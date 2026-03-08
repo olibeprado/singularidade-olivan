@@ -10,60 +10,50 @@ st.subheader("Radar Global de Criptomoedas")
 
 def pegar_dados():
 
+    url = "https://api.coingecko.com/api/v3/coins/markets"
+
+    parametros = {
+        "vs_currency": "usd",
+        "order": "market_cap_desc",
+        "per_page": 250,
+        "page": 1
+    }
+
+    r = requests.get(url, params=parametros)
+
+    if r.status_code != 200:
+        return pd.DataFrame()
+
+    data = r.json()
+
     tabela = []
 
-    for pagina in range(1,5):  # 4 páginas = até 1000 moedas
+    for moeda in data:
 
-        url = "https://api.coingecko.com/api/v3/coins/markets"
+        nome = moeda.get("name")
+        simbolo = moeda.get("symbol","").upper()
+        preco = moeda.get("current_price")
 
-        parametros = {
-            "vs_currency": "usd",
-            "order": "market_cap_desc",
-            "per_page": 250,
-            "page": pagina
-        }
-
-        r = requests.get(url, params=parametros)
-
-        if r.status_code != 200:
-            continue
-
-        data = r.json()
-
-        for moeda in data:
-
-            nome = moeda.get("name")
-            simbolo = moeda.get("symbol","").upper()
-            preco = moeda.get("current_price")
-
-            tabela.append([nome, simbolo, preco])
+        tabela.append([nome, simbolo, preco])
 
     df = pd.DataFrame(tabela, columns=["Moeda","Símbolo","Preço USD"])
 
     return df
 
 
-if st.sidebar.button("Ativar Monitoramento"):
+if st.sidebar.button("Carregar Mercado"):
 
-    placeholder = st.empty()
+    df = pegar_dados()
 
-    while True:
+    if not df.empty:
 
-        try:
+        st.dataframe(df, use_container_width=True)
+        st.success(f"{len(df)} moedas carregadas")
 
-            df = pegar_dados()
+    else:
 
-            with placeholder.container():
-
-                st.dataframe(df, use_container_width=True)
-
-                st.success(f"{len(df)} moedas carregadas")
-
-        except Exception as e:
-
-            st.error(f"Erro detectado: {e}")
-
-        time.sleep(30)
+        st.error("Não foi possível carregar dados da API")
 
 else:
-    st.warning("Clique em 'Ativar Monitoramento'")
+
+    st.warning("Clique em 'Carregar Mercado'")
