@@ -1,4 +1,4 @@
- import streamlit as st
+import streamlit as st
 import ccxt
 import time
 
@@ -11,13 +11,7 @@ def conectar_bybit():
     try:
 
         exchange = ccxt.bybit({
-            "enableRateLimit": True,
-            "urls": {
-                "api": {
-                    "public": "https://api.bytick.com",
-                    "private": "https://api.bytick.com"
-                }
-            }
+            "enableRateLimit": True
         })
 
         ticker = exchange.fetch_ticker("BTC/USDT")
@@ -28,7 +22,6 @@ def conectar_bybit():
 
     except Exception as e:
         st.error(f"Erro detectado: {e}")
-
 
 if st.sidebar.button("Ativar Monitoramento"):
 
