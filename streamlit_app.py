@@ -14,7 +14,7 @@ def pegar_dados():
     parametros = {
         "vs_currency": "usd",
         "order": "market_cap_desc",
-        "per_page": 200,
+        "per_page": 190,
         "page": 1
     }
 
