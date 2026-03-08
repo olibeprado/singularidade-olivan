@@ -2,16 +2,14 @@ import streamlit as st
 import ccxt
 import time
 
-# Configuração da página
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
 st.title("🚀 Sistema Singularidade Olivan")
 st.subheader("Sinal Prioritário: Matriz de Mercado Ativa")
 
-# Função para conectar e puxar preço
-def conectar_bybit():
+def conectar_mercado():
     try:
-        exchange = ccxt.bybit({
+        exchange = ccxt.binance({
             "enableRateLimit": True
         })
 
@@ -24,8 +22,6 @@ def conectar_bybit():
     except Exception as e:
         st.error(f"Erro detectado: {e}")
 
-
-# Botão lateral
 if st.sidebar.button("Ativar Monitoramento"):
 
     placeholder = st.empty()
@@ -33,7 +29,7 @@ if st.sidebar.button("Ativar Monitoramento"):
     for i in range(100000):
 
         with placeholder.container():
-            conectar_bybit()
+            conectar_mercado()
 
         time.sleep(2)
 
