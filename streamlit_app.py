@@ -14,11 +14,9 @@ def conectar_bybit():
         key = st.secrets["BYBIT_API_KEY"]
         secret = st.secrets["BYBIT_API_SECRET"]
 
-        bybit = ccxt.bybit({
-            "apiKey": key,
-            "secret": secret,
-            "enableRateLimit": True
-        })
+       bybit = ccxt.bybit({
+    'enableRateLimit': True
+})
 
         ticker = bybit.fetch_ticker("BTC/USDT:USDT")
         preco = ticker["last"]
