@@ -39,3 +39,4 @@ if st.sidebar.button('Ativar Monitoramento'):
         st.rerun()
 else:
     st.warning("Aguardando comando para abrir as matrizes...")
+    
