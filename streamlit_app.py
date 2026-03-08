@@ -1,26 +1,34 @@
-import streamlit as st
+ import streamlit as st
 import ccxt
 import time
 
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
 st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Sinal Prioritário: Matriz de Mercado Ativa")
+st.subheader("Sinal Prioritário: Matriz Bybit Ativa")
 
-def conectar_mercado():
+def conectar_bybit():
     try:
-        exchange = ccxt.binance({
-            "enableRateLimit": True
+
+        exchange = ccxt.bybit({
+            "enableRateLimit": True,
+            "urls": {
+                "api": {
+                    "public": "https://api.bytick.com",
+                    "private": "https://api.bytick.com"
+                }
+            }
         })
 
         ticker = exchange.fetch_ticker("BTC/USDT")
         preco = ticker["last"]
 
-        st.metric("BTC/USDT", f"$ {preco:,.2f}")
-        st.success("Conexão de Mercado Ativa")
+        st.metric("BTC/USDT (Bybit)", f"$ {preco:,.2f}")
+        st.success("Conexão Bybit Ativa")
 
     except Exception as e:
         st.error(f"Erro detectado: {e}")
+
 
 if st.sidebar.button("Ativar Monitoramento"):
 
@@ -29,7 +37,7 @@ if st.sidebar.button("Ativar Monitoramento"):
     for i in range(100000):
 
         with placeholder.container():
-            conectar_mercado()
+            conectar_bybit()
 
         time.sleep(2)
 
