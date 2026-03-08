@@ -10,19 +10,35 @@ st.subheader("Radar de Mercado Cripto")
 
 def pegar_dados():
 
-    url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1"
+    url = "https://api.coingecko.com/api/v3/coins/markets"
 
-    r = requests.get(url)
+    parametros = {
+        "vs_currency": "usd",
+        "order": "market_cap_desc",
+        "per_page": 20,
+        "page": 1
+    }
+
+    r = requests.get(url, params=parametros)
+
+    if r.status_code != 200:
+        return None
+
     data = r.json()
+
+    if not isinstance(data, list):
+        return None
 
     tabela = []
 
     for moeda in data:
-        nome = moeda["name"]
-        simbolo = moeda["symbol"].upper()
-        preco = moeda["current_price"]
 
-        tabela.append([nome, simbolo, preco])
+        nome = moeda.get("name")
+        simbolo = moeda.get("symbol", "").upper()
+        preco = moeda.get("current_price")
+
+        if nome and preco:
+            tabela.append([nome, simbolo, preco])
 
     df = pd.DataFrame(tabela, columns=["Moeda", "Símbolo", "Preço USD"])
 
@@ -39,15 +55,20 @@ if st.sidebar.button("Ativar Monitoramento"):
 
             df = pegar_dados()
 
-            with placeholder.container():
+            if df is not None:
 
-                st.dataframe(df, use_container_width=True)
+                with placeholder.container():
 
-                for i in range(len(df)):
-                    st.metric(
-                        f"{df['Moeda'][i]} ({df['Símbolo'][i]})",
-                        f"${df['Preço USD'][i]:,.2f}"
-                    )
+                    st.dataframe(df, use_container_width=True)
+
+                    for i in range(len(df)):
+                        st.metric(
+                            f"{df['Moeda'][i]} ({df['Símbolo'][i]})",
+                            f"${df['Preço USD'][i]:,.2f}"
+                        )
+
+            else:
+                st.warning("Não foi possível obter dados da API")
 
         except Exception as e:
             st.error(f"Erro detectado: {e}")
