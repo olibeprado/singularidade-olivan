@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import pandas as pd
-import time
 
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
@@ -15,13 +14,19 @@ def pegar_dados():
     parametros = {
         "vs_currency": "usd",
         "order": "market_cap_desc",
-        "per_page": 250,
+        "per_page": 100,
         "page": 1
     }
 
-    r = requests.get(url, params=parametros)
+    headers = {
+        "accept": "application/json",
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    r = requests.get(url, params=parametros, headers=headers)
 
     if r.status_code != 200:
+        st.write("Status da API:", r.status_code)
         return pd.DataFrame()
 
     data = r.json()
@@ -41,7 +46,7 @@ def pegar_dados():
     return df
 
 
-if st.sidebar.button("Carregar Mercado"):
+if st.button("Carregar Mercado"):
 
     df = pegar_dados()
 
@@ -53,7 +58,3 @@ if st.sidebar.button("Carregar Mercado"):
     else:
 
         st.error("Não foi possível carregar dados da API")
-
-else:
-
-    st.warning("Clique em 'Carregar Mercado'")
