@@ -9,37 +9,38 @@ st.subheader("Radar Global de Criptomoedas")
 
 def pegar_dados():
 
-    url = "https://api.coingecko.com/api/v3/coins/markets"
-
-    parametros = {
-        "vs_currency": "usd",
-        "order": "market_cap_desc",
-        "per_page": 100,
-        "page": 2
-    }
+    tabela = []
 
     headers = {
         "accept": "application/json",
         "User-Agent": "Mozilla/5.0"
     }
 
-    r = requests.get(url, params=parametros, headers=headers)
+    for pagina in range(1,3):  # 2 páginas = 500 moedas
 
-    if r.status_code != 200:
-        st.write("Status da API:", r.status_code)
-        return pd.DataFrame()
+        url = "https://api.coingecko.com/api/v3/coins/markets"
 
-    data = r.json()
+        parametros = {
+            "vs_currency": "usd",
+            "order": "market_cap_desc",
+            "per_page": 250,
+            "page": pagina
+        }
 
-    tabela = []
+        r = requests.get(url, params=parametros, headers=headers)
 
-    for moeda in data:
+        if r.status_code != 200:
+            continue
 
-        nome = moeda.get("name")
-        simbolo = moeda.get("symbol","").upper()
-        preco = moeda.get("current_price")
+        data = r.json()
 
-        tabela.append([nome, simbolo, preco])
+        for moeda in data:
+
+            nome = moeda.get("name")
+            simbolo = moeda.get("symbol","").upper()
+            preco = moeda.get("current_price")
+
+            tabela.append([nome, simbolo, preco])
 
     df = pd.DataFrame(tabela, columns=["Moeda","Símbolo","Preço USD"])
 
@@ -50,11 +51,5 @@ if st.button("Carregar Mercado"):
 
     df = pegar_dados()
 
-    if not df.empty:
-
-        st.dataframe(df, use_container_width=True)
-        st.success(f"{len(df)} moedas carregadas")
-
-    else:
-
-        st.error("Não foi possível carregar dados da API")
+    st.dataframe(df, use_container_width=True)
+    st.success(f"{len(df)} moedas carregadas")
