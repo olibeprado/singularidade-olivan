@@ -1,58 +1,44 @@
 import streamlit as st
-import requests
+import pandas as pd
+import ccxt
 import time
-from datetime import datetime
 
-# PROTOCOLO DEUS EX MACHINA - Camada 7 (Consistência)
-st.set_page_config(page_title="Singularidade Olivan", layout="wide")
-
-def buscar_binance(ticker):
-    """Protocolo PVT: Busca preço na Binance"""
-    try:
-        url = f"https://api.binance.com/api/v3/ticker/price?symbol={ticker}"
-        data = requests.get(url).json()
-        return float(data['price'])
-    except:
-        return None
-
-def buscar_bybit(ticker):
-    """Protocolo PVT: Busca preço na Bybit"""
-    try:
-        url = f"https://api.bybit.com/v5/market/tickers?category=spot&symbol={ticker}"
-        data = requests.get(url).json()
-        return float(data['result']['list'][0]['lastPrice'])
-    except:
-        return None
-
-# Interface Streamlit
+# Interface Visual Nazare
+st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Conectando às Matrizes Binance & Bybit")
+st.subheader("Monitoramento em Tempo Real: Binance & Bybit")
 
-# Entrada do usuário na barra lateral
-escolha = st.sidebar.text_input("Qual moeda deseja monitorar? (Ex: BTCUSDT)", value="BTCUSDT").upper()
-
-if st.sidebar.button("Iniciar Monitoramento"):
-    st.write(f"Ativando Protocolo Ômega para **{escolha}**...")
-    placeholder = st.empty() # Espaço para atualizar o preço em tempo real
+def conectar_matrizes():
+    # Configuração das corretoras com Timeout de 10 segundos
+    binance = ccxt.binance({'timeout': 10000, 'enableRateLimit': True})
+    bybit = ccxt.bybit({'timeout': 10000, 'enableRateLimit': True})
     
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.write("### Matriz Binance")
+        try:
+            ticker_bn = binance.fetch_ticker('BTC/USDT')
+            st.metric("BTC/USDT (Binance)", f"$ {ticker_bn['last']:.2f}")
+            st.success("Conexão Estável")
+        except Exception as e:
+            st.error(f"Erro na Binance: Link instável")
+
+    with col2:
+        st.write("### Matriz Bybit")
+        try:
+            ticker_bb = bybit.fetch_ticker('BTC/USDT')
+            st.metric("BTC/USDT (Bybit)", f"$ {ticker_bb['last']:.2f}")
+            st.success("Conexão Estável")
+        except Exception as e:
+            st.error(f"Erro na Bybit: Link instável")
+
+# Botão de Ativação
+if st.sidebar.button('Iniciar Monitoramento'):
+    st.info("Ativando Protocolo Ômega...")
     while True:
-        preco_binance = buscar_binance(escolha)
-        preco_bybit = buscar_bybit(escolha)
-        horario = datetime.now().strftime('%H:%M:%S')
-
-        with placeholder.container():
-            col1, col2 = st.columns(2)
-            
-            if preco_binance:
-                col1.metric("Binance", f"USD {preco_binance:,.4f}")
-            
-            if preco_bybit:
-                col2.metric("Bybit", f"USD {preco_bybit:,.4f}")
-
-            # Lógica de Arbitragem (PVT Regra 3)
-            if preco_binance and preco_bybit:
-                diff = abs(preco_binance - preco_bybit)
-                if diff > (preco_binance * 0.01):
-                    st.error(f"!! ALERTA DE ARBITRAGEM !! Diferença: {diff:,.4f}")
-        
-        time.sleep(2)
+        conectar_matrizes()
+        time.sleep(5) # Atualiza a cada 5 segundos para não travar
+        st.rerun()
+else:
+    st.warning("Aguardando comando para iniciar...")
