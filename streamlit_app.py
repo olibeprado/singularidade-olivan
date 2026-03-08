@@ -38,7 +38,7 @@ if st.sidebar.button('Iniciar Monitoramento'):
     st.info("Ativando Protocolo Ômega...")
     while True:
         conectar_matrizes()
-        time.sleep(5) # Atualiza a cada 5 segundos para não travar
+        time.sleep(5) 
         st.rerun()
 else:
     st.warning("Aguardando comando para iniciar...")
