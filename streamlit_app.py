@@ -11,7 +11,13 @@ def conectar_bybit():
     try:
 
         exchange = ccxt.bybit({
-            "enableRateLimit": True
+            "enableRateLimit": True,
+            "urls": {
+                "api": {
+                    "public": "https://api.bytick.com",
+                    "private": "https://api.bytick.com"
+                }
+            }
         })
 
         ticker = exchange.fetch_ticker("BTC/USDT")
@@ -27,12 +33,9 @@ if st.sidebar.button("Ativar Monitoramento"):
 
     placeholder = st.empty()
 
-    for i in range(100000):
+    while True:
 
         with placeholder.container():
             conectar_bybit()
 
         time.sleep(2)
-
-else:
-    st.warning("Aguardando comando para abrir as matrizes...")
