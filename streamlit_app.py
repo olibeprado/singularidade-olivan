@@ -1,44 +1,58 @@
 import streamlit as st
-import pandas as pd
 import ccxt
 import time
 
-# Interface Visual Nazare
-st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
-st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Monitoramento em Tempo Real: Binance & Bybit")
+# Visual Nazare Interface
+st.set_page_config(page_title="Olivan Singularity System", layout="wide")
+st.title("🚀 Olivan Singularity System")
+st.subheader("Priority Signal: Active Bybit Matrix")
 
-def conectar_matrizes():
-    # Configuração das corretoras com Timeout de 10 segundos
-    binance = ccxt.binance({'timeout': 10000, 'enableRateLimit': True})
-    bybit = ccxt.bybit({'timeout': 10000, 'enableRateLimit': True})
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.write("### Matriz Binance")
-        try:
-            ticker_bn = binance.fetch_ticker('BTC/USDT')
-            st.metric("BTC/USDT (Binance)", f"$ {ticker_bn['last']:.2f}")
-            st.success("Conexão Estável")
-        except Exception as e:
-            st.error(f"Erro na Binance: Link instável")
+def connect_bybit_with_key():
 
-    with col2:
-        st.write("### Matriz Bybit")
-        try:
-            ticker_bb = bybit.fetch_ticker('BTC/USDT')
-            st.metric("BTC/USDT (Bybit)", f"$ {ticker_bb['last']:.2f}")
-            st.success("Conexão Estável")
-        except Exception as e:
-            st.error(f"Erro na Bybit: Link instável")
+try:
 
-# Botão de Ativação
-if st.sidebar.button('Iniciar Monitoramento'):
-    st.info("Ativando Protocolo Ômega...")
-    while True:
-        conectar_matrizes()
-        time.sleep(5) 
-        st.rerun()
+# Here the code pulls the keys from the 'Secrets' drawer that you saved
+
+key = st.secrets["BYBIT_API_KEY"]
+
+secret = st.secrets["BYBIT_API_SECRET"]
+
+# Official connection with Bybit
+bybit = ccxt.bybit({
+
+'apiKey': key,
+
+'secret': secret,
+
+'enableRateLimit': True
+
+})
+
+ticker = bybit.fetch_ticker('BTC/USDT')
+price = ticker['last']
+
+st.metric("BTC/USDT (Bybit)", f"$ {preco:,.2f}")
+
+st.success("Encrypted Connection: Signal 100%")
+
+except Exception as e:
+
+# If there's an error here, it's because the name in the drawer is different from the code
+
+st.error("Waiting for key synchronization... Check the Secrets.")
+
+# Protocol Activation Button
+if st.sidebar.button('Activate Monitoring'):
+placeholder = st.empty()
+
+while True:
+
+with placeholder.container():
+connect_bybit_with_key()
+
+time.sleep(2) # Updates the price every 2 seconds
+
+st.rerun()
 else:
-    st.warning("Aguardando comando para iniciar...")
+
+st.warning("Waiting for command to open the matrices...")
