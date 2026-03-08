@@ -1,33 +1,27 @@
 import streamlit as st
-import ccxt
+import requests
 import time
 
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
 st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Sinal Prioritário: Matriz Bybit Ativa")
+st.subheader("Sinal Prioritário: Matriz de Mercado Ativa")
 
-def conectar_bybit():
+def pegar_preco():
+
     try:
+        url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
 
-        exchange = ccxt.bybit({
-            "enableRateLimit": True,
-            "urls": {
-                "api": {
-                    "public": "https://api.bytick.com",
-                    "private": "https://api.bytick.com"
-                }
-            }
-        })
+        resposta = requests.get(url).json()
 
-        ticker = exchange.fetch_ticker("BTC/USDT")
-        preco = ticker["last"]
+        preco = resposta["bitcoin"]["usd"]
 
-        st.metric("BTC/USDT (Bybit)", f"$ {preco:,.2f}")
-        st.success("Conexão Bybit Ativa")
+        st.metric("BTC/USD", f"$ {preco:,.2f}")
+        st.success("Conexão com CoinGecko ativa")
 
     except Exception as e:
         st.error(f"Erro detectado: {e}")
+
 
 if st.sidebar.button("Ativar Monitoramento"):
 
@@ -36,6 +30,9 @@ if st.sidebar.button("Ativar Monitoramento"):
     while True:
 
         with placeholder.container():
-            conectar_bybit()
+            pegar_preco()
 
-        time.sleep(2)
+        time.sleep(5)
+
+else:
+    st.warning("Aguardando comando para abrir as matrizes...")
