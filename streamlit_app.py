@@ -5,7 +5,7 @@ import pandas as pd
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
 st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Scanner de Tendência e Breakout")
+st.subheader("Scanner de Tendência")
 
 moedas = ["bitcoin","ethereum","solana","ripple","cardano"]
 
@@ -21,12 +21,12 @@ def pegar_dados(moeda):
     r = requests.get(url, params=parametros)
 
     if r.status_code != 200:
-        return None
+        return None, None, "NEUTRO"
 
     data = r.json()
 
     if "prices" not in data:
-        return None
+        return None, None, "NEUTRO"
 
     precos = [p[1] for p in data["prices"]]
 
@@ -37,14 +37,12 @@ def pegar_dados(moeda):
     preco_atual = df["preco"].iloc[-1]
     ema = df["EMA"].iloc[-1]
 
-    maxima = df["preco"].tail(20).max()
-
-    if preco_atual > ema and preco_atual > maxima:
-        sinal = "COMPRA 🚀"
+    if preco_atual > ema:
+        sinal = "ALTA"
     elif preco_atual < ema:
-        sinal = "BAIXA 🔻"
+        sinal = "QUEDA"
     else:
-        sinal = "AGUARDAR"
+        sinal = "NEUTRO"
 
     return preco_atual, ema, sinal
 
@@ -55,13 +53,20 @@ if st.button("Escanear Mercado"):
 
     for moeda in moedas:
 
-        resultado = pegar_dados(moeda)
+        preco, ema, sinal = pegar_dados(moeda)
 
-        if resultado:
+        tabela.append([moeda.upper(), preco, ema, sinal])
 
-            preco, ema, sinal = resultado
-            tabela.append([moeda.upper(), preco, ema, sinal])
+    df = pd.DataFrame(tabela, columns=["Moeda","Preço","MME","Tendência"])
 
-    df = pd.DataFrame(tabela, columns=["Moeda","Preço","MME","Sinal"])
+    def colorir(valor):
 
-    st.dataframe(df, use_container_width=True)
+        if valor == "ALTA":
+            return "color: green"
+
+        if valor == "QUEDA":
+            return "color: red"
+
+        return "color: orange"
+
+    st.dataframe(df.style.applymap(colorir, subset=["Tendência"]), use_container_width=True)
