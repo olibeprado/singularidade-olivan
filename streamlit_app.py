@@ -20,7 +20,13 @@ def pegar_dados(moeda):
 
     r = requests.get(url, params=parametros)
 
+    if r.status_code != 200:
+        return None
+
     data = r.json()
+
+    if "prices" not in data:
+        return None
 
     precos = [p[1] for p in data["prices"]]
 
@@ -49,9 +55,12 @@ if st.button("Escanear Mercado"):
 
     for moeda in moedas:
 
-        preco, ema, sinal = pegar_dados(moeda)
+        resultado = pegar_dados(moeda)
 
-        tabela.append([moeda.upper(), preco, ema, sinal])
+        if resultado:
+
+            preco, ema, sinal = resultado
+            tabela.append([moeda.upper(), preco, ema, sinal])
 
     df = pd.DataFrame(tabela, columns=["Moeda","Preço","MME","Sinal"])
 
