@@ -6,13 +6,11 @@ import time
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
 st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Radar Global de Criptomoedas")
-
-criptos = "bitcoin,ethereum,solana,ripple,cardano,binancecoin,tron,polkadot,chainlink,polygon,avalanche-2,litecoin,uniswap,stellar,monero"
+st.subheader("Radar de Mercado Cripto")
 
 def pegar_dados():
 
-    url = f"https://api.coingecko.com/api/v3/simple/price?ids={criptos}&vs_currencies=usd"
+    url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1"
 
     r = requests.get(url)
     data = r.json()
@@ -20,13 +18,13 @@ def pegar_dados():
     tabela = []
 
     for moeda in data:
+        nome = moeda["name"]
+        simbolo = moeda["symbol"].upper()
+        preco = moeda["current_price"]
 
-        preco = data[moeda].get("usd", None)
+        tabela.append([nome, simbolo, preco])
 
-        if preco is not None:
-            tabela.append([moeda.upper(), preco])
-
-    df = pd.DataFrame(tabela, columns=["Moeda", "Preço USD"])
+    df = pd.DataFrame(tabela, columns=["Moeda", "Símbolo", "Preço USD"])
 
     return df
 
@@ -46,7 +44,10 @@ if st.sidebar.button("Ativar Monitoramento"):
                 st.dataframe(df, use_container_width=True)
 
                 for i in range(len(df)):
-                    st.metric(df["Moeda"][i], f"${df['Preço USD'][i]:,.2f}")
+                    st.metric(
+                        f"{df['Moeda'][i]} ({df['Símbolo'][i]})",
+                        f"${df['Preço USD'][i]:,.2f}"
+                    )
 
         except Exception as e:
             st.error(f"Erro detectado: {e}")
