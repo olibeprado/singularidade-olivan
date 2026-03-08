@@ -2,31 +2,30 @@ import streamlit as st
 import ccxt
 import time
 
-st.write(st.secrets)
-
+# Configuração da página
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
 st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Sinal Prioritário: Matriz Bybit Ativa")
+st.subheader("Sinal Prioritário: Matriz de Mercado Ativa")
 
+# Função para conectar e puxar preço
 def conectar_bybit():
     try:
-        key = st.secrets["BYBIT_API_KEY"]
-        secret = st.secrets["BYBIT_API_SECRET"]
+        exchange = ccxt.bybit({
+            "enableRateLimit": True
+        })
 
-       bybit = ccxt.bybit({
-    'enableRateLimit': True
-})
-
-        ticker = bybit.fetch_ticker("BTC/USDT:USDT")
+        ticker = exchange.fetch_ticker("BTC/USDT")
         preco = ticker["last"]
 
-        st.metric("BTC/USDT (Bybit)", f"$ {preco:,.2f}")
-        st.success("Conexão Criptografada: Sinal 100%")
+        st.metric("BTC/USDT", f"$ {preco:,.2f}")
+        st.success("Conexão de Mercado Ativa")
 
     except Exception as e:
-        st.error(f"Erro real detectado: {e}")
+        st.error(f"Erro detectado: {e}")
 
+
+# Botão lateral
 if st.sidebar.button("Ativar Monitoramento"):
 
     placeholder = st.empty()
