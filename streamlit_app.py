@@ -1,33 +1,22 @@
 import streamlit as st
 import requests
-import time
 
-st.title("🚀 Sistema Singularidade Olivan")
+st.title("Teste API CoinGecko")
 
-def pegar_preco():
+url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
 
-    try:
-        url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+try:
+    r = requests.get(url)
+    data = r.json()
 
-        r = requests.get(url)
-        data = r.json()
+    st.write("Resposta da API:")
+    st.write(data)
 
-        if "bitcoin" in data:
-            preco = data["bitcoin"]["usd"]
-            st.metric("BTC/USD", f"${preco:,.2f}")
-        else:
-            st.error("Dados do Bitcoin não encontrados")
+    if "bitcoin" in data:
+        preco = data["bitcoin"]["usd"]
+        st.success(f"Preço BTC: ${preco}")
+    else:
+        st.error("Bitcoin não veio na resposta")
 
-    except Exception as e:
-        st.error(f"Erro detectado: {e}")
-
-
-if st.button("Ativar Monitoramento"):
-
-    placeholder = st.empty()
-
-    while True:
-        with placeholder.container():
-            pegar_preco()
-
-        time.sleep(5)
+except Exception as e:
+    st.error(e)
