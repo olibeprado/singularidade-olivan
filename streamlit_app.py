@@ -6,10 +6,10 @@ import time
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
 st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Monitor de Criptomoedas em Tempo Real")
+st.subheader("Radar Global de Criptomoedas")
 
-# criptomoedas monitoradas
-criptos = "bitcoin,ethereum,solana,ripple,cardano"
+# lista maior de criptos
+criptos = "bitcoin,ethereum,solana,ripple,cardano,binancecoin,tron,polkadot,chainlink,polygon,avalanche-2,litecoin,uniswap,stellar,monero"
 
 def pegar_dados():
 
@@ -41,13 +41,12 @@ if st.sidebar.button("Ativar Monitoramento"):
 
             with placeholder.container():
 
-                st.dataframe(df)
+                st.dataframe(df, use_container_width=True)
 
                 for i in range(len(df)):
                     st.metric(df["Moeda"][i], f"${df['Preço USD'][i]:,.2f}")
 
         except Exception as e:
-
             st.error(f"Erro detectado: {e}")
 
         time.sleep(10)
