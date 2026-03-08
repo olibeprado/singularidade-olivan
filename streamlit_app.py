@@ -7,7 +7,7 @@ st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 st.title("🚀 Sistema Singularidade Olivan")
 st.subheader("Scanner de Tendência")
 
-moedas = ["bitcoin","ethereum","solana","ripple","cardano"]
+moedas = ["bitcoin","ethereum","solana","ripple","cardano","MNT","FET","BNB","RAY","TAI","KSM","RENDER"]  
 
 def pegar_dados(moeda):
 
