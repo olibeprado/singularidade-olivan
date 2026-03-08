@@ -5,51 +5,54 @@ import pandas as pd
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
 st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Radar Global de Criptomoedas")
+st.subheader("Scanner de Tendência e Breakout")
 
-def pegar_dados():
+moedas = ["bitcoin","ethereum","solana","ripple","cardano"]
+
+def pegar_dados(moeda):
+
+    url = f"https://api.coingecko.com/api/v3/coins/{moeda}/market_chart"
+
+    parametros = {
+        "vs_currency":"usd",
+        "days":1
+    }
+
+    r = requests.get(url, params=parametros)
+
+    data = r.json()
+
+    precos = [p[1] for p in data["prices"]]
+
+    df = pd.DataFrame(precos, columns=["preco"])
+
+    df["EMA"] = df["preco"].ewm(span=9).mean()
+
+    preco_atual = df["preco"].iloc[-1]
+    ema = df["EMA"].iloc[-1]
+
+    maxima = df["preco"].tail(20).max()
+
+    if preco_atual > ema and preco_atual > maxima:
+        sinal = "COMPRA 🚀"
+    elif preco_atual < ema:
+        sinal = "BAIXA 🔻"
+    else:
+        sinal = "AGUARDAR"
+
+    return preco_atual, ema, sinal
+
+
+if st.button("Escanear Mercado"):
 
     tabela = []
 
-    headers = {
-        "accept": "application/json",
-        "User-Agent": "Mozilla/5.0"
-    }
+    for moeda in moedas:
 
-    for pagina in range(1,3):  # 2 páginas = 500 moedas
+        preco, ema, sinal = pegar_dados(moeda)
 
-        url = "https://api.coingecko.com/api/v3/coins/markets"
+        tabela.append([moeda.upper(), preco, ema, sinal])
 
-        parametros = {
-            "vs_currency": "usd",
-            "order": "market_cap_desc",
-            "per_page": 250,
-            "page": pagina
-        }
-
-        r = requests.get(url, params=parametros, headers=headers)
-
-        if r.status_code != 200:
-            continue
-
-        data = r.json()
-
-        for moeda in data:
-
-            nome = moeda.get("name")
-            simbolo = moeda.get("symbol","").upper()
-            preco = moeda.get("current_price")
-
-            tabela.append([nome, simbolo, preco])
-
-    df = pd.DataFrame(tabela, columns=["Moeda","Símbolo","Preço USD"])
-
-    return df
-
-
-if st.button("Carregar Mercado"):
-
-    df = pegar_dados()
+    df = pd.DataFrame(tabela, columns=["Moeda","Preço","MME","Sinal"])
 
     st.dataframe(df, use_container_width=True)
-    st.success(f"{len(df)} moedas carregadas")
