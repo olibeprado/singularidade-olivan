@@ -8,7 +8,6 @@ st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 st.title("🚀 Sistema Singularidade Olivan")
 st.subheader("Radar Global de Criptomoedas")
 
-# lista maior de criptos
 criptos = "bitcoin,ethereum,solana,ripple,cardano,binancecoin,tron,polkadot,chainlink,polygon,avalanche-2,litecoin,uniswap,stellar,monero"
 
 def pegar_dados():
@@ -21,8 +20,11 @@ def pegar_dados():
     tabela = []
 
     for moeda in data:
-        preco = data[moeda]["usd"]
-        tabela.append([moeda.upper(), preco])
+
+        preco = data[moeda].get("usd", None)
+
+        if preco is not None:
+            tabela.append([moeda.upper(), preco])
 
     df = pd.DataFrame(tabela, columns=["Moeda", "Preço USD"])
 
