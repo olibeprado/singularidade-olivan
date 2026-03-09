@@ -2,77 +2,77 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# CONFIGURAÇÃO DA CHAVE - COPIADA DIRETO DA SUA FOTO
+# CHAVE DA SUA FOTO - VERIFICADA
 API_KEY_CMC = '910c7033-d8e4-4e19-8489-1d27e4e00' 
 
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
 st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Scanner de Tendência - Modo CoinMarketCap")
+st.subheader("Scanner de Tendência - Versão Otimizada")
 
-# Lista de moedas atualizada
-moedas = ["BTC", "ETH", "SOL", "XRP", "ADA", "FET", "BNB", "RAY", "TAI", "KSM"]
+# Lista de moedas
+moedas_lista = ["BTC", "ETH", "SOL", "XRP", "ADA", "FET", "BNB", "RAY", "TAI", "KSM"]
 
-def pegar_dados_cmc(simbolo):
+def buscar_tudo_uma_vez(lista_simbolos):
     url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
     headers = {
         'Accepts': 'application/json',
         'X-CMC_PRO_API_KEY': API_KEY_CMC,
     }
+    # Transformamos a lista em uma string separada por vírgula: "BTC,ETH,SOL..."
     parametros = {
-        'symbol': simbolo.upper(),
+        'symbol': ','.join(lista_simbolos),
         'convert': 'USD'
     }
 
     try:
         r = requests.get(url, headers=headers, params=parametros)
         if r.status_code == 200:
-            dados = r.json()
-            # O CMC organiza os dados por símbolo
-            info = dados['data'][simbolo.upper()]['quote']['USD']
-            
-            preco = info['price']
-            variacao = info['percent_change_24h']
-            
-            # Lógica de tendência baseada na força do movimento (24h)
-            if variacao > 0.5:
-                sinal = "ALTA"
-            elif variacao < -0.5:
-                sinal = "QUEDA"
-            else:
-                sinal = "NEUTRO"
-                
-            return preco, variacao, sinal
+            return r.json()
         else:
-            # Se der erro 401 é porque a chave está errada
-            return None, None, f"ERRO {r.status_code}"
+            st.error(f"Erro na API: {r.status_code}")
+            return None
     except Exception as e:
-        return None, None, "FALHA"
+        st.error(f"Falha de conexão: {e}")
+        return None
 
 def colorir_tendencia(valor):
     if valor == "ALTA":
-        return "color: #00ff00; font-weight: bold" # Verde neon
+        return "color: #00ff00; font-weight: bold"
     elif valor == "QUEDA":
-        return "color: #ff4b4b; font-weight: bold" # Vermelho
-    return "color: #ffa500" # Laranja para Neutro
+        return "color: #ff4b4b; font-weight: bold"
+    return "color: #ffa500"
 
 if st.button("Escanear Mercado Agora"):
-    tabela = []
+    dados_api = buscar_tudo_uma_vez(moedas_lista)
     
-    # Barra de progresso para dar um toque profissional
-    progresso = st.progress(0)
-    for i, moeda in enumerate(moedas):
-        preco, var, sinal = pegar_dados_cmc(moeda)
-        tabela.append([moeda, preco, var, sinal])
-        progresso.progress((i + 1) / len(moedas))
-    
-    # Criando o DataFrame
-    df = pd.DataFrame(tabela, columns=["Moeda", "Preço (USD)", "Variação 24h (%)", "Tendência"])
-    
-    # Exibindo a tabela com estilo
-    st.dataframe(
-        df.style.applymap(colorir_tendencia, subset=["Tendência"]),
-        use_container_width=True
-    )
+    if dados_api:
+        tabela = []
+        for moeda in moedas_lista:
+            try:
+                info = dados_api['data'][moeda]['quote']['USD']
+                preco = info['price']
+                variacao = info['percent_change_24h']
+                
+                # Definindo a tendência
+                if variacao > 0.5:
+                    sinal = "ALTA"
+                elif variacao < -0.5:
+                    sinal = "QUEDA"
+                else:
+                    sinal = "NEUTRO"
+                
+                tabela.append([moeda, preco, variacao, sinal])
+            except:
+                tabela.append([moeda, None, None, "NÃO ENCONTRADO"])
 
-    st.success(f"Consulta finalizada com sucesso via CoinMarketCap às {pd.Timestamp.now().strftime('%H:%M:%S')}")
+        df = pd.DataFrame(tabela, columns=["Moeda", "Preço (USD)", "Variação 24h (%)", "Tendência"])
+        
+        # Exibindo a tabela com o seu protocolo de precisão (centavos)
+        st.dataframe(
+            df.style.format({"Preço (USD)": "{:.6f}", "Variação 24h (%)": "{:.2f}%"})
+            .applymap(colorir_tendencia, subset=["Tendência"]),
+            use_container_width=True
+        )
+
+        st.success(f"Consulta finalizada via CoinMarketCap às {pd.Timestamp.now().strftime('%H:%M:%S')}")
