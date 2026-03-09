@@ -25,7 +25,7 @@ def definir_status(valor):
     return "NEUTRO 🟡"
 
 if st.button("Escanear Força do Mercado"):
-    dados = buscar_mercado_cmc(100) # Busca o Top 100
+    dados = buscar_mercado_cmc(500) # Busca o Top 500
     if dados:
         tabela = []
         for moeda in dados:
