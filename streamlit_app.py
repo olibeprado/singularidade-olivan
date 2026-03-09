@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 
 # CHAVE CORRIGIDA CONFORME SUA FOTO
-API_KEY_CMC = '910c7033-d8e4-4e19-8489-1d27e4e00222' 
+API_KEY_CMC = '910c7033d8e44e1984891d27e4e00222' 
 
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
