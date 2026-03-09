@@ -33,6 +33,7 @@ if st.button("Escanear Força do Mercado"):
             q = moeda['quote']['USD']
             
             # Pegando múltiplos tempos
+            p_02m = q['percent_change_02m']
             p_1h = q['percent_change_1h']
             p_24h = q['percent_change_24h']
             p_7d = q['percent_change_7d']
