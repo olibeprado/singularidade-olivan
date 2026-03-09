@@ -2,71 +2,71 @@ import streamlit as st
 import requests
 import pandas as pd
 
+# 1. COLE SUA CHAVE AQUI
+API_KEY_CMC = '910c7033-d8e4-4e19-8489-1d27e4e00' # Use a chave que você copiou
+
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
 st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Scanner de Tendência")
+st.subheader("Scanner de Tendência - Modo CoinMarketCap")
 
-moedas = ["bitcoin","ethereum","solana","ripple","cardano","MNTUSDT","FET","BNB","RAY","TAI","KSM","RENDER"]  
+# Lista de moedas (Usando os símbolos que o CMC entende)
+moedas = ["BTC", "ETH", "SOL", "XRP", "ADA", "FET", "BNB", "RAY", "TAI", "KSM", "RENDER"]
 
-def pegar_dados(moeda):
-
-    url = f"https://api.coingecko.com/api/v3/coins/{moeda}/market_chart"
-
+def pegar_dados_cmc(simbolo):
+    url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
+    headers = {
+        'Accepts': 'application/json',
+        'X-CMC_PRO_API_KEY': API_KEY_CMC,
+    }
     parametros = {
-        "vs_currency":"usd",
-        "days":1
+        'symbol': simbolo.upper(),
+        'convert': 'USD'
     }
 
-    r = requests.get(url, params=parametros)
+    try:
+        r = requests.get(url, headers=headers, params=parametros)
+        if r.status_code == 200:
+            dados = r.json()
+            info = dados['data'][simbolo.upper()]['quote']['USD']
+            
+            preco = info['price']
+            # Como a API gratuita não dá histórico pra MME fácil, 
+            # vamos usar a variação de 24h para definir a tendência no teste
+            variacao = info['percent_change_24h']
+            
+            if variacao > 0.5:
+                sinal = "ALTA"
+            elif variacao < -0.5:
+                sinal = "QUEDA"
+            else:
+                sinal = "NEUTRO"
+                
+            return preco, variacao, sinal
+        else:
+            return None, None, "ERRO API"
+    except:
+        return None, None, "FALHA"
 
-    if r.status_code != 200:
-        return None, None, "NEUTRO"
-
-    data = r.json()
-
-    if "prices" not in data:
-        return None, None, "NEUTRO"
-
-    precos = [p[1] for p in data["prices"]]
-
-    df = pd.DataFrame(precos, columns=["preco"])
-
-    df["EMA"] = df["preco"].ewm(span=9).mean()
-
-    preco_atual = df["preco"].iloc[-1]
-    ema = df["EMA"].iloc[-1]
-
-    if preco_atual > ema:
-        sinal = "ALTA"
-    elif preco_atual < ema:
-        sinal = "QUEDA"
-    else:
-        sinal = "NEUTRO"
-
-    return preco_atual, ema, sinal
-
+def colorir(valor):
+    if valor == "ALTA":
+        return "color: green"
+    elif valor == "QUEDA":
+        return "color: red"
+    return "color: orange"
 
 if st.button("Escanear Mercado"):
-
     tabela = []
-
+    
     for moeda in moedas:
-
-        preco, ema, sinal = pegar_dados(moeda)
-
-        tabela.append([moeda.upper(), preco, ema, sinal])
-
-    df = pd.DataFrame(tabela, columns=["Moeda","Preço","MME","Tendência"])
-
-    def colorir(valor):
-
-        if valor == "ALTA":
-            return "color: green"
-
-        if valor == "QUEDA":
-            return "color: red"
-
-        return "color: orange"
-
+        preco, var, sinal = pegar_dados_cmc(moeda)
+        # No PVT: Preço exato com centavos
+        tabela.append([moeda, preco, var, sinal])
+    
+    df = pd.DataFrame(tabela, columns=["Moeda", "Preço", "Variação 24h", "Tendência"])
+    
+    # Exibe a tabela com as cores que você criou
     st.dataframe(df.style.applymap(colorir, subset=["Tendência"]), use_container_width=True)
+
+    # Lembrete do protocolo Nazare
+    st.write(f"Consulta realizada às: {pd.Timestamp.now().strftime('%H:%M:%S')} - Fonte: CoinMarketCap")
