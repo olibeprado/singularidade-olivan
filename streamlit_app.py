@@ -46,13 +46,14 @@ if st.button("Escanear Força do Mercado"):
             tabela.append([
                 simbolo, 
                 q['price'], 
+                definir_status(p_15m), 
                 definir_status(p_1h), 
                 definir_status(p_24h), 
                 definir_status(p_7d),
                 forca_geral
             ])
 
-        df = pd.DataFrame(tabela, columns=["Moeda", "Preço", "1 Hora", "24 Horas", "7 Dias", "Status Geral"])
+        df = pd.DataFrame(tabela, columns=["Moeda", "Preço", "15 Minuto", "1 Hora", "24 Horas", "7 Dias", "Status Geral"])
         
         # Exibindo com precisão PVT (6 casas decimais)
         st.dataframe(df.style.format({"Preço": "{:.6f}"}), use_container_width=True)
