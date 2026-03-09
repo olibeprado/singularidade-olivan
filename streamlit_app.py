@@ -2,16 +2,16 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# 1. COLE SUA CHAVE AQUI
-API_KEY_CMC = '910c7033-d8e4-4e19-8489-1d27e4e00' # Use a chave que você copiou
+# CONFIGURAÇÃO DA CHAVE - COPIADA DIRETO DA SUA FOTO
+API_KEY_CMC = '910c7033-d8e4-4e19-8489-1d27e4e00' 
 
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
 
 st.title("🚀 Sistema Singularidade Olivan")
 st.subheader("Scanner de Tendência - Modo CoinMarketCap")
 
-# Lista de moedas (Usando os símbolos que o CMC entende)
-moedas = ["BTC", "ETH", "SOL", "XRP", "ADA", "FET", "BNB", "RAY", "TAI", "KSM", "RENDER"]
+# Lista de moedas atualizada
+moedas = ["BTC", "ETH", "SOL", "XRP", "ADA", "FET", "BNB", "RAY", "TAI", "KSM"]
 
 def pegar_dados_cmc(simbolo):
     url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
@@ -28,13 +28,13 @@ def pegar_dados_cmc(simbolo):
         r = requests.get(url, headers=headers, params=parametros)
         if r.status_code == 200:
             dados = r.json()
+            # O CMC organiza os dados por símbolo
             info = dados['data'][simbolo.upper()]['quote']['USD']
             
             preco = info['price']
-            # Como a API gratuita não dá histórico pra MME fácil, 
-            # vamos usar a variação de 24h para definir a tendência no teste
             variacao = info['percent_change_24h']
             
+            # Lógica de tendência baseada na força do movimento (24h)
             if variacao > 0.5:
                 sinal = "ALTA"
             elif variacao < -0.5:
@@ -44,29 +44,35 @@ def pegar_dados_cmc(simbolo):
                 
             return preco, variacao, sinal
         else:
-            return None, None, "ERRO API"
-    except:
+            # Se der erro 401 é porque a chave está errada
+            return None, None, f"ERRO {r.status_code}"
+    except Exception as e:
         return None, None, "FALHA"
 
-def colorir(valor):
+def colorir_tendencia(valor):
     if valor == "ALTA":
-        return "color: green"
+        return "color: #00ff00; font-weight: bold" # Verde neon
     elif valor == "QUEDA":
-        return "color: red"
-    return "color: orange"
+        return "color: #ff4b4b; font-weight: bold" # Vermelho
+    return "color: #ffa500" # Laranja para Neutro
 
-if st.button("Escanear Mercado"):
+if st.button("Escanear Mercado Agora"):
     tabela = []
     
-    for moeda in moedas:
+    # Barra de progresso para dar um toque profissional
+    progresso = st.progress(0)
+    for i, moeda in enumerate(moedas):
         preco, var, sinal = pegar_dados_cmc(moeda)
-        # No PVT: Preço exato com centavos
         tabela.append([moeda, preco, var, sinal])
+        progresso.progress((i + 1) / len(moedas))
     
-    df = pd.DataFrame(tabela, columns=["Moeda", "Preço", "Variação 24h", "Tendência"])
+    # Criando o DataFrame
+    df = pd.DataFrame(tabela, columns=["Moeda", "Preço (USD)", "Variação 24h (%)", "Tendência"])
     
-    # Exibe a tabela com as cores que você criou
-    st.dataframe(df.style.applymap(colorir, subset=["Tendência"]), use_container_width=True)
+    # Exibindo a tabela com estilo
+    st.dataframe(
+        df.style.applymap(colorir_tendencia, subset=["Tendência"]),
+        use_container_width=True
+    )
 
-    # Lembrete do protocolo Nazare
-    st.write(f"Consulta realizada às: {pd.Timestamp.now().strftime('%H:%M:%S')} - Fonte: CoinMarketCap")
+    st.success(f"Consulta finalizada com sucesso via CoinMarketCap às {pd.Timestamp.now().strftime('%H:%M:%S')}")
