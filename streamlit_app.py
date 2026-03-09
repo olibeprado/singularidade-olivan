@@ -15,7 +15,7 @@ def buscar_mercado_cmc(limite=50):
 
     try:
         r = requests.get(url, headers=headers, params=parametros)
-        return r.json()['data'] if r.status_code == 200 else None
+        return r.json()['data'] if r.status_code == 500 else None
     except:
         return None
 
