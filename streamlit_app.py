@@ -2,78 +2,57 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# CHAVE CORRIGIDA CONFORME SUA FOTO
 API_KEY_CMC = '910c7033d8e44e1984891d27e4e00222' 
 
 st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
-
 st.title("🚀 Sistema Singularidade Olivan")
-st.subheader("Scanner de Tendência Global - Top Mercado")
+st.subheader("Scanner Multitemporal (Força Relativa)")
 
-def buscar_mercado_completo(limite=100):
-    # Usamos 'listings/latest' para pegar o ranking atualizado
+def buscar_mercado_cmc(limite=50):
     url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
-    headers = {
-        'Accepts': 'application/json',
-        'X-CMC_PRO_API_KEY': API_KEY_CMC,
-    }
-    parametros = {
-        'start': '1',
-        'limit': str(limite), # Define quantas moedas quer ver (ex: 100)
-        'convert': 'USD'
-    }
+    headers = {'Accepts': 'application/json', 'X-CMC_PRO_API_KEY': API_KEY_CMC}
+    parametros = {'start': '1', 'limit': str(limite), 'convert': 'USD'}
 
     try:
         r = requests.get(url, headers=headers, params=parametros)
-        if r.status_code == 200:
-            return r.json()['data']
-        else:
-            st.error(f"Erro na API: {r.status_code}")
-            return None
-    except Exception as e:
-        st.error(f"Falha de conexão: {e}")
+        return r.json()['data'] if r.status_code == 200 else None
+    except:
         return None
 
-def colorir_tendencia(valor):
-    if valor == "ALTA":
-        return "color: #00ff00; font-weight: bold"
-    elif valor == "QUEDA":
-        return "color: #ff4b4b; font-weight: bold"
-    return "color: #ffa500"
+def definir_status(valor):
+    if valor > 0.5: return "FORTE 🟢"
+    if valor < -0.5: return "FRACO 🔴"
+    return "NEUTRO 🟡"
 
-# Seletor para o usuário escolher o tamanho do scan
-qtd_moedas = st.sidebar.slider("Quantidade de moedas para escanear", 10, 200, 100)
-
-if st.button(f"Escanear Top {qtd_moedas} do Mercado"):
-    dados_api = buscar_mercado_completo(qtd_moedas)
-    
-    if dados_api:
+if st.button("Escanear Força do Mercado"):
+    dados = buscar_mercado_cmc(100) # Busca o Top 100
+    if dados:
         tabela = []
-        for moeda in dados_api:
+        for moeda in dados:
             simbolo = moeda['symbol']
-            info = moeda['quote']['USD']
-            preco = info['price']
-            variacao = info['percent_change_24h']
+            q = moeda['quote']['USD']
             
-            # Lógica de tendência baseada na variação
-            if variacao > 0.5:
-                sinal = "ALTA"
-            elif variacao < -0.5:
-                sinal = "QUEDA"
-            else:
-                sinal = "NEUTRO"
+            # Pegando múltiplos tempos
+            p_1h = q['percent_change_1h']
+            p_24h = q['percent_change_24h']
+            p_7d = q['percent_change_7d']
             
-            tabela.append([simbolo, preco, variacao, sinal])
+            # Lógica de Força: Só é "FORTE" se estiver positivo em pelo menos 2 tempos
+            forca_geral = "NEUTRO"
+            if p_1h > 0 and p_24h > 0: forca_geral = "ALTA FORÇA"
+            elif p_1h < 0 and p_24h < 0: forca_geral = "NEGATIVO"
 
-        df = pd.DataFrame(tabela, columns=["Moeda", "Preço (USD)", "Variação 24h (%)", "Tendência"])
+            tabela.append([
+                simbolo, 
+                q['price'], 
+                definir_status(p_1h), 
+                definir_status(p_24h), 
+                definir_status(p_7d),
+                forca_geral
+            ])
+
+        df = pd.DataFrame(tabela, columns=["Moeda", "Preço", "1 Hora", "24 Horas", "7 Dias", "Status Geral"])
         
-        # Formatação seguindo o Protocolo PVT (Precisão total)
-        st.dataframe(
-            df.style.format({
-                "Preço (USD)": "{:.6f}", 
-                "Variação 24h (%)": "{:.2f}%"
-            }).applymap(colorir_tendencia, subset=["Tendência"]),
-            use_container_width=True
-        )
-
-        st.success(f"Scanner completo finalizado às {pd.Timestamp.now().strftime('%H:%M:%S')} - Fonte: CoinMarketCap")
+        # Exibindo com precisão PVT (6 casas decimais)
+        st.dataframe(df.style.format({"Preço": "{:.6f}"}), use_container_width=True)
+        st.success(f"Análise Multitemporal concluída às {pd.Timestamp.now().strftime('%H:%M:%S')}")
