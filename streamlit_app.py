@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import pandas as pd
-from pathlib import Path
 
 API_KEY_CMC = '910c7033d8e44e1984891d27e4e00222'
 
@@ -55,6 +54,16 @@ section[data-testid="stSidebar"] {
     overflow: hidden;
 }
 
+.chart-box-pro {
+    background: radial-gradient(circle at top left, rgba(20,40,80,0.35), rgba(8,12,24,0.98) 55%);
+    border: 1px solid rgba(120,170,255,0.18);
+    border-radius: 18px;
+    min-height: 760px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
 .chart-grid {
     position: absolute;
     inset: 0;
@@ -72,6 +81,19 @@ section[data-testid="stSidebar"] {
     justify-content: center;
     align-items: center;
     font-size: 64px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.04);
+    letter-spacing: 2px;
+    pointer-events: none;
+}
+
+.chart-watermark-pro {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 88px;
     font-weight: 800;
     color: rgba(255,255,255,0.04);
     letter-spacing: 2px;
@@ -314,6 +336,8 @@ def gerar_dataset_mercado():
 def inicializar_estado():
     if "market_data" not in st.session_state:
         st.session_state.market_data = None
+    if "chart_expandido" not in st.session_state:
+        st.session_state.chart_expandido = False
 
 
 def botao_atualizar():
@@ -481,102 +505,165 @@ def tela_radar():
 
 def tela_chart():
     cabecalho_principal()
-    st.subheader("📈 Atlas Chart")
 
-    topo1, topo2, topo3, topo4 = st.columns([1.2, 1, 1, 1])
+    if not st.session_state.chart_expandido:
+        st.subheader("📈 Atlas Chart")
 
-    with topo1:
-        ativo = st.selectbox("Ativo", ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"])
-    with topo2:
-        timeframe = st.selectbox("Timeframe", ["5m", "15m", "1h", "4h", "1D"], index=1)
-    with topo3:
-        modo = st.selectbox("Modo", ["Limpo", "Estrutural", "Operacional", "IA"], index=1)
-    with topo4:
-        overlay = st.selectbox("Camada", ["Volume", "Confluência", "Fluxo", "Execução"], index=0)
+        topo1, topo2, topo3, topo4 = st.columns([1.2, 1, 1, 1])
 
-    st.write("")
+        with topo1:
+            ativo = st.selectbox("Ativo", ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"])
+        with topo2:
+            timeframe = st.selectbox("Timeframe", ["5m", "15m", "1h", "4h", "1D"], index=1)
+        with topo3:
+            modo = st.selectbox("Modo", ["Limpo", "Estrutural", "Operacional", "IA"], index=1)
+        with topo4:
+            overlay = st.selectbox("Camada", ["Volume", "Confluência", "Fluxo", "Execução"], index=0)
 
-    if st.button("Abrir Chart Pro Expandido", use_container_width=True):
-        page_path = Path("pages/1_Chart_Pro.py")
-        if page_path.exists():
-            st.switch_page(str(page_path))
-        else:
-            st.error("Página expandida não encontrada. Crie o arquivo: pages/1_Chart_Pro.py")
+        st.write("")
 
-    st.write("")
+        if st.button("Abrir Chart Pro Expandido", use_container_width=True):
+            st.session_state.chart_expandido = True
+            st.rerun()
 
-    tools, main, right = st.columns([0.8, 3.8, 1.3])
+        st.write("")
 
-    with tools:
-        st.markdown("""
-        <div class="toolbar-box">
-            <div class="card-title">Ferramentas</div>
-            <div class="small">✚ Cursor</div><br>
-            <div class="small">／ Linha</div><br>
-            <div class="small">▭ Zona</div><br>
-            <div class="small">↗ Tendência</div><br>
-            <div class="small">ƒ Fibonacci</div><br>
-            <div class="small">⟂ Horizontal</div><br>
-            <div class="small">⊣ Vertical</div><br>
-            <div class="small">✎ Texto</div><br>
-            <div class="small">⚖ Risco/Retorno</div><br>
-            <div class="small">◎ IA</div>
-        </div>
-        """, unsafe_allow_html=True)
+        tools, main, right = st.columns([0.8, 3.8, 1.3])
 
-    with main:
+        with tools:
+            st.markdown("""
+            <div class="toolbar-box">
+                <div class="card-title">Ferramentas</div>
+                <div class="small">✚ Cursor</div><br>
+                <div class="small">／ Linha</div><br>
+                <div class="small">▭ Zona</div><br>
+                <div class="small">↗ Tendência</div><br>
+                <div class="small">ƒ Fibonacci</div><br>
+                <div class="small">⟂ Horizontal</div><br>
+                <div class="small">⊣ Vertical</div><br>
+                <div class="small">✎ Texto</div><br>
+                <div class="small">⚖ Risco/Retorno</div><br>
+                <div class="small">◎ IA</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with main:
+            st.markdown(f"""
+            <div class="chart-box">
+                <div class="chart-grid"></div>
+                <div class="chart-watermark">{ativo}</div>
+                <div class="card-title">Gráfico Principal</div>
+                <div class="small">Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}</div>
+                <br>
+                <div class="small">
+                    Aqui entra o gráfico próprio do terminal:
+                    candles • volume • crosshair • ferramentas • Fibonacci autoral • confluência • IA
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.write("")
+
+            sub1, sub2 = st.columns([2.2, 1])
+
+            with sub1:
+                st.markdown("""
+                <div class="soft-card">
+                    <div class="card-title">Indicadores / Volume</div>
+                    <div class="small">
+                        Espaço reservado para volume, oscilador, fluxo, força e sinais secundários.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with sub2:
+                st.markdown("""
+                <div class="soft-card">
+                    <div class="card-title">Confluência</div>
+                    <div class="small">
+                        PhiCube • Euler • Razão de Prata • PI • Score estrutural
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        with right:
+            st.subheader("Painel do Ativo")
+            st.metric("Ativo", ativo)
+            st.metric("Timeframe", timeframe)
+            st.metric("Modo", modo)
+
+            st.write("**Leitura rápida**")
+            st.write("- Tendência: Estrutural")
+            st.write("- Força: Moderada")
+            st.write("- Risco: Médio")
+            st.write("- Confluência: Em construção")
+
+            st.write("**Próxima etapa**")
+            st.write("Adicionar gráfico real e ferramentas autorais.")
+
+    else:
+        st.subheader("📈 Atlas Chart Pro Expandido")
+
+        topo1, topo2, topo3, topo4 = st.columns([1.3, 1, 1, 1])
+
+        with topo1:
+            ativo = st.selectbox("Ativo", ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"], key="pro_ativo")
+        with topo2:
+            timeframe = st.selectbox("Timeframe", ["5m", "15m", "1h", "4h", "1D"], index=1, key="pro_tf")
+        with topo3:
+            modo = st.selectbox("Modo", ["Limpo", "Estrutural", "Operacional", "IA"], index=1, key="pro_modo")
+        with topo4:
+            overlay = st.selectbox("Camada", ["Volume", "Confluência", "Fluxo", "Execução"], index=0, key="pro_overlay")
+
+        st.write("")
+
+        if st.button("⬅ Voltar ao Chart Normal", use_container_width=True):
+            st.session_state.chart_expandido = False
+            st.rerun()
+
+        st.write("")
+
         st.markdown(f"""
-        <div class="chart-box">
+        <div class="chart-box-pro">
             <div class="chart-grid"></div>
-            <div class="chart-watermark">{ativo}</div>
-            <div class="card-title">Gráfico Principal</div>
+            <div class="chart-watermark-pro">{ativo}</div>
+            <div class="card-title">Chart Pro Expandido</div>
             <div class="small">Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}</div>
             <br>
             <div class="small">
-                Aqui entra o gráfico próprio do terminal:
-                candles • volume • crosshair • ferramentas • Fibonacci autoral • confluência • IA
+                Aqui entra a versão ampla do gráfico com:
+                candles • zoom • ferramentas • fluxo • Fibonacci autoral • IA • confluência
             </div>
         </div>
         """, unsafe_allow_html=True)
 
         st.write("")
 
-        sub1, sub2 = st.columns([2.2, 1])
+        a, b, c = st.columns([1.4, 1.4, 1])
 
-        with sub1:
+        with a:
             st.markdown("""
             <div class="soft-card">
-                <div class="card-title">Indicadores / Volume</div>
-                <div class="small">
-                    Espaço reservado para volume, oscilador, fluxo, força e sinais secundários.
-                </div>
+                <div class="card-title">Painel Estrutural</div>
+                <div class="small">Tendência, zonas, pivôs, rompimentos e continuação.</div>
             </div>
             """, unsafe_allow_html=True)
 
-        with sub2:
+        with b:
             st.markdown("""
             <div class="soft-card">
                 <div class="card-title">Confluência</div>
-                <div class="small">
-                    PhiCube • Euler • Razão de Prata • PI • Score estrutural
-                </div>
+                <div class="small">PhiCube • Euler • Razão de Prata • PI • níveis autorais.</div>
             </div>
             """, unsafe_allow_html=True)
 
-    with right:
-        st.subheader("Painel do Ativo")
-        st.metric("Ativo", ativo)
-        st.metric("Timeframe", timeframe)
-        st.metric("Modo", modo)
-
-        st.write("**Leitura rápida**")
-        st.write("- Tendência: Estrutural")
-        st.write("- Força: Moderada")
-        st.write("- Risco: Médio")
-        st.write("- Confluência: Em construção")
-
-        st.write("**Próxima etapa**")
-        st.write("Adicionar gráfico real e ferramentas autorais.")
+        with c:
+            st.markdown("""
+            <div class="soft-card">
+                <div class="card-title">Execução</div>
+                <div class="small">Entrada, stop, alvo e invalidação.</div>
+            </div>
+            """, unsafe_allow_html=True)
 
 
 def tela_scanner():
