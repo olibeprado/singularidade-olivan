@@ -50,6 +50,16 @@ section[data-testid="stSidebar"] {
     overflow: hidden;
 }
 
+.chart-box-pro {
+    background: radial-gradient(circle at top left, rgba(20,40,80,0.35), rgba(8,12,24,0.98) 55%);
+    border: 1px solid rgba(120,170,255,0.15);
+    border-radius: 16px;
+    min-height: 640px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
 .chart-grid {
     position: absolute;
     inset: 0;
@@ -73,12 +83,33 @@ section[data-testid="stSidebar"] {
     pointer-events: none;
 }
 
+.chart-watermark-pro {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 84px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.04);
+    letter-spacing: 3px;
+    pointer-events: none;
+}
+
 .toolbar-box {
     background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
     border: 1px solid rgba(120,170,255,0.14);
     border-radius: 14px;
     padding: 14px;
     min-height: 430px;
+}
+
+.toolbar-box-pro {
+    background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
+    border: 1px solid rgba(120,170,255,0.14);
+    border-radius: 14px;
+    padding: 14px;
+    min-height: 640px;
 }
 
 .card-title {
@@ -315,7 +346,7 @@ def sidebar_terminal():
 
         modulo = st.radio(
             "Módulos",
-            ["Radar", "Chart", "Scanner", "Fluxo", "IA"],
+            ["Radar", "Chart", "Chart Pro", "Scanner", "Fluxo", "IA"],
             index=0
         )
 
@@ -548,6 +579,113 @@ def tela_chart():
         st.write("**Próxima etapa**")
         st.write("Adicionar gráfico real e ferramentas autorais.")
 
+def tela_chart_pro():
+    cabecalho_principal()
+    st.subheader("🖥️ Atlas Chart Pro")
+
+    topo1, topo2, topo3, topo4, topo5 = st.columns([1.2, 1, 1, 1, 1])
+
+    with topo1:
+        ativo = st.selectbox("Ativo Pro", ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"])
+    with topo2:
+        timeframe = st.selectbox("Timeframe Pro", ["1m", "5m", "15m", "1h", "4h", "1D"], index=2)
+    with topo3:
+        modo = st.selectbox("Modo Pro", ["Estrutural", "Operacional", "IA", "Confluência"], index=0)
+    with topo4:
+        overlay = st.selectbox("Camada Pro", ["Volume", "Confluência", "Fluxo", "Execução"], index=0)
+    with topo5:
+        layout = st.selectbox("Layout", ["Expandido", "Análise", "Execução"], index=0)
+
+    st.write("")
+
+    tools, main, right = st.columns([0.7, 4.3, 1.4])
+
+    with tools:
+        st.markdown("""
+        <div class="toolbar-box-pro">
+            <div class="card-title">Tools</div>
+            <div class="small">✚ Cursor</div><br>
+            <div class="small">／ Linha</div><br>
+            <div class="small">▭ Zona</div><br>
+            <div class="small">↗ Tendência</div><br>
+            <div class="small">ƒ Fibo Singular</div><br>
+            <div class="small">⟂ Horizontal</div><br>
+            <div class="small">⊣ Vertical</div><br>
+            <div class="small">✎ Texto</div><br>
+            <div class="small">⚖ Risco/Retorno</div><br>
+            <div class="small">◎ IA</div><br>
+            <div class="small">◫ Long/Short</div><br>
+            <div class="small">⌁ Liquidez</div><br>
+            <div class="small">◉ Confluência</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with main:
+        st.markdown(f"""
+        <div class="chart-box-pro">
+            <div class="chart-grid"></div>
+            <div class="chart-watermark-pro">{ativo}</div>
+            <div class="card-title">Chart Expandido</div>
+            <div class="small">Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay} • Layout: {layout}</div>
+            <br>
+            <div class="small">
+                Esta será a tela de operação e análise profunda do terminal.
+                Aqui entram candles, volume, ferramentas, matemática própria, IA, sinais e execução.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.write("")
+        baixo1, baixo2, baixo3 = st.columns([1.8, 1.2, 1.2])
+
+        with baixo1:
+            st.markdown("""
+            <div class="soft-card">
+                <div class="card-title">Indicadores / Volume / Fluxo</div>
+                <div class="small">
+                    Espaço reservado para indicadores inferiores, leitura de pressão, volume, fluxo e estrutura.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with baixo2:
+            st.markdown("""
+            <div class="soft-card">
+                <div class="card-title">Confluência Matemática</div>
+                <div class="small">
+                    PhiCube • Euler • Razão de Prata • PI • Núcleo Mestre • Score estrutural
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with baixo3:
+            st.markdown("""
+            <div class="soft-card">
+                <div class="card-title">Execução</div>
+                <div class="small">
+                    Entrada • Stop • Parcial • Alvo • Invalidação
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    with right:
+        st.subheader("Painel Pro")
+        st.metric("Ativo", ativo)
+        st.metric("Timeframe", timeframe)
+        st.metric("Modo", modo)
+
+        st.write("**Operação**")
+        st.write("- Entrada: em construção")
+        st.write("- Stop: em construção")
+        st.write("- Alvo: em construção")
+        st.write("- Parcial: em construção")
+
+        st.write("**IA / Estrutura**")
+        st.write("- Tendência: Estrutural")
+        st.write("- Força: Moderada")
+        st.write("- Risco: Médio")
+        st.write("- Confluência: Parcial")
+
 def tela_scanner():
     cabecalho_principal()
     st.subheader("🛰️ Scanner Avançado")
@@ -657,6 +795,8 @@ if modulo == "Radar":
     tela_radar()
 elif modulo == "Chart":
     tela_chart()
+elif modulo == "Chart Pro":
+    tela_chart_pro()
 elif modulo == "Scanner":
     tela_scanner()
 elif modulo == "Fluxo":
