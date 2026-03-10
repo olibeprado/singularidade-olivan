@@ -87,9 +87,6 @@ STABLECOINS = {
     "USDD", "FRAX", "GUSD", "LUSD", "SUSD", "USDP", "EURC", "USDK"
 }
 
-# -----------------------------
-# FUNÇÕES BASE
-# -----------------------------
 def buscar_mercado_cmc(limite=300):
     url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
     headers = {
@@ -265,9 +262,6 @@ def botao_atualizar():
     if st.button("Escanear Força do Mercado", use_container_width=True):
         st.session_state.market_data = gerar_dataset_mercado()
 
-# -----------------------------
-# COMPONENTES DE TELA
-# -----------------------------
 def cabecalho_principal():
     st.title("🚀 Sistema Singularidade Olivan")
     st.caption("Terminal Modular • Radar • Scanner • Fluxo • IA • Estrutura")
@@ -297,9 +291,6 @@ def sidebar_terminal():
 
     return modulo
 
-# -----------------------------
-# TELA RADAR
-# -----------------------------
 def tela_radar():
     cabecalho_principal()
 
@@ -426,47 +417,85 @@ def tela_radar():
         st.caption("Próximo passo")
         st.write("Aqui depois entra entrada, saída e stop com IA")
 
-# -----------------------------
-# TELA CHART
-# -----------------------------
 def tela_chart():
     cabecalho_principal()
     st.subheader("📈 Atlas Chart")
 
-    c1, c2 = st.columns([3, 1])
+    topo1, topo2, topo3, topo4 = st.columns([1.2, 1, 1, 1])
 
-    with c1:
-        st.markdown("""
+    with topo1:
+        ativo = st.selectbox("Ativo", ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"])
+    with topo2:
+        timeframe = st.selectbox("Timeframe", ["5m", "15m", "1h", "4h", "1D"], index=1)
+    with topo3:
+        modo = st.selectbox("Modo", ["Limpo", "Estrutural", "Operacional", "IA"], index=1)
+    with topo4:
+        overlay = st.selectbox("Camada", ["Volume", "Confluência", "Fluxo", "Execução"], index=0)
+
+    st.write("")
+
+    esquerda, direita = st.columns([3.2, 1.2])
+
+    with esquerda:
+        st.markdown(f"""
         <div class="card">
             <div class="card-title">Gráfico Principal</div>
             <div class="small">
-                Aqui vai entrar o gráfico próprio do terminal:
-                candles • volume • ferramentas • camadas • matemática • IA
+                Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}
             </div>
         </div>
         """, unsafe_allow_html=True)
 
         st.write("")
-        st.info("Próxima etapa: integrar o motor gráfico próprio sem copiar TradingView.")
 
-    with c2:
         st.markdown("""
         <div class="soft-card">
-            <div class="card-title">Painel do Ativo</div>
-            <div class="small">Ativo</div>
-            <div class="big-number">BTCUSDT</div>
-            <br>
-            <div class="small">Timeframe</div>
-            <div>15m</div>
-            <br>
-            <div class="small">Modo</div>
-            <div>Estrutural</div>
+            <div class="card-title">Área do Chart</div>
+            <div class="small">
+                Aqui entra o gráfico próprio do terminal:
+                candles • volume • crosshair • ferramentas • Fibonacci autoral • confluência • IA
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-# -----------------------------
-# TELA SCANNER
-# -----------------------------
+        st.write("")
+        sub1, sub2 = st.columns([2, 1])
+
+        with sub1:
+            st.markdown("""
+            <div class="soft-card">
+                <div class="card-title">Indicadores / Volume</div>
+                <div class="small">
+                    Espaço reservado para volume, oscilador, fluxo, força e sinais secundários.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with sub2:
+            st.markdown("""
+            <div class="soft-card">
+                <div class="card-title">Ferramentas</div>
+                <div class="small">
+                    Linha • Retângulo • Fibo Singular • Long/Short • Risco/Retorno
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    with direita:
+        st.subheader("Painel do Ativo")
+        st.metric("Ativo", ativo)
+        st.metric("Timeframe", timeframe)
+        st.metric("Modo", modo)
+
+        st.write("**Leitura rápida**")
+        st.write("- Tendência: Estrutural")
+        st.write("- Força: Moderada")
+        st.write("- Risco: Médio")
+        st.write("- Confluência: Em construção")
+
+        st.write("**Próxima etapa**")
+        st.write("Adicionar gráfico real e ferramentas autorais.")
+
 def tela_scanner():
     cabecalho_principal()
     st.subheader("🛰️ Scanner Avançado")
@@ -500,9 +529,6 @@ def tela_scanner():
         use_container_width=True
     )
 
-# -----------------------------
-# TELA FLUXO
-# -----------------------------
 def tela_fluxo():
     cabecalho_principal()
     st.subheader("🌊 Fluxo de Mercado")
@@ -536,9 +562,6 @@ def tela_fluxo():
     st.write("")
     st.info("Próxima etapa: ligar volume, fluxo, eventos e anomalias.")
 
-# -----------------------------
-# TELA IA
-# -----------------------------
 def tela_ia():
     cabecalho_principal()
     st.subheader("🧠 IA Atlas")
@@ -575,9 +598,6 @@ def tela_ia():
         st.write("- invalidação")
         st.write("- score por confluência")
 
-# -----------------------------
-# APP PRINCIPAL
-# -----------------------------
 inicializar_estado()
 modulo = sidebar_terminal()
 
