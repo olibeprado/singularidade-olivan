@@ -27,6 +27,15 @@ html, body, [class*="css"] {
     min-height: 120px;
 }
 
+.card-ia {
+    background: linear-gradient(180deg, rgba(20,30,50,0.95) 0%, rgba(12,18,32,0.95) 100%);
+    border: 1px solid rgba(120,170,255,0.18);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.20);
+    min-height: 420px;
+}
+
 .card-title {
     font-size: 15px;
     font-weight: 700;
@@ -104,11 +113,9 @@ def calcular_score_base(p1h, p24h, p7d):
 
 def score_0_100(p1h, p24h, p7d):
     score = 50
-
     score += max(-12, min(12, p1h * 3))
     score += max(-20, min(20, p24h * 2))
     score += max(-18, min(18, p7d * 0.8))
-
     return max(0, min(100, round(score)))
 
 def classificar_score_base(score):
@@ -330,35 +337,34 @@ if not df.empty:
         ativo_top = df.iloc[0]
         score_top = int(ativo_top["Score"])
 
-        st.markdown(f"""
-        <div class="card">
+        html_ia = f"""
+        <div class="card-ia">
             <div class="card-title">IA Insights</div>
+
             <div class="small">Moeda em destaque</div>
             <div class="big-number">{ativo_top['Moeda']}</div>
 
-            <div class="small">Score</div>
+            <div class="small" style="margin-top:10px;">Score</div>
             <div class="big-number blue">{score_top}</div>
 
-            <div class="small">Status</div>
+            <div class="small" style="margin-top:10px;">Status</div>
             <div class="yellow">{ativo_top['Status Geral']}</div>
-            <br>
 
-            <div class="small">Sinal</div>
+            <div class="small" style="margin-top:10px;">Sinal</div>
             <div>{sinal_texto(score_top)}</div>
-            <br>
 
-            <div class="small">Confiança</div>
+            <div class="small" style="margin-top:10px;">Confiança</div>
             <div>{confianca_texto(score_top)}</div>
-            <br>
 
-            <div class="small">Risco</div>
+            <div class="small" style="margin-top:10px;">Risco</div>
             <div>{risco_texto(score_top)}</div>
-            <br>
 
-            <div class="small">Próximo passo</div>
+            <div class="small" style="margin-top:10px;">Próximo passo</div>
             <div>Aqui depois entra entrada, saída e stop com IA</div>
         </div>
-        """, unsafe_allow_html=True)
+        """
+
+        st.markdown(html_ia, unsafe_allow_html=True)
 
 else:
     st.info("Clique em 'Escanear Força do Mercado' para carregar os dados.")
