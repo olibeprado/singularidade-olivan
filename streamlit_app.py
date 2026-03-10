@@ -54,16 +54,6 @@ section[data-testid="stSidebar"] {
     overflow: hidden;
 }
 
-.chart-box-pro {
-    background: radial-gradient(circle at top left, rgba(20,40,80,0.35), rgba(8,12,24,0.98) 55%);
-    border: 1px solid rgba(120,170,255,0.15);
-    border-radius: 16px;
-    min-height: 760px;
-    padding: 14px;
-    position: relative;
-    overflow: hidden;
-}
-
 .chart-grid {
     position: absolute;
     inset: 0;
@@ -87,49 +77,12 @@ section[data-testid="stSidebar"] {
     pointer-events: none;
 }
 
-.chart-watermark-pro {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 84px;
-    font-weight: 800;
-    color: rgba(255,255,255,0.04);
-    letter-spacing: 3px;
-    pointer-events: none;
-}
-
 .toolbar-box {
     background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
     border: 1px solid rgba(120,170,255,0.14);
     border-radius: 14px;
     padding: 14px;
     min-height: 430px;
-}
-
-.toolbar-box-pro {
-    background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
-    border: 1px solid rgba(120,170,255,0.14);
-    border-radius: 14px;
-    padding: 12px;
-    min-height: 760px;
-}
-
-.panel-pro {
-    background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
-    border: 1px solid rgba(120,170,255,0.14);
-    border-radius: 14px;
-    padding: 16px;
-    min-height: 760px;
-}
-
-.indicador-pro {
-    background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
-    border: 1px solid rgba(120,170,255,0.12);
-    border-radius: 12px;
-    padding: 12px;
-    min-height: 150px;
 }
 
 .card-title {
@@ -148,19 +101,6 @@ section[data-testid="stSidebar"] {
 .small {
     font-size: 13px;
     color: #9fb2d9;
-}
-
-.chart-pro-title {
-    font-size: 20px;
-    font-weight: 800;
-    color: white;
-    margin-bottom: 6px;
-}
-
-.chart-pro-subtitle {
-    font-size: 12px;
-    color: #9fb2d9;
-    margin-bottom: 14px;
 }
 
 .green { color: #56f287; }
@@ -393,7 +333,7 @@ def sidebar_terminal():
 
         modulo = st.radio(
             "Módulos",
-            ["Radar", "Chart", "Chart Pro", "Scanner", "Fluxo", "IA"],
+            ["Radar", "Chart", "Scanner", "Fluxo", "IA"],
             index=0
         )
 
@@ -555,6 +495,12 @@ def tela_chart():
 
     st.write("")
 
+    abrir = st.button("Abrir Chart Pro Expandido", use_container_width=True)
+    if abrir:
+        st.switch_page("pages/1_Chart_Pro.py")
+
+    st.write("")
+
     tools, main, right = st.columns([0.8, 3.8, 1.3])
 
     with tools:
@@ -627,123 +573,6 @@ def tela_chart():
 
         st.write("**Próxima etapa**")
         st.write("Adicionar gráfico real e ferramentas autorais.")
-
-
-def tela_chart_pro():
-    st.markdown("""
-    <div class="chart-pro-title">🖥️ Atlas Chart Pro</div>
-    <div class="chart-pro-subtitle">
-        Modo expandido • visão imersiva • análise profunda • execução
-    </div>
-    """, unsafe_allow_html=True)
-
-    topo1, topo2, topo3, topo4, topo5 = st.columns([1.3, 1, 1, 1, 1])
-
-    with topo1:
-        ativo = st.selectbox("Ativo Pro", ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"])
-    with topo2:
-        timeframe = st.selectbox("Timeframe Pro", ["1m", "5m", "15m", "1h", "4h", "1D"], index=2)
-    with topo3:
-        modo = st.selectbox("Modo Pro", ["Estrutural", "Operacional", "IA", "Confluência"], index=0)
-    with topo4:
-        overlay = st.selectbox("Camada Pro", ["Volume", "Confluência", "Fluxo", "Execução"], index=0)
-    with topo5:
-        layout = st.selectbox("Layout", ["Expandido", "Análise", "Execução"], index=0)
-
-    st.write("")
-
-    tools, main, right = st.columns([0.65, 4.8, 1.45])
-
-    with tools:
-        st.markdown("""
-        <div class="toolbar-box-pro">
-            <div class="card-title">Tools</div>
-            <div class="small">✚</div><br>
-            <div class="small">／</div><br>
-            <div class="small">▭</div><br>
-            <div class="small">↗</div><br>
-            <div class="small">ƒ</div><br>
-            <div class="small">⟂</div><br>
-            <div class="small">⊣</div><br>
-            <div class="small">✎</div><br>
-            <div class="small">⚖</div><br>
-            <div class="small">◎</div><br>
-            <div class="small">◫</div><br>
-            <div class="small">⌁</div><br>
-            <div class="small">◉</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with main:
-        st.markdown(f"""
-        <div class="chart-box-pro">
-            <div class="chart-grid"></div>
-            <div class="chart-watermark-pro">{ativo}</div>
-            <div class="card-title">Chart Expandido</div>
-            <div class="small">
-                Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay} • Layout: {layout}
-            </div>
-            <br>
-            <div class="small">
-                Aqui entra o gráfico real em modo imersivo: candles, volume, ferramentas, matemática própria, IA e execução.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.write("")
-        baixo1, baixo2, baixo3 = st.columns([2.2, 1.3, 1.3])
-
-        with baixo1:
-            st.markdown("""
-            <div class="indicador-pro">
-                <div class="card-title">Indicadores / Volume / Fluxo</div>
-                <div class="small">
-                    Área reservada para indicadores inferiores, pressão, volume, fluxo e estrutura.
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with baixo2:
-            st.markdown("""
-            <div class="indicador-pro">
-                <div class="card-title">Confluência Matemática</div>
-                <div class="small">
-                    PhiCube • Euler • Razão de Prata • PI • Núcleo Mestre • Score estrutural
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with baixo3:
-            st.markdown("""
-            <div class="indicador-pro">
-                <div class="card-title">Execução</div>
-                <div class="small">
-                    Entrada • Stop • Parcial • Alvo • Invalidação
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-    with right:
-        st.markdown('<div class="panel-pro">', unsafe_allow_html=True)
-
-        st.subheader("Painel Pro")
-        st.metric("Ativo", ativo)
-        st.metric("Timeframe", timeframe)
-        st.metric("Modo", modo)
-
-        st.write("**Operação**")
-        st.write("- Entrada: em construção")
-        st.write("- Stop: em construção")
-        st.write("- Alvo: em construção")
-        st.write("- Parcial: em construção")
-
-        st.write("**IA / Estrutura**")
-        st.write("- Tendência: Estrutural")
-        st.write("- Força: Moderada")
-        st.write("- Risco: Médio")
-        st.write("- Confluência: Parcial")
-
-        st.markdown("</div>", unsafe_allow_html=True)
 
 
 def tela_scanner():
@@ -858,8 +687,6 @@ if modulo == "Radar":
     tela_radar()
 elif modulo == "Chart":
     tela_chart()
-elif modulo == "Chart Pro":
-    tela_chart_pro()
 elif modulo == "Scanner":
     tela_scanner()
 elif modulo == "Fluxo":
