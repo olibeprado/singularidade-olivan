@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+from pathlib import Path
 
 API_KEY_CMC = '910c7033d8e44e1984891d27e4e00222'
 
@@ -495,9 +496,12 @@ def tela_chart():
 
     st.write("")
 
-    abrir = st.button("Abrir Chart Pro Expandido", use_container_width=True)
-    if abrir:
-        st.switch_page("pages/1_Chart_Pro.py")
+    if st.button("Abrir Chart Pro Expandido", use_container_width=True):
+        page_path = Path("pages/1_Chart_Pro.py")
+        if page_path.exists():
+            st.switch_page(str(page_path))
+        else:
+            st.error("Página expandida não encontrada. Crie o arquivo: pages/1_Chart_Pro.py")
 
     st.write("")
 
