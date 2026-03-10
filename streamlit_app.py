@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import textwrap
 
 API_KEY_CMC = '910c7033d8e44e1984891d27e4e00222'
 
@@ -337,7 +338,7 @@ if not df.empty:
         ativo_top = df.iloc[0]
         score_top = int(ativo_top["Score"])
 
-        html_ia = f"""
+        html_ia = textwrap.dedent(f"""
         <div class="card-ia">
             <div class="card-title">IA Insights</div>
 
@@ -362,7 +363,7 @@ if not df.empty:
             <div class="small" style="margin-top:10px;">Próximo passo</div>
             <div>Aqui depois entra entrada, saída e stop com IA</div>
         </div>
-        """
+        """)
 
         st.markdown(html_ia, unsafe_allow_html=True)
 
