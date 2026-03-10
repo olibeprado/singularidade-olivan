@@ -4,7 +4,11 @@ import pandas as pd
 
 API_KEY_CMC = '910c7033d8e44e1984891d27e4e00222'
 
-st.set_page_config(page_title="Sistema Singularidade Olivan", layout="wide")
+st.set_page_config(
+    page_title="Sistema Singularidade Olivan",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 st.markdown("""
 <style>
@@ -54,8 +58,8 @@ section[data-testid="stSidebar"] {
     background: radial-gradient(circle at top left, rgba(20,40,80,0.35), rgba(8,12,24,0.98) 55%);
     border: 1px solid rgba(120,170,255,0.15);
     border-radius: 16px;
-    min-height: 640px;
-    padding: 18px;
+    min-height: 760px;
+    padding: 14px;
     position: relative;
     overflow: hidden;
 }
@@ -108,8 +112,24 @@ section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
     border: 1px solid rgba(120,170,255,0.14);
     border-radius: 14px;
-    padding: 14px;
-    min-height: 640px;
+    padding: 12px;
+    min-height: 760px;
+}
+
+.panel-pro {
+    background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
+    border: 1px solid rgba(120,170,255,0.14);
+    border-radius: 14px;
+    padding: 16px;
+    min-height: 760px;
+}
+
+.indicador-pro {
+    background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
+    border: 1px solid rgba(120,170,255,0.12);
+    border-radius: 12px;
+    padding: 12px;
+    min-height: 150px;
 }
 
 .card-title {
@@ -128,6 +148,19 @@ section[data-testid="stSidebar"] {
 .small {
     font-size: 13px;
     color: #9fb2d9;
+}
+
+.chart-pro-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 6px;
+}
+
+.chart-pro-subtitle {
+    font-size: 12px;
+    color: #9fb2d9;
+    margin-bottom: 14px;
 }
 
 .green { color: #56f287; }
@@ -159,6 +192,7 @@ STABLECOINS = {
     "USDD", "FRAX", "GUSD", "LUSD", "SUSD", "USDP", "EURC", "USDK"
 }
 
+
 def buscar_mercado_cmc(limite=300):
     url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
     headers = {
@@ -182,12 +216,14 @@ def buscar_mercado_cmc(limite=300):
         st.error(f"Erro ao buscar dados: {e}")
         return []
 
+
 def definir_status(valor):
     if valor > 0.5:
         return "FORTE 🟢"
     if valor < -0.5:
         return "FRACO 🔴"
     return "NEUTRO 🟡"
+
 
 def calcular_score_base(p1h, p24h, p7d):
     score = 0
@@ -196,12 +232,14 @@ def calcular_score_base(p1h, p24h, p7d):
     score += 1 if p7d > 0 else -1
     return score
 
+
 def score_0_100(p1h, p24h, p7d):
     score = 50
     score += max(-12, min(12, p1h * 3))
     score += max(-20, min(20, p24h * 2))
     score += max(-18, min(18, p7d * 0.8))
     return max(0, min(100, round(score)))
+
 
 def classificar_score_base(score):
     if score >= 3:
@@ -210,12 +248,14 @@ def classificar_score_base(score):
         return "NEGATIVO 🔻"
     return "NEUTRO ⚖️"
 
+
 def sentimento_mercado(media_1h, media_24h):
     if media_1h > 0 and media_24h > 0:
         return "Mercado em força"
     elif media_1h < 0 and media_24h < 0:
         return "Mercado pressionado"
     return "Mercado indefinido"
+
 
 def confianca_texto(score100):
     if score100 >= 80:
@@ -226,12 +266,14 @@ def confianca_texto(score100):
         return "Neutra"
     return "Baixa"
 
+
 def risco_texto(score100):
     if score100 >= 80:
         return "Baixo"
     elif score100 >= 60:
         return "Médio"
     return "Alto"
+
 
 def sinal_texto(score100):
     if score100 >= 80:
@@ -243,6 +285,7 @@ def sinal_texto(score100):
     elif score100 >= 20:
         return "Venda moderada"
     return "Venda forte"
+
 
 def gerar_dataset_mercado():
     dados = buscar_mercado_cmc(300)
@@ -326,17 +369,21 @@ def gerar_dataset_mercado():
         "horario": pd.Timestamp.now().strftime("%H:%M:%S")
     }
 
+
 def inicializar_estado():
     if "market_data" not in st.session_state:
         st.session_state.market_data = None
+
 
 def botao_atualizar():
     if st.button("Escanear Força do Mercado", use_container_width=True):
         st.session_state.market_data = gerar_dataset_mercado()
 
+
 def cabecalho_principal():
     st.title("🚀 Sistema Singularidade Olivan")
     st.caption("Terminal Modular • Radar • Scanner • Fluxo • IA • Estrutura")
+
 
 def sidebar_terminal():
     with st.sidebar:
@@ -362,6 +409,7 @@ def sidebar_terminal():
             st.info("Aguardando leitura")
 
     return modulo
+
 
 def tela_radar():
     cabecalho_principal()
@@ -489,6 +537,7 @@ def tela_radar():
         st.caption("Próximo passo")
         st.write("Aqui depois entra entrada, saída e stop com IA")
 
+
 def tela_chart():
     cabecalho_principal()
     st.subheader("📈 Atlas Chart")
@@ -579,11 +628,16 @@ def tela_chart():
         st.write("**Próxima etapa**")
         st.write("Adicionar gráfico real e ferramentas autorais.")
 
-def tela_chart_pro():
-    cabecalho_principal()
-    st.subheader("🖥️ Atlas Chart Pro")
 
-    topo1, topo2, topo3, topo4, topo5 = st.columns([1.2, 1, 1, 1, 1])
+def tela_chart_pro():
+    st.markdown("""
+    <div class="chart-pro-title">🖥️ Atlas Chart Pro</div>
+    <div class="chart-pro-subtitle">
+        Modo expandido • visão imersiva • análise profunda • execução
+    </div>
+    """, unsafe_allow_html=True)
+
+    topo1, topo2, topo3, topo4, topo5 = st.columns([1.3, 1, 1, 1, 1])
 
     with topo1:
         ativo = st.selectbox("Ativo Pro", ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"])
@@ -598,25 +652,25 @@ def tela_chart_pro():
 
     st.write("")
 
-    tools, main, right = st.columns([0.7, 4.3, 1.4])
+    tools, main, right = st.columns([0.65, 4.8, 1.45])
 
     with tools:
         st.markdown("""
         <div class="toolbar-box-pro">
             <div class="card-title">Tools</div>
-            <div class="small">✚ Cursor</div><br>
-            <div class="small">／ Linha</div><br>
-            <div class="small">▭ Zona</div><br>
-            <div class="small">↗ Tendência</div><br>
-            <div class="small">ƒ Fibo Singular</div><br>
-            <div class="small">⟂ Horizontal</div><br>
-            <div class="small">⊣ Vertical</div><br>
-            <div class="small">✎ Texto</div><br>
-            <div class="small">⚖ Risco/Retorno</div><br>
-            <div class="small">◎ IA</div><br>
-            <div class="small">◫ Long/Short</div><br>
-            <div class="small">⌁ Liquidez</div><br>
-            <div class="small">◉ Confluência</div>
+            <div class="small">✚</div><br>
+            <div class="small">／</div><br>
+            <div class="small">▭</div><br>
+            <div class="small">↗</div><br>
+            <div class="small">ƒ</div><br>
+            <div class="small">⟂</div><br>
+            <div class="small">⊣</div><br>
+            <div class="small">✎</div><br>
+            <div class="small">⚖</div><br>
+            <div class="small">◎</div><br>
+            <div class="small">◫</div><br>
+            <div class="small">⌁</div><br>
+            <div class="small">◉</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -626,31 +680,32 @@ def tela_chart_pro():
             <div class="chart-grid"></div>
             <div class="chart-watermark-pro">{ativo}</div>
             <div class="card-title">Chart Expandido</div>
-            <div class="small">Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay} • Layout: {layout}</div>
+            <div class="small">
+                Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay} • Layout: {layout}
+            </div>
             <br>
             <div class="small">
-                Esta será a tela de operação e análise profunda do terminal.
-                Aqui entram candles, volume, ferramentas, matemática própria, IA, sinais e execução.
+                Aqui entra o gráfico real em modo imersivo: candles, volume, ferramentas, matemática própria, IA e execução.
             </div>
         </div>
         """, unsafe_allow_html=True)
 
         st.write("")
-        baixo1, baixo2, baixo3 = st.columns([1.8, 1.2, 1.2])
+        baixo1, baixo2, baixo3 = st.columns([2.2, 1.3, 1.3])
 
         with baixo1:
             st.markdown("""
-            <div class="soft-card">
+            <div class="indicador-pro">
                 <div class="card-title">Indicadores / Volume / Fluxo</div>
                 <div class="small">
-                    Espaço reservado para indicadores inferiores, leitura de pressão, volume, fluxo e estrutura.
+                    Área reservada para indicadores inferiores, pressão, volume, fluxo e estrutura.
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
         with baixo2:
             st.markdown("""
-            <div class="soft-card">
+            <div class="indicador-pro">
                 <div class="card-title">Confluência Matemática</div>
                 <div class="small">
                     PhiCube • Euler • Razão de Prata • PI • Núcleo Mestre • Score estrutural
@@ -660,7 +715,7 @@ def tela_chart_pro():
 
         with baixo3:
             st.markdown("""
-            <div class="soft-card">
+            <div class="indicador-pro">
                 <div class="card-title">Execução</div>
                 <div class="small">
                     Entrada • Stop • Parcial • Alvo • Invalidação
@@ -669,6 +724,8 @@ def tela_chart_pro():
             """, unsafe_allow_html=True)
 
     with right:
+        st.markdown('<div class="panel-pro">', unsafe_allow_html=True)
+
         st.subheader("Painel Pro")
         st.metric("Ativo", ativo)
         st.metric("Timeframe", timeframe)
@@ -685,6 +742,9 @@ def tela_chart_pro():
         st.write("- Força: Moderada")
         st.write("- Risco: Médio")
         st.write("- Confluência: Parcial")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
 
 def tela_scanner():
     cabecalho_principal()
@@ -719,6 +779,7 @@ def tela_scanner():
         use_container_width=True
     )
 
+
 def tela_fluxo():
     cabecalho_principal()
     st.subheader("🌊 Fluxo de Mercado")
@@ -751,6 +812,7 @@ def tela_fluxo():
 
     st.write("")
     st.info("Próxima etapa: ligar volume, fluxo, eventos e anomalias.")
+
 
 def tela_ia():
     cabecalho_principal()
@@ -787,6 +849,7 @@ def tela_ia():
         st.write("- saída parcial")
         st.write("- invalidação")
         st.write("- score por confluência")
+
 
 inicializar_estado()
 modulo = sidebar_terminal()
