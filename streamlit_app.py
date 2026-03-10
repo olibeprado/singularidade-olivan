@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import pandas as pd
-import textwrap
 
 API_KEY_CMC = '910c7033d8e44e1984891d27e4e00222'
 
@@ -26,15 +25,6 @@ html, body, [class*="css"] {
     padding: 18px;
     box-shadow: 0 0 20px rgba(0,0,0,0.20);
     min-height: 120px;
-}
-
-.card-ia {
-    background: linear-gradient(180deg, rgba(20,30,50,0.95) 0%, rgba(12,18,32,0.95) 100%);
-    border: 1px solid rgba(120,170,255,0.18);
-    border-radius: 16px;
-    padding: 18px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.20);
-    min-height: 420px;
 }
 
 .card-title {
@@ -62,6 +52,14 @@ html, body, [class*="css"] {
 
 h1, h2, h3 {
     color: white !important;
+}
+
+/* melhora leve no metric */
+div[data-testid="metric-container"] {
+    background: rgba(20,30,50,0.65);
+    border: 1px solid rgba(120,170,255,0.12);
+    padding: 10px;
+    border-radius: 12px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -338,34 +336,27 @@ if not df.empty:
         ativo_top = df.iloc[0]
         score_top = int(ativo_top["Score"])
 
-        html_ia = textwrap.dedent(f"""
-        <div class="card-ia">
-            <div class="card-title">IA Insights</div>
+        st.subheader("IA Insights")
+        st.caption("Moeda em destaque")
+        st.markdown(f"## {ativo_top['Moeda']}")
 
-            <div class="small">Moeda em destaque</div>
-            <div class="big-number">{ativo_top['Moeda']}</div>
+        c1, c2 = st.columns(2)
+        with c1:
+            st.metric("Score", score_top)
+        with c2:
+            st.metric("Status", ativo_top["Status Geral"])
 
-            <div class="small" style="margin-top:10px;">Score</div>
-            <div class="big-number blue">{score_top}</div>
+        st.caption("Sinal")
+        st.write(sinal_texto(score_top))
 
-            <div class="small" style="margin-top:10px;">Status</div>
-            <div class="yellow">{ativo_top['Status Geral']}</div>
+        st.caption("Confiança")
+        st.write(confianca_texto(score_top))
 
-            <div class="small" style="margin-top:10px;">Sinal</div>
-            <div>{sinal_texto(score_top)}</div>
+        st.caption("Risco")
+        st.write(risco_texto(score_top))
 
-            <div class="small" style="margin-top:10px;">Confiança</div>
-            <div>{confianca_texto(score_top)}</div>
-
-            <div class="small" style="margin-top:10px;">Risco</div>
-            <div>{risco_texto(score_top)}</div>
-
-            <div class="small" style="margin-top:10px;">Próximo passo</div>
-            <div>Aqui depois entra entrada, saída e stop com IA</div>
-        </div>
-        """)
-
-        st.markdown(html_ia, unsafe_allow_html=True)
+        st.caption("Próximo passo")
+        st.write("Aqui depois entra entrada, saída e stop com IA")
 
 else:
     st.info("Clique em 'Escanear Força do Mercado' para carregar os dados.")
