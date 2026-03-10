@@ -40,6 +40,47 @@ section[data-testid="stSidebar"] {
     box-shadow: 0 0 14px rgba(0,0,0,0.16);
 }
 
+.chart-box {
+    background: radial-gradient(circle at top left, rgba(20,40,80,0.35), rgba(8,12,24,0.95) 55%);
+    border: 1px solid rgba(120,170,255,0.15);
+    border-radius: 16px;
+    min-height: 430px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(120,170,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120,170,255,0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+}
+
+.chart-watermark {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 64px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.04);
+    letter-spacing: 2px;
+    pointer-events: none;
+}
+
+.toolbar-box {
+    background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
+    border: 1px solid rgba(120,170,255,0.14);
+    border-radius: 14px;
+    padding: 14px;
+    min-height: 430px;
+}
+
 .card-title {
     font-size: 15px;
     font-weight: 700;
@@ -434,23 +475,33 @@ def tela_chart():
 
     st.write("")
 
-    esquerda, direita = st.columns([3.2, 1.2])
+    tools, main, right = st.columns([0.8, 3.8, 1.3])
 
-    with esquerda:
-        st.markdown(f"""
-        <div class="card">
-            <div class="card-title">Gráfico Principal</div>
-            <div class="small">
-                Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}
-            </div>
+    with tools:
+        st.markdown("""
+        <div class="toolbar-box">
+            <div class="card-title">Ferramentas</div>
+            <div class="small">✚ Cursor</div><br>
+            <div class="small">／ Linha</div><br>
+            <div class="small">▭ Zona</div><br>
+            <div class="small">↗ Tendência</div><br>
+            <div class="small">ƒ Fibonacci</div><br>
+            <div class="small">⟂ Horizontal</div><br>
+            <div class="small">⊣ Vertical</div><br>
+            <div class="small">✎ Texto</div><br>
+            <div class="small">⚖ Risco/Retorno</div><br>
+            <div class="small">◎ IA</div>
         </div>
         """, unsafe_allow_html=True)
 
-        st.write("")
-
-        st.markdown("""
-        <div class="soft-card">
-            <div class="card-title">Área do Chart</div>
+    with main:
+        st.markdown(f"""
+        <div class="chart-box">
+            <div class="chart-grid"></div>
+            <div class="chart-watermark">{ativo}</div>
+            <div class="card-title">Gráfico Principal</div>
+            <div class="small">Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}</div>
+            <br>
             <div class="small">
                 Aqui entra o gráfico próprio do terminal:
                 candles • volume • crosshair • ferramentas • Fibonacci autoral • confluência • IA
@@ -459,7 +510,8 @@ def tela_chart():
         """, unsafe_allow_html=True)
 
         st.write("")
-        sub1, sub2 = st.columns([2, 1])
+
+        sub1, sub2 = st.columns([2.2, 1])
 
         with sub1:
             st.markdown("""
@@ -474,14 +526,14 @@ def tela_chart():
         with sub2:
             st.markdown("""
             <div class="soft-card">
-                <div class="card-title">Ferramentas</div>
+                <div class="card-title">Confluência</div>
                 <div class="small">
-                    Linha • Retângulo • Fibo Singular • Long/Short • Risco/Retorno
+                    PhiCube • Euler • Razão de Prata • PI • Score estrutural
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-    with direita:
+    with right:
         st.subheader("Painel do Ativo")
         st.metric("Ativo", ativo)
         st.metric("Timeframe", timeframe)
