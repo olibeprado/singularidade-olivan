@@ -93,10 +93,10 @@ section[data-testid="stSidebar"] {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 88px;
+    font-size: 110px;
     font-weight: 800;
     color: rgba(255,255,255,0.04);
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     pointer-events: none;
 }
 
@@ -602,9 +602,65 @@ def tela_chart():
             st.write("Adicionar gráfico real e ferramentas autorais.")
 
     else:
-        st.subheader("📈 Atlas Chart Pro Expandido")
+        st.markdown("""
+        <style>
+        section[data-testid="stSidebar"] {
+            min-width: 78px !important;
+            max-width: 78px !important;
+        }
 
-        topo1, topo2, topo3, topo4 = st.columns([1.3, 1, 1, 1])
+        .block-container {
+            padding-top: 0.6rem !important;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            max-width: 100% !important;
+        }
+
+        .chart-pro-full {
+            background: radial-gradient(circle at top left, rgba(20,40,80,0.35), rgba(8,12,24,0.98) 55%);
+            border: 1px solid rgba(120,170,255,0.18);
+            border-radius: 18px;
+            height: 78vh;
+            min-height: 780px;
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-pro-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(120,170,255,0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(120,170,255,0.06) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+        }
+
+        .chart-pro-watermark {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 110px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.04);
+            letter-spacing: 3px;
+            pointer-events: none;
+        }
+
+        .top-mini {
+            background: linear-gradient(180deg, rgba(18,26,44,0.92) 0%, rgba(10,16,28,0.96) 100%);
+            border: 1px solid rgba(120,170,255,0.14);
+            border-radius: 14px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        topo1, topo2, topo3, topo4, topo5 = st.columns([1.4, 1, 1, 1, 1])
 
         with topo1:
             ativo = st.selectbox("Ativo", ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"], key="pro_ativo")
@@ -614,54 +670,67 @@ def tela_chart():
             modo = st.selectbox("Modo", ["Limpo", "Estrutural", "Operacional", "IA"], index=1, key="pro_modo")
         with topo4:
             overlay = st.selectbox("Camada", ["Volume", "Confluência", "Fluxo", "Execução"], index=0, key="pro_overlay")
+        with topo5:
+            voltar = st.button("⬅ Voltar", use_container_width=True)
 
-        st.write("")
-
-        if st.button("⬅ Voltar ao Chart Normal", use_container_width=True):
+        if voltar:
             st.session_state.chart_expandido = False
             st.rerun()
 
-        st.write("")
-
         st.markdown(f"""
-        <div class="chart-box-pro">
-            <div class="chart-grid"></div>
-            <div class="chart-watermark-pro">{ativo}</div>
-            <div class="card-title">Chart Pro Expandido</div>
-            <div class="small">Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}</div>
-            <br>
-            <div class="small">
-                Aqui entra a versão ampla do gráfico com:
-                candles • zoom • ferramentas • fluxo • Fibonacci autoral • IA • confluência
+        <div class="chart-pro-full">
+            <div class="chart-pro-grid"></div>
+            <div class="chart-pro-watermark">{ativo}</div>
+
+            <div style="position:relative; z-index:2;">
+                <div class="card-title" style="font-size:22px; margin-bottom:10px;">
+                    Chart Pro Expandido
+                </div>
+                <div class="small" style="font-size:14px;">
+                    Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}
+                </div>
+
+                <div style="margin-top:22px;" class="small">
+                    Área principal reservada para o gráfico autoral em tela ampla:
+                    candles • zoom • fluxo • Fibonacci autoral • confluência • IA
+                </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
         st.write("")
 
-        a, b, c = st.columns([1.4, 1.4, 1])
+        info1, info2, info3, info4 = st.columns(4)
 
-        with a:
+        with info1:
             st.markdown("""
-            <div class="soft-card">
-                <div class="card-title">Painel Estrutural</div>
-                <div class="small">Tendência, zonas, pivôs, rompimentos e continuação.</div>
+            <div class="top-mini">
+                <div class="card-title">Estrutura</div>
+                <div class="small">Tendência, pivôs e rompimentos.</div>
             </div>
             """, unsafe_allow_html=True)
 
-        with b:
+        with info2:
             st.markdown("""
-            <div class="soft-card">
+            <div class="top-mini">
                 <div class="card-title">Confluência</div>
-                <div class="small">PhiCube • Euler • Razão de Prata • PI • níveis autorais.</div>
+                <div class="small">PhiCube • Euler • PI • Razão de Prata.</div>
             </div>
             """, unsafe_allow_html=True)
 
-        with c:
+        with info3:
             st.markdown("""
-            <div class="soft-card">
+            <div class="top-mini">
                 <div class="card-title">Execução</div>
                 <div class="small">Entrada, stop, alvo e invalidação.</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with info4:
+            st.markdown("""
+            <div class="top-mini">
+                <div class="card-title">IA</div>
+                <div class="small">Leitura adaptativa e apoio operacional.</div>
             </div>
             """, unsafe_allow_html=True)
 
