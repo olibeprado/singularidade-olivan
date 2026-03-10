@@ -48,6 +48,7 @@ html, body, [class*="css"] {
 .green { color: #56f287; }
 .red { color: #ff6b81; }
 .yellow { color: #ffd166; }
+.blue { color: #7ab8ff; }
 
 h1, h2, h3 {
     color: white !important;
@@ -57,6 +58,11 @@ h1, h2, h3 {
 
 st.title("🚀 Sistema Singularidade Olivan")
 st.caption("Scanner Multitemporal • Força Relativa • Estrutura • IA")
+
+STABLECOINS = {
+    "USDT", "USDC", "BUSD", "DAI", "TUSD", "FDUSD", "USDE", "PYUSD",
+    "USDD", "FRAX", "GUSD", "LUSD", "SUSD", "USDP", "EURC", "USDK"
+}
 
 def buscar_mercado_cmc(limite=50):
     url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
@@ -89,14 +95,23 @@ def definir_status(valor):
         return "FRACO 🔴"
     return "NEUTRO 🟡"
 
-def calcular_score(p1h, p24h, p7d):
+def calcular_score_base(p1h, p24h, p7d):
     score = 0
     score += 1 if p1h > 0 else -1
     score += 2 if p24h > 0 else -2
     score += 1 if p7d > 0 else -1
     return score
 
-def classificar_score(score):
+def score_0_100(p1h, p24h, p7d):
+    score = 50
+
+    score += max(-12, min(12, p1h * 3))
+    score += max(-20, min(20, p24h * 2))
+    score += max(-18, min(18, p7d * 0.8))
+
+    return max(0, min(100, round(score)))
+
+def classificar_score_base(score):
     if score >= 3:
         return "ALTA FORÇA 🚀"
     elif score <= -3:
@@ -110,11 +125,38 @@ def sentimento_mercado(media_1h, media_24h):
         return "Mercado pressionado"
     return "Mercado indefinido"
 
+def confianca_texto(score100):
+    if score100 >= 80:
+        return "Alta"
+    elif score100 >= 60:
+        return "Moderada"
+    elif score100 >= 40:
+        return "Neutra"
+    return "Baixa"
+
+def risco_texto(score100):
+    if score100 >= 80:
+        return "Baixo"
+    elif score100 >= 60:
+        return "Médio"
+    return "Alto"
+
+def sinal_texto(score100):
+    if score100 >= 80:
+        return "Compra forte"
+    elif score100 >= 60:
+        return "Compra moderada"
+    elif score100 >= 40:
+        return "Observação"
+    elif score100 >= 20:
+        return "Venda moderada"
+    return "Venda forte"
+
 if "df_mercado" not in st.session_state:
     st.session_state.df_mercado = pd.DataFrame()
 
 if st.button("Escanear Força do Mercado"):
-    dados = buscar_mercado_cmc(200)
+    dados = buscar_mercado_cmc(300)
 
     if dados:
         tabela = []
@@ -123,9 +165,14 @@ if st.button("Escanear Força do Mercado"):
 
         soma_1h = 0
         soma_24h = 0
+        contador_validos = 0
 
         for moeda in dados:
-            simbolo = moeda['symbol']
+            simbolo = moeda['symbol'].upper()
+
+            if simbolo in STABLECOINS:
+                continue
+
             q = moeda['quote']['USD']
 
             preco = q.get('price', 0)
@@ -133,16 +180,18 @@ if st.button("Escanear Força do Mercado"):
             p_24h = q.get('percent_change_24h', 0)
             p_7d = q.get('percent_change_7d', 0)
 
-            score = calcular_score(p_1h, p_24h, p_7d)
-            status_geral = classificar_score(score)
+            score_base = calcular_score_base(p_1h, p_24h, p_7d)
+            score100 = score_0_100(p_1h, p_24h, p_7d)
+            status_geral = classificar_score_base(score_base)
 
             soma_1h += p_1h
             soma_24h += p_24h
+            contador_validos += 1
 
-            if score >= 3:
-                fortes.append((simbolo, score))
-            elif score <= -3:
-                fracas.append((simbolo, score))
+            if score100 >= 75:
+                fortes.append((simbolo, score100))
+            elif score100 <= 25:
+                fracas.append((simbolo, score100))
 
             tabela.append([
                 simbolo,
@@ -153,30 +202,35 @@ if st.button("Escanear Força do Mercado"):
                 definir_status(p_1h),
                 definir_status(p_24h),
                 definir_status(p_7d),
-                score,
+                score_base,
+                score100,
                 status_geral
             ])
 
-        df = pd.DataFrame(
-            tabela,
-            columns=[
-                "Moeda", "Preço", "%1h", "%24h", "%7d",
-                "1 Hora", "24 Horas", "7 Dias",
-                "Score", "Status Geral"
-            ]
-        )
+        if tabela:
+            df = pd.DataFrame(
+                tabela,
+                columns=[
+                    "Moeda", "Preço", "%1h", "%24h", "%7d",
+                    "1 Hora", "24 Horas", "7 Dias",
+                    "Score Base", "Score", "Status Geral"
+                ]
+            )
 
-        df = df.sort_values(by="Score", ascending=False).reset_index(drop=True)
-        st.session_state.df_mercado = df
+            df = df.sort_values(by="Score", ascending=False).reset_index(drop=True)
+            st.session_state.df_mercado = df
 
-        media_1h = soma_1h / len(dados)
-        media_24h = soma_24h / len(dados)
+            media_1h = soma_1h / contador_validos if contador_validos else 0
+            media_24h = soma_24h / contador_validos if contador_validos else 0
 
-        st.session_state.media_1h = media_1h
-        st.session_state.media_24h = media_24h
-        st.session_state.top_fortes = fortes[:5]
-        st.session_state.top_fracas = fracas[:5]
-        st.session_state.horario = pd.Timestamp.now().strftime('%H:%M:%S')
+            fortes = sorted(fortes, key=lambda x: x[1], reverse=True)
+            fracas = sorted(fracas, key=lambda x: x[1])
+
+            st.session_state.media_1h = media_1h
+            st.session_state.media_24h = media_24h
+            st.session_state.top_fortes = fortes[:5]
+            st.session_state.top_fracas = fracas[:5]
+            st.session_state.horario = pd.Timestamp.now().strftime('%H:%M:%S')
 
 df = st.session_state.df_mercado
 
@@ -255,8 +309,7 @@ if not df.empty:
         <div class="card">
             <div class="card-title">Radar de Mercado</div>
             <div class="small">
-                Esta área pode virar depois:
-                scanner avançado • gráfico • confluência • núcleo matemático • sinais IA
+                Esta área pode virar depois: scanner avançado • gráfico • confluência • núcleo matemático • sinais IA
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -275,20 +328,33 @@ if not df.empty:
 
     with right:
         ativo_top = df.iloc[0]
+        score_top = int(ativo_top["Score"])
 
         st.markdown(f"""
         <div class="card">
             <div class="card-title">IA Insights</div>
             <div class="small">Moeda em destaque</div>
             <div class="big-number">{ativo_top['Moeda']}</div>
+
             <div class="small">Score</div>
-            <div class="big-number">{ativo_top['Score']}</div>
+            <div class="big-number blue">{score_top}</div>
+
             <div class="small">Status</div>
             <div class="yellow">{ativo_top['Status Geral']}</div>
             <br>
-            <div class="small">Leitura inicial</div>
-            <div>{"Mercado comprador" if ativo_top['Score'] > 0 else "Mercado vendedor"}</div>
+
+            <div class="small">Sinal</div>
+            <div>{sinal_texto(score_top)}</div>
             <br>
+
+            <div class="small">Confiança</div>
+            <div>{confianca_texto(score_top)}</div>
+            <br>
+
+            <div class="small">Risco</div>
+            <div>{risco_texto(score_top)}</div>
+            <br>
+
             <div class="small">Próximo passo</div>
             <div>Aqui depois entra entrada, saída e stop com IA</div>
         </div>
