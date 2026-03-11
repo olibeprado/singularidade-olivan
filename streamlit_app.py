@@ -18,7 +18,7 @@ html, body, [class*="css"] {
 }
 
 .block-container {
-    padding-top: 1.0rem;
+    padding-top: 1rem;
     padding-bottom: 1rem;
 }
 
@@ -54,16 +54,6 @@ section[data-testid="stSidebar"] {
     overflow: hidden;
 }
 
-.chart-box-pro {
-    background: radial-gradient(circle at top left, rgba(20,40,80,0.35), rgba(8,12,24,0.98) 55%);
-    border: 1px solid rgba(120,170,255,0.18);
-    border-radius: 18px;
-    min-height: 760px;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-}
-
 .chart-grid {
     position: absolute;
     inset: 0;
@@ -84,19 +74,6 @@ section[data-testid="stSidebar"] {
     font-weight: 800;
     color: rgba(255,255,255,0.04);
     letter-spacing: 2px;
-    pointer-events: none;
-}
-
-.chart-watermark-pro {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 110px;
-    font-weight: 800;
-    color: rgba(255,255,255,0.04);
-    letter-spacing: 3px;
     pointer-events: none;
 }
 
@@ -677,26 +654,30 @@ def tela_chart():
             st.session_state.chart_expandido = False
             st.rerun()
 
-        st.markdown(f"""
-        <div class="chart-pro-full">
-            <div class="chart-pro-grid"></div>
-            <div class="chart-pro-watermark">{ativo}</div>
+        st.markdown(
+            f"""
+            <div class="chart-pro-full">
+                <div class="chart-pro-grid"></div>
+                <div class="chart-pro-watermark">{ativo}</div>
 
-            <div style="position:relative; z-index:2;">
-                <div class="card-title" style="font-size:22px; margin-bottom:10px;">
-                    Chart Pro Expandido
-                </div>
-                <div class="small" style="font-size:14px;">
-                    Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}
-                </div>
+                <div style="position:relative; z-index:2;">
+                    <div class="card-title" style="font-size:22px; margin-bottom:10px;">
+                        Chart Pro Expandido
+                    </div>
 
-                <div style="margin-top:22px;" class="small">
-                    Área principal reservada para o gráfico autoral em tela ampla:
-                    candles • zoom • fluxo • Fibonacci autoral • confluência • IA
+                    <div class="small" style="font-size:14px;">
+                        Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}
+                    </div>
+
+                    <div style="margin-top:22px;" class="small">
+                        Área principal reservada para o gráfico autoral em tela ampla:
+                        candles • zoom • fluxo • Fibonacci autoral • confluência • IA
+                    </div>
                 </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
 
         st.write("")
 
