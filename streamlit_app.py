@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 API_KEY_CMC = '910c7033d8e44e1984891d27e4e00222'
 
@@ -42,39 +44,6 @@ section[data-testid="stSidebar"] {
     border-radius: 14px;
     padding: 16px;
     box-shadow: 0 0 14px rgba(0,0,0,0.16);
-}
-
-.chart-box {
-    background: radial-gradient(circle at top left, rgba(20,40,80,0.35), rgba(8,12,24,0.95) 55%);
-    border: 1px solid rgba(120,170,255,0.15);
-    border-radius: 16px;
-    min-height: 430px;
-    padding: 18px;
-    position: relative;
-    overflow: hidden;
-}
-
-.chart-grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(120,170,255,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(120,170,255,0.06) 1px, transparent 1px);
-    background-size: 48px 48px;
-    pointer-events: none;
-}
-
-.chart-watermark {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 64px;
-    font-weight: 800;
-    color: rgba(255,255,255,0.04);
-    letter-spacing: 2px;
-    pointer-events: none;
 }
 
 .toolbar-box {
@@ -155,6 +124,104 @@ def buscar_mercado_cmc(limite=300):
     except Exception as e:
         st.error(f"Erro ao buscar dados: {e}")
         return []
+
+
+def buscar_klines_binance(symbol="BTCUSDT", interval="15m", limit=300):
+    url = "https://api.binance.com/api/v3/klines"
+    params = {
+        "symbol": symbol,
+        "interval": interval,
+        "limit": limit
+    }
+
+    try:
+        r = requests.get(url, params=params, timeout=20)
+        r.raise_for_status()
+        data = r.json()
+
+        df = pd.DataFrame(data, columns=[
+            "open_time", "open", "high", "low", "close", "volume",
+            "close_time", "quote_asset_volume", "number_of_trades",
+            "taker_buy_base_asset_volume", "taker_buy_quote_asset_volume", "ignore"
+        ])
+
+        df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
+        df["close_time"] = pd.to_datetime(df["close_time"], unit="ms")
+
+        numeric_cols = ["open", "high", "low", "close", "volume"]
+        for col in numeric_cols:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+        return df
+    except Exception as e:
+        st.error(f"Erro ao buscar candles da Binance: {e}")
+        return pd.DataFrame()
+
+
+def criar_grafico_candles(df, symbol="BTCUSDT", expandido=False):
+    if df.empty:
+        return None
+
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.03,
+        row_heights=[0.78, 0.22]
+    )
+
+    fig.add_trace(
+        go.Candlestick(
+            x=df["open_time"],
+            open=df["open"],
+            high=df["high"],
+            low=df["low"],
+            close=df["close"],
+            name=symbol
+        ),
+        row=1,
+        col=1
+    )
+
+    volume_colors = [
+        "#56f287" if close_ >= open_ else "#ff6b81"
+        for open_, close_ in zip(df["open"], df["close"])
+    ]
+
+    fig.add_trace(
+        go.Bar(
+            x=df["open_time"],
+            y=df["volume"],
+            name="Volume",
+            marker_color=volume_colors
+        ),
+        row=2,
+        col=1
+    )
+
+    fig.update_layout(
+        height=850 if expandido else 620,
+        paper_bgcolor="#08111f",
+        plot_bgcolor="#08111f",
+        font=dict(color="white"),
+        margin=dict(l=10, r=10, t=30, b=10),
+        xaxis_rangeslider_visible=False,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+    )
+
+    fig.update_xaxes(
+        showgrid=True,
+        gridcolor="rgba(120,170,255,0.08)",
+        zeroline=False
+    )
+
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor="rgba(120,170,255,0.08)",
+        zeroline=False
+    )
+
+    return fig
 
 
 def definir_status(valor):
@@ -483,19 +550,24 @@ def tela_radar():
 def tela_chart():
     cabecalho_principal()
 
+    ativos = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"]
+    timeframes = ["5m", "15m", "1h", "4h", "1d"]
+    modos = ["Limpo", "Estrutural", "Operacional", "IA"]
+    camadas = ["Volume", "Confluência", "Fluxo", "Execução"]
+
     if not st.session_state.chart_expandido:
         st.subheader("📈 Atlas Chart")
 
         topo1, topo2, topo3, topo4 = st.columns([1.2, 1, 1, 1])
 
         with topo1:
-            ativo = st.selectbox("Ativo", ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"])
+            ativo = st.selectbox("Ativo", ativos)
         with topo2:
-            timeframe = st.selectbox("Timeframe", ["5m", "15m", "1h", "4h", "1D"], index=1)
+            timeframe = st.selectbox("Timeframe", timeframes, index=1)
         with topo3:
-            modo = st.selectbox("Modo", ["Limpo", "Estrutural", "Operacional", "IA"], index=1)
+            modo = st.selectbox("Modo", modos, index=1)
         with topo4:
-            overlay = st.selectbox("Camada", ["Volume", "Confluência", "Fluxo", "Execução"], index=0)
+            overlay = st.selectbox("Camada", camadas, index=0)
 
         st.write("")
 
@@ -503,7 +575,8 @@ def tela_chart():
             st.session_state.chart_expandido = True
             st.rerun()
 
-        st.write("")
+        df_chart = buscar_klines_binance(ativo, timeframe, 220)
+        fig = criar_grafico_candles(df_chart, ativo, expandido=False)
 
         tools, main, right = st.columns([0.8, 3.8, 1.3])
 
@@ -525,21 +598,10 @@ def tela_chart():
             """, unsafe_allow_html=True)
 
         with main:
-            st.markdown(f"""
-            <div class="chart-box">
-                <div class="chart-grid"></div>
-                <div class="chart-watermark">{ativo}</div>
-                <div class="card-title">Gráfico Principal</div>
-                <div class="small">Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}</div>
-                <br>
-                <div class="small">
-                    Aqui entra o gráfico próprio do terminal:
-                    candles • volume • crosshair • ferramentas • Fibonacci autoral • confluência • IA
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            st.write("")
+            if fig:
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("Não foi possível carregar o gráfico agora.")
 
             sub1, sub2 = st.columns([2.2, 1])
 
@@ -548,17 +610,18 @@ def tela_chart():
                 <div class="soft-card">
                     <div class="card-title">Indicadores / Volume</div>
                     <div class="small">
-                        Espaço reservado para volume, oscilador, fluxo, força e sinais secundários.
+                        Candles e volume já ativos. Próximo passo: indicadores, fluxo e confluência.
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
 
             with sub2:
-                st.markdown("""
+                st.markdown(f"""
                 <div class="soft-card">
                     <div class="card-title">Confluência</div>
                     <div class="small">
-                        PhiCube • Euler • Razão de Prata • PI • Score estrutural
+                        Camada atual: {overlay}<br>
+                        Modo atual: {modo}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -569,14 +632,20 @@ def tela_chart():
             st.metric("Timeframe", timeframe)
             st.metric("Modo", modo)
 
-            st.write("**Leitura rápida**")
-            st.write("- Tendência: Estrutural")
-            st.write("- Força: Moderada")
-            st.write("- Risco: Médio")
-            st.write("- Confluência: Em construção")
+            if not df_chart.empty:
+                ultimo = df_chart.iloc[-1]
+                anterior = df_chart.iloc[-2] if len(df_chart) > 1 else ultimo
+                variacao = ((ultimo["close"] - anterior["close"]) / anterior["close"]) * 100 if anterior["close"] else 0
 
-            st.write("**Próxima etapa**")
-            st.write("Adicionar gráfico real e ferramentas autorais.")
+                st.metric("Último preço", f"{ultimo['close']:.4f}", f"{variacao:.2f}%")
+                st.metric("Volume", f"{ultimo['volume']:.2f}")
+
+            st.write("**Leitura rápida**")
+            st.write("- Gráfico real ativo")
+            st.write("- Volume ativo")
+            st.write("- Candles ativos")
+            st.write("- Próximo: fluxo e confluência")
+
 
     else:
         st.markdown("""
@@ -593,40 +662,6 @@ def tela_chart():
             max-width: 100% !important;
         }
 
-        .chart-pro-full {
-            background: radial-gradient(circle at top left, rgba(20,40,80,0.35), rgba(8,12,24,0.98) 55%);
-            border: 1px solid rgba(120,170,255,0.18);
-            border-radius: 18px;
-            height: 78vh;
-            min-height: 780px;
-            padding: 18px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .chart-pro-grid {
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(120,170,255,0.06) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(120,170,255,0.06) 1px, transparent 1px);
-            background-size: 48px 48px;
-            pointer-events: none;
-        }
-
-        .chart-pro-watermark {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 110px;
-            font-weight: 800;
-            color: rgba(255,255,255,0.04);
-            letter-spacing: 3px;
-            pointer-events: none;
-        }
-
         .top-mini {
             background: linear-gradient(180deg, rgba(18,26,44,0.92) 0%, rgba(10,16,28,0.96) 100%);
             border: 1px solid rgba(120,170,255,0.14);
@@ -640,13 +675,13 @@ def tela_chart():
         topo1, topo2, topo3, topo4, topo5 = st.columns([1.4, 1, 1, 1, 1])
 
         with topo1:
-            ativo = st.selectbox("Ativo", ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"], key="pro_ativo")
+            ativo = st.selectbox("Ativo", ativos, key="pro_ativo")
         with topo2:
-            timeframe = st.selectbox("Timeframe", ["5m", "15m", "1h", "4h", "1D"], index=1, key="pro_tf")
+            timeframe = st.selectbox("Timeframe", timeframes, index=1, key="pro_tf")
         with topo3:
-            modo = st.selectbox("Modo", ["Limpo", "Estrutural", "Operacional", "IA"], index=1, key="pro_modo")
+            modo = st.selectbox("Modo", modos, index=1, key="pro_modo")
         with topo4:
-            overlay = st.selectbox("Camada", ["Volume", "Confluência", "Fluxo", "Execução"], index=0, key="pro_overlay")
+            overlay = st.selectbox("Camada", camadas, index=0, key="pro_overlay")
         with topo5:
             voltar = st.button("⬅ Voltar", use_container_width=True)
 
@@ -654,18 +689,13 @@ def tela_chart():
             st.session_state.chart_expandido = False
             st.rerun()
 
-        html_expandido = f"""<div class="chart-pro-full">
-<div class="chart-pro-grid"></div>
-<div class="chart-pro-watermark">{ativo}</div>
-<div style="position:relative; z-index:2;">
-<div class="card-title" style="font-size:22px; margin-bottom:10px;">Chart Pro Expandido</div>
-<div class="small" style="font-size:14px;">Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}</div>
-<div style="margin-top:22px;" class="small">Área principal reservada para o gráfico autoral em tela ampla: candles • zoom • fluxo • Fibonacci autoral • confluência • IA</div>
-</div>
-</div>"""
-        st.markdown(html_expandido, unsafe_allow_html=True)
+        df_chart = buscar_klines_binance(ativo, timeframe, 320)
+        fig = criar_grafico_candles(df_chart, ativo, expandido=True)
 
-        st.write("")
+        if fig:
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("Não foi possível carregar o gráfico expandido agora.")
 
         info1, info2, info3, info4 = st.columns(4)
 
@@ -678,10 +708,10 @@ def tela_chart():
             """, unsafe_allow_html=True)
 
         with info2:
-            st.markdown("""
+            st.markdown(f"""
             <div class="top-mini">
                 <div class="card-title">Confluência</div>
-                <div class="small">PhiCube • Euler • PI • Razão de Prata.</div>
+                <div class="small">Camada ativa: {overlay}</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -694,10 +724,10 @@ def tela_chart():
             """, unsafe_allow_html=True)
 
         with info4:
-            st.markdown("""
+            st.markdown(f"""
             <div class="top-mini">
                 <div class="card-title">IA</div>
-                <div class="small">Leitura adaptativa e apoio operacional.</div>
+                <div class="small">Modo atual: {modo}</div>
             </div>
             """, unsafe_allow_html=True)
 
