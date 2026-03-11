@@ -654,30 +654,16 @@ def tela_chart():
             st.session_state.chart_expandido = False
             st.rerun()
 
-        st.markdown(
-            f"""
-            <div class="chart-pro-full">
-                <div class="chart-pro-grid"></div>
-                <div class="chart-pro-watermark">{ativo}</div>
-
-                <div style="position:relative; z-index:2;">
-                    <div class="card-title" style="font-size:22px; margin-bottom:10px;">
-                        Chart Pro Expandido
-                    </div>
-
-                    <div class="small" style="font-size:14px;">
-                        Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}
-                    </div>
-
-                    <div style="margin-top:22px;" class="small">
-                        Área principal reservada para o gráfico autoral em tela ampla:
-                        candles • zoom • fluxo • Fibonacci autoral • confluência • IA
-                    </div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        html_expandido = f"""<div class="chart-pro-full">
+<div class="chart-pro-grid"></div>
+<div class="chart-pro-watermark">{ativo}</div>
+<div style="position:relative; z-index:2;">
+<div class="card-title" style="font-size:22px; margin-bottom:10px;">Chart Pro Expandido</div>
+<div class="small" style="font-size:14px;">Ativo: {ativo} • Timeframe: {timeframe} • Modo: {modo} • Camada: {overlay}</div>
+<div style="margin-top:22px;" class="small">Área principal reservada para o gráfico autoral em tela ampla: candles • zoom • fluxo • Fibonacci autoral • confluência • IA</div>
+</div>
+</div>"""
+        st.markdown(html_expandido, unsafe_allow_html=True)
 
         st.write("")
 
