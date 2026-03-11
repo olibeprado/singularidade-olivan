@@ -25,9 +25,6 @@ export default function AtlasChartPro() {
         vertLines: { color: "rgba(255,255,255,0.06)" },
         horzLines: { color: "rgba(255,255,255,0.06)" },
       },
-      crosshair: {
-        mode: 1,
-      },
       rightPriceScale: {
         borderColor: "rgba(255,255,255,0.15)",
       },
@@ -56,9 +53,7 @@ export default function AtlasChartPro() {
     ]);
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
-      priceFormat: {
-        type: "volume",
-      },
+      priceFormat: { type: "volume" },
       priceScaleId: "",
     });
 
