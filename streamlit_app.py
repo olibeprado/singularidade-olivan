@@ -1,7 +1,8 @@
-streamlit
-requests
-pandas
-plotly
+import streamlit as st
+import requests
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 API_KEY_CMC = '910c7033d8e44e1984891d27e4e00222'
 
