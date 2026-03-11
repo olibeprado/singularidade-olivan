@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-API_KEY_CMC = '910c7033d8e44e1984891d27e4e00222'
+API_KEY_CMC = "910c7033d8e44e1984891d27e4e00222"
 
 st.set_page_config(
     page_title="Sistema Singularidade Olivan",
@@ -12,89 +12,92 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.markdown("""
-<style>
-html, body, [class*="css"] {
-    background-color: #0b1220;
-    color: white;
-}
+st.markdown(
+    """
+    <style>
+    html, body, [class*="css"] {
+        background-color: #0b1220;
+        color: white;
+    }
 
-.block-container {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-}
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
 
-section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0a1120 0%, #0d1528 100%);
-    border-right: 1px solid rgba(120,170,255,0.12);
-}
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0a1120 0%, #0d1528 100%);
+        border-right: 1px solid rgba(120,170,255,0.12);
+    }
 
-.card {
-    background: linear-gradient(180deg, rgba(20,30,50,0.95) 0%, rgba(12,18,32,0.95) 100%);
-    border: 1px solid rgba(120,170,255,0.18);
-    border-radius: 16px;
-    padding: 18px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.20);
-    min-height: 120px;
-}
+    .card {
+        background: linear-gradient(180deg, rgba(20,30,50,0.95) 0%, rgba(12,18,32,0.95) 100%);
+        border: 1px solid rgba(120,170,255,0.18);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.20);
+        min-height: 120px;
+    }
 
-.soft-card {
-    background: linear-gradient(180deg, rgba(18,26,44,0.85) 0%, rgba(10,16,28,0.90) 100%);
-    border: 1px solid rgba(120,170,255,0.12);
-    border-radius: 14px;
-    padding: 16px;
-    box-shadow: 0 0 14px rgba(0,0,0,0.16);
-}
+    .soft-card {
+        background: linear-gradient(180deg, rgba(18,26,44,0.85) 0%, rgba(10,16,28,0.90) 100%);
+        border: 1px solid rgba(120,170,255,0.12);
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 0 14px rgba(0,0,0,0.16);
+    }
 
-.toolbar-box {
-    background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
-    border: 1px solid rgba(120,170,255,0.14);
-    border-radius: 14px;
-    padding: 14px;
-    min-height: 430px;
-}
+    .toolbar-box {
+        background: linear-gradient(180deg, rgba(18,26,44,0.90) 0%, rgba(10,16,28,0.95) 100%);
+        border: 1px solid rgba(120,170,255,0.14);
+        border-radius: 14px;
+        padding: 14px;
+        min-height: 430px;
+    }
 
-.card-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #cfe0ff;
-    margin-bottom: 8px;
-}
+    .card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #cfe0ff;
+        margin-bottom: 8px;
+    }
 
-.big-number {
-    font-size: 30px;
-    font-weight: 800;
-    color: white;
-}
+    .big-number {
+        font-size: 30px;
+        font-weight: 800;
+        color: white;
+    }
 
-.small {
-    font-size: 13px;
-    color: #9fb2d9;
-}
+    .small {
+        font-size: 13px;
+        color: #9fb2d9;
+    }
 
-.green { color: #56f287; }
-.red { color: #ff6b81; }
-.yellow { color: #ffd166; }
-.blue { color: #7ab8ff; }
+    .green { color: #56f287; }
+    .red { color: #ff6b81; }
+    .yellow { color: #ffd166; }
+    .blue { color: #7ab8ff; }
 
-h1, h2, h3 {
-    color: white !important;
-}
+    h1, h2, h3 {
+        color: white !important;
+    }
 
-div[data-testid="metric-container"] {
-    background: rgba(20,30,50,0.65);
-    border: 1px solid rgba(120,170,255,0.12);
-    padding: 10px;
-    border-radius: 12px;
-}
+    div[data-testid="metric-container"] {
+        background: rgba(20,30,50,0.65);
+        border: 1px solid rgba(120,170,255,0.12);
+        padding: 10px;
+        border-radius: 12px;
+    }
 
-hr {
-    border: none;
-    border-top: 1px solid rgba(120,170,255,0.12);
-    margin: 0.6rem 0 1rem 0;
-}
-</style>
-""", unsafe_allow_html=True)
+    hr {
+        border: none;
+        border-top: 1px solid rgba(120,170,255,0.12);
+        margin: 0.6rem 0 1rem 0;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 STABLECOINS = {
     "USDT", "USDC", "BUSD", "DAI", "TUSD", "FDUSD", "USDE", "PYUSD",
@@ -115,11 +118,11 @@ def buscar_mercado_cmc(limite=300):
     }
 
     try:
-        r = requests.get(url, headers=headers, params=parametros, timeout=20)
-        if r.status_code == 200:
-            payload = r.json()
+        resposta = requests.get(url, headers=headers, params=parametros, timeout=20)
+        if resposta.status_code == 200:
+            payload = resposta.json()
             return payload.get("data", [])
-        st.error(f"Erro na API: {r.status_code}")
+        st.error(f"Erro na API: {resposta.status_code}")
         return []
     except Exception as e:
         st.error(f"Erro ao buscar dados: {e}")
@@ -135,9 +138,9 @@ def buscar_klines_binance(symbol="BTCUSDT", interval="15m", limit=300):
     }
 
     try:
-        r = requests.get(url, params=params, timeout=20)
-        r.raise_for_status()
-        data = r.json()
+        resposta = requests.get(url, params=params, timeout=20)
+        resposta.raise_for_status()
+        data = resposta.json()
 
         df = pd.DataFrame(data, columns=[
             "open_time", "open", "high", "low", "close", "volume",
@@ -148,11 +151,11 @@ def buscar_klines_binance(symbol="BTCUSDT", interval="15m", limit=300):
         df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
         df["close_time"] = pd.to_datetime(df["close_time"], unit="ms")
 
-        numeric_cols = ["open", "high", "low", "close", "volume"]
-        for col in numeric_cols:
+        for col in ["open", "high", "low", "close", "volume"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
         return df
+
     except Exception as e:
         st.error(f"Erro ao buscar candles da Binance: {e}")
         return pd.DataFrame()
@@ -206,20 +209,11 @@ def criar_grafico_candles(df, symbol="BTCUSDT", expandido=False):
         font=dict(color="white"),
         margin=dict(l=10, r=10, t=30, b=10),
         xaxis_rangeslider_visible=False,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0)
     )
 
-    fig.update_xaxes(
-        showgrid=True,
-        gridcolor="rgba(120,170,255,0.08)",
-        zeroline=False
-    )
-
-    fig.update_yaxes(
-        showgrid=True,
-        gridcolor="rgba(120,170,255,0.08)",
-        zeroline=False
-    )
+    fig.update_xaxes(showgrid=True, gridcolor="rgba(120,170,255,0.08)", zeroline=False)
+    fig.update_yaxes(showgrid=True, gridcolor="rgba(120,170,255,0.08)", zeroline=False)
 
     return fig
 
@@ -251,7 +245,7 @@ def score_0_100(p1h, p24h, p7d):
 def classificar_score_base(score):
     if score >= 3:
         return "ALTA FORÇA 🚀"
-    elif score <= -3:
+    if score <= -3:
         return "NEGATIVO 🔻"
     return "NEUTRO ⚖️"
 
@@ -259,7 +253,7 @@ def classificar_score_base(score):
 def sentimento_mercado(media_1h, media_24h):
     if media_1h > 0 and media_24h > 0:
         return "Mercado em força"
-    elif media_1h < 0 and media_24h < 0:
+    if media_1h < 0 and media_24h < 0:
         return "Mercado pressionado"
     return "Mercado indefinido"
 
@@ -267,9 +261,9 @@ def sentimento_mercado(media_1h, media_24h):
 def confianca_texto(score100):
     if score100 >= 80:
         return "Alta"
-    elif score100 >= 60:
+    if score100 >= 60:
         return "Moderada"
-    elif score100 >= 40:
+    if score100 >= 40:
         return "Neutra"
     return "Baixa"
 
@@ -277,7 +271,7 @@ def confianca_texto(score100):
 def risco_texto(score100):
     if score100 >= 80:
         return "Baixo"
-    elif score100 >= 60:
+    if score100 >= 60:
         return "Médio"
     return "Alto"
 
@@ -285,11 +279,11 @@ def risco_texto(score100):
 def sinal_texto(score100):
     if score100 >= 80:
         return "Compra forte"
-    elif score100 >= 60:
+    if score100 >= 60:
         return "Compra moderada"
-    elif score100 >= 40:
+    if score100 >= 40:
         return "Observação"
-    elif score100 >= 20:
+    if score100 >= 20:
         return "Venda moderada"
     return "Venda forte"
 
@@ -302,7 +296,6 @@ def gerar_dataset_mercado():
     tabela = []
     fortes = []
     fracas = []
-
     soma_1h = 0
     soma_24h = 0
     contador_validos = 0
@@ -511,9 +504,7 @@ def tela_radar():
         st.write("")
         st.subheader("📊 Tabela Mestre do Mercado")
 
-        df_exibir = df[[
-            "Moeda", "Preço", "1 Hora", "24 Horas", "7 Dias", "Score", "Status Geral"
-        ]]
+        df_exibir = df[["Moeda", "Preço", "1 Hora", "24 Horas", "7 Dias", "Score", "Status Geral"]]
 
         st.dataframe(
             df_exibir.style.format({"Preço": "{:.6f}"}),
@@ -598,7 +589,7 @@ def tela_chart():
             """, unsafe_allow_html=True)
 
         with main:
-            if fig:
+            if fig is not None:
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.warning("Não foi possível carregar o gráfico agora.")
@@ -646,7 +637,6 @@ def tela_chart():
             st.write("- Candles ativos")
             st.write("- Próximo: fluxo e confluência")
 
-
     else:
         st.markdown("""
         <style>
@@ -692,7 +682,7 @@ def tela_chart():
         df_chart = buscar_klines_binance(ativo, timeframe, 320)
         fig = criar_grafico_candles(df_chart, ativo, expandido=True)
 
-        if fig:
+        if fig is not None:
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("Não foi possível carregar o gráfico expandido agora.")
