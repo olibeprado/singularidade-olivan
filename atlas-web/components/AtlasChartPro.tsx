@@ -1,151 +1,89 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   createChart,
   ColorType,
   CandlestickSeries,
-  HistogramSeries
+  HistogramSeries,
 } from "lightweight-charts";
 
-type Candle = {
-  time: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-};
-
-const SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
-const TIMEFRAMES = ["1m", "5m", "15m", "1h"];
-
-function intervalSeconds(tf: string) {
-  switch (tf) {
-    case "1m":
-      return 60;
-    case "5m":
-      return 300;
-    case "15m":
-      return 900;
-    case "1h":
-      return 3600;
-    default:
-      return 60;
-  }
-}
-
-function basePrice(symbol: string) {
-  switch (symbol) {
-    case "BTCUSDT":
-      return 70000;
-    case "ETHUSDT":
-      return 3800;
-    case "SOLUSDT":
-      return 160;
-    case "BNBUSDT":
-      return 620;
-    default:
-      return 100;
-  }
-}
-
-function generateHistory(symbol: string, tf: string, count = 220): Candle[] {
-  const candles: Candle[] = [];
-  const step = intervalSeconds(tf);
-  const now = Math.floor(Date.now() / 1000);
-  let close = basePrice(symbol);
-
-  for (let i = count; i > 0; i--) {
-    const t = now - i * step;
-    const drift = (Math.random() - 0.5) * (close * 0.004);
-    const open = close;
-    close = Math.max(0.0001, open + drift);
-    const high = Math.max(open, close) + Math.random() * (close * 0.0025);
-    const low = Math.min(open, close) - Math.random() * (close * 0.0025);
-    const volume = Math.random() * 1000 + 100;
-    candles.push({ time: t, open, high, low, close, volume });
-  }
-
-  return candles;
-}
-
 export default function AtlasChartPro() {
-  const [symbol, setSymbol] = useState("BTCUSDT");
-  const [timeframe, setTimeframe] = useState("1m");
-  const [live, setLive] = useState(true);
-  const [price, setPrice] = useState<number | null>(null);
-
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<any>(null);
-  const candleSeriesRef = useRef<any>(null);
-  const volumeSeriesRef = useRef<any>(null);
-  const dataRef = useRef<Candle[]>([]);
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const data = generateHistory(symbol, timeframe, 220);
-    dataRef.current = data;
-    setPrice(data[data.length - 1]?.close ?? null);
-  }, [symbol, timeframe]);
+    if (!chartContainerRef.current) return;
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const chart = createChart(containerRef.current, {
+    const chart = createChart(chartContainerRef.current, {
+      width: chartContainerRef.current.clientWidth,
+      height: 500,
       layout: {
-        background: { type: ColorType.Solid, color: "#08111f" },
-        textColor: "#cbd5e1",
-        attributionLogo: false
+        background: { type: ColorType.Solid, color: "#0b1020" },
+        textColor: "#d1d5db",
       },
       grid: {
-        vertLines: { color: "rgba(120,170,255,0.08)" },
-        horzLines: { color: "rgba(120,170,255,0.08)" }
-      },
-      rightPriceScale: {
-        borderColor: "rgba(120,170,255,0.16)"
-      },
-      timeScale: {
-        borderColor: "rgba(120,170,255,0.16)",
-        timeVisible: true,
-        secondsVisible: false
+        vertLines: { color: "rgba(255,255,255,0.06)" },
+        horzLines: { color: "rgba(255,255,255,0.06)" },
       },
       crosshair: {
-        vertLine: { color: "rgba(255,255,255,0.20)" },
-        horzLine: { color: "rgba(255,255,255,0.20)" }
+        mode: 1,
       },
-      width: containerRef.current.clientWidth,
-      height: 620
+      rightPriceScale: {
+        borderColor: "rgba(255,255,255,0.15)",
+      },
+      timeScale: {
+        borderColor: "rgba(255,255,255,0.15)",
+      },
     });
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#72f3a0",
-      downColor: "#ff9ca9",
-      borderUpColor: "#72f3a0",
-      borderDownColor: "#ff9ca9",
-      wickUpColor: "#72f3a0",
-      wickDownColor: "#ff9ca9"
+      upColor: "#22c55e",
+      downColor: "#ef4444",
+      borderUpColor: "#22c55e",
+      borderDownColor: "#ef4444",
+      wickUpColor: "#22c55e",
+      wickDownColor: "#ef4444",
     });
+
+    candleSeries.setData([
+      { time: "2025-03-01", open: 42000, high: 42800, low: 41750, close: 42650 },
+      { time: "2025-03-02", open: 42650, high: 43100, low: 42300, close: 42920 },
+      { time: "2025-03-03", open: 42920, high: 43450, low: 42520, close: 42780 },
+      { time: "2025-03-04", open: 42780, high: 43800, low: 42600, close: 43620 },
+      { time: "2025-03-05", open: 43620, high: 44200, low: 43350, close: 43910 },
+      { time: "2025-03-06", open: 43910, high: 44580, low: 43700, close: 44320 },
+      { time: "2025-03-07", open: 44320, high: 44800, low: 44000, close: 44110 },
+    ]);
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
-      priceFormat: { type: "volume" },
-      priceScaleId: ""
-    });
-
-    candleSeries.priceScale().applyOptions({
-      scaleMargins: { top: 0.08, bottom: 0.24 }
+      priceFormat: {
+        type: "volume",
+      },
+      priceScaleId: "",
     });
 
     volumeSeries.priceScale().applyOptions({
-      scaleMargins: { top: 0.80, bottom: 0 }
+      scaleMargins: {
+        top: 0.8,
+        bottom: 0,
+      },
     });
 
-    chartRef.current = chart;
-    candleSeriesRef.current = candleSeries;
-    volumeSeriesRef.current = volumeSeries;
+    volumeSeries.setData([
+      { time: "2025-03-01", value: 1200, color: "#22c55e" },
+      { time: "2025-03-02", value: 980, color: "#22c55e" },
+      { time: "2025-03-03", value: 1500, color: "#ef4444" },
+      { time: "2025-03-04", value: 1800, color: "#22c55e" },
+      { time: "2025-03-05", value: 1350, color: "#22c55e" },
+      { time: "2025-03-06", value: 1600, color: "#22c55e" },
+      { time: "2025-03-07", value: 1100, color: "#ef4444" },
+    ]);
 
     const handleResize = () => {
-      if (!containerRef.current) return;
-      chart.applyOptions({ width: containerRef.current.clientWidth });
+      if (!chartContainerRef.current) return;
+      chart.applyOptions({
+        width: chartContainerRef.current.clientWidth,
+      });
     };
 
     window.addEventListener("resize", handleResize);
@@ -156,202 +94,15 @@ export default function AtlasChartPro() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!candleSeriesRef.current || !volumeSeriesRef.current || dataRef.current.length === 0) return;
-
-    candleSeriesRef.current.setData(
-      dataRef.current.map(({ time, open, high, low, close }) => ({
-        time,
-        open,
-        high,
-        low,
-        close
-      }))
-    );
-
-    volumeSeriesRef.current.setData(
-      dataRef.current.map((d) => ({
-        time: d.time,
-        value: d.volume,
-        color: d.close >= d.open ? "rgba(86,242,135,0.90)" : "rgba(255,107,129,0.90)"
-      }))
-    );
-
-    chartRef.current.timeScale().fitContent();
-  }, [symbol, timeframe]);
-
-  useEffect(() => {
-    if (!live) return;
-    if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
-
-    const id = setInterval(() => {
-      const candles = dataRef.current;
-      if (!candles.length) return;
-
-      const last = candles[candles.length - 1];
-      const step = intervalSeconds(timeframe);
-      const now = Math.floor(Date.now() / 1000);
-      const currentBucket = Math.floor(now / step) * step;
-      const randomMove = (Math.random() - 0.5) * (last.close * 0.0018);
-
-      if (last.time === currentBucket) {
-        const nextClose = Math.max(0.0001, last.close + randomMove);
-        last.close = nextClose;
-        last.high = Math.max(last.high, nextClose);
-        last.low = Math.min(last.low, nextClose);
-        last.volume += Math.random() * 80;
-      } else {
-        const open = last.close;
-        const close = Math.max(0.0001, open + randomMove);
-        candles.push({
-          time: currentBucket,
-          open,
-          high: Math.max(open, close),
-          low: Math.min(open, close),
-          close,
-          volume: Math.random() * 200 + 50
-        });
-        if (candles.length > 260) candles.shift();
-      }
-
-      const latest = candles[candles.length - 1];
-      setPrice(latest.close);
-
-      candleSeriesRef.current.update({
-        time: latest.time,
-        open: latest.open,
-        high: latest.high,
-        low: latest.low,
-        close: latest.close
-      });
-
-      volumeSeriesRef.current.update({
-        time: latest.time,
-        value: latest.volume,
-        color: latest.close >= latest.open ? "rgba(86,242,135,0.90)" : "rgba(255,107,129,0.90)"
-      });
-    }, 1200);
-
-    return () => clearInterval(id);
-  }, [live, timeframe]);
-
   return (
     <div
+      ref={chartContainerRef}
       style={{
-        minHeight: "100vh",
-        background: "#0b1220",
-        color: "white",
-        padding: "24px",
-        fontFamily: "Arial, sans-serif"
+        width: "100%",
+        height: "500px",
+        borderRadius: "16px",
+        overflow: "hidden",
       }}
-    >
-      <div style={{ maxWidth: 1700, margin: "0 auto" }}>
-        <h1 style={{ fontSize: 42, marginBottom: 8 }}>🚀 Sistema Singularidade Olivan</h1>
-        <p style={{ color: "#94a3b8", marginBottom: 24 }}>
-          Terminal Modular • Radar • Scanner • Fluxo • IA • Estrutura
-        </p>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr",
-            gap: 12,
-            marginBottom: 16
-          }}
-        >
-          <select value={symbol} onChange={(e) => setSymbol(e.target.value)} style={inputStyle}>
-            {SYMBOLS.map((item) => (
-              <option key={item} value={item}>{item}</option>
-            ))}
-          </select>
-
-          <select value={timeframe} onChange={(e) => setTimeframe(e.target.value)} style={inputStyle}>
-            {TIMEFRAMES.map((item) => (
-              <option key={item} value={item}>{item}</option>
-            ))}
-          </select>
-
-          <div style={boxStyle}>Estrutural</div>
-          <div style={boxStyle}>Volume</div>
-
-          <button onClick={() => setLive((v) => !v)} style={buttonStyle}>
-            {live ? "Pausar" : "Ao vivo"}
-          </button>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "220px 1fr 280px",
-            gap: 16
-          }}
-        >
-          <div style={panelStyle}>
-            <h3>Ferramentas</h3>
-            <p>✚ Cursor</p>
-            <p>／ Linha</p>
-            <p>▭ Zona</p>
-            <p>↗ Tendência</p>
-            <p>ƒ Fibonacci</p>
-            <p>⟂ Horizontal</p>
-            <p>⊣ Vertical</p>
-            <p>✎ Texto</p>
-            <p>⚖ Risco/Retorno</p>
-            <p>◎ IA</p>
-          </div>
-
-          <div style={panelStyle}>
-            <div style={{ marginBottom: 10, color: "#94a3b8" }}>Chart Pro • tempo real</div>
-            <div ref={containerRef} />
-          </div>
-
-          <div style={panelStyle}>
-            <h2>Painel do Ativo</h2>
-            <p><strong>Ativo:</strong> {symbol}</p>
-            <p><strong>Timeframe:</strong> {timeframe}</p>
-            <p><strong>Modo:</strong> Estrutural</p>
-            <p><strong>Preço atual:</strong> {price?.toFixed(4) ?? "--"}</p>
-            <p><strong>Status:</strong> {live ? "Ao vivo" : "Pausado"}</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    />
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  height: 48,
-  borderRadius: 14,
-  border: "1px solid rgba(255,255,255,0.10)",
-  background: "rgba(255,255,255,0.05)",
-  color: "white",
-  padding: "0 14px"
-};
-
-const boxStyle: React.CSSProperties = {
-  height: 48,
-  borderRadius: 14,
-  border: "1px solid rgba(255,255,255,0.10)",
-  background: "rgba(255,255,255,0.05)",
-  color: "white",
-  display: "flex",
-  alignItems: "center",
-  padding: "0 14px"
-};
-
-const buttonStyle: React.CSSProperties = {
-  height: 48,
-  borderRadius: 14,
-  border: "none",
-  background: "#22d3ee",
-  color: "#082f49",
-  fontWeight: 700,
-  cursor: "pointer"
-};
-
-const panelStyle: React.CSSProperties = {
-  borderRadius: 20,
-  border: "1px solid rgba(255,255,255,0.10)",
-  background: "linear-gradient(180deg, rgba(10,18,34,.95), rgba(8,14,26,.98))",
-  padding: 16
-};
