@@ -3,7 +3,6 @@ import requests
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from streamlit_autorefresh import st_autorefresh
 
 API_KEY_CMC = "910c7033d8e44e1984891d27e4e00222"
 
@@ -348,7 +347,6 @@ def criar_grafico_candles(df, symbol="BTCUSDT", timeframe="1m", expandido=False)
         col=1
     )
 
-    # chave fixa para preservar zoom/pan enquanto ativo/timeframe forem os mesmos
     ui_key = f"{symbol}-{timeframe}-{'exp' if expandido else 'norm'}"
 
     fig.update_layout(
@@ -569,10 +567,6 @@ def inicializar_estado():
         st.session_state.market_data = None
     if "chart_expandido" not in st.session_state:
         st.session_state.chart_expandido = False
-    if "auto_refresh_chart" not in st.session_state:
-        st.session_state.auto_refresh_chart = False
-    if "refresh_seconds" not in st.session_state:
-        st.session_state.refresh_seconds = 5
 
 
 def botao_atualizar():
@@ -611,39 +605,16 @@ def sidebar_terminal():
     return modulo
 
 
-# =========================
-# CONTROLES DE REFRESH
-# =========================
-def controles_refresh_chart():
-    c1, c2, c3 = st.columns([1.2, 1, 1])
+def barra_controle_chart():
+    c1, c2 = st.columns([1, 1])
 
     with c1:
-        st.session_state.auto_refresh_chart = st.toggle(
-            "Autoatualizar gráfico",
-            value=st.session_state.auto_refresh_chart
-        )
+        st.caption("Modo estável ativado")
+        st.caption("Sem auto refresh para não pulsar nem resetar o enquadramento")
 
     with c2:
-        opcoes = [3, 5, 10, 15, 30]
-        atual = st.session_state.refresh_seconds
-        if atual not in opcoes:
-            atual = 5
-
-        st.session_state.refresh_seconds = st.selectbox(
-            "Atualizar a cada",
-            opcoes,
-            index=opcoes.index(atual)
-        )
-
-    with c3:
-        if st.button("Atualizar agora", use_container_width=True):
+        if st.button("Atualizar gráfico agora", use_container_width=True):
             st.rerun()
-
-    if st.session_state.auto_refresh_chart:
-        st_autorefresh(
-            interval=st.session_state.refresh_seconds * 1000,
-            key="chartrefresh"
-        )
 
 
 # =========================
@@ -776,14 +747,13 @@ def tela_radar():
 
 def tela_chart():
     cabecalho_principal()
+    barra_controle_chart()
+    st.write("")
 
     ativos = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"]
     timeframes = ["1m", "5m", "15m", "1h", "4h", "1d"]
     modos = ["Limpo", "Estrutural", "Operacional", "IA"]
     camadas = ["Volume", "Confluência", "Fluxo", "Execução"]
-
-    controles_refresh_chart()
-    st.write("")
 
     if not st.session_state.chart_expandido:
         st.subheader("📈 Atlas Chart")
@@ -845,7 +815,7 @@ def tela_chart():
                 <div class="soft-card">
                     <div class="card-title">Indicadores / Volume</div>
                     <div class="small">
-                        Zoom e pan preservados. Auto refresh desligado por padrão para não pulsar.
+                        Layout estável. Sem pulsação. Atualização manual para manter a navegação natural.
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -879,10 +849,10 @@ def tela_chart():
                     st.metric("Preço live", f"{preco_live:.4f}")
 
             st.write("**Leitura rápida**")
-            st.write("- Gráfico real ativo")
-            st.write("- Volume ativo")
+            st.write("- Gráfico estável")
             st.write("- Zoom preservado")
-            st.write("- Refresh opcional")
+            st.write("- Sem pulsação")
+            st.write("- Atualização manual")
 
     else:
         st.markdown("""
