@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import {
-  createChart,
-  ColorType,
-  CandlestickSeries,
-  HistogramSeries,
-} from "lightweight-charts";
+import { createChart, ColorType } from "lightweight-charts";
 
 export default function AtlasChartPro() {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
@@ -33,7 +28,7 @@ export default function AtlasChartPro() {
       },
     });
 
-    const candleSeries = chart.addSeries(CandlestickSeries, {
+    const candleSeries = chart.addCandlestickSeries({
       upColor: "#22c55e",
       downColor: "#ef4444",
       borderUpColor: "#22c55e",
@@ -52,9 +47,12 @@ export default function AtlasChartPro() {
       { time: "2025-03-07", open: 44320, high: 44800, low: 44000, close: 44110 },
     ]);
 
-    const volumeSeries = chart.addSeries(HistogramSeries, {
-      priceFormat: { type: "volume" },
+    const volumeSeries = chart.addHistogramSeries({
+      priceFormat: {
+        type: "volume",
+      },
       priceScaleId: "",
+      color: "#3b82f6",
     });
 
     volumeSeries.priceScale().applyOptions({
