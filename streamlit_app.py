@@ -1,3 +1,4 @@
+import math
 import streamlit as st
 import requests
 import pandas as pd
@@ -22,7 +23,7 @@ st.markdown(
     }
 
     .block-container {
-        padding-top: 1rem;
+        padding-top: 0.8rem;
         padding-bottom: 1rem;
     }
 
@@ -106,6 +107,9 @@ STABLECOINS = {
 }
 
 
+# =========================
+# DADOS DE MERCADO
+# =========================
 def buscar_mercado_cmc(limite=300):
     url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
     headers = {
@@ -130,8 +134,12 @@ def buscar_mercado_cmc(limite=300):
         return []
 
 
+# =========================
+# FEEDS DO GRÁFICO
+# =========================
 def _intervalo_kucoin(intervalo_streamlit):
     mapa = {
+        "1m": "1min",
         "5m": "5min",
         "15m": "15min",
         "1h": "1hour",
@@ -141,6 +149,18 @@ def _intervalo_kucoin(intervalo_streamlit):
     return mapa.get(intervalo_streamlit, "15min")
 
 
+def _intervalo_binance(intervalo_streamlit):
+    mapa = {
+        "1m": "1m",
+        "5m": "5m",
+        "15m": "15m",
+        "1h": "1h",
+        "4h": "4h",
+        "1d": "1d"
+    }
+    return mapa.get(intervalo_streamlit, "15m")
+
+
 def _symbol_kucoin(symbol):
     if symbol.endswith("USDT"):
         base = symbol[:-4]
@@ -148,11 +168,23 @@ def _symbol_kucoin(symbol):
     return symbol
 
 
+def _segundos_intervalo(intervalo):
+    mapa = {
+        "1m": 60,
+        "5m": 300,
+        "15m": 900,
+        "1h": 3600,
+        "4h": 14400,
+        "1d": 86400
+    }
+    return mapa.get(intervalo, 900)
+
+
 def buscar_klines_binance(symbol="BTCUSDT", interval="15m", limit=300):
     url = "https://api.binance.com/api/v3/klines"
     params = {
         "symbol": symbol,
-        "interval": interval,
+        "interval": _intervalo_binance(interval),
         "limit": limit
     }
 
@@ -209,23 +241,70 @@ def buscar_klines_kucoin(symbol="BTCUSDT", interval="15m", limit=300):
     return df[["open_time", "open", "high", "low", "close", "volume", "close_time"]]
 
 
+def buscar_preco_live_kucoin(symbol="BTCUSDT"):
+    kucoin_symbol = _symbol_kucoin(symbol)
+    url = "https://api.kucoin.com/api/v1/market/orderbook/level1"
+    params = {"symbol": kucoin_symbol}
+
+    resposta = requests.get(url, params=params, timeout=10)
+    resposta.raise_for_status()
+    payload = resposta.json()
+    data = payload.get("data", {})
+
+    price = float(data.get("price", 0))
+    time_ms = int(data.get("time", 0)) if data.get("time") else 0
+    dt = pd.to_datetime(time_ms, unit="ms") if time_ms else pd.Timestamp.utcnow()
+
+    return price, dt
+
+
+def atualizar_ultima_vela_com_preco_live(df, symbol="BTCUSDT", interval="15m"):
+    if df.empty:
+        return df, None
+
+    try:
+        preco_live, tempo_live = buscar_preco_live_kucoin(symbol)
+    except Exception:
+        return df, None
+
+    if preco_live <= 0:
+        return df, None
+
+    df = df.copy()
+    idx = df.index[-1]
+
+    df.at[idx, "close"] = preco_live
+    df.at[idx, "high"] = max(float(df.at[idx, "high"]), preco_live)
+    df.at[idx, "low"] = min(float(df.at[idx, "low"]), preco_live)
+    df.at[idx, "close_time"] = tempo_live
+
+    return df, preco_live
+
+
 def buscar_klines(symbol="BTCUSDT", interval="15m", limit=300):
     erros = []
 
     try:
-        return buscar_klines_binance(symbol, interval, limit), "Binance"
-    except Exception as e:
-        erros.append(f"Binance: {e}")
-
-    try:
-        return buscar_klines_kucoin(symbol, interval, limit), "KuCoin"
+        df = buscar_klines_kucoin(symbol, interval, limit)
+        if not df.empty:
+            return df, "KuCoin"
     except Exception as e:
         erros.append(f"KuCoin: {e}")
+
+    try:
+        df = buscar_klines_binance(symbol, interval, limit)
+        if not df.empty:
+            return df, "Binance"
+    except Exception as e:
+        erros.append(f"Binance: {e}")
 
     st.error("Falha ao carregar candles. Fontes testadas: " + " | ".join(erros))
     return pd.DataFrame(), None
 
 
+# =========================
+# GRÁFICO
+# =========================
 def criar_grafico_candles(df, symbol="BTCUSDT", expandido=False):
     if df.empty:
         return None
@@ -234,7 +313,7 @@ def criar_grafico_candles(df, symbol="BTCUSDT", expandido=False):
         rows=2,
         cols=1,
         shared_xaxes=True,
-        vertical_spacing=0.03,
+        vertical_spacing=0.025,
         row_heights=[0.78, 0.22]
     )
 
@@ -245,7 +324,11 @@ def criar_grafico_candles(df, symbol="BTCUSDT", expandido=False):
             high=df["high"],
             low=df["low"],
             close=df["close"],
-            name=symbol
+            name=symbol,
+            increasing_line_color="#72f3a0",
+            decreasing_line_color="#ff9ca9",
+            increasing_fillcolor="rgba(114,243,160,0.35)",
+            decreasing_fillcolor="rgba(255,156,169,0.35)"
         ),
         row=1,
         col=1
@@ -261,28 +344,77 @@ def criar_grafico_candles(df, symbol="BTCUSDT", expandido=False):
             x=df["open_time"],
             y=df["volume"],
             name="Volume",
-            marker_color=volume_colors
+            marker_color=volume_colors,
+            opacity=0.9
         ),
         row=2,
         col=1
     )
 
+    ultimo_preco = float(df["close"].iloc[-1])
+
+    fig.add_hline(
+        y=ultimo_preco,
+        line_dash="dot",
+        line_color="rgba(255,255,255,0.35)",
+        row=1,
+        col=1
+    )
+
     fig.update_layout(
-        height=850 if expandido else 620,
+        height=920 if expandido else 650,
         paper_bgcolor="#08111f",
         plot_bgcolor="#08111f",
         font=dict(color="white"),
-        margin=dict(l=10, r=10, t=30, b=10),
+        margin=dict(l=8, r=8, t=24, b=8),
         xaxis_rangeslider_visible=False,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0)
+        hovermode="x unified",
+        dragmode="pan",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0
+        )
     )
 
-    fig.update_xaxes(showgrid=True, gridcolor="rgba(120,170,255,0.08)", zeroline=False)
-    fig.update_yaxes(showgrid=True, gridcolor="rgba(120,170,255,0.08)", zeroline=False)
+    fig.update_xaxes(
+        showgrid=True,
+        gridcolor="rgba(120,170,255,0.07)",
+        zeroline=False,
+        showspikes=True,
+        spikemode="across",
+        spikesnap="cursor",
+        spikecolor="rgba(255,255,255,0.22)"
+    )
+
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor="rgba(120,170,255,0.07)",
+        zeroline=False,
+        fixedrange=False
+    )
 
     return fig
 
 
+PLOTLY_CONFIG = {
+    "displaylogo": False,
+    "scrollZoom": True,
+    "responsive": True,
+    "doubleClick": "reset",
+    "modeBarButtonsToRemove": [
+        "select2d",
+        "lasso2d",
+        "autoScale2d"
+    ]
+}
+
+
+# =========================
+# REGRAS DE SCORE
+# =========================
 def definir_status(valor):
     if valor > 0.5:
         return "FORTE 🟢"
@@ -353,6 +485,9 @@ def sinal_texto(score100):
     return "Venda forte"
 
 
+# =========================
+# DATASET GERAL
+# =========================
 def gerar_dataset_mercado():
     dados = buscar_mercado_cmc(300)
     if not dados:
@@ -435,6 +570,9 @@ def gerar_dataset_mercado():
     }
 
 
+# =========================
+# ESTADO
+# =========================
 def inicializar_estado():
     if "market_data" not in st.session_state:
         st.session_state.market_data = None
@@ -443,7 +581,7 @@ def inicializar_estado():
     if "auto_refresh_chart" not in st.session_state:
         st.session_state.auto_refresh_chart = True
     if "refresh_seconds" not in st.session_state:
-        st.session_state.refresh_seconds = 15
+        st.session_state.refresh_seconds = 2
 
 
 def botao_atualizar():
@@ -482,8 +620,11 @@ def sidebar_terminal():
     return modulo
 
 
+# =========================
+# CONTROLES DE REFRESH
+# =========================
 def controles_refresh_chart():
-    c1, c2, c3 = st.columns([1, 1, 1])
+    c1, c2, c3 = st.columns([1.2, 1, 1])
 
     with c1:
         st.session_state.auto_refresh_chart = st.toggle(
@@ -492,10 +633,15 @@ def controles_refresh_chart():
         )
 
     with c2:
+        opcoes = [2, 3, 5, 10, 15, 30]
+        atual = st.session_state.refresh_seconds
+        if atual not in opcoes:
+            atual = 5
+
         st.session_state.refresh_seconds = st.selectbox(
             "Atualizar a cada",
-            [5, 10, 15, 30, 60],
-            index=[5, 10, 15, 30, 60].index(st.session_state.refresh_seconds)
+            opcoes,
+            index=opcoes.index(atual)
         )
 
     with c3:
@@ -503,9 +649,15 @@ def controles_refresh_chart():
             st.rerun()
 
     if st.session_state.auto_refresh_chart:
-        st_autorefresh(interval=st.session_state.refresh_seconds * 1000, key="chartrefresh")
+        st_autorefresh(
+            interval=st.session_state.refresh_seconds * 1000,
+            key="chartrefresh"
+        )
 
 
+# =========================
+# TELAS
+# =========================
 def tela_radar():
     cabecalho_principal()
 
@@ -635,7 +787,7 @@ def tela_chart():
     cabecalho_principal()
 
     ativos = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"]
-    timeframes = ["5m", "15m", "1h", "4h", "1d"]
+    timeframes = ["1m", "5m", "15m", "1h", "4h", "1d"]
     modos = ["Limpo", "Estrutural", "Operacional", "IA"]
     camadas = ["Volume", "Confluência", "Fluxo", "Execução"]
 
@@ -650,7 +802,7 @@ def tela_chart():
         with topo1:
             ativo = st.selectbox("Ativo", ativos)
         with topo2:
-            timeframe = st.selectbox("Timeframe", timeframes, index=1)
+            timeframe = st.selectbox("Timeframe", timeframes, index=0)
         with topo3:
             modo = st.selectbox("Modo", modos, index=1)
         with topo4:
@@ -662,7 +814,9 @@ def tela_chart():
             st.session_state.chart_expandido = True
             st.rerun()
 
-        df_chart, fonte = buscar_klines(ativo, timeframe, 220)
+        limite = 180 if timeframe in ["1m", "5m"] else 220
+        df_chart, fonte = buscar_klines(ativo, timeframe, limite)
+        df_chart, preco_live = atualizar_ultima_vela_com_preco_live(df_chart, ativo, timeframe)
         fig = criar_grafico_candles(df_chart, ativo, expandido=False)
 
         tools, main, right = st.columns([0.8, 3.8, 1.3])
@@ -689,7 +843,7 @@ def tela_chart():
                 st.caption(f"Fonte do gráfico: {fonte}")
 
             if fig is not None:
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
             else:
                 st.warning("Não foi possível carregar o gráfico agora.")
 
@@ -700,7 +854,7 @@ def tela_chart():
                 <div class="soft-card">
                     <div class="card-title">Indicadores / Volume</div>
                     <div class="small">
-                        Candles e volume já ativos. Próximo passo: indicadores, fluxo e confluência.
+                        Vela atual viva com preço live. Zoom no mouse ativo. Arraste para navegar.
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -730,11 +884,14 @@ def tela_chart():
                 st.metric("Último preço", f"{ultimo['close']:.4f}", f"{variacao:.2f}%")
                 st.metric("Volume", f"{ultimo['volume']:.2f}")
 
+                if preco_live is not None:
+                    st.metric("Preço live", f"{preco_live:.4f}")
+
             st.write("**Leitura rápida**")
             st.write("- Gráfico real ativo")
             st.write("- Volume ativo")
-            st.write("- Candles ativos")
-            st.write("- Auto refresh disponível")
+            st.write("- Vela atual viva")
+            st.write("- Zoom e pan habilitados")
 
     else:
         st.markdown("""
@@ -745,7 +902,7 @@ def tela_chart():
         }
 
         .block-container {
-            padding-top: 0.6rem !important;
+            padding-top: 0.5rem !important;
             padding-left: 1rem !important;
             padding-right: 1rem !important;
             max-width: 100% !important;
@@ -766,7 +923,7 @@ def tela_chart():
         with topo1:
             ativo = st.selectbox("Ativo", ativos, key="pro_ativo")
         with topo2:
-            timeframe = st.selectbox("Timeframe", timeframes, index=1, key="pro_tf")
+            timeframe = st.selectbox("Timeframe", timeframes, index=0, key="pro_tf")
         with topo3:
             modo = st.selectbox("Modo", modos, index=1, key="pro_modo")
         with topo4:
@@ -778,14 +935,16 @@ def tela_chart():
             st.session_state.chart_expandido = False
             st.rerun()
 
-        df_chart, fonte = buscar_klines(ativo, timeframe, 320)
+        limite = 260 if timeframe in ["1m", "5m"] else 320
+        df_chart, fonte = buscar_klines(ativo, timeframe, limite)
+        df_chart, preco_live = atualizar_ultima_vela_com_preco_live(df_chart, ativo, timeframe)
         fig = criar_grafico_candles(df_chart, ativo, expandido=True)
 
         if fonte:
             st.caption(f"Fonte do gráfico: {fonte}")
 
         if fig is not None:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
         else:
             st.warning("Não foi possível carregar o gráfico expandido agora.")
 
@@ -816,10 +975,11 @@ def tela_chart():
             """, unsafe_allow_html=True)
 
         with info4:
+            texto_live = f"Preço live: {preco_live:.4f}" if preco_live is not None else f"Modo atual: {modo}"
             st.markdown(f"""
             <div class="top-mini">
                 <div class="card-title">IA</div>
-                <div class="small">Modo atual: {modo}</div>
+                <div class="small">{texto_live}</div>
             </div>
             """, unsafe_allow_html=True)
 
