@@ -1,4 +1,3 @@
-import math
 import streamlit as st
 import requests
 import pandas as pd
@@ -168,18 +167,6 @@ def _symbol_kucoin(symbol):
     return symbol
 
 
-def _segundos_intervalo(intervalo):
-    mapa = {
-        "1m": 60,
-        "5m": 300,
-        "15m": 900,
-        "1h": 3600,
-        "4h": 14400,
-        "1d": 86400
-    }
-    return mapa.get(intervalo, 900)
-
-
 def buscar_klines_binance(symbol="BTCUSDT", interval="15m", limit=300):
     url = "https://api.binance.com/api/v3/klines"
     params = {
@@ -258,7 +245,7 @@ def buscar_preco_live_kucoin(symbol="BTCUSDT"):
     return price, dt
 
 
-def atualizar_ultima_vela_com_preco_live(df, symbol="BTCUSDT", interval="15m"):
+def atualizar_ultima_vela_com_preco_live(df, symbol="BTCUSDT"):
     if df.empty:
         return df, None
 
@@ -305,7 +292,7 @@ def buscar_klines(symbol="BTCUSDT", interval="15m", limit=300):
 # =========================
 # GRÁFICO
 # =========================
-def criar_grafico_candles(df, symbol="BTCUSDT", expandido=False):
+def criar_grafico_candles(df, symbol="BTCUSDT", timeframe="1m", expandido=False):
     if df.empty:
         return None
 
@@ -361,6 +348,9 @@ def criar_grafico_candles(df, symbol="BTCUSDT", expandido=False):
         col=1
     )
 
+    # chave fixa para preservar zoom/pan enquanto ativo/timeframe forem os mesmos
+    ui_key = f"{symbol}-{timeframe}-{'exp' if expandido else 'norm'}"
+
     fig.update_layout(
         height=920 if expandido else 650,
         paper_bgcolor="#08111f",
@@ -370,6 +360,7 @@ def criar_grafico_candles(df, symbol="BTCUSDT", expandido=False):
         xaxis_rangeslider_visible=False,
         hovermode="x unified",
         dragmode="pan",
+        uirevision=ui_key,
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -579,9 +570,9 @@ def inicializar_estado():
     if "chart_expandido" not in st.session_state:
         st.session_state.chart_expandido = False
     if "auto_refresh_chart" not in st.session_state:
-        st.session_state.auto_refresh_chart = True
+        st.session_state.auto_refresh_chart = False
     if "refresh_seconds" not in st.session_state:
-        st.session_state.refresh_seconds = 2
+        st.session_state.refresh_seconds = 5
 
 
 def botao_atualizar():
@@ -633,7 +624,7 @@ def controles_refresh_chart():
         )
 
     with c2:
-        opcoes = [2, 3, 5, 10, 15, 30]
+        opcoes = [3, 5, 10, 15, 30]
         atual = st.session_state.refresh_seconds
         if atual not in opcoes:
             atual = 5
@@ -816,8 +807,8 @@ def tela_chart():
 
         limite = 180 if timeframe in ["1m", "5m"] else 220
         df_chart, fonte = buscar_klines(ativo, timeframe, limite)
-        df_chart, preco_live = atualizar_ultima_vela_com_preco_live(df_chart, ativo, timeframe)
-        fig = criar_grafico_candles(df_chart, ativo, expandido=False)
+        df_chart, preco_live = atualizar_ultima_vela_com_preco_live(df_chart, ativo)
+        fig = criar_grafico_candles(df_chart, ativo, timeframe, expandido=False)
 
         tools, main, right = st.columns([0.8, 3.8, 1.3])
 
@@ -854,7 +845,7 @@ def tela_chart():
                 <div class="soft-card">
                     <div class="card-title">Indicadores / Volume</div>
                     <div class="small">
-                        Vela atual viva com preço live. Zoom no mouse ativo. Arraste para navegar.
+                        Zoom e pan preservados. Auto refresh desligado por padrão para não pulsar.
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -890,8 +881,8 @@ def tela_chart():
             st.write("**Leitura rápida**")
             st.write("- Gráfico real ativo")
             st.write("- Volume ativo")
-            st.write("- Vela atual viva")
-            st.write("- Zoom e pan habilitados")
+            st.write("- Zoom preservado")
+            st.write("- Refresh opcional")
 
     else:
         st.markdown("""
@@ -937,8 +928,8 @@ def tela_chart():
 
         limite = 260 if timeframe in ["1m", "5m"] else 320
         df_chart, fonte = buscar_klines(ativo, timeframe, limite)
-        df_chart, preco_live = atualizar_ultima_vela_com_preco_live(df_chart, ativo, timeframe)
-        fig = criar_grafico_candles(df_chart, ativo, expandido=True)
+        df_chart, preco_live = atualizar_ultima_vela_com_preco_live(df_chart, ativo)
+        fig = criar_grafico_candles(df_chart, ativo, timeframe, expandido=True)
 
         if fonte:
             st.caption(f"Fonte do gráfico: {fonte}")
