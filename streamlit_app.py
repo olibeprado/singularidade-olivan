@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from streamlit_autorefresh import st_autorefresh
 
 API_KEY_CMC = "910c7033d8e44e1984891d27e4e00222"
 
@@ -192,7 +193,6 @@ def buscar_klines_kucoin(symbol="BTCUSDT", interval="15m", limit=300):
     if not data:
         return pd.DataFrame()
 
-    # retorno vem em ordem reversa
     df = pd.DataFrame(data, columns=[
         "time", "open", "close", "high", "low", "volume", "turnover"
     ])
@@ -440,6 +440,10 @@ def inicializar_estado():
         st.session_state.market_data = None
     if "chart_expandido" not in st.session_state:
         st.session_state.chart_expandido = False
+    if "auto_refresh_chart" not in st.session_state:
+        st.session_state.auto_refresh_chart = True
+    if "refresh_seconds" not in st.session_state:
+        st.session_state.refresh_seconds = 15
 
 
 def botao_atualizar():
@@ -476,6 +480,30 @@ def sidebar_terminal():
             st.info("Aguardando leitura")
 
     return modulo
+
+
+def controles_refresh_chart():
+    c1, c2, c3 = st.columns([1, 1, 1])
+
+    with c1:
+        st.session_state.auto_refresh_chart = st.toggle(
+            "Autoatualizar gráfico",
+            value=st.session_state.auto_refresh_chart
+        )
+
+    with c2:
+        st.session_state.refresh_seconds = st.selectbox(
+            "Atualizar a cada",
+            [5, 10, 15, 30, 60],
+            index=[5, 10, 15, 30, 60].index(st.session_state.refresh_seconds)
+        )
+
+    with c3:
+        if st.button("Atualizar agora", use_container_width=True):
+            st.rerun()
+
+    if st.session_state.auto_refresh_chart:
+        st_autorefresh(interval=st.session_state.refresh_seconds * 1000, key="chartrefresh")
 
 
 def tela_radar():
@@ -611,6 +639,9 @@ def tela_chart():
     modos = ["Limpo", "Estrutural", "Operacional", "IA"]
     camadas = ["Volume", "Confluência", "Fluxo", "Execução"]
 
+    controles_refresh_chart()
+    st.write("")
+
     if not st.session_state.chart_expandido:
         st.subheader("📈 Atlas Chart")
 
@@ -703,7 +734,7 @@ def tela_chart():
             st.write("- Gráfico real ativo")
             st.write("- Volume ativo")
             st.write("- Candles ativos")
-            st.write("- Próximo: fluxo e confluência")
+            st.write("- Auto refresh disponível")
 
     else:
         st.markdown("""
