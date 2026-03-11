@@ -129,6 +129,24 @@ def buscar_mercado_cmc(limite=300):
         return []
 
 
+def _intervalo_kucoin(intervalo_streamlit):
+    mapa = {
+        "5m": "5min",
+        "15m": "15min",
+        "1h": "1hour",
+        "4h": "4hour",
+        "1d": "1day"
+    }
+    return mapa.get(intervalo_streamlit, "15min")
+
+
+def _symbol_kucoin(symbol):
+    if symbol.endswith("USDT"):
+        base = symbol[:-4]
+        return f"{base}-USDT"
+    return symbol
+
+
 def buscar_klines_binance(symbol="BTCUSDT", interval="15m", limit=300):
     url = "https://api.binance.com/api/v3/klines"
     params = {
@@ -137,28 +155,75 @@ def buscar_klines_binance(symbol="BTCUSDT", interval="15m", limit=300):
         "limit": limit
     }
 
-    try:
-        resposta = requests.get(url, params=params, timeout=20)
-        resposta.raise_for_status()
-        data = resposta.json()
+    resposta = requests.get(url, params=params, timeout=20)
+    resposta.raise_for_status()
+    data = resposta.json()
 
-        df = pd.DataFrame(data, columns=[
-            "open_time", "open", "high", "low", "close", "volume",
-            "close_time", "quote_asset_volume", "number_of_trades",
-            "taker_buy_base_asset_volume", "taker_buy_quote_asset_volume", "ignore"
-        ])
+    df = pd.DataFrame(data, columns=[
+        "open_time", "open", "high", "low", "close", "volume",
+        "close_time", "quote_asset_volume", "number_of_trades",
+        "taker_buy_base_asset_volume", "taker_buy_quote_asset_volume", "ignore"
+    ])
 
-        df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
-        df["close_time"] = pd.to_datetime(df["close_time"], unit="ms")
+    df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
+    df["close_time"] = pd.to_datetime(df["close_time"], unit="ms")
 
-        for col in ["open", "high", "low", "close", "volume"]:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+    for col in ["open", "high", "low", "close", "volume"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
 
-        return df
+    return df[["open_time", "open", "high", "low", "close", "volume", "close_time"]]
 
-    except Exception as e:
-        st.error(f"Erro ao buscar candles da Binance: {e}")
+
+def buscar_klines_kucoin(symbol="BTCUSDT", interval="15m", limit=300):
+    kucoin_symbol = _symbol_kucoin(symbol)
+    kucoin_interval = _intervalo_kucoin(interval)
+
+    url = "https://api.kucoin.com/api/v1/market/candles"
+    params = {
+        "type": kucoin_interval,
+        "symbol": kucoin_symbol
+    }
+
+    resposta = requests.get(url, params=params, timeout=20)
+    resposta.raise_for_status()
+    payload = resposta.json()
+
+    data = payload.get("data", [])
+    if not data:
         return pd.DataFrame()
+
+    # retorno vem em ordem reversa
+    df = pd.DataFrame(data, columns=[
+        "time", "open", "close", "high", "low", "volume", "turnover"
+    ])
+
+    df["time"] = pd.to_datetime(pd.to_numeric(df["time"]), unit="s")
+    df["close_time"] = df["time"]
+
+    for col in ["open", "high", "low", "close", "volume"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    df = df.rename(columns={"time": "open_time"})
+    df = df.sort_values("open_time").tail(limit).reset_index(drop=True)
+
+    return df[["open_time", "open", "high", "low", "close", "volume", "close_time"]]
+
+
+def buscar_klines(symbol="BTCUSDT", interval="15m", limit=300):
+    erros = []
+
+    try:
+        return buscar_klines_binance(symbol, interval, limit), "Binance"
+    except Exception as e:
+        erros.append(f"Binance: {e}")
+
+    try:
+        return buscar_klines_kucoin(symbol, interval, limit), "KuCoin"
+    except Exception as e:
+        erros.append(f"KuCoin: {e}")
+
+    st.error("Falha ao carregar candles. Fontes testadas: " + " | ".join(erros))
+    return pd.DataFrame(), None
 
 
 def criar_grafico_candles(df, symbol="BTCUSDT", expandido=False):
@@ -566,7 +631,7 @@ def tela_chart():
             st.session_state.chart_expandido = True
             st.rerun()
 
-        df_chart = buscar_klines_binance(ativo, timeframe, 220)
+        df_chart, fonte = buscar_klines(ativo, timeframe, 220)
         fig = criar_grafico_candles(df_chart, ativo, expandido=False)
 
         tools, main, right = st.columns([0.8, 3.8, 1.3])
@@ -589,6 +654,9 @@ def tela_chart():
             """, unsafe_allow_html=True)
 
         with main:
+            if fonte:
+                st.caption(f"Fonte do gráfico: {fonte}")
+
             if fig is not None:
                 st.plotly_chart(fig, use_container_width=True)
             else:
@@ -679,8 +747,11 @@ def tela_chart():
             st.session_state.chart_expandido = False
             st.rerun()
 
-        df_chart = buscar_klines_binance(ativo, timeframe, 320)
+        df_chart, fonte = buscar_klines(ativo, timeframe, 320)
         fig = criar_grafico_candles(df_chart, ativo, expandido=True)
+
+        if fonte:
+            st.caption(f"Fonte do gráfico: {fonte}")
 
         if fig is not None:
             st.plotly_chart(fig, use_container_width=True)
