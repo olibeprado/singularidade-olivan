@@ -19,7 +19,7 @@ export default function AtlasChartPro() {
   const volumeRef = useRef<any>(null);
 
   const [symbol, setSymbol] = useState("BTCUSDT");
-  const [interval, setInterval] = useState("1m");
+  const [interval, setChartInterval] = useState("1m");
   const [source, setSource] = useState("carregando...");
 
   useEffect(() => {
@@ -139,11 +139,11 @@ export default function AtlasChartPro() {
     }
 
     loadData();
-    const timer = setInterval(loadData, 15000);
+    const timer = window.setInterval(loadData, 15000);
 
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      window.clearInterval(timer);
     };
   }, [symbol, interval]);
 
@@ -153,10 +153,10 @@ export default function AtlasChartPro() {
         <button onClick={() => setSymbol("BTCUSDT")}>BTCUSDT</button>
         <button onClick={() => setSymbol("ETHUSDT")}>ETHUSDT</button>
         <button onClick={() => setSymbol("SOLUSDT")}>SOLUSDT</button>
-        <button onClick={() => setInterval("1m")}>1m</button>
-        <button onClick={() => setInterval("5m")}>5m</button>
-        <button onClick={() => setInterval("15m")}>15m</button>
-        <button onClick={() => setInterval("1h")}>1h</button>
+        <button onClick={() => setChartInterval("1m")}>1m</button>
+        <button onClick={() => setChartInterval("5m")}>5m</button>
+        <button onClick={() => setChartInterval("15m")}>15m</button>
+        <button onClick={() => setChartInterval("1h")}>1h</button>
       </div>
 
       <div style={{ color: "#cbd5e1", marginBottom: 10 }}>
