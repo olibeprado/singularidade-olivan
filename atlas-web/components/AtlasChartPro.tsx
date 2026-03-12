@@ -31,8 +31,8 @@ function StatCard({
         background: "linear-gradient(180deg, rgba(14,21,39,0.95), rgba(7,11,22,0.98))",
         border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: 12,
-        padding: "6px 10px",
-        minHeight: 50,
+        padding: "5px 9px",
+        minHeight: 46,
         boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
       }}
     >
@@ -149,7 +149,7 @@ export default function AtlasChartPro() {
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: 700,
+      height: 780,
       layout: {
         background: { type: ColorType.Solid, color: "#09111f" },
         textColor: "#8ea2c7",
@@ -330,8 +330,8 @@ export default function AtlasChartPro() {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div
                 style={{
-                  width: 52,
-                  height: 52,
+                  width: 62,
+                  height: 62,
                   borderRadius: 12,
                   background: "rgba(255,255,255,0.02)",
                   border: "1px solid rgba(255,255,255,0.05)",
@@ -345,8 +345,8 @@ export default function AtlasChartPro() {
                 <Image
                   src="/logo-singularidade.png"
                   alt="Logo Singularidade"
-                  width={46}
-                  height={46}
+                  width={56}
+                  height={56}
                   style={{
                     objectFit: "cover",
                     opacity: 1,
@@ -355,10 +355,10 @@ export default function AtlasChartPro() {
               </div>
 
               <div style={{ display: "flex", alignItems: "baseline", gap: 7 }}>
-                <span style={{ fontWeight: 900, fontSize: 16, letterSpacing: 0.45 }}>
+                <span style={{ fontWeight: 900, fontSize: 17, letterSpacing: 0.45 }}>
                   SINGULARIDADE
                 </span>
-                <span style={{ color: "#93a7ca", fontSize: 11, fontWeight: 800 }}>OBP</span>
+                <span style={{ color: "#93a7ca", fontSize: 12, fontWeight: 800 }}>OBP</span>
               </div>
             </div>
 
@@ -478,7 +478,7 @@ export default function AtlasChartPro() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "54px minmax(0, 1fr) 300px",
+            gridTemplateColumns: "54px minmax(0, 1fr) 280px",
             gap: 10,
             alignItems: "start",
           }}
@@ -554,7 +554,7 @@ export default function AtlasChartPro() {
               ref={chartContainerRef}
               style={{
                 width: "100%",
-                height: 700,
+                height: 780,
               }}
             />
           </div>
@@ -672,7 +672,7 @@ export default function AtlasChartPro() {
 
         <div
           style={{
-            marginTop: 12,
+            marginTop: 10,
             background: "linear-gradient(180deg, rgba(13,20,38,0.98), rgba(8,12,24,0.98))",
             border: "1px solid rgba(255,255,255,0.07)",
             borderRadius: 20,
