@@ -31,8 +31,8 @@ function StatCard({
         background: "linear-gradient(180deg, rgba(14,21,39,0.95), rgba(7,11,22,0.98))",
         border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: 12,
-        padding: "8px 12px",
-        minHeight: 56,
+        padding: "6px 10px",
+        minHeight: 50,
         boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
       }}
     >
@@ -40,7 +40,7 @@ function StatCard({
         style={{
           fontSize: 10,
           color: "#7f93b9",
-          marginBottom: 6,
+          marginBottom: 5,
           letterSpacing: 0.4,
           textTransform: "uppercase",
         }}
@@ -49,7 +49,7 @@ function StatCard({
       </div>
       <div
         style={{
-          fontSize: 16,
+          fontSize: 15,
           fontWeight: 800,
           color: positive === undefined ? "#eef4ff" : positive ? "#2fe19a" : "#ff6b81",
           lineHeight: 1.1,
@@ -76,7 +76,7 @@ function RightRow({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "9px 0",
+        padding: "8px 0",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
         gap: 12,
       }}
@@ -149,7 +149,7 @@ export default function AtlasChartPro() {
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: 640,
+      height: 700,
       layout: {
         background: { type: ColorType.Solid, color: "#09111f" },
         textColor: "#8ea2c7",
@@ -189,7 +189,7 @@ export default function AtlasChartPro() {
 
     volumeSeries.priceScale().applyOptions({
       scaleMargins: {
-        top: 0.84,
+        top: 0.85,
         bottom: 0,
       },
     });
@@ -323,15 +323,15 @@ export default function AtlasChartPro() {
             alignItems: "center",
             justifyContent: "space-between",
             gap: 14,
-            padding: "8px 16px 6px",
+            padding: "6px 14px 5px",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div
                 style={{
-                  width: 42,
-                  height: 42,
+                  width: 52,
+                  height: 52,
                   borderRadius: 12,
                   background: "rgba(255,255,255,0.02)",
                   border: "1px solid rgba(255,255,255,0.05)",
@@ -345,12 +345,11 @@ export default function AtlasChartPro() {
                 <Image
                   src="/logo-singularidade.png"
                   alt="Logo Singularidade"
-                  width={34}
-                  height={34}
+                  width={46}
+                  height={46}
                   style={{
-                    objectFit: "contain",
+                    objectFit: "cover",
                     opacity: 1,
-                    filter: "contrast(1.1) brightness(1.02)",
                   }}
                 />
               </div>
@@ -435,7 +434,7 @@ export default function AtlasChartPro() {
           style={{
             display: "flex",
             gap: 7,
-            padding: "0 16px 8px",
+            padding: "0 14px 6px",
             flexWrap: "wrap",
           }}
         >
@@ -479,7 +478,7 @@ export default function AtlasChartPro() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "58px minmax(0, 1fr) 320px",
+            gridTemplateColumns: "54px minmax(0, 1fr) 300px",
             gap: 10,
             alignItems: "start",
           }}
@@ -501,13 +500,13 @@ export default function AtlasChartPro() {
               <button
                 key={icon}
                 style={{
-                  width: 34,
-                  height: 34,
+                  width: 32,
+                  height: 32,
                   borderRadius: 10,
                   border: "1px solid rgba(255,255,255,0.06)",
                   background: "rgba(255,255,255,0.025)",
                   color: "#9fb3d4",
-                  fontSize: 15,
+                  fontSize: 14,
                   cursor: "pointer",
                 }}
               >
@@ -555,7 +554,7 @@ export default function AtlasChartPro() {
               ref={chartContainerRef}
               style={{
                 width: "100%",
-                height: 640,
+                height: 700,
               }}
             />
           </div>
