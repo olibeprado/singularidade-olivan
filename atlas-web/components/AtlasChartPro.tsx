@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createChart, ColorType, IChartApi, ISeriesApi } from "lightweight-charts";
+import { createChart, ColorType } from "lightweight-charts";
 
 type Candle = {
   time: string;
@@ -14,13 +14,13 @@ type Candle = {
 
 export default function AtlasChartPro() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const chartRef = useRef<any>(null);
+  const candleRef = useRef<any>(null);
+  const volumeRef = useRef<any>(null);
 
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [interval, setInterval] = useState("1m");
-  const [source, setSource] = useState("");
+  const [source, setSource] = useState("carregando...");
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -58,6 +58,7 @@ export default function AtlasChartPro() {
     const volumeSeries = chart.addHistogramSeries({
       priceFormat: { type: "volume" },
       priceScaleId: "",
+      color: "#3b82f6",
     });
 
     volumeSeries.priceScale().applyOptions({
@@ -71,15 +72,17 @@ export default function AtlasChartPro() {
     candleRef.current = candleSeries;
     volumeRef.current = volumeSeries;
 
-    const onResize = () => {
+    const handleResize = () => {
       if (!containerRef.current || !chartRef.current) return;
-      chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
+      chartRef.current.applyOptions({
+        width: containerRef.current.clientWidth,
+      });
     };
 
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", handleResize);
       chart.remove();
     };
   }, []);
@@ -88,35 +91,51 @@ export default function AtlasChartPro() {
     let cancelled = false;
 
     async function loadData() {
-      const res = await fetch(`/api/market?symbol=${symbol}&interval=${interval}&limit=200`);
-      const data = await res.json();
+      try {
+        const res = await fetch(
+          `/api/market?symbol=${symbol}&interval=${interval}&limit=200`
+        );
+        const data = await res.json();
 
-      if (cancelled || !candleRef.current || !volumeRef.current) return;
-      if (!res.ok) return;
+        if (cancelled) return;
 
-      setSource(data.source);
+        if (!res.ok || !data?.candles) {
+          setSource("erro");
+          return;
+        }
 
-      const candles: Candle[] = data.candles;
+        setSource(data.source || "desconhecida");
 
-      candleRef.current.setData(
-        candles.map((c) => ({
-          time: c.time,
-          open: c.open,
-          high: c.high,
-          low: c.low,
-          close: c.close,
-        }))
-      );
+        const candles: Candle[] = data.candles;
 
-      volumeRef.current.setData(
-        candles.map((c) => ({
-          time: c.time,
-          value: c.volume,
-          color: c.close >= c.open ? "#22c55e" : "#ef4444",
-        }))
-      );
+        if (candleRef.current) {
+          candleRef.current.setData(
+            candles.map((c) => ({
+              time: c.time,
+              open: c.open,
+              high: c.high,
+              low: c.low,
+              close: c.close,
+            }))
+          );
+        }
 
-      chartRef.current?.timeScale().fitContent();
+        if (volumeRef.current) {
+          volumeRef.current.setData(
+            candles.map((c) => ({
+              time: c.time,
+              value: c.volume,
+              color: c.close >= c.open ? "#22c55e" : "#ef4444",
+            }))
+          );
+        }
+
+        if (chartRef.current) {
+          chartRef.current.timeScale().fitContent();
+        }
+      } catch {
+        if (!cancelled) setSource("erro");
+      }
     }
 
     loadData();
@@ -129,7 +148,7 @@ export default function AtlasChartPro() {
   }, [symbol, interval]);
 
   return (
-    <div style={{ width: "100%" }}>
+    <div style={{ width: "100%", padding: "12px", background: "#070b16", minHeight: "100vh" }}>
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         <button onClick={() => setSymbol("BTCUSDT")}>BTCUSDT</button>
         <button onClick={() => setSymbol("ETHUSDT")}>ETHUSDT</button>
@@ -140,8 +159,8 @@ export default function AtlasChartPro() {
         <button onClick={() => setInterval("1h")}>1h</button>
       </div>
 
-      <div style={{ color: "#cbd5e1", marginBottom: 8 }}>
-        Fonte: {source || "carregando..."} | Par: {symbol} | Timeframe: {interval}
+      <div style={{ color: "#cbd5e1", marginBottom: 10 }}>
+        Fonte: {source} | Par: {symbol} | Timeframe: {interval}
       </div>
 
       <div
