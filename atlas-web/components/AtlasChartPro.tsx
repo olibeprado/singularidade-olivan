@@ -151,7 +151,12 @@ function ScannerRow({
 }) {
   const up =
     trend.toLowerCase().includes("forte") ||
-    trend.toLowerCase().includes("positivo");
+    trend.toLowerCase().includes("positivo") ||
+    trend.toLowerCase().includes("compra") ||
+    trend.toLowerCase().includes("alta") ||
+    trend.toLowerCase().includes("validação") ||
+    trend.toLowerCase().includes("confluência") ||
+    trend.toLowerCase().includes("assistida");
 
   return (
     <div
@@ -456,45 +461,307 @@ export default function AtlasChartPro() {
   const leftRows =
     activeModule === "Fluxo"
       ? [
-          { asset: "BTCUSDT", score: "91.7", trend: "Pressão Compradora", price: "$69,489" },
-          { asset: "ETHUSDT", score: "84.1", trend: "Fluxo Positivo", price: "$3,745" },
-          { asset: "SOLUSDT", score: "79.4", trend: "Absorção", price: "$168.40" },
-          { asset: "BNBUSDT", score: "72.3", trend: "Aceleração", price: "$611.22" },
+          {
+            asset: "BTCUSDT",
+            score: "91.7",
+            trend: "Pressão Compradora",
+            price: "$69,489",
+          },
+          {
+            asset: "ETHUSDT",
+            score: "84.1",
+            trend: "Fluxo Positivo",
+            price: "$3,745",
+          },
+          {
+            asset: "SOLUSDT",
+            score: "79.4",
+            trend: "Absorção",
+            price: "$168.40",
+          },
+          {
+            asset: "BNBUSDT",
+            score: "72.3",
+            trend: "Aceleração",
+            price: "$611.22",
+          },
         ]
       : activeModule === "IA Atlas"
       ? [
-          { asset: "BTCUSDT", score: "94.2", trend: "Convicção Alta", price: "$69,489" },
-          { asset: "ETHUSDT", score: "88.8", trend: "Compra Assistida", price: "$3,745" },
-          { asset: "SOLUSDT", score: "81.0", trend: "Positivo", price: "$168.40" },
-          { asset: "BNBUSDT", score: "76.4", trend: "Neutro Forte", price: "$611.22" },
+          {
+            asset: "BTCUSDT",
+            score: "94.2",
+            trend: "Convicção Alta",
+            price: "$69,489",
+          },
+          {
+            asset: "ETHUSDT",
+            score: "88.8",
+            trend: "Compra Assistida",
+            price: "$3,745",
+          },
+          {
+            asset: "SOLUSDT",
+            score: "81.0",
+            trend: "Positivo",
+            price: "$168.40",
+          },
+          {
+            asset: "BNBUSDT",
+            score: "76.4",
+            trend: "Neutro Forte",
+            price: "$611.22",
+          },
         ]
       : activeModule === "Estrutura"
       ? [
-          { asset: "BTCUSDT", score: "93.1", trend: "Estrutura Forte", price: "$69,489" },
-          { asset: "ETHUSDT", score: "86.7", trend: "Positivo", price: "$3,745" },
-          { asset: "SOLUSDT", score: "80.5", trend: "Continuidade", price: "$168.40" },
-          { asset: "BNBUSDT", score: "74.8", trend: "Base Sólida", price: "$611.22" },
+          {
+            asset: "BTCUSDT",
+            score: "93.1",
+            trend: "Estrutura Forte",
+            price: "$69,489",
+          },
+          {
+            asset: "ETHUSDT",
+            score: "86.7",
+            trend: "Positivo",
+            price: "$3,745",
+          },
+          {
+            asset: "SOLUSDT",
+            score: "80.5",
+            trend: "Continuidade",
+            price: "$168.40",
+          },
+          {
+            asset: "BNBUSDT",
+            score: "74.8",
+            trend: "Base Sólida",
+            price: "$611.22",
+          },
         ]
       : activeModule === "Euler"
       ? [
-          { asset: "BTCUSDT", score: "90.6", trend: "Validação Forte", price: "$69,489" },
-          { asset: "ETHUSDT", score: "83.3", trend: "Curvatura Positiva", price: "$3,745" },
-          { asset: "SOLUSDT", score: "78.1", trend: "Confirmação", price: "$168.40" },
-          { asset: "BNBUSDT", score: "71.9", trend: "Assimetria", price: "$611.22" },
+          {
+            asset: "BTCUSDT",
+            score: "90.6",
+            trend: "Validação Forte",
+            price: "$69,489",
+          },
+          {
+            asset: "ETHUSDT",
+            score: "83.3",
+            trend: "Curvatura Positiva",
+            price: "$3,745",
+          },
+          {
+            asset: "SOLUSDT",
+            score: "78.1",
+            trend: "Confirmação",
+            price: "$168.40",
+          },
+          {
+            asset: "BNBUSDT",
+            score: "71.9",
+            trend: "Assimetria",
+            price: "$611.22",
+          },
         ]
       : activeModule === "Singularidade"
       ? [
-          { asset: "BTCUSDT", score: "92.8", trend: "Pulso Forte", price: "$69,489" },
-          { asset: "ETHUSDT", score: "87.1", trend: "Confluência", price: "$3,745" },
-          { asset: "SOLUSDT", score: "82.2", trend: "Positivo", price: "$168.40" },
-          { asset: "BNBUSDT", score: "75.0", trend: "Aceleração", price: "$611.22" },
+          {
+            asset: "BTCUSDT",
+            score: "92.8",
+            trend: "Pulso Forte",
+            price: "$69,489",
+          },
+          {
+            asset: "ETHUSDT",
+            score: "87.1",
+            trend: "Confluência",
+            price: "$3,745",
+          },
+          {
+            asset: "SOLUSDT",
+            score: "82.2",
+            trend: "Positivo",
+            price: "$168.40",
+          },
+          {
+            asset: "BNBUSDT",
+            score: "75.0",
+            trend: "Aceleração",
+            price: "$611.22",
+          },
         ]
       : [
-          { asset: "BTCUSDT", score: "92.4", trend: "Compra Forte", price: "$69,489" },
-          { asset: "ETHUSDT", score: "87.2", trend: "Positivo", price: "$3,745" },
-          { asset: "SOLUSDT", score: "82.8", trend: "Positivo", price: "$168.40" },
-          { asset: "BNBUSDT", score: "74.9", trend: "Aceleração", price: "$611.22" },
+          {
+            asset: "BTCUSDT",
+            score: "92.4",
+            trend: "Compra Forte",
+            price: "$69,489",
+          },
+          {
+            asset: "ETHUSDT",
+            score: "87.2",
+            trend: "Positivo",
+            price: "$3,745",
+          },
+          {
+            asset: "SOLUSDT",
+            score: "82.8",
+            trend: "Positivo",
+            price: "$168.40",
+          },
+          {
+            asset: "BNBUSDT",
+            score: "74.9",
+            trend: "Aceleração",
+            price: "$611.22",
+          },
         ];
+
+  const pulseConfig = useMemo(() => {
+    switch (activeModule) {
+      case "Fluxo":
+        return {
+          title: "Fluxo de Mercado",
+          description:
+            "Mapeamento do fluxo, volume e pressão compradora versus vendedora com leitura de impulso e continuidade.",
+          stats: [
+            { title: "Fluxo", value: "Forte", positive: true },
+            {
+              title: "Volume",
+              value: volume === "--" ? "18.4" : volume,
+              positive: true,
+            },
+            { title: "Pressão", value: "Compradora", positive: true },
+          ],
+          path1:
+            "M0,98 C40,102 80,96 120,88 C170,72 210,68 250,58 C295,48 330,38 380,30 C430,22 470,18 520,16 C555,15 580,18 600,14",
+          path2:
+            "M0,116 C45,118 80,110 120,106 C170,100 210,92 250,88 C300,78 350,72 400,62 C455,56 510,48 600,36",
+          biasLabel: "Bias",
+          biasValue: "Alta",
+        };
+
+      case "Singularidade":
+        return {
+          title: "Pulso da Singularidade",
+          description:
+            "Resumo estrutural com leitura de aceleração, confluência e estabilidade do movimento dominante.",
+          stats: [
+            { title: "Pulso", value: "Expandindo", positive: true },
+            { title: "Confluência", value: "Alta", positive: true },
+            { title: "Ciclo", value: "Acelerado", positive: true },
+          ],
+          path1:
+            "M0,108 C40,104 70,94 100,90 C150,82 180,64 220,54 C255,44 300,42 345,34 C395,28 440,18 490,16 C535,14 565,18 600,20",
+          path2:
+            "M0,118 C35,122 70,120 110,112 C150,104 190,94 235,90 C280,84 320,76 370,66 C420,56 480,48 600,42",
+          biasLabel: "Pulso",
+          biasValue: "Forte",
+        };
+
+      case "IA Atlas":
+        return {
+          title: "Leitura IA Atlas",
+          description:
+            "Camada de interpretação sintética com score, risco, invalidação e direção provável do mercado.",
+          stats: [
+            { title: "Convicção", value: "Alta", positive: true },
+            { title: "Score", value: `${score}`, positive: true },
+            { title: "Risco", value: "Médio", positive: true },
+          ],
+          path1:
+            "M0,104 C35,104 60,108 90,100 C130,88 165,82 210,66 C250,54 280,50 330,38 C390,26 430,18 475,16 C515,14 555,16 600,10",
+          path2:
+            "M0,118 C45,116 85,114 130,110 C180,102 220,94 260,90 C305,82 350,76 405,64 C470,50 520,44 600,30",
+          biasLabel: "Bias",
+          biasValue: "Assistido",
+        };
+
+      case "Scanner":
+        return {
+          title: "Scanner Atlas",
+          description:
+            "Leitura resumida dos ativos monitorados em tempo real com prioridade, tendência e força relativa.",
+          stats: [
+            { title: "Top Score", value: "BTC", positive: true },
+            {
+              title: "Volume",
+              value: volume === "--" ? "10.29" : volume,
+              positive: true,
+            },
+            { title: "Radar", value: "Ativo", positive: true },
+          ],
+          path1:
+            "M0,96 C40,96 60,98 90,88 C140,68 180,72 210,58 C250,42 285,52 320,38 C370,18 410,26 450,22 C490,18 530,8 600,16",
+          path2:
+            "M0,105 C60,110 110,98 160,94 C220,88 255,92 320,74 C370,60 410,62 470,52 C520,43 560,46 600,36",
+          biasLabel: "Radar",
+          biasValue: "Ativo",
+        };
+
+      case "Estrutura":
+        return {
+          title: "Estrutura do Mercado",
+          description:
+            "Leitura estrutural com base em suporte, continuidade, inclinação e força das zonas principais.",
+          stats: [
+            { title: "Estrutura", value: "Positiva", positive: true },
+            { title: "Suporte", value: "Sólido", positive: true },
+            { title: "Ciclo", value: "Forte", positive: true },
+          ],
+          path1:
+            "M0,112 C35,108 70,102 120,94 C170,86 210,76 250,62 C300,48 340,42 390,34 C440,26 500,24 600,18",
+          path2:
+            "M0,122 C45,122 80,118 130,108 C180,98 220,92 270,84 C330,74 390,68 450,58 C510,50 555,46 600,40",
+          biasLabel: "Base",
+          biasValue: "Estável",
+        };
+
+      case "Euler":
+        return {
+          title: "Leitura Euler",
+          description:
+            "Camada matemática complementar com validação de curvatura, simetria e sustentação do movimento.",
+          stats: [
+            { title: "Curvatura", value: "Positiva", positive: true },
+            { title: "Validação", value: "Forte", positive: true },
+            { title: "Assimetria", value: "Favorável", positive: true },
+          ],
+          path1:
+            "M0,118 C40,110 80,100 125,90 C175,76 215,64 250,54 C290,44 320,36 360,30 C410,24 460,20 520,18 C555,18 580,20 600,22",
+          path2:
+            "M0,126 C50,122 95,118 150,106 C210,92 260,84 320,72 C380,62 430,54 500,46 C545,42 575,40 600,36",
+          biasLabel: "Modelo",
+          biasValue: "Validado",
+        };
+
+      default:
+        return {
+          title: "Scanner Atlas",
+          description:
+            "Leitura resumida dos ativos monitorados em tempo real com prioridade, tendência e força relativa.",
+          stats: [
+            { title: "Top Score", value: "BTC", positive: true },
+            {
+              title: "Volume",
+              value: volume === "--" ? "10.29" : volume,
+              positive: true,
+            },
+            { title: "Radar", value: "Ativo", positive: true },
+          ],
+          path1:
+            "M0,96 C40,96 60,98 90,88 C140,68 180,72 210,58 C250,42 285,52 320,38 C370,18 410,26 450,22 C490,18 530,8 600,16",
+          path2:
+            "M0,105 C60,110 110,98 160,94 C220,88 255,92 320,74 C370,60 410,62 470,52 C520,43 560,46 600,36",
+          biasLabel: "Radar",
+          biasValue: "Ativo",
+        };
+    }
+  }, [activeModule, score, volume]);
 
   return (
     <div
@@ -969,7 +1236,9 @@ export default function AtlasChartPro() {
               <RightRow label="Resumo" value={activeModule} positive />
               <RightRow
                 label="Ferramenta"
-                value={chartTools.find((t) => t.key === activeTool)?.label || "--"}
+                value={
+                  chartTools.find((t) => t.key === activeTool)?.label || "--"
+                }
                 positive
               />
               <RightRow
@@ -1017,7 +1286,11 @@ export default function AtlasChartPro() {
               <RightRow label="Estrutura" value="Positivo" positive />
               <RightRow label="Euler" value="Forte" positive />
               <RightRow label="Singularidade" value="5 / 6" positive />
-              <RightRow label="Razão de Prata" value="Suporte Sólido" positive />
+              <RightRow
+                label="Razão de Prata"
+                value="Suporte Sólido"
+                positive
+              />
               <RightRow label="Ciclo" value="Acelerado" positive />
             </div>
           </div>
@@ -1131,10 +1404,11 @@ export default function AtlasChartPro() {
               }}
             >
               <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8 }}>
-                {moduleTitle}
+                {pulseConfig.title}
               </div>
+
               <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 15 }}>
-                {moduleDescription}
+                {pulseConfig.description}
               </div>
 
               <div
@@ -1162,13 +1436,13 @@ export default function AtlasChartPro() {
                   style={{ position: "relative" }}
                 >
                   <path
-                    d="M0,90 C40,88 60,96 90,84 C140,65 180,70 210,58 C250,42 285,52 320,38 C370,18 410,26 450,22 C490,18 530,8 600,16"
+                    d={pulseConfig.path1}
                     fill="none"
                     stroke="#5ee7ff"
                     strokeWidth="3"
                   />
                   <path
-                    d="M0,105 C60,110 110,98 160,94 C220,88 255,92 320,74 C370,60 410,62 470,52 C520,43 560,46 600,36"
+                    d={pulseConfig.path2}
                     fill="none"
                     stroke="#ffd65a"
                     strokeWidth="2"
@@ -1185,9 +1459,21 @@ export default function AtlasChartPro() {
                   marginTop: 12,
                 }}
               >
-                <StatCard title="Fluxo" value="Forte" positive />
-                <StatCard title="Volume" value={volume} positive />
-                <StatCard title="Bias" value="Alta" positive />
+                <StatCard
+                  title={pulseConfig.stats[0].title}
+                  value={pulseConfig.stats[0].value}
+                  positive={pulseConfig.stats[0].positive}
+                />
+                <StatCard
+                  title={pulseConfig.stats[1].title}
+                  value={pulseConfig.stats[1].value}
+                  positive={pulseConfig.stats[1].positive}
+                />
+                <StatCard
+                  title={pulseConfig.biasLabel}
+                  value={pulseConfig.biasValue}
+                  positive
+                />
               </div>
             </div>
           </div>
