@@ -32,6 +32,8 @@ type ToolKey =
   | "clock"
   | "settings";
 
+type ViewMode = "auto" | "manual" | "space";
+
 const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const timeframes = ["1m", "5m", "15m", "1h", "4h"];
 const topModules: TopModule[] = [
@@ -345,7 +347,8 @@ export default function AtlasChartPro() {
   const [score, setScore] = useState(92);
   const [chartHeight, setChartHeight] = useState(730);
   const [viewportWidth, setViewportWidth] = useState(1440);
-  const [autoFit, setAutoFit] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>("auto");
+  const [spaceOffset] = useState(10);
 
   const hasInitialFitRef = useRef(false);
   const savedScrollPositionRef = useRef<number | null>(null);
@@ -459,7 +462,7 @@ export default function AtlasChartPro() {
   }, [chartHeight]);
 
   useEffect(() => {
-    setAutoFit(true);
+    setViewMode("auto");
     savedScrollPositionRef.current = null;
     hasInitialFitRef.current = false;
   }, [symbol, timeframe]);
@@ -483,7 +486,7 @@ export default function AtlasChartPro() {
 
         const timeScale = chartRef.current?.timeScale();
 
-        if (timeScale && !autoFit) {
+        if (timeScale && viewMode === "manual") {
           const currentScrollPosition = timeScale.scrollPosition();
           if (
             typeof currentScrollPosition === "number" &&
@@ -521,8 +524,10 @@ export default function AtlasChartPro() {
           if (!hasInitialFitRef.current) {
             timeScale.fitContent();
             hasInitialFitRef.current = true;
-          } else if (autoFit) {
+          } else if (viewMode === "auto") {
             timeScale.scrollToRealTime();
+          } else if (viewMode === "space") {
+            timeScale.scrollToPosition(spaceOffset, false);
           } else if (
             savedScrollPositionRef.current !== null &&
             Number.isFinite(savedScrollPositionRef.current)
@@ -573,7 +578,7 @@ export default function AtlasChartPro() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [symbol, timeframe, autoFit]);
+  }, [symbol, timeframe, viewMode, spaceOffset]);
 
   const scoreColor = useMemo(() => {
     if (score >= 85) return "#29d391";
@@ -1535,18 +1540,20 @@ export default function AtlasChartPro() {
               >
                 <button
                   onClick={() => {
-                    setAutoFit(true);
+                    setViewMode("auto");
                     savedScrollPositionRef.current = 0;
                     chartRef.current?.timeScale()?.scrollToRealTime();
                   }}
                   style={{
-                    border: autoFit
-                      ? "1px solid rgba(255,220,110,0.40)"
-                      : "1px solid rgba(255,255,255,0.08)",
-                    background: autoFit
-                      ? "linear-gradient(180deg, rgba(255,213,79,0.22), rgba(255,170,0,0.08))"
-                      : "rgba(255,255,255,0.03)",
-                    color: autoFit ? "#fff0ad" : "#bfd0ea",
+                    border:
+                      viewMode === "auto"
+                        ? "1px solid rgba(255,220,110,0.40)"
+                        : "1px solid rgba(255,255,255,0.08)",
+                    background:
+                      viewMode === "auto"
+                        ? "linear-gradient(180deg, rgba(255,213,79,0.22), rgba(255,170,0,0.08))"
+                        : "rgba(255,255,255,0.03)",
+                    color: viewMode === "auto" ? "#fff0ad" : "#bfd0ea",
                     borderRadius: 10,
                     padding: "7px 10px",
                     fontWeight: 800,
@@ -1559,7 +1566,7 @@ export default function AtlasChartPro() {
 
                 <button
                   onClick={() => {
-                    setAutoFit(false);
+                    setViewMode("manual");
                     const currentScroll =
                       chartRef.current?.timeScale()?.scrollPosition();
                     if (
@@ -1570,13 +1577,15 @@ export default function AtlasChartPro() {
                     }
                   }}
                   style={{
-                    border: !autoFit
-                      ? "1px solid rgba(94,231,255,0.35)"
-                      : "1px solid rgba(255,255,255,0.08)",
-                    background: !autoFit
-                      ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
-                      : "rgba(255,255,255,0.03)",
-                    color: !autoFit ? "#bff8ff" : "#bfd0ea",
+                    border:
+                      viewMode === "manual"
+                        ? "1px solid rgba(94,231,255,0.35)"
+                        : "1px solid rgba(255,255,255,0.08)",
+                    background:
+                      viewMode === "manual"
+                        ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
+                        : "rgba(255,255,255,0.03)",
+                    color: viewMode === "manual" ? "#bff8ff" : "#bfd0ea",
                     borderRadius: 10,
                     padding: "7px 10px",
                     fontWeight: 800,
@@ -1589,8 +1598,34 @@ export default function AtlasChartPro() {
 
                 <button
                   onClick={() => {
+                    setViewMode("space");
+                    savedScrollPositionRef.current = spaceOffset;
+                    chartRef.current?.timeScale()?.scrollToPosition(spaceOffset, false);
+                  }}
+                  style={{
+                    border:
+                      viewMode === "space"
+                        ? "1px solid rgba(94,231,255,0.35)"
+                        : "1px solid rgba(255,255,255,0.08)",
+                    background:
+                      viewMode === "space"
+                        ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
+                        : "rgba(255,255,255,0.03)",
+                    color: viewMode === "space" ? "#bff8ff" : "#bfd0ea",
+                    borderRadius: 10,
+                    padding: "7px 10px",
+                    fontWeight: 800,
+                    fontSize: 11,
+                    cursor: "pointer",
+                  }}
+                >
+                  Seguir + Espaço
+                </button>
+
+                <button
+                  onClick={() => {
                     savedScrollPositionRef.current = 0;
-                    setAutoFit(true);
+                    setViewMode("auto");
                     const timeScale = chartRef.current?.timeScale();
                     if (timeScale) {
                       timeScale.fitContent();
