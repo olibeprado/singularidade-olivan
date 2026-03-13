@@ -180,6 +180,89 @@ function ScannerRow({
   );
 }
 
+function MiniMetricCard({
+  title,
+  value,
+  subtitle,
+  positive = true,
+}: {
+  title: string;
+  value: string;
+  subtitle: string;
+  positive?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: 14,
+        padding: 12,
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))",
+      }}
+    >
+      <div
+        style={{
+          color: "#8ea4c8",
+          fontSize: 10,
+          textTransform: "uppercase",
+          letterSpacing: 0.45,
+          fontWeight: 700,
+          marginBottom: 8,
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          color: positive ? "#eaf2ff" : "#ff8ea0",
+          fontSize: 22,
+          fontWeight: 900,
+          lineHeight: 1,
+          marginBottom: 8,
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ color: "#9eb0cf", fontSize: 12 }}>{subtitle}</div>
+    </div>
+  );
+}
+
+function LeftInfoRow({
+  label,
+  value,
+  positive,
+}: {
+  label: string;
+  value: string;
+  positive?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        gap: 12,
+        padding: "11px 0",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+      }}
+    >
+      <div style={{ color: "#8ea4c8", fontSize: 13 }}>{label}</div>
+      <div
+        style={{
+          color: positive === false ? "#ff8ea0" : positive ? "#34d399" : "#eaf2ff",
+          fontWeight: 800,
+          fontSize: 13,
+          textAlign: "right",
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 export default function AtlasChartPro() {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<any>(null);
@@ -391,25 +474,6 @@ export default function AtlasChartPro() {
         return "Leitura Euler";
       default:
         return "Scanner Atlas";
-    }
-  }, [activeModule]);
-
-  const moduleDescription = useMemo(() => {
-    switch (activeModule) {
-      case "Fluxo":
-        return "Mapeamento do fluxo, volume e pressão compradora versus vendedora.";
-      case "Singularidade":
-        return "Resumo estrutural com leitura de força, aceleração e continuidade.";
-      case "IA Atlas":
-        return "Camada de interpretação sintética com score, risco e invalidação.";
-      case "Scanner":
-        return "Ativos monitorados em tempo real com score e tendência.";
-      case "Estrutura":
-        return "Leitura de ciclo, suporte, força estrutural e estabilidade.";
-      case "Euler":
-        return "Camada matemática complementar para validação estrutural.";
-      default:
-        return "Ativos monitorados em tempo real com score e tendência.";
     }
   }, [activeModule]);
 
@@ -832,6 +896,118 @@ export default function AtlasChartPro() {
         };
     }
   }, [activeModule, score, volume]);
+
+  const leftDynamicBlock = useMemo(() => {
+    switch (activeModule) {
+      case "Fluxo":
+        return {
+          type: "cards" as const,
+          title: "Mapa de Pressão",
+          subtitle:
+            "Leitura do fluxo dominante com ênfase em agressão, absorção e continuidade.",
+          cards: [
+            { title: "Pressão", value: "Compra", subtitle: "Agressão dominante", positive: true },
+            { title: "Absorção", value: "Ativa", subtitle: "Defesa compradora", positive: true },
+            { title: "Volume", value: "Elevado", subtitle: "Entrada acima da média", positive: true },
+            { title: "Ritmo", value: "Forte", subtitle: "Impulso sustentado", positive: true },
+          ],
+          rows: [
+            { label: "Dominância", value: "Compradora", positive: true },
+            { label: "Spread", value: "Controlado", positive: true },
+            { label: "Aceleração", value: "Crescente", positive: true },
+            { label: "Liquidez", value: "Saudável", positive: true },
+          ],
+        };
+
+      case "Singularidade":
+        return {
+          type: "cards" as const,
+          title: "Núcleo da Singularidade",
+          subtitle:
+            "Leitura integrada de pulso, confluência e expansão estrutural do ativo.",
+          cards: [
+            { title: "Pulso", value: "Forte", subtitle: "Movimento ativo", positive: true },
+            { title: "Confluência", value: "Alta", subtitle: "Sinais alinhados", positive: true },
+            { title: "Expansão", value: "Ativa", subtitle: "Mercado abrindo espaço", positive: true },
+            { title: "Ritmo", value: "Crescente", subtitle: "Continuidade", positive: true },
+          ],
+          rows: [
+            { label: "Nível", value: "5 / 6", positive: true },
+            { label: "Estabilidade", value: "Boa", positive: true },
+            { label: "Transição", value: "Favorável", positive: true },
+            { label: "Ciclo", value: "Acelerado", positive: true },
+          ],
+        };
+
+      case "IA Atlas":
+        return {
+          type: "cards" as const,
+          title: "Radar de Convicção",
+          subtitle:
+            "Síntese de confiança, risco, direção e suporte operacional da IA Atlas.",
+          cards: [
+            { title: "Convicção", value: "Alta", subtitle: "Sinal robusto", positive: true },
+            { title: "Risco", value: "Médio", subtitle: "Exposição controlada", positive: true },
+            { title: "Direção", value: "Alta", subtitle: "Bias positivo", positive: true },
+            { title: "Assistência", value: "Ativa", subtitle: "Leitura complementar", positive: true },
+          ],
+          rows: [
+            { label: "Confiança", value: "Elevada", positive: true },
+            { label: "Probabilidade", value: "Favorável", positive: true },
+            { label: "Suporte IA", value: "Presente", positive: true },
+            { label: "Condição", value: "Operável", positive: true },
+          ],
+        };
+
+      case "Estrutura":
+        return {
+          type: "cards" as const,
+          title: "Mapa Estrutural",
+          subtitle:
+            "Visão organizada de base, suporte, inclinação e continuidade do movimento.",
+          cards: [
+            { title: "Base", value: "Sólida", subtitle: "Fundação estável", positive: true },
+            { title: "Suporte", value: "Firme", subtitle: "Zona respeitada", positive: true },
+            { title: "Inclinação", value: "Positiva", subtitle: "Direção favorável", positive: true },
+            { title: "Força", value: "Alta", subtitle: "Estrutura íntegra", positive: true },
+          ],
+          rows: [
+            { label: "Continuidade", value: "Provável", positive: true },
+            { label: "Compressão", value: "Baixa", positive: true },
+            { label: "Resposta", value: "Boa", positive: true },
+            { label: "Ciclo", value: "Sustentado", positive: true },
+          ],
+        };
+
+      case "Euler":
+        return {
+          type: "cards" as const,
+          title: "Validação Matemática",
+          subtitle:
+            "Leitura de curvatura, simetria e assimetria para apoio matemático da decisão.",
+          cards: [
+            { title: "Curvatura", value: "Positiva", subtitle: "Trajetória saudável", positive: true },
+            { title: "Validação", value: "Forte", subtitle: "Modelo confirma", positive: true },
+            { title: "Simetria", value: "Boa", subtitle: "Consistência estrutural", positive: true },
+            { title: "Assimetria", value: "Favorável", subtitle: "Boa relação risco/retorno", positive: true },
+          ],
+          rows: [
+            { label: "Modelo", value: "Validado", positive: true },
+            { label: "Sustentação", value: "Presente", positive: true },
+            { label: "Regularidade", value: "Alta", positive: true },
+            { label: "Leitura", value: "Confiável", positive: true },
+          ],
+        };
+
+      default:
+        return {
+          type: "table" as const,
+          title: "Mestre Scanner",
+          subtitle:
+            "Ativos priorizados por score, tendência e leitura geral do momento.",
+        };
+    }
+  }, [activeModule]);
 
   return (
     <div
@@ -1410,7 +1586,7 @@ export default function AtlasChartPro() {
                 style={{
                   color: "#dfe8ff",
                   fontWeight: 900,
-                  marginBottom: 10,
+                  marginBottom: 8,
                   fontSize: 15,
                 }}
               >
@@ -1419,32 +1595,97 @@ export default function AtlasChartPro() {
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1.2fr 1fr 1fr 1fr",
-                  gap: 10,
-                  color: "#7f95bb",
-                  fontSize: 11,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.4,
-                  paddingBottom: 10,
-                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  color: "#8ea4c8",
+                  fontSize: 12,
+                  marginBottom: 12,
                 }}
               >
-                <div>Ativo</div>
-                <div>Score</div>
-                <div>Tendência</div>
-                <div style={{ textAlign: "right" }}>Preço</div>
+                {leftDynamicBlock.subtitle}
               </div>
 
-              {leftRows.map((row) => (
-                <ScannerRow
-                  key={`${activeModule}-${row.asset}`}
-                  asset={row.asset}
-                  score={row.score}
-                  trend={row.trend}
-                  price={row.price}
-                />
-              ))}
+              {leftDynamicBlock.type === "table" ? (
+                <>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1.2fr 1fr 1fr 1fr",
+                      gap: 10,
+                      color: "#7f95bb",
+                      fontSize: 11,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.4,
+                      paddingBottom: 10,
+                      borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    }}
+                  >
+                    <div>Ativo</div>
+                    <div>Score</div>
+                    <div>Tendência</div>
+                    <div style={{ textAlign: "right" }}>Preço</div>
+                  </div>
+
+                  {leftRows.map((row) => (
+                    <ScannerRow
+                      key={`${activeModule}-${row.asset}`}
+                      asset={row.asset}
+                      score={row.score}
+                      trend={row.trend}
+                      price={row.price}
+                    />
+                  ))}
+                </>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: 10,
+                      marginBottom: 12,
+                    }}
+                  >
+                    {leftDynamicBlock.cards.map((card) => (
+                      <MiniMetricCard
+                        key={`${activeModule}-${card.title}`}
+                        title={card.title}
+                        value={card.value}
+                        subtitle={card.subtitle}
+                        positive={card.positive}
+                      />
+                    ))}
+                  </div>
+
+                  <div
+                    style={{
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      borderRadius: 16,
+                      padding: 14,
+                      background:
+                        "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: "#dfe8ff",
+                        fontWeight: 800,
+                        marginBottom: 6,
+                        fontSize: 14,
+                      }}
+                    >
+                      {leftDynamicBlock.title}
+                    </div>
+
+                    {leftDynamicBlock.rows.map((row) => (
+                      <LeftInfoRow
+                        key={`${activeModule}-${row.label}`}
+                        label={row.label}
+                        value={row.value}
+                        positive={row.positive}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             <div
