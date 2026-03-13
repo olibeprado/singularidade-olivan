@@ -31,8 +31,8 @@ function StatCard({
         background: "linear-gradient(180deg, rgba(14,21,39,0.95), rgba(7,11,22,0.98))",
         border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: 12,
-        padding: "5px 9px",
-        minHeight: 46,
+        padding: "4px 8px",
+        minHeight: 42,
         boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
       }}
     >
@@ -40,7 +40,7 @@ function StatCard({
         style={{
           fontSize: 10,
           color: "#7f93b9",
-          marginBottom: 5,
+          marginBottom: 4,
           letterSpacing: 0.4,
           textTransform: "uppercase",
         }}
@@ -149,7 +149,7 @@ export default function AtlasChartPro() {
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: 780,
+      height: 820,
       layout: {
         background: { type: ColorType.Solid, color: "#09111f" },
         textColor: "#8ea2c7",
@@ -330,8 +330,8 @@ export default function AtlasChartPro() {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div
                 style={{
-                  width: 62,
-                  height: 62,
+                  width: 68,
+                  height: 68,
                   borderRadius: 12,
                   background: "rgba(255,255,255,0.02)",
                   border: "1px solid rgba(255,255,255,0.05)",
@@ -345,8 +345,8 @@ export default function AtlasChartPro() {
                 <Image
                   src="/logo-singularidade.png"
                   alt="Logo Singularidade"
-                  width={56}
-                  height={56}
+                  width={62}
+                  height={62}
                   style={{
                     objectFit: "cover",
                     opacity: 1,
@@ -554,7 +554,7 @@ export default function AtlasChartPro() {
               ref={chartContainerRef}
               style={{
                 width: "100%",
-                height: 780,
+                height: 820,
               }}
             />
           </div>
@@ -672,7 +672,7 @@ export default function AtlasChartPro() {
 
         <div
           style={{
-            marginTop: 10,
+            marginTop: 4,
             background: "linear-gradient(180deg, rgba(13,20,38,0.98), rgba(8,12,24,0.98))",
             border: "1px solid rgba(255,255,255,0.07)",
             borderRadius: 20,
