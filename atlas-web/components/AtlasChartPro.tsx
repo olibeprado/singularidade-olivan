@@ -107,7 +107,9 @@ function ScannerRow({
   trend: string;
   price: string;
 }) {
-  const up = trend.toLowerCase().includes("forte") || trend.toLowerCase().includes("positivo");
+  const up =
+    trend.toLowerCase().includes("forte") ||
+    trend.toLowerCase().includes("positivo");
   return (
     <div
       style={{
@@ -122,7 +124,9 @@ function ScannerRow({
     >
       <div style={{ fontWeight: 700 }}>{asset}</div>
       <div>{score}</div>
-      <div style={{ color: up ? "#34d399" : "#f59e0b", fontWeight: 700 }}>{trend}</div>
+      <div style={{ color: up ? "#34d399" : "#f59e0b", fontWeight: 700 }}>
+        {trend}
+      </div>
       <div style={{ textAlign: "right" }}>{price}</div>
     </div>
   );
@@ -245,7 +249,10 @@ export default function AtlasChartPro() {
         const normalizedVolume = candles.map((c) => ({
           time: Math.floor(new Date(c.time).getTime() / 1000),
           value: c.volume,
-          color: c.close >= c.open ? "rgba(54,226,154,0.72)" : "rgba(255,95,122,0.72)",
+          color:
+            c.close >= c.open
+              ? "rgba(54,226,154,0.72)"
+              : "rgba(255,95,122,0.72)",
         }));
 
         candleSeriesRef.current?.setData(normalizedCandles);
@@ -264,7 +271,9 @@ export default function AtlasChartPro() {
           })
         );
 
-        const pct = prev.close ? ((last.close - prev.close) / prev.close) * 100 : 0;
+        const pct = prev.close
+          ? ((last.close - prev.close) / prev.close) * 100
+          : 0;
         setChange(`${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`);
 
         setVolume(
@@ -273,7 +282,10 @@ export default function AtlasChartPro() {
           })
         );
 
-        const strength = Math.min(99, Math.max(51, Math.round(70 + Math.abs(pct) * 12)));
+        const strength = Math.min(
+          99,
+          Math.max(51, Math.round(70 + Math.abs(pct) * 12))
+        );
         setScore(strength);
         setSignal(pct >= 0 ? "Compra Forte" : "Pressão Vendedora");
       } catch {
@@ -323,10 +335,19 @@ export default function AtlasChartPro() {
             alignItems: "center",
             justifyContent: "space-between",
             gap: 14,
-            padding: "6px 14px 5px",
+            padding: "8px 14px 8px",
+            flexWrap: "nowrap",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "nowrap",
+              minWidth: 0,
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div
                 style={{
@@ -340,6 +361,7 @@ export default function AtlasChartPro() {
                   justifyContent: "center",
                   overflow: "hidden",
                   boxShadow: "0 0 10px rgba(114,160,255,0.08)",
+                  flexShrink: 0,
                 }}
               >
                 <Image
@@ -355,10 +377,26 @@ export default function AtlasChartPro() {
               </div>
 
               <div style={{ display: "flex", alignItems: "baseline", gap: 7 }}>
-                <span style={{ fontWeight: 900, fontSize: 17, letterSpacing: 0.45 }}>
+                <span
+                  style={{
+                    fontWeight: 900,
+                    fontSize: 17,
+                    letterSpacing: 0.45,
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   SINGULARIDADE
                 </span>
-                <span style={{ color: "#93a7ca", fontSize: 12, fontWeight: 800 }}>OBP</span>
+                <span
+                  style={{
+                    color: "#93a7ca",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  OBP
+                </span>
               </div>
             </div>
 
@@ -371,6 +409,7 @@ export default function AtlasChartPro() {
                 border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 10,
                 padding: "6px 9px",
+                flexShrink: 0,
               }}
             >
               <span style={{ color: "#f4c24e", fontSize: 13 }}>🪙</span>
@@ -394,7 +433,16 @@ export default function AtlasChartPro() {
               </select>
             </div>
 
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 6,
+                alignItems: "center",
+                flexWrap: "nowrap",
+                overflowX: "auto",
+                scrollbarWidth: "none",
+              }}
+            >
               {timeframes.map((tf) => {
                 const active = timeframe === tf;
                 return (
@@ -408,55 +456,72 @@ export default function AtlasChartPro() {
                         : "rgba(255,255,255,0.025)",
                       color: active ? "#ffd95b" : "#9cb0d2",
                       borderRadius: 8,
-                      padding: "6px 10px",
+                      padding: "7px 12px",
                       fontWeight: 800,
-                      fontSize: 11,
+                      fontSize: 12,
                       cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
                     }}
                   >
                     {tf}
                   </button>
                 );
               })}
+
+              {[
+                "Fluxo",
+                "Singularidade",
+                "IA Atlas",
+                "Scanner",
+                "Estrutura",
+                "Euler",
+              ].map((item, i) => (
+                <div
+                  key={item}
+                  style={{
+                    padding: "7px 13px",
+                    borderRadius: 10,
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    background:
+                      i === 3
+                        ? "linear-gradient(180deg, rgba(255,214,90,0.22), rgba(255,180,20,0.10))"
+                        : "rgba(255,255,255,0.025)",
+                    color: i === 3 ? "#ffd65a" : "#b4c3df",
+                    fontWeight: 700,
+                    fontSize: 12,
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                  }}
+                >
+                  {item}
+                </div>
+              ))}
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12, color: "#9cb0d2", fontSize: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              color: "#9cb0d2",
+              fontSize: 12,
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+            }}
+          >
             <span>Replay</span>
             <span>IA Atlas</span>
-            <span style={{ color: change.startsWith("-") ? "#ff6b81" : "#2fe19a", fontWeight: 800 }}>
+            <span
+              style={{
+                color: change.startsWith("-") ? "#ff6b81" : "#2fe19a",
+                fontWeight: 800,
+              }}
+            >
               {change}
             </span>
           </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: 7,
-            padding: "0 14px 6px",
-            flexWrap: "wrap",
-          }}
-        >
-          {["Fluxo", "Singularidade", "IA Atlas", "Scanner", "Estrutura", "Euler"].map((item, i) => (
-            <div
-              key={item}
-              style={{
-                padding: "6px 11px",
-                borderRadius: 10,
-                border: "1px solid rgba(255,255,255,0.06)",
-                background:
-                  i === 3
-                    ? "linear-gradient(180deg, rgba(255,214,90,0.22), rgba(255,180,20,0.10))"
-                    : "rgba(255,255,255,0.025)",
-                color: i === 3 ? "#ffd65a" : "#b4c3df",
-                fontWeight: 700,
-                fontSize: 11,
-              }}
-            >
-              {item}
-            </div>
-          ))}
         </div>
       </div>
 
@@ -471,7 +536,11 @@ export default function AtlasChartPro() {
         >
           <StatCard title="Ativo" value={symbol} />
           <StatCard title="Preço" value={price} positive />
-          <StatCard title="Variação" value={change} positive={!change.startsWith("-")} />
+          <StatCard
+            title="Variação"
+            value={change}
+            positive={!change.startsWith("-")}
+          />
           <StatCard title="Fonte" value={source.toUpperCase()} />
         </div>
 
@@ -485,7 +554,8 @@ export default function AtlasChartPro() {
         >
           <div
             style={{
-              background: "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
+              background:
+                "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
               border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: 15,
               padding: "9px 5px",
@@ -517,7 +587,8 @@ export default function AtlasChartPro() {
 
           <div
             style={{
-              background: "linear-gradient(180deg, rgba(13,20,38,0.98), rgba(8,12,24,0.98))",
+              background:
+                "linear-gradient(180deg, rgba(13,20,38,0.98), rgba(8,12,24,0.98))",
               border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: 20,
               overflow: "hidden",
@@ -542,7 +613,14 @@ export default function AtlasChartPro() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: 9, color: "#8fa3c7", fontSize: 13 }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 9,
+                  color: "#8fa3c7",
+                  fontSize: 13,
+                }}
+              >
                 <span>♡</span>
                 <span>⚡</span>
                 <span>◎</span>
@@ -562,7 +640,8 @@ export default function AtlasChartPro() {
           <div style={{ display: "grid", gap: 10 }}>
             <div
               style={{
-                background: "linear-gradient(180deg, rgba(15,22,40,0.98), rgba(8,12,24,0.98))",
+                background:
+                  "linear-gradient(180deg, rgba(15,22,40,0.98), rgba(8,12,24,0.98))",
                 border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 18,
                 padding: 14,
@@ -580,7 +659,11 @@ export default function AtlasChartPro() {
                 IA Atlas Insights
               </div>
 
-              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 8 }}>{symbol}</div>
+              <div
+                style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 8 }}
+              >
+                {symbol}
+              </div>
 
               <div
                 style={{
@@ -591,7 +674,15 @@ export default function AtlasChartPro() {
                 }}
               >
                 <div style={{ fontSize: 27, fontWeight: 900 }}>{symbol}</div>
-                <div style={{ fontSize: 40, fontWeight: 900, color: scoreColor }}>{score}</div>
+                <div
+                  style={{
+                    fontSize: 40,
+                    fontWeight: 900,
+                    color: scoreColor,
+                  }}
+                >
+                  {score}
+                </div>
               </div>
 
               <div
@@ -602,7 +693,9 @@ export default function AtlasChartPro() {
                   marginBottom: 10,
                 }}
               >
-                <div style={{ height: 5, background: "rgba(255,255,255,0.05)" }}>
+                <div
+                  style={{ height: 5, background: "rgba(255,255,255,0.05)" }}
+                >
                   <div
                     style={{
                       width: `${score}%`,
@@ -628,7 +721,11 @@ export default function AtlasChartPro() {
               </div>
 
               <RightRow label="Risco" value="Médio" />
-              <RightRow label="Força" value={score >= 85 ? "Alta" : "Moderada"} positive />
+              <RightRow
+                label="Força"
+                value={score >= 85 ? "Alta" : "Moderada"}
+                positive
+              />
               <RightRow
                 label="Invalidação"
                 value={
@@ -643,7 +740,8 @@ export default function AtlasChartPro() {
 
             <div
               style={{
-                background: "linear-gradient(180deg, rgba(15,22,40,0.98), rgba(8,12,24,0.98))",
+                background:
+                  "linear-gradient(180deg, rgba(15,22,40,0.98), rgba(8,12,24,0.98))",
                 border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 18,
                 padding: 14,
@@ -664,7 +762,11 @@ export default function AtlasChartPro() {
               <RightRow label="Estrutura" value="Positivo" positive />
               <RightRow label="Euler" value="Forte" positive />
               <RightRow label="Singularidade" value="5 / 6" positive />
-              <RightRow label="Razão de Prata" value="Suporte Sólido" positive />
+              <RightRow
+                label="Razão de Prata"
+                value="Suporte Sólido"
+                positive
+              />
               <RightRow label="Ciclo" value="Acelerado" positive />
             </div>
           </div>
@@ -673,7 +775,8 @@ export default function AtlasChartPro() {
         <div
           style={{
             marginTop: 4,
-            background: "linear-gradient(180deg, rgba(13,20,38,0.98), rgba(8,12,24,0.98))",
+            background:
+              "linear-gradient(180deg, rgba(13,20,38,0.98), rgba(8,12,24,0.98))",
             border: "1px solid rgba(255,255,255,0.07)",
             borderRadius: 20,
             padding: 14,
@@ -712,7 +815,9 @@ export default function AtlasChartPro() {
               ))}
             </div>
 
-            <div style={{ color: "#88a0c9", fontSize: 12 }}>Scanner Atlas • Volume • RSI • Fluxo</div>
+            <div style={{ color: "#88a0c9", fontSize: 12 }}>
+              Scanner Atlas • Volume • RSI • Fluxo
+            </div>
           </div>
 
           <div
@@ -742,10 +847,30 @@ export default function AtlasChartPro() {
                 <div style={{ textAlign: "right" }}>Preço</div>
               </div>
 
-              <ScannerRow asset="BTCUSDT" score="92.4" trend="Compra Forte" price="$69,489" />
-              <ScannerRow asset="ETHUSDT" score="87.2" trend="Positivo" price="$3,745" />
-              <ScannerRow asset="SOLUSDT" score="82.8" trend="Positivo" price="$168.40" />
-              <ScannerRow asset="BNBUSDT" score="74.9" trend="Aceleração" price="$611.22" />
+              <ScannerRow
+                asset="BTCUSDT"
+                score="92.4"
+                trend="Compra Forte"
+                price="$69,489"
+              />
+              <ScannerRow
+                asset="ETHUSDT"
+                score="87.2"
+                trend="Positivo"
+                price="$3,745"
+              />
+              <ScannerRow
+                asset="SOLUSDT"
+                score="82.8"
+                trend="Positivo"
+                price="$168.40"
+              />
+              <ScannerRow
+                asset="BNBUSDT"
+                score="74.9"
+                trend="Aceleração"
+                price="$611.22"
+              />
             </div>
 
             <div
@@ -758,11 +883,16 @@ export default function AtlasChartPro() {
                 minHeight: 215,
               }}
             >
-              <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8 }}>
+              <div
+                style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8 }}
+              >
                 Pulso da Singularidade
               </div>
-              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 15 }}>
-                Leitura resumida do comportamento do mercado com base em preço, volume e estrutura.
+              <div
+                style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 15 }}
+              >
+                Leitura resumida do comportamento do mercado com base em
+                preço, volume e estrutura.
               </div>
 
               <div
@@ -783,7 +913,12 @@ export default function AtlasChartPro() {
                       "linear-gradient(90deg, rgba(61,229,255,0.0), rgba(61,229,255,0.12), rgba(255,213,79,0.10), rgba(61,229,255,0.0))",
                   }}
                 />
-                <svg viewBox="0 0 600 140" width="100%" height="100%" style={{ position: "relative" }}>
+                <svg
+                  viewBox="0 0 600 140"
+                  width="100%"
+                  height="100%"
+                  style={{ position: "relative" }}
+                >
                   <path
                     d="M0,90 C40,88 60,96 90,84 C140,65 180,70 210,58 C250,42 285,52 320,38 C370,18 410,26 450,22 C490,18 530,8 600,16"
                     fill="none"
