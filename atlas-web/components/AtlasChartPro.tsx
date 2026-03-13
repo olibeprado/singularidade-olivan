@@ -345,6 +345,10 @@ export default function AtlasChartPro() {
   const [score, setScore] = useState(92);
   const [chartHeight, setChartHeight] = useState(730);
   const [viewportWidth, setViewportWidth] = useState(1440);
+  const [autoFit, setAutoFit] = useState(true);
+
+  const hasInitialFitRef = useRef(false);
+  const savedLogicalRangeRef = useRef<any>(null);
 
   useEffect(() => {
     const handleViewport = () => setViewportWidth(window.innerWidth);
@@ -397,6 +401,18 @@ export default function AtlasChartPro() {
         borderColor: "rgba(255,255,255,0.10)",
         timeVisible: true,
         secondsVisible: false,
+        rightOffset: 6,
+      },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true,
       },
     });
 
@@ -443,6 +459,11 @@ export default function AtlasChartPro() {
   }, [chartHeight]);
 
   useEffect(() => {
+    setAutoFit(true);
+    savedLogicalRangeRef.current = null;
+  }, [symbol, timeframe]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadData() {
@@ -482,7 +503,24 @@ export default function AtlasChartPro() {
 
         candleSeriesRef.current?.setData(normalizedCandles);
         volumeSeriesRef.current?.setData(normalizedVolume);
-        chartRef.current?.timeScale().fitContent();
+
+        const timeScale = chartRef.current?.timeScale();
+
+        if (timeScale) {
+          if (!autoFit) {
+            const currentLogicalRange = timeScale.getVisibleLogicalRange();
+            if (currentLogicalRange) {
+              savedLogicalRangeRef.current = currentLogicalRange;
+            }
+          }
+
+          if (autoFit || !hasInitialFitRef.current) {
+            timeScale.fitContent();
+            hasInitialFitRef.current = true;
+          } else if (savedLogicalRangeRef.current) {
+            timeScale.setVisibleLogicalRange(savedLogicalRangeRef.current);
+          }
+        }
 
         const last = candles[candles.length - 1];
         const prev = candles[candles.length - 2] || last;
@@ -526,7 +564,7 @@ export default function AtlasChartPro() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, autoFit]);
 
   const scoreColor = useMemo(() => {
     if (score >= 85) return "#29d391";
@@ -1479,12 +1517,72 @@ export default function AtlasChartPro() {
               <div
                 style={{
                   display: "flex",
-                  gap: 10,
+                  gap: 8,
                   color: "#8fa3c7",
                   fontSize: 13,
                   alignItems: "center",
+                  flexWrap: "wrap",
                 }}
               >
+                <button
+                  onClick={() => setAutoFit(true)}
+                  style={{
+                    border: autoFit
+                      ? "1px solid rgba(255,220,110,0.40)"
+                      : "1px solid rgba(255,255,255,0.08)",
+                    background: autoFit
+                      ? "linear-gradient(180deg, rgba(255,213,79,0.22), rgba(255,170,0,0.08))"
+                      : "rgba(255,255,255,0.03)",
+                    color: autoFit ? "#fff0ad" : "#bfd0ea",
+                    borderRadius: 10,
+                    padding: "7px 10px",
+                    fontWeight: 800,
+                    fontSize: 11,
+                    cursor: "pointer",
+                  }}
+                >
+                  Auto
+                </button>
+
+                <button
+                  onClick={() => setAutoFit(false)}
+                  style={{
+                    border: !autoFit
+                      ? "1px solid rgba(94,231,255,0.35)"
+                      : "1px solid rgba(255,255,255,0.08)",
+                    background: !autoFit
+                      ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
+                      : "rgba(255,255,255,0.03)",
+                    color: !autoFit ? "#bff8ff" : "#bfd0ea",
+                    borderRadius: 10,
+                    padding: "7px 10px",
+                    fontWeight: 800,
+                    fontSize: 11,
+                    cursor: "pointer",
+                  }}
+                >
+                  Manual
+                </button>
+
+                <button
+                  onClick={() => {
+                    savedLogicalRangeRef.current = null;
+                    chartRef.current?.timeScale().fitContent();
+                  }}
+                  style={{
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(255,255,255,0.03)",
+                    color: "#d7e4ff",
+                    borderRadius: 10,
+                    padding: "7px 10px",
+                    fontWeight: 800,
+                    fontSize: 11,
+                    cursor: "pointer",
+                  }}
+                >
+                  Reset
+                </button>
+
                 <span>♡</span>
                 <span>⚡</span>
                 <span>◎</span>
