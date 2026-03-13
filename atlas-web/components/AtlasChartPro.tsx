@@ -43,6 +43,15 @@ const topModules: TopModule[] = [
   "Euler",
 ];
 
+const moduleIcons: Record<TopModule, string> = {
+  Fluxo: "≈",
+  Singularidade: "✦",
+  "IA Atlas": "◈",
+  Scanner: "⌕",
+  Estrutura: "▣",
+  Euler: "∑",
+};
+
 const chartTools: { key: ToolKey; icon: string; label: string }[] = [
   { key: "cursor", icon: "⌖", label: "Cursor" },
   { key: "zoom", icon: "⊕", label: "Zoom" },
@@ -260,6 +269,60 @@ function LeftInfoRow({
         {value}
       </div>
     </div>
+  );
+}
+
+function PremiumButton({
+  active,
+  onClick,
+  children,
+  compact,
+}: {
+  active?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        position: "relative",
+        border: active
+          ? "1px solid rgba(255,220,110,0.42)"
+          : "1px solid rgba(255,255,255,0.08)",
+        background: active
+          ? "linear-gradient(180deg, rgba(255,213,79,0.24), rgba(255,170,0,0.08))"
+          : "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018))",
+        color: active ? "#fff4bf" : "#bfd0ea",
+        borderRadius: 12,
+        padding: compact ? "10px 14px" : "11px 16px",
+        minHeight: 44,
+        fontWeight: 800,
+        fontSize: compact ? 13 : 14,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        flexShrink: 0,
+        boxShadow: active
+          ? "0 0 0 1px rgba(255,215,90,0.12) inset, 0 8px 22px rgba(255,180,20,0.10)"
+          : "0 6px 18px rgba(0,0,0,0.10)",
+        transition: "all 0.18s ease",
+      }}
+    >
+      {active && (
+        <span
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: 12,
+            background:
+              "linear-gradient(90deg, rgba(255,255,255,0.00), rgba(255,255,255,0.10), rgba(255,255,255,0.00))",
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      <span style={{ position: "relative" }}>{children}</span>
+    </button>
   );
 }
 
@@ -1097,13 +1160,15 @@ export default function AtlasChartPro() {
                   width: isSmall ? 58 : 66,
                   height: isSmall ? 58 : 66,
                   borderRadius: 14,
-                  background: "rgba(255,255,255,0.02)",
+                  background:
+                    "radial-gradient(circle at 30% 30%, rgba(94,231,255,0.16), rgba(255,255,255,0.02))",
                   border: "1px solid rgba(255,255,255,0.06)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   overflow: "hidden",
-                  boxShadow: "0 0 14px rgba(114,160,255,0.10)",
+                  boxShadow:
+                    "0 0 14px rgba(114,160,255,0.10), 0 0 24px rgba(94,231,255,0.05)",
                   flexShrink: 0,
                 }}
               >
@@ -1123,6 +1188,7 @@ export default function AtlasChartPro() {
                     fontSize: isSmall ? 20 : 24,
                     letterSpacing: 0.55,
                     whiteSpace: "nowrap",
+                    textShadow: "0 0 18px rgba(94,231,255,0.08)",
                   }}
                 >
                   SINGULARIDADE
@@ -1158,8 +1224,8 @@ export default function AtlasChartPro() {
                   alignItems: "center",
                   gap: 8,
                   background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025))",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                    "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025))",
+                  border: "1px solid rgba(255,255,255,0.09)",
                   borderRadius: 12,
                   padding: "10px 14px",
                   minHeight: 46,
@@ -1192,27 +1258,14 @@ export default function AtlasChartPro() {
               {timeframes.map((tf) => {
                 const active = timeframe === tf;
                 return (
-                  <button
+                  <PremiumButton
                     key={tf}
+                    active={active}
                     onClick={() => setTimeframe(tf)}
-                    style={{
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      background: active
-                        ? "linear-gradient(180deg, rgba(255,213,79,0.34), rgba(255,170,0,0.16))"
-                        : "rgba(255,255,255,0.03)",
-                      color: active ? "#ffd95b" : "#afc1df",
-                      borderRadius: 11,
-                      padding: "11px 16px",
-                      minHeight: 46,
-                      fontWeight: 900,
-                      fontSize: 15,
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                    }}
+                    compact={isSmall}
                   >
                     {tf}
-                  </button>
+                  </PremiumButton>
                 );
               })}
             </div>
@@ -1238,6 +1291,9 @@ export default function AtlasChartPro() {
                 color: change.startsWith("-") ? "#ff6b81" : "#2fe19a",
                 fontWeight: 900,
                 fontSize: 14,
+                textShadow: change.startsWith("-")
+                  ? "0 0 12px rgba(255,107,129,0.12)"
+                  : "0 0 12px rgba(47,225,154,0.14)",
               }}
             >
               {change}
@@ -1260,32 +1316,31 @@ export default function AtlasChartPro() {
           {topModules.map((item) => {
             const active = activeModule === item;
             return (
-              <button
+              <PremiumButton
                 key={item}
+                active={active}
                 onClick={() => setActiveModule(item)}
-                style={{
-                  padding: isSmall ? "10px 14px" : "11px 16px",
-                  minHeight: 44,
-                  display: "flex",
-                  alignItems: "center",
-                  borderRadius: 11,
-                  border: active
-                    ? `1px solid ${moduleAccent}55`
-                    : "1px solid rgba(255,255,255,0.07)",
-                  background: active
-                    ? `linear-gradient(180deg, ${moduleAccent}30, rgba(255,255,255,0.04))`
-                    : "rgba(255,255,255,0.03)",
-                  color: active ? "#f4f8ff" : "#c2cee4",
-                  fontWeight: 800,
-                  fontSize: isSmall ? 13 : 14,
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                  cursor: "pointer",
-                  boxShadow: active ? `0 0 0 1px ${moduleAccent}20 inset` : "none",
-                }}
+                compact={isSmall}
               >
-                {item}
-              </button>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 18,
+                      textAlign: "center",
+                      color: active ? "#fff0ad" : "#96abd0",
+                    }}
+                  >
+                    {moduleIcons[item]}
+                  </span>
+                  <span>{item}</span>
+                </span>
+              </PremiumButton>
             );
           })}
         </div>
@@ -1355,6 +1410,9 @@ export default function AtlasChartPro() {
                       color: active ? "#eef4ff" : "#9fb3d4",
                       fontSize: 13,
                       cursor: "pointer",
+                      boxShadow: active
+                        ? `0 0 18px ${moduleAccent}22`
+                        : "none",
                     }}
                   >
                     {tool.icon}
@@ -1402,6 +1460,7 @@ export default function AtlasChartPro() {
                     fontSize: 12,
                     border: `1px solid ${moduleAccent}33`,
                     padding: "0 8px",
+                    boxShadow: `0 0 16px ${moduleAccent}22`,
                   }}
                 >
                   {activeModule.slice(0, 2).toUpperCase()}
@@ -1465,6 +1524,9 @@ export default function AtlasChartPro() {
                         fontSize: 14,
                         cursor: "pointer",
                         flexShrink: 0,
+                        boxShadow: active
+                          ? `0 0 18px ${moduleAccent}22`
+                          : "none",
                       }}
                     >
                       {tool.icon}
@@ -1527,6 +1589,7 @@ export default function AtlasChartPro() {
                     lineHeight: 1,
                     fontWeight: 900,
                     color: scoreColor,
+                    textShadow: `0 0 18px ${moduleAccent}22`,
                   }}
                 >
                   {insightConfig.scoreValue}
@@ -1549,6 +1612,7 @@ export default function AtlasChartPro() {
                       width: `${insightConfig.scoreValue}%`,
                       height: "100%",
                       background: `linear-gradient(90deg, ${moduleAccent}70, rgba(61,229,255,0.95))`,
+                      boxShadow: `0 0 18px ${moduleAccent}35`,
                     }}
                   />
                 </div>
