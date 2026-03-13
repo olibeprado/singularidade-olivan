@@ -13,9 +13,17 @@ type Candle = {
   volume: number;
 };
 
+type TopModule =
+  | "Fluxo"
+  | "Singularidade"
+  | "IA Atlas"
+  | "Scanner"
+  | "Estrutura"
+  | "Euler";
+
 const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const timeframes = ["1m", "5m", "15m", "1h", "4h"];
-const topModules = [
+const topModules: TopModule[] = [
   "Fluxo",
   "Singularidade",
   "IA Atlas",
@@ -152,6 +160,7 @@ export default function AtlasChartPro() {
 
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [timeframe, setTimeframe] = useState("1m");
+  const [activeModule, setActiveModule] = useState<TopModule>("Scanner");
   const [source, setSource] = useState("carregando...");
   const [price, setPrice] = useState("--");
   const [change, setChange] = useState("--");
@@ -337,6 +346,57 @@ export default function AtlasChartPro() {
     return "#ff6b81";
   }, [score]);
 
+  const moduleTitle = useMemo(() => {
+    switch (activeModule) {
+      case "Fluxo":
+        return "Fluxo de Mercado";
+      case "Singularidade":
+        return "Pulso da Singularidade";
+      case "IA Atlas":
+        return "Leitura IA Atlas";
+      case "Scanner":
+        return "Scanner Atlas";
+      case "Estrutura":
+        return "Estrutura do Mercado";
+      case "Euler":
+        return "Leitura Euler";
+      default:
+        return "Scanner Atlas";
+    }
+  }, [activeModule]);
+
+  const moduleDescription = useMemo(() => {
+    switch (activeModule) {
+      case "Fluxo":
+        return "Mapeamento do fluxo, volume e pressão compradora versus vendedora.";
+      case "Singularidade":
+        return "Resumo estrutural com leitura de força, aceleração e continuidade.";
+      case "IA Atlas":
+        return "Camada de interpretação sintética com score, risco e invalidação.";
+      case "Scanner":
+        return "Ativos monitorados em tempo real com score e tendência.";
+      case "Estrutura":
+        return "Leitura de ciclo, suporte, força estrutural e estabilidade.";
+      case "Euler":
+        return "Camada matemática complementar para validação estrutural.";
+      default:
+        return "Ativos monitorados em tempo real com score e tendência.";
+    }
+  }, [activeModule]);
+
+  const bottomTabs =
+    activeModule === "Fluxo"
+      ? ["Fluxo", "Pressão", "Volume", "Eventos"]
+      : activeModule === "Singularidade"
+      ? ["Singularidade", "Confluência", "Pulso", "Eventos"]
+      : activeModule === "IA Atlas"
+      ? ["IA Atlas", "Score", "Risco", "Eventos"]
+      : activeModule === "Estrutura"
+      ? ["Estrutura", "Euler", "Ciclo", "Eventos"]
+      : activeModule === "Euler"
+      ? ["Euler", "Curvatura", "Validação", "Eventos"]
+      : ["Indicadores", "Fluxo", "Scanner", "Eventos"];
+
   return (
     <div
       style={{
@@ -366,9 +426,9 @@ export default function AtlasChartPro() {
             alignItems: "center",
             justifyContent: "space-between",
             gap: 18,
-            padding: "12px 16px",
+            padding: "10px 16px 8px",
             flexWrap: "wrap",
-            minHeight: 88,
+            borderBottom: "1px solid rgba(255,255,255,0.05)",
           }}
         >
           <div
@@ -433,15 +493,11 @@ export default function AtlasChartPro() {
             <div
               style={{
                 display: "flex",
+                gap: 8,
                 alignItems: "center",
-                gap: 10,
-                background:
-                  "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))",
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 14,
-                padding: "9px 10px",
-                flexWrap: "wrap",
-                boxShadow: "0 8px 20px rgba(0,0,0,0.14)",
+                flexWrap: "nowrap",
+                overflowX: "auto",
+                scrollbarWidth: "none",
               }}
             >
               <div
@@ -479,71 +535,32 @@ export default function AtlasChartPro() {
                 </select>
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  gap: 8,
-                  alignItems: "center",
-                  flexWrap: "nowrap",
-                  overflowX: "auto",
-                  scrollbarWidth: "none",
-                }}
-              >
-                {timeframes.map((tf) => {
-                  const active = timeframe === tf;
-                  return (
-                    <button
-                      key={tf}
-                      onClick={() => setTimeframe(tf)}
-                      style={{
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        background: active
-                          ? "linear-gradient(180deg, rgba(255,213,79,0.34), rgba(255,170,0,0.16))"
-                          : "rgba(255,255,255,0.03)",
-                        color: active ? "#ffd95b" : "#afc1df",
-                        borderRadius: 10,
-                        padding: "10px 16px",
-                        minHeight: 42,
-                        fontWeight: 900,
-                        fontSize: 15,
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                        flexShrink: 0,
-                        boxShadow: active
-                          ? "0 0 0 1px rgba(255,213,79,0.08) inset"
-                          : "none",
-                      }}
-                    >
-                      {tf}
-                    </button>
-                  );
-                })}
-
-                {topModules.map((item, i) => (
-                  <div
-                    key={item}
+              {timeframes.map((tf) => {
+                const active = timeframe === tf;
+                return (
+                  <button
+                    key={tf}
+                    onClick={() => setTimeframe(tf)}
                     style={{
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: active
+                        ? "linear-gradient(180deg, rgba(255,213,79,0.34), rgba(255,170,0,0.16))"
+                        : "rgba(255,255,255,0.03)",
+                      color: active ? "#ffd95b" : "#afc1df",
+                      borderRadius: 10,
                       padding: "10px 16px",
                       minHeight: 42,
-                      display: "flex",
-                      alignItems: "center",
-                      borderRadius: 10,
-                      border: "1px solid rgba(255,255,255,0.07)",
-                      background:
-                        i === 3
-                          ? "linear-gradient(180deg, rgba(255,214,90,0.24), rgba(255,180,20,0.10))"
-                          : "rgba(255,255,255,0.03)",
-                      color: i === 3 ? "#ffd65a" : "#c2cee4",
-                      fontWeight: 800,
+                      fontWeight: 900,
                       fontSize: 15,
+                      cursor: "pointer",
                       whiteSpace: "nowrap",
                       flexShrink: 0,
                     }}
                   >
-                    {item}
-                  </div>
-                ))}
-              </div>
+                    {tf}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -556,7 +573,6 @@ export default function AtlasChartPro() {
               fontSize: 13,
               flexShrink: 0,
               whiteSpace: "nowrap",
-              paddingRight: 2,
             }}
           >
             <span>Replay</span>
@@ -571,6 +587,46 @@ export default function AtlasChartPro() {
               {change}
             </span>
           </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 16px 10px",
+            overflowX: "auto",
+            scrollbarWidth: "none",
+          }}
+        >
+          {topModules.map((item) => {
+            const active = activeModule === item;
+            return (
+              <button
+                key={item}
+                onClick={() => setActiveModule(item)}
+                style={{
+                  padding: "10px 16px",
+                  minHeight: 42,
+                  display: "flex",
+                  alignItems: "center",
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  background: active
+                    ? "linear-gradient(180deg, rgba(255,214,90,0.24), rgba(255,180,20,0.10))"
+                    : "rgba(255,255,255,0.03)",
+                  color: active ? "#ffd65a" : "#c2cee4",
+                  fontWeight: 800,
+                  fontSize: 15,
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                  cursor: "pointer",
+                }}
+              >
+                {item}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -658,7 +714,7 @@ export default function AtlasChartPro() {
               <div>
                 <div style={{ fontWeight: 900, fontSize: 17 }}>{symbol}</div>
                 <div style={{ color: "#8fa3c7", fontSize: 11 }}>
-                  Singularidade Atlas • Fonte: {source} • TF: {timeframe}
+                  {moduleTitle} • Fonte: {source} • TF: {timeframe}
                 </div>
               </div>
 
@@ -705,7 +761,7 @@ export default function AtlasChartPro() {
                   marginBottom: 14,
                 }}
               >
-                IA Atlas Insights
+                {activeModule}
               </div>
 
               <div
@@ -771,12 +827,8 @@ export default function AtlasChartPro() {
                 </div>
               </div>
 
-              <RightRow label="Risco" value="Médio" />
-              <RightRow
-                label="Força"
-                value={score >= 85 ? "Alta" : "Moderada"}
-                positive
-              />
+              <RightRow label="Resumo" value={activeModule} positive />
+              <RightRow label="Força" value={score >= 85 ? "Alta" : "Moderada"} positive />
               <RightRow
                 label="Invalidação"
                 value={
@@ -807,17 +859,17 @@ export default function AtlasChartPro() {
                   marginBottom: 8,
                 }}
               >
-                Estrutura
+                {moduleTitle}
+              </div>
+
+              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 12 }}>
+                {moduleDescription}
               </div>
 
               <RightRow label="Estrutura" value="Positivo" positive />
               <RightRow label="Euler" value="Forte" positive />
               <RightRow label="Singularidade" value="5 / 6" positive />
-              <RightRow
-                label="Razão de Prata"
-                value="Suporte Sólido"
-                positive
-              />
+              <RightRow label="Razão de Prata" value="Suporte Sólido" positive />
               <RightRow label="Ciclo" value="Acelerado" positive />
             </div>
           </div>
@@ -845,7 +897,7 @@ export default function AtlasChartPro() {
             }}
           >
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {["Indicadores", "Fluxo", "Scanner", "Eventos"].map((tab, i) => (
+              {bottomTabs.map((tab, i) => (
                 <div
                   key={tab}
                   style={{
@@ -853,10 +905,10 @@ export default function AtlasChartPro() {
                     borderRadius: 11,
                     border: "1px solid rgba(255,255,255,0.06)",
                     background:
-                      i === 2
+                      i === 0
                         ? "linear-gradient(180deg, rgba(255,215,90,0.18), rgba(255,180,20,0.10))"
                         : "rgba(255,255,255,0.025)",
-                    color: i === 2 ? "#ffd45a" : "#a8b8d8",
+                    color: i === 0 ? "#ffd45a" : "#a8b8d8",
                     fontWeight: 800,
                     fontSize: 12,
                   }}
@@ -867,7 +919,7 @@ export default function AtlasChartPro() {
             </div>
 
             <div style={{ color: "#88a0c9", fontSize: 12 }}>
-              Scanner Atlas • Volume • RSI • Fluxo
+              {moduleTitle} • Volume • RSI • Fluxo
             </div>
           </div>
 
@@ -898,30 +950,10 @@ export default function AtlasChartPro() {
                 <div style={{ textAlign: "right" }}>Preço</div>
               </div>
 
-              <ScannerRow
-                asset="BTCUSDT"
-                score="92.4"
-                trend="Compra Forte"
-                price="$69,489"
-              />
-              <ScannerRow
-                asset="ETHUSDT"
-                score="87.2"
-                trend="Positivo"
-                price="$3,745"
-              />
-              <ScannerRow
-                asset="SOLUSDT"
-                score="82.8"
-                trend="Positivo"
-                price="$168.40"
-              />
-              <ScannerRow
-                asset="BNBUSDT"
-                score="74.9"
-                trend="Aceleração"
-                price="$611.22"
-              />
+              <ScannerRow asset="BTCUSDT" score="92.4" trend="Compra Forte" price="$69,489" />
+              <ScannerRow asset="ETHUSDT" score="87.2" trend="Positivo" price="$3,745" />
+              <ScannerRow asset="SOLUSDT" score="82.8" trend="Positivo" price="$168.40" />
+              <ScannerRow asset="BNBUSDT" score="74.9" trend="Aceleração" price="$611.22" />
             </div>
 
             <div
@@ -934,16 +966,11 @@ export default function AtlasChartPro() {
                 minHeight: 210,
               }}
             >
-              <div
-                style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8 }}
-              >
-                Pulso da Singularidade
+              <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8 }}>
+                {moduleTitle}
               </div>
-              <div
-                style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 15 }}
-              >
-                Leitura resumida do comportamento do mercado com base em preço,
-                volume e estrutura.
+              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 15 }}>
+                {moduleDescription}
               </div>
 
               <div
