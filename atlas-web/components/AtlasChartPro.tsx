@@ -21,6 +21,17 @@ type TopModule =
   | "Estrutura"
   | "Euler";
 
+type ToolKey =
+  | "cursor"
+  | "zoom"
+  | "line"
+  | "zones"
+  | "levels"
+  | "measure"
+  | "magnet"
+  | "clock"
+  | "settings";
+
 const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const timeframes = ["1m", "5m", "15m", "1h", "4h"];
 const topModules: TopModule[] = [
@@ -30,6 +41,18 @@ const topModules: TopModule[] = [
   "Scanner",
   "Estrutura",
   "Euler",
+];
+
+const chartTools: { key: ToolKey; icon: string; label: string }[] = [
+  { key: "cursor", icon: "⌖", label: "Cursor" },
+  { key: "zoom", icon: "⊕", label: "Zoom" },
+  { key: "line", icon: "╱", label: "Linha" },
+  { key: "zones", icon: "◫", label: "Zonas" },
+  { key: "levels", icon: "≡", label: "Níveis" },
+  { key: "measure", icon: "⎘", label: "Medida" },
+  { key: "magnet", icon: "⌬", label: "Magnet" },
+  { key: "clock", icon: "◷", label: "Replay" },
+  { key: "settings", icon: "⚙", label: "Config" },
 ];
 
 function StatCard({
@@ -48,8 +71,8 @@ function StatCard({
           "linear-gradient(180deg, rgba(14,21,39,0.96), rgba(7,11,22,0.985))",
         border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: 14,
-        padding: "9px 12px",
-        minHeight: 60,
+        padding: "10px 12px",
+        minHeight: 64,
         boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
       }}
     >
@@ -161,6 +184,7 @@ export default function AtlasChartPro() {
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [timeframe, setTimeframe] = useState("1m");
   const [activeModule, setActiveModule] = useState<TopModule>("Scanner");
+  const [activeTool, setActiveTool] = useState<ToolKey>("cursor");
   const [source, setSource] = useState("carregando...");
   const [price, setPrice] = useState("--");
   const [change, setChange] = useState("--");
@@ -168,11 +192,11 @@ export default function AtlasChartPro() {
   const [lastClose, setLastClose] = useState<number | null>(null);
   const [signal, setSignal] = useState("Compra Forte");
   const [score, setScore] = useState(92);
-  const [chartHeight, setChartHeight] = useState(710);
+  const [chartHeight, setChartHeight] = useState(730);
 
   useEffect(() => {
     const updateChartHeight = () => {
-      const nextHeight = Math.max(650, Math.min(window.innerHeight - 315, 880));
+      const nextHeight = Math.max(650, Math.min(window.innerHeight - 315, 900));
       setChartHeight(nextHeight);
     };
 
@@ -384,6 +408,25 @@ export default function AtlasChartPro() {
     }
   }, [activeModule]);
 
+  const moduleAccent = useMemo(() => {
+    switch (activeModule) {
+      case "Fluxo":
+        return "#29d391";
+      case "Singularidade":
+        return "#5ee7ff";
+      case "IA Atlas":
+        return "#8b5cf6";
+      case "Scanner":
+        return "#ffd65a";
+      case "Estrutura":
+        return "#34d399";
+      case "Euler":
+        return "#60a5fa";
+      default:
+        return "#ffd65a";
+    }
+  }, [activeModule]);
+
   const bottomTabs =
     activeModule === "Fluxo"
       ? ["Fluxo", "Pressão", "Volume", "Eventos"]
@@ -396,6 +439,62 @@ export default function AtlasChartPro() {
       : activeModule === "Euler"
       ? ["Euler", "Curvatura", "Validação", "Eventos"]
       : ["Indicadores", "Fluxo", "Scanner", "Eventos"];
+
+  const leftPanelTitle =
+    activeModule === "Scanner"
+      ? "Mestre Scanner"
+      : activeModule === "Fluxo"
+      ? "Mapa de Fluxo"
+      : activeModule === "IA Atlas"
+      ? "Radar IA Atlas"
+      : activeModule === "Estrutura"
+      ? "Mapa Estrutural"
+      : activeModule === "Euler"
+      ? "Validação Euler"
+      : "Pulso Singularidade";
+
+  const leftRows =
+    activeModule === "Fluxo"
+      ? [
+          { asset: "BTCUSDT", score: "91.7", trend: "Pressão Compradora", price: "$69,489" },
+          { asset: "ETHUSDT", score: "84.1", trend: "Fluxo Positivo", price: "$3,745" },
+          { asset: "SOLUSDT", score: "79.4", trend: "Absorção", price: "$168.40" },
+          { asset: "BNBUSDT", score: "72.3", trend: "Aceleração", price: "$611.22" },
+        ]
+      : activeModule === "IA Atlas"
+      ? [
+          { asset: "BTCUSDT", score: "94.2", trend: "Convicção Alta", price: "$69,489" },
+          { asset: "ETHUSDT", score: "88.8", trend: "Compra Assistida", price: "$3,745" },
+          { asset: "SOLUSDT", score: "81.0", trend: "Positivo", price: "$168.40" },
+          { asset: "BNBUSDT", score: "76.4", trend: "Neutro Forte", price: "$611.22" },
+        ]
+      : activeModule === "Estrutura"
+      ? [
+          { asset: "BTCUSDT", score: "93.1", trend: "Estrutura Forte", price: "$69,489" },
+          { asset: "ETHUSDT", score: "86.7", trend: "Positivo", price: "$3,745" },
+          { asset: "SOLUSDT", score: "80.5", trend: "Continuidade", price: "$168.40" },
+          { asset: "BNBUSDT", score: "74.8", trend: "Base Sólida", price: "$611.22" },
+        ]
+      : activeModule === "Euler"
+      ? [
+          { asset: "BTCUSDT", score: "90.6", trend: "Validação Forte", price: "$69,489" },
+          { asset: "ETHUSDT", score: "83.3", trend: "Curvatura Positiva", price: "$3,745" },
+          { asset: "SOLUSDT", score: "78.1", trend: "Confirmação", price: "$168.40" },
+          { asset: "BNBUSDT", score: "71.9", trend: "Assimetria", price: "$611.22" },
+        ]
+      : activeModule === "Singularidade"
+      ? [
+          { asset: "BTCUSDT", score: "92.8", trend: "Pulso Forte", price: "$69,489" },
+          { asset: "ETHUSDT", score: "87.1", trend: "Confluência", price: "$3,745" },
+          { asset: "SOLUSDT", score: "82.2", trend: "Positivo", price: "$168.40" },
+          { asset: "BNBUSDT", score: "75.0", trend: "Aceleração", price: "$611.22" },
+        ]
+      : [
+          { asset: "BTCUSDT", score: "92.4", trend: "Compra Forte", price: "$69,489" },
+          { asset: "ETHUSDT", score: "87.2", trend: "Positivo", price: "$3,745" },
+          { asset: "SOLUSDT", score: "82.8", trend: "Positivo", price: "$168.40" },
+          { asset: "BNBUSDT", score: "74.9", trend: "Aceleração", price: "$611.22" },
+        ];
 
   return (
     <div
@@ -412,7 +511,7 @@ export default function AtlasChartPro() {
         style={{
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           background:
-            "linear-gradient(180deg, rgba(5,10,20,0.98), rgba(6,11,22,0.96))",
+            "linear-gradient(180deg, rgba(5,10,20,0.985), rgba(6,11,22,0.965))",
           backdropFilter: "blur(12px)",
           position: "sticky",
           top: 0,
@@ -426,16 +525,17 @@ export default function AtlasChartPro() {
             alignItems: "center",
             justifyContent: "space-between",
             gap: 18,
-            padding: "10px 16px 8px",
+            padding: "10px 16px 10px",
             flexWrap: "wrap",
             borderBottom: "1px solid rgba(255,255,255,0.05)",
+            minHeight: 82,
           }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 14,
+              gap: 16,
               minWidth: 0,
               flexWrap: "wrap",
               flex: 1,
@@ -444,8 +544,8 @@ export default function AtlasChartPro() {
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div
                 style={{
-                  width: 64,
-                  height: 64,
+                  width: 66,
+                  height: 66,
                   borderRadius: 14,
                   background: "rgba(255,255,255,0.02)",
                   border: "1px solid rgba(255,255,255,0.06)",
@@ -460,8 +560,8 @@ export default function AtlasChartPro() {
                 <Image
                   src="/logo-singularidade.png"
                   alt="Logo Singularidade"
-                  width={58}
-                  height={58}
+                  width={60}
+                  height={60}
                   style={{ objectFit: "cover" }}
                 />
               </div>
@@ -470,7 +570,7 @@ export default function AtlasChartPro() {
                 <span
                   style={{
                     fontWeight: 900,
-                    fontSize: 22,
+                    fontSize: 24,
                     letterSpacing: 0.55,
                     whiteSpace: "nowrap",
                   }}
@@ -493,7 +593,7 @@ export default function AtlasChartPro() {
             <div
               style={{
                 display: "flex",
-                gap: 8,
+                gap: 9,
                 alignItems: "center",
                 flexWrap: "nowrap",
                 overflowX: "auto",
@@ -505,12 +605,14 @@ export default function AtlasChartPro() {
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
-                  background: "rgba(255,255,255,0.04)",
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025))",
                   border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 10,
-                  padding: "9px 12px",
-                  minHeight: 42,
+                  borderRadius: 12,
+                  padding: "10px 14px",
+                  minHeight: 46,
                   flexShrink: 0,
+                  boxShadow: "0 8px 18px rgba(0,0,0,0.12)",
                 }}
               >
                 <span style={{ color: "#f4c24e", fontSize: 15 }}>🪙</span>
@@ -547,9 +649,9 @@ export default function AtlasChartPro() {
                         ? "linear-gradient(180deg, rgba(255,213,79,0.34), rgba(255,170,0,0.16))"
                         : "rgba(255,255,255,0.03)",
                       color: active ? "#ffd95b" : "#afc1df",
-                      borderRadius: 10,
-                      padding: "10px 16px",
-                      minHeight: 42,
+                      borderRadius: 11,
+                      padding: "11px 16px",
+                      minHeight: 46,
                       fontWeight: 900,
                       fontSize: 15,
                       cursor: "pointer",
@@ -594,9 +696,11 @@ export default function AtlasChartPro() {
             display: "flex",
             alignItems: "center",
             gap: 8,
-            padding: "8px 16px 10px",
+            padding: "9px 16px 12px",
             overflowX: "auto",
             scrollbarWidth: "none",
+            background:
+              "linear-gradient(180deg, rgba(12,18,34,0.55), rgba(8,12,24,0.10))",
           }}
         >
           {topModules.map((item) => {
@@ -606,21 +710,24 @@ export default function AtlasChartPro() {
                 key={item}
                 onClick={() => setActiveModule(item)}
                 style={{
-                  padding: "10px 16px",
-                  minHeight: 42,
+                  padding: "11px 16px",
+                  minHeight: 44,
                   display: "flex",
                   alignItems: "center",
-                  borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 11,
+                  border: active
+                    ? `1px solid ${moduleAccent}55`
+                    : "1px solid rgba(255,255,255,0.07)",
                   background: active
-                    ? "linear-gradient(180deg, rgba(255,214,90,0.24), rgba(255,180,20,0.10))"
+                    ? `linear-gradient(180deg, ${moduleAccent}30, rgba(255,255,255,0.04))`
                     : "rgba(255,255,255,0.03)",
-                  color: active ? "#ffd65a" : "#c2cee4",
+                  color: active ? "#f4f8ff" : "#c2cee4",
                   fontWeight: 800,
-                  fontSize: 15,
+                  fontSize: 14,
                   whiteSpace: "nowrap",
                   flexShrink: 0,
                   cursor: "pointer",
+                  boxShadow: active ? `0 0 0 1px ${moduleAccent}20 inset` : "none",
                 }}
               >
                 {item}
@@ -663,7 +770,7 @@ export default function AtlasChartPro() {
                 "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
               border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: 16,
-              padding: "9px 4px",
+              padding: "10px 4px",
               display: "flex",
               flexDirection: "column",
               gap: 8,
@@ -671,23 +778,32 @@ export default function AtlasChartPro() {
               boxShadow: "0 16px 40px rgba(0,0,0,0.24)",
             }}
           >
-            {["⌖", "◔", "⌁", "⊕", "⌗", "⎘", "⌬", "◷", "⚙"].map((icon) => (
-              <button
-                key={icon}
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 9,
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  background: "rgba(255,255,255,0.025)",
-                  color: "#9fb3d4",
-                  fontSize: 13,
-                  cursor: "pointer",
-                }}
-              >
-                {icon}
-              </button>
-            ))}
+            {chartTools.map((tool) => {
+              const active = activeTool === tool.key;
+              return (
+                <button
+                  key={tool.key}
+                  title={tool.label}
+                  onClick={() => setActiveTool(tool.key)}
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 9,
+                    border: active
+                      ? `1px solid ${moduleAccent}55`
+                      : "1px solid rgba(255,255,255,0.06)",
+                    background: active
+                      ? `linear-gradient(180deg, ${moduleAccent}28, rgba(255,255,255,0.03))`
+                      : "rgba(255,255,255,0.025)",
+                    color: active ? "#eef4ff" : "#9fb3d4",
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  {tool.icon}
+                </button>
+              );
+            })}
           </div>
 
           <div
@@ -711,10 +827,33 @@ export default function AtlasChartPro() {
                   "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
               }}
             >
-              <div>
-                <div style={{ fontWeight: 900, fontSize: 17 }}>{symbol}</div>
-                <div style={{ color: "#8fa3c7", fontSize: 11 }}>
-                  {moduleTitle} • Fonte: {source} • TF: {timeframe}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minWidth: 26,
+                    height: 26,
+                    borderRadius: 8,
+                    background: `${moduleAccent}20`,
+                    color: moduleAccent,
+                    fontWeight: 900,
+                    fontSize: 12,
+                    border: `1px solid ${moduleAccent}33`,
+                    padding: "0 8px",
+                  }}
+                >
+                  {activeModule.slice(0, 2).toUpperCase()}
+                </div>
+
+                <div>
+                  <div style={{ fontWeight: 900, fontSize: 17 }}>{symbol}</div>
+                  <div style={{ color: "#8fa3c7", fontSize: 11 }}>
+                    {moduleTitle} • Ferramenta:{" "}
+                    {chartTools.find((t) => t.key === activeTool)?.label} • TF:{" "}
+                    {timeframe}
+                  </div>
                 </div>
               </div>
 
@@ -724,6 +863,7 @@ export default function AtlasChartPro() {
                   gap: 10,
                   color: "#8fa3c7",
                   fontSize: 13,
+                  alignItems: "center",
                 }}
               >
                 <span>♡</span>
@@ -807,8 +947,7 @@ export default function AtlasChartPro() {
                     style={{
                       width: `${score}%`,
                       height: "100%",
-                      background:
-                        "linear-gradient(90deg, rgba(41,211,145,0.35), rgba(61,229,255,0.95))",
+                      background: `linear-gradient(90deg, ${moduleAccent}70, rgba(61,229,255,0.95))`,
                     }}
                   />
                 </div>
@@ -828,7 +967,16 @@ export default function AtlasChartPro() {
               </div>
 
               <RightRow label="Resumo" value={activeModule} positive />
-              <RightRow label="Força" value={score >= 85 ? "Alta" : "Moderada"} positive />
+              <RightRow
+                label="Ferramenta"
+                value={chartTools.find((t) => t.key === activeTool)?.label || "--"}
+                positive
+              />
+              <RightRow
+                label="Força"
+                value={score >= 85 ? "Alta" : "Moderada"}
+                positive
+              />
               <RightRow
                 label="Invalidação"
                 value={
@@ -906,9 +1054,9 @@ export default function AtlasChartPro() {
                     border: "1px solid rgba(255,255,255,0.06)",
                     background:
                       i === 0
-                        ? "linear-gradient(180deg, rgba(255,215,90,0.18), rgba(255,180,20,0.10))"
+                        ? `linear-gradient(180deg, ${moduleAccent}24, rgba(255,255,255,0.03))`
                         : "rgba(255,255,255,0.025)",
-                    color: i === 0 ? "#ffd45a" : "#a8b8d8",
+                    color: i === 0 ? "#eef4ff" : "#a8b8d8",
                     fontWeight: 800,
                     fontSize: 12,
                   }}
@@ -933,6 +1081,17 @@ export default function AtlasChartPro() {
             <div>
               <div
                 style={{
+                  color: "#dfe8ff",
+                  fontWeight: 900,
+                  marginBottom: 10,
+                  fontSize: 15,
+                }}
+              >
+                {leftPanelTitle}
+              </div>
+
+              <div
+                style={{
                   display: "grid",
                   gridTemplateColumns: "1.2fr 1fr 1fr 1fr",
                   gap: 10,
@@ -950,10 +1109,15 @@ export default function AtlasChartPro() {
                 <div style={{ textAlign: "right" }}>Preço</div>
               </div>
 
-              <ScannerRow asset="BTCUSDT" score="92.4" trend="Compra Forte" price="$69,489" />
-              <ScannerRow asset="ETHUSDT" score="87.2" trend="Positivo" price="$3,745" />
-              <ScannerRow asset="SOLUSDT" score="82.8" trend="Positivo" price="$168.40" />
-              <ScannerRow asset="BNBUSDT" score="74.9" trend="Aceleração" price="$611.22" />
+              {leftRows.map((row) => (
+                <ScannerRow
+                  key={`${activeModule}-${row.asset}`}
+                  asset={row.asset}
+                  score={row.score}
+                  trend={row.trend}
+                  price={row.price}
+                />
+              ))}
             </div>
 
             <div
