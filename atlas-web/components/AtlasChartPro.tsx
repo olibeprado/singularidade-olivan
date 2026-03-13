@@ -15,6 +15,14 @@ type Candle = {
 
 const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const timeframes = ["1m", "5m", "15m", "1h", "4h"];
+const topModules = [
+  "Fluxo",
+  "Singularidade",
+  "IA Atlas",
+  "Scanner",
+  "Estrutura",
+  "Euler",
+];
 
 function StatCard({
   title,
@@ -28,31 +36,34 @@ function StatCard({
   return (
     <div
       style={{
-        background: "linear-gradient(180deg, rgba(14,21,39,0.95), rgba(7,11,22,0.98))",
+        background:
+          "linear-gradient(180deg, rgba(14,21,39,0.96), rgba(7,11,22,0.985))",
         border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: 12,
-        padding: "4px 8px",
-        minHeight: 42,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
+        borderRadius: 14,
+        padding: "8px 12px",
+        minHeight: 58,
+        boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
       }}
     >
       <div
         style={{
           fontSize: 10,
           color: "#7f93b9",
-          marginBottom: 4,
-          letterSpacing: 0.4,
+          marginBottom: 6,
+          letterSpacing: 0.45,
           textTransform: "uppercase",
+          fontWeight: 700,
         }}
       >
         {title}
       </div>
       <div
         style={{
-          fontSize: 15,
-          fontWeight: 800,
-          color: positive === undefined ? "#eef4ff" : positive ? "#2fe19a" : "#ff6b81",
-          lineHeight: 1.1,
+          fontSize: 18,
+          fontWeight: 900,
+          color:
+            positive === undefined ? "#eef4ff" : positive ? "#2fe19a" : "#ff6b81",
+          lineHeight: 1.08,
         }}
       >
         {value}
@@ -76,7 +87,7 @@ function RightRow({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "8px 0",
+        padding: "10px 0",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
         gap: 12,
       }}
@@ -85,7 +96,7 @@ function RightRow({
       <span
         style={{
           color: positive === undefined ? "#eef4ff" : positive ? "#34d399" : "#fb7185",
-          fontWeight: 700,
+          fontWeight: 800,
           fontSize: 13,
           textAlign: "right",
         }}
@@ -110,21 +121,22 @@ function ScannerRow({
   const up =
     trend.toLowerCase().includes("forte") ||
     trend.toLowerCase().includes("positivo");
+
   return (
     <div
       style={{
         display: "grid",
         gridTemplateColumns: "1.2fr 1fr 1fr 1fr",
         gap: 10,
-        padding: "10px 0",
+        padding: "12px 0",
         borderBottom: "1px solid rgba(255,255,255,0.05)",
         color: "#d8e2ff",
         fontSize: 13,
       }}
     >
-      <div style={{ fontWeight: 700 }}>{asset}</div>
+      <div style={{ fontWeight: 800 }}>{asset}</div>
       <div>{score}</div>
-      <div style={{ color: up ? "#34d399" : "#f59e0b", fontWeight: 700 }}>
+      <div style={{ color: up ? "#34d399" : "#f59e0b", fontWeight: 800 }}>
         {trend}
       </div>
       <div style={{ textAlign: "right" }}>{price}</div>
@@ -147,16 +159,31 @@ export default function AtlasChartPro() {
   const [lastClose, setLastClose] = useState<number | null>(null);
   const [signal, setSignal] = useState("Compra Forte");
   const [score, setScore] = useState(92);
+  const [chartHeight, setChartHeight] = useState(700);
+
+  useEffect(() => {
+    const updateChartHeight = () => {
+      const nextHeight = Math.max(640, Math.min(window.innerHeight - 300, 860));
+      setChartHeight(nextHeight);
+    };
+
+    updateChartHeight();
+    window.addEventListener("resize", updateChartHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateChartHeight);
+    };
+  }, []);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: 820,
+      height: chartHeight,
       layout: {
         background: { type: ColorType.Solid, color: "#09111f" },
-        textColor: "#8ea2c7",
+        textColor: "#93a9cf",
       },
       grid: {
         vertLines: { color: "rgba(120,140,180,0.10)" },
@@ -193,7 +220,7 @@ export default function AtlasChartPro() {
 
     volumeSeries.priceScale().applyOptions({
       scaleMargins: {
-        top: 0.85,
+        top: 0.84,
         bottom: 0,
       },
     });
@@ -206,6 +233,7 @@ export default function AtlasChartPro() {
       if (!chartContainerRef.current || !chartRef.current) return;
       chartRef.current.applyOptions({
         width: chartContainerRef.current.clientWidth,
+        height: chartHeight,
       });
     };
 
@@ -215,7 +243,7 @@ export default function AtlasChartPro() {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, []);
+  }, [chartHeight]);
 
   useEffect(() => {
     let cancelled = false;
@@ -274,6 +302,7 @@ export default function AtlasChartPro() {
         const pct = prev.close
           ? ((last.close - prev.close) / prev.close) * 100
           : 0;
+
         setChange(`${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`);
 
         setVolume(
@@ -323,10 +352,11 @@ export default function AtlasChartPro() {
         style={{
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           background: "rgba(4,9,18,0.95)",
-          backdropFilter: "blur(10px)",
+          backdropFilter: "blur(12px)",
           position: "sticky",
           top: 0,
           zIndex: 20,
+          boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
         }}
       >
         <div
@@ -334,54 +364,52 @@ export default function AtlasChartPro() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 14,
-            padding: "8px 14px 8px",
-            flexWrap: "nowrap",
+            gap: 16,
+            padding: "10px 16px",
+            flexWrap: "wrap",
           }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 10,
-              flexWrap: "nowrap",
+              gap: 14,
               minWidth: 0,
+              flexWrap: "wrap",
+              flex: 1,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div
                 style={{
-                  width: 68,
-                  height: 68,
-                  borderRadius: 12,
+                  width: 56,
+                  height: 56,
+                  borderRadius: 14,
                   background: "rgba(255,255,255,0.02)",
                   border: "1px solid rgba(255,255,255,0.05)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   overflow: "hidden",
-                  boxShadow: "0 0 10px rgba(114,160,255,0.08)",
+                  boxShadow: "0 0 12px rgba(114,160,255,0.08)",
                   flexShrink: 0,
                 }}
               >
                 <Image
                   src="/logo-singularidade.png"
                   alt="Logo Singularidade"
-                  width={62}
-                  height={62}
-                  style={{
-                    objectFit: "cover",
-                    opacity: 1,
-                  }}
+                  width={52}
+                  height={52}
+                  style={{ objectFit: "cover" }}
                 />
               </div>
 
-              <div style={{ display: "flex", alignItems: "baseline", gap: 7 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                 <span
                   style={{
                     fontWeight: 900,
-                    fontSize: 17,
-                    letterSpacing: 0.45,
+                    fontSize: 20,
+                    letterSpacing: 0.5,
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -404,99 +432,111 @@ export default function AtlasChartPro() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
-                background: "rgba(255,255,255,0.03)",
+                gap: 10,
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))",
                 border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 10,
-                padding: "6px 9px",
-                flexShrink: 0,
+                borderRadius: 14,
+                padding: "8px 10px",
+                flexWrap: "wrap",
+                boxShadow: "0 8px 20px rgba(0,0,0,0.14)",
               }}
             >
-              <span style={{ color: "#f4c24e", fontSize: 13 }}>🪙</span>
-              <select
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
+              <div
                 style={{
-                  background: "transparent",
-                  color: "#eef4ff",
-                  border: "none",
-                  outline: "none",
-                  fontWeight: 800,
-                  fontSize: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: "rgba(255,255,255,0.035)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 10,
+                  padding: "7px 10px",
+                  flexShrink: 0,
                 }}
               >
-                {symbols.map((s) => (
-                  <option key={s} value={s} style={{ color: "#000" }}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <span style={{ color: "#f4c24e", fontSize: 14 }}>🪙</span>
+                <select
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value)}
+                  style={{
+                    background: "transparent",
+                    color: "#eef4ff",
+                    border: "none",
+                    outline: "none",
+                    fontWeight: 800,
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  {symbols.map((s) => (
+                    <option key={s} value={s} style={{ color: "#000" }}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div
-              style={{
-                display: "flex",
-                gap: 6,
-                alignItems: "center",
-                flexWrap: "nowrap",
-                overflowX: "auto",
-                scrollbarWidth: "none",
-              }}
-            >
-              {timeframes.map((tf) => {
-                const active = timeframe === tf;
-                return (
-                  <button
-                    key={tf}
-                    onClick={() => setTimeframe(tf)}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 7,
+                  alignItems: "center",
+                  flexWrap: "nowrap",
+                  overflowX: "auto",
+                  scrollbarWidth: "none",
+                }}
+              >
+                {timeframes.map((tf) => {
+                  const active = timeframe === tf;
+                  return (
+                    <button
+                      key={tf}
+                      onClick={() => setTimeframe(tf)}
+                      style={{
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        background: active
+                          ? "linear-gradient(180deg, rgba(255,213,79,0.30), rgba(255,170,0,0.14))"
+                          : "rgba(255,255,255,0.03)",
+                        color: active ? "#ffd95b" : "#a7bbde",
+                        borderRadius: 10,
+                        padding: "9px 14px",
+                        fontWeight: 900,
+                        fontSize: 13,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        boxShadow: active
+                          ? "0 0 0 1px rgba(255,213,79,0.08) inset"
+                          : "none",
+                      }}
+                    >
+                      {tf}
+                    </button>
+                  );
+                })}
+
+                {topModules.map((item, i) => (
+                  <div
+                    key={item}
                     style={{
-                      border: "1px solid rgba(255,255,255,0.07)",
-                      background: active
-                        ? "linear-gradient(180deg, rgba(255,213,79,0.28), rgba(255,170,0,0.13))"
-                        : "rgba(255,255,255,0.025)",
-                      color: active ? "#ffd95b" : "#9cb0d2",
-                      borderRadius: 8,
-                      padding: "7px 12px",
+                      padding: "9px 14px",
+                      borderRadius: 10,
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      background:
+                        i === 3
+                          ? "linear-gradient(180deg, rgba(255,214,90,0.24), rgba(255,180,20,0.10))"
+                          : "rgba(255,255,255,0.03)",
+                      color: i === 3 ? "#ffd65a" : "#b9c8e2",
                       fontWeight: 800,
-                      fontSize: 12,
-                      cursor: "pointer",
+                      fontSize: 13,
                       whiteSpace: "nowrap",
                       flexShrink: 0,
                     }}
                   >
-                    {tf}
-                  </button>
-                );
-              })}
-
-              {[
-                "Fluxo",
-                "Singularidade",
-                "IA Atlas",
-                "Scanner",
-                "Estrutura",
-                "Euler",
-              ].map((item, i) => (
-                <div
-                  key={item}
-                  style={{
-                    padding: "7px 13px",
-                    borderRadius: 10,
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    background:
-                      i === 3
-                        ? "linear-gradient(180deg, rgba(255,214,90,0.22), rgba(255,180,20,0.10))"
-                        : "rgba(255,255,255,0.025)",
-                    color: i === 3 ? "#ffd65a" : "#b4c3df",
-                    fontWeight: 700,
-                    fontSize: 12,
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                  }}
-                >
-                  {item}
-                </div>
-              ))}
+                    {item}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -504,11 +544,12 @@ export default function AtlasChartPro() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 12,
+              gap: 14,
               color: "#9cb0d2",
               fontSize: 12,
               flexShrink: 0,
               whiteSpace: "nowrap",
+              paddingRight: 2,
             }}
           >
             <span>Replay</span>
@@ -516,7 +557,8 @@ export default function AtlasChartPro() {
             <span
               style={{
                 color: change.startsWith("-") ? "#ff6b81" : "#2fe19a",
-                fontWeight: 800,
+                fontWeight: 900,
+                fontSize: 13,
               }}
             >
               {change}
@@ -529,8 +571,8 @@ export default function AtlasChartPro() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1.35fr 0.95fr 0.95fr 0.95fr",
-            gap: 8,
+            gridTemplateColumns: "1.3fr 1fr 1fr 1fr",
+            gap: 10,
             marginBottom: 10,
           }}
         >
@@ -547,7 +589,7 @@ export default function AtlasChartPro() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "54px minmax(0, 1fr) 280px",
+            gridTemplateColumns: "50px minmax(0, 1fr) 292px",
             gap: 10,
             alignItems: "start",
           }}
@@ -557,11 +599,11 @@ export default function AtlasChartPro() {
               background:
                 "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
               border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 15,
-              padding: "9px 5px",
+              borderRadius: 16,
+              padding: "9px 4px",
               display: "flex",
               flexDirection: "column",
-              gap: 9,
+              gap: 8,
               alignItems: "center",
               boxShadow: "0 16px 40px rgba(0,0,0,0.24)",
             }}
@@ -570,13 +612,13 @@ export default function AtlasChartPro() {
               <button
                 key={icon}
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 10,
+                  width: 30,
+                  height: 30,
+                  borderRadius: 9,
                   border: "1px solid rgba(255,255,255,0.06)",
                   background: "rgba(255,255,255,0.025)",
                   color: "#9fb3d4",
-                  fontSize: 14,
+                  fontSize: 13,
                   cursor: "pointer",
                 }}
               >
@@ -600,14 +642,14 @@ export default function AtlasChartPro() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "10px 12px",
+                padding: "12px 14px",
                 borderBottom: "1px solid rgba(255,255,255,0.05)",
                 background:
                   "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
               }}
             >
               <div>
-                <div style={{ fontWeight: 900, fontSize: 16 }}>{symbol}</div>
+                <div style={{ fontWeight: 900, fontSize: 17 }}>{symbol}</div>
                 <div style={{ color: "#8fa3c7", fontSize: 11 }}>
                   Singularidade Atlas • Fonte: {source} • TF: {timeframe}
                 </div>
@@ -616,7 +658,7 @@ export default function AtlasChartPro() {
               <div
                 style={{
                   display: "flex",
-                  gap: 9,
+                  gap: 10,
                   color: "#8fa3c7",
                   fontSize: 13,
                 }}
@@ -632,7 +674,7 @@ export default function AtlasChartPro() {
               ref={chartContainerRef}
               style={{
                 width: "100%",
-                height: 820,
+                height: chartHeight,
               }}
             />
           </div>
@@ -671,12 +713,14 @@ export default function AtlasChartPro() {
                   justifyContent: "space-between",
                   alignItems: "flex-end",
                   marginBottom: 12,
+                  gap: 12,
                 }}
               >
-                <div style={{ fontSize: 27, fontWeight: 900 }}>{symbol}</div>
+                <div style={{ fontSize: 28, fontWeight: 900 }}>{symbol}</div>
                 <div
                   style={{
-                    fontSize: 40,
+                    fontSize: 42,
+                    lineHeight: 1,
                     fontWeight: 900,
                     color: scoreColor,
                   }}
@@ -694,7 +738,7 @@ export default function AtlasChartPro() {
                 }}
               >
                 <div
-                  style={{ height: 5, background: "rgba(255,255,255,0.05)" }}
+                  style={{ height: 6, background: "rgba(255,255,255,0.05)" }}
                 >
                   <div
                     style={{
@@ -707,7 +751,7 @@ export default function AtlasChartPro() {
                 </div>
                 <div
                   style={{
-                    padding: "9px 11px",
+                    padding: "10px 11px",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
@@ -774,7 +818,7 @@ export default function AtlasChartPro() {
 
         <div
           style={{
-            marginTop: 4,
+            marginTop: 10,
             background:
               "linear-gradient(180deg, rgba(13,20,38,0.98), rgba(8,12,24,0.98))",
             border: "1px solid rgba(255,255,255,0.07)",
@@ -798,7 +842,7 @@ export default function AtlasChartPro() {
                 <div
                   key={tab}
                   style={{
-                    padding: "8px 12px",
+                    padding: "9px 13px",
                     borderRadius: 11,
                     border: "1px solid rgba(255,255,255,0.06)",
                     background:
@@ -807,7 +851,7 @@ export default function AtlasChartPro() {
                         : "rgba(255,255,255,0.025)",
                     color: i === 2 ? "#ffd45a" : "#a8b8d8",
                     fontWeight: 800,
-                    fontSize: 11,
+                    fontSize: 12,
                   }}
                 >
                   {tab}
@@ -880,7 +924,7 @@ export default function AtlasChartPro() {
                 padding: 14,
                 background:
                   "radial-gradient(circle at top, rgba(38,106,255,0.18), transparent 35%), rgba(255,255,255,0.02)",
-                minHeight: 215,
+                minHeight: 210,
               }}
             >
               <div
@@ -891,13 +935,13 @@ export default function AtlasChartPro() {
               <div
                 style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 15 }}
               >
-                Leitura resumida do comportamento do mercado com base em
-                preço, volume e estrutura.
+                Leitura resumida do comportamento do mercado com base em preço,
+                volume e estrutura.
               </div>
 
               <div
                 style={{
-                  height: 105,
+                  height: 104,
                   borderRadius: 14,
                   background:
                     "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))",
