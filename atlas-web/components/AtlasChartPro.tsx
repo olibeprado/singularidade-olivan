@@ -40,8 +40,8 @@ function StatCard({
           "linear-gradient(180deg, rgba(14,21,39,0.96), rgba(7,11,22,0.985))",
         border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: 14,
-        padding: "8px 12px",
-        minHeight: 58,
+        padding: "9px 12px",
+        minHeight: 60,
         boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
       }}
     >
@@ -59,7 +59,7 @@ function StatCard({
       </div>
       <div
         style={{
-          fontSize: 18,
+          fontSize: 19,
           fontWeight: 900,
           color:
             positive === undefined ? "#eef4ff" : positive ? "#2fe19a" : "#ff6b81",
@@ -159,11 +159,11 @@ export default function AtlasChartPro() {
   const [lastClose, setLastClose] = useState<number | null>(null);
   const [signal, setSignal] = useState("Compra Forte");
   const [score, setScore] = useState(92);
-  const [chartHeight, setChartHeight] = useState(700);
+  const [chartHeight, setChartHeight] = useState(710);
 
   useEffect(() => {
     const updateChartHeight = () => {
-      const nextHeight = Math.max(640, Math.min(window.innerHeight - 300, 860));
+      const nextHeight = Math.max(650, Math.min(window.innerHeight - 315, 880));
       setChartHeight(nextHeight);
     };
 
@@ -351,12 +351,13 @@ export default function AtlasChartPro() {
       <div
         style={{
           borderBottom: "1px solid rgba(255,255,255,0.06)",
-          background: "rgba(4,9,18,0.95)",
+          background:
+            "linear-gradient(180deg, rgba(5,10,20,0.98), rgba(6,11,22,0.96))",
           backdropFilter: "blur(12px)",
           position: "sticky",
           top: 0,
           zIndex: 20,
-          boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
+          boxShadow: "0 12px 32px rgba(0,0,0,0.22)",
         }}
       >
         <div
@@ -364,9 +365,10 @@ export default function AtlasChartPro() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 16,
-            padding: "10px 16px",
+            gap: 18,
+            padding: "12px 16px",
             flexWrap: "wrap",
+            minHeight: 88,
           }}
         >
           <div
@@ -382,24 +384,24 @@ export default function AtlasChartPro() {
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 64,
+                  height: 64,
                   borderRadius: 14,
                   background: "rgba(255,255,255,0.02)",
-                  border: "1px solid rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.06)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   overflow: "hidden",
-                  boxShadow: "0 0 12px rgba(114,160,255,0.08)",
+                  boxShadow: "0 0 14px rgba(114,160,255,0.10)",
                   flexShrink: 0,
                 }}
               >
                 <Image
                   src="/logo-singularidade.png"
                   alt="Logo Singularidade"
-                  width={52}
-                  height={52}
+                  width={58}
+                  height={58}
                   style={{ objectFit: "cover" }}
                 />
               </div>
@@ -408,8 +410,8 @@ export default function AtlasChartPro() {
                 <span
                   style={{
                     fontWeight: 900,
-                    fontSize: 20,
-                    letterSpacing: 0.5,
+                    fontSize: 22,
+                    letterSpacing: 0.55,
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -418,7 +420,7 @@ export default function AtlasChartPro() {
                 <span
                   style={{
                     color: "#93a7ca",
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 800,
                     whiteSpace: "nowrap",
                   }}
@@ -437,7 +439,7 @@ export default function AtlasChartPro() {
                   "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))",
                 border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 14,
-                padding: "8px 10px",
+                padding: "9px 10px",
                 flexWrap: "wrap",
                 boxShadow: "0 8px 20px rgba(0,0,0,0.14)",
               }}
@@ -447,14 +449,15 @@ export default function AtlasChartPro() {
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
-                  background: "rgba(255,255,255,0.035)",
-                  border: "1px solid rgba(255,255,255,0.07)",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: 10,
-                  padding: "7px 10px",
+                  padding: "9px 12px",
+                  minHeight: 42,
                   flexShrink: 0,
                 }}
               >
-                <span style={{ color: "#f4c24e", fontSize: 14 }}>🪙</span>
+                <span style={{ color: "#f4c24e", fontSize: 15 }}>🪙</span>
                 <select
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
@@ -463,8 +466,8 @@ export default function AtlasChartPro() {
                     color: "#eef4ff",
                     border: "none",
                     outline: "none",
-                    fontWeight: 800,
-                    fontSize: 13,
+                    fontWeight: 900,
+                    fontSize: 15,
                     cursor: "pointer",
                   }}
                 >
@@ -479,7 +482,7 @@ export default function AtlasChartPro() {
               <div
                 style={{
                   display: "flex",
-                  gap: 7,
+                  gap: 8,
                   alignItems: "center",
                   flexWrap: "nowrap",
                   overflowX: "auto",
@@ -493,15 +496,16 @@ export default function AtlasChartPro() {
                       key={tf}
                       onClick={() => setTimeframe(tf)}
                       style={{
-                        border: "1px solid rgba(255,255,255,0.07)",
+                        border: "1px solid rgba(255,255,255,0.08)",
                         background: active
-                          ? "linear-gradient(180deg, rgba(255,213,79,0.30), rgba(255,170,0,0.14))"
+                          ? "linear-gradient(180deg, rgba(255,213,79,0.34), rgba(255,170,0,0.16))"
                           : "rgba(255,255,255,0.03)",
-                        color: active ? "#ffd95b" : "#a7bbde",
+                        color: active ? "#ffd95b" : "#afc1df",
                         borderRadius: 10,
-                        padding: "9px 14px",
+                        padding: "10px 16px",
+                        minHeight: 42,
                         fontWeight: 900,
-                        fontSize: 13,
+                        fontSize: 15,
                         cursor: "pointer",
                         whiteSpace: "nowrap",
                         flexShrink: 0,
@@ -519,16 +523,19 @@ export default function AtlasChartPro() {
                   <div
                     key={item}
                     style={{
-                      padding: "9px 14px",
+                      padding: "10px 16px",
+                      minHeight: 42,
+                      display: "flex",
+                      alignItems: "center",
                       borderRadius: 10,
-                      border: "1px solid rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.07)",
                       background:
                         i === 3
                           ? "linear-gradient(180deg, rgba(255,214,90,0.24), rgba(255,180,20,0.10))"
                           : "rgba(255,255,255,0.03)",
-                      color: i === 3 ? "#ffd65a" : "#b9c8e2",
+                      color: i === 3 ? "#ffd65a" : "#c2cee4",
                       fontWeight: 800,
-                      fontSize: 13,
+                      fontSize: 15,
                       whiteSpace: "nowrap",
                       flexShrink: 0,
                     }}
@@ -546,7 +553,7 @@ export default function AtlasChartPro() {
               alignItems: "center",
               gap: 14,
               color: "#9cb0d2",
-              fontSize: 12,
+              fontSize: 13,
               flexShrink: 0,
               whiteSpace: "nowrap",
               paddingRight: 2,
@@ -558,7 +565,7 @@ export default function AtlasChartPro() {
               style={{
                 color: change.startsWith("-") ? "#ff6b81" : "#2fe19a",
                 fontWeight: 900,
-                fontSize: 13,
+                fontSize: 14,
               }}
             >
               {change}
