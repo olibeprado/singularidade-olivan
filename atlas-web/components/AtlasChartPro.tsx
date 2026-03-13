@@ -348,7 +348,7 @@ export default function AtlasChartPro() {
   const [autoFit, setAutoFit] = useState(true);
 
   const hasInitialFitRef = useRef(false);
-  const savedLogicalRangeRef = useRef<any>(null);
+  const savedScrollPositionRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleViewport = () => setViewportWidth(window.innerWidth);
@@ -460,7 +460,8 @@ export default function AtlasChartPro() {
 
   useEffect(() => {
     setAutoFit(true);
-    savedLogicalRangeRef.current = null;
+    savedScrollPositionRef.current = null;
+    hasInitialFitRef.current = false;
   }, [symbol, timeframe]);
 
   useEffect(() => {
@@ -478,6 +479,18 @@ export default function AtlasChartPro() {
         if (!res.ok || !data?.candles?.length) {
           setSource("erro");
           return;
+        }
+
+        const timeScale = chartRef.current?.timeScale();
+
+        if (timeScale && !autoFit) {
+          const currentScrollPosition = timeScale.scrollPosition();
+          if (
+            typeof currentScrollPosition === "number" &&
+            Number.isFinite(currentScrollPosition)
+          ) {
+            savedScrollPositionRef.current = currentScrollPosition;
+          }
         }
 
         setSource(data.source || "desconhecida");
@@ -504,21 +517,17 @@ export default function AtlasChartPro() {
         candleSeriesRef.current?.setData(normalizedCandles);
         volumeSeriesRef.current?.setData(normalizedVolume);
 
-        const timeScale = chartRef.current?.timeScale();
-
         if (timeScale) {
-          if (!autoFit) {
-            const currentLogicalRange = timeScale.getVisibleLogicalRange();
-            if (currentLogicalRange) {
-              savedLogicalRangeRef.current = currentLogicalRange;
-            }
-          }
-
-          if (autoFit || !hasInitialFitRef.current) {
+          if (!hasInitialFitRef.current) {
             timeScale.fitContent();
             hasInitialFitRef.current = true;
-          } else if (savedLogicalRangeRef.current) {
-            timeScale.setVisibleLogicalRange(savedLogicalRangeRef.current);
+          } else if (autoFit) {
+            timeScale.scrollToRealTime();
+          } else if (
+            savedScrollPositionRef.current !== null &&
+            Number.isFinite(savedScrollPositionRef.current)
+          ) {
+            timeScale.scrollToPosition(savedScrollPositionRef.current, false);
           }
         }
 
@@ -1525,7 +1534,11 @@ export default function AtlasChartPro() {
                 }}
               >
                 <button
-                  onClick={() => setAutoFit(true)}
+                  onClick={() => {
+                    setAutoFit(true);
+                    savedScrollPositionRef.current = 0;
+                    chartRef.current?.timeScale()?.scrollToRealTime();
+                  }}
                   style={{
                     border: autoFit
                       ? "1px solid rgba(255,220,110,0.40)"
@@ -1545,7 +1558,17 @@ export default function AtlasChartPro() {
                 </button>
 
                 <button
-                  onClick={() => setAutoFit(false)}
+                  onClick={() => {
+                    setAutoFit(false);
+                    const currentScroll =
+                      chartRef.current?.timeScale()?.scrollPosition();
+                    if (
+                      typeof currentScroll === "number" &&
+                      Number.isFinite(currentScroll)
+                    ) {
+                      savedScrollPositionRef.current = currentScroll;
+                    }
+                  }}
                   style={{
                     border: !autoFit
                       ? "1px solid rgba(94,231,255,0.35)"
@@ -1566,8 +1589,15 @@ export default function AtlasChartPro() {
 
                 <button
                   onClick={() => {
-                    savedLogicalRangeRef.current = null;
-                    chartRef.current?.timeScale().fitContent();
+                    savedScrollPositionRef.current = 0;
+                    setAutoFit(true);
+                    const timeScale = chartRef.current?.timeScale();
+                    if (timeScale) {
+                      timeScale.fitContent();
+                      window.setTimeout(() => {
+                        chartRef.current?.timeScale()?.scrollToRealTime();
+                      }, 20);
+                    }
                   }}
                   style={{
                     border: "1px solid rgba(255,255,255,0.08)",
