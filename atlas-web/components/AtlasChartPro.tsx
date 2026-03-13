@@ -281,10 +281,23 @@ export default function AtlasChartPro() {
   const [signal, setSignal] = useState("Compra Forte");
   const [score, setScore] = useState(92);
   const [chartHeight, setChartHeight] = useState(730);
+  const [viewportWidth, setViewportWidth] = useState(1440);
+
+  useEffect(() => {
+    const handleViewport = () => setViewportWidth(window.innerWidth);
+    handleViewport();
+    window.addEventListener("resize", handleViewport);
+    return () => window.removeEventListener("resize", handleViewport);
+  }, []);
+
+  const isCompact = viewportWidth < 1280;
+  const isMedium = viewportWidth < 1024;
+  const isSmall = viewportWidth < 860;
 
   useEffect(() => {
     const updateChartHeight = () => {
-      const nextHeight = Math.max(650, Math.min(window.innerHeight - 315, 900));
+      const offset = isSmall ? 360 : isMedium ? 340 : 315;
+      const nextHeight = Math.max(560, Math.min(window.innerHeight - offset, 900));
       setChartHeight(nextHeight);
     };
 
@@ -294,7 +307,7 @@ export default function AtlasChartPro() {
     return () => {
       window.removeEventListener("resize", updateChartHeight);
     };
-  }, []);
+  }, [isMedium, isSmall]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -1009,6 +1022,22 @@ export default function AtlasChartPro() {
     }
   }, [activeModule]);
 
+  const summaryGridColumns = isSmall
+    ? "1fr"
+    : isMedium
+    ? "repeat(2, minmax(0, 1fr))"
+    : "1.3fr 1fr 1fr 1fr";
+
+  const mainGridColumns = isSmall
+    ? "1fr"
+    : isMedium
+    ? "minmax(0, 1fr)"
+    : isCompact
+    ? "46px minmax(0, 1fr) 270px"
+    : "50px minmax(0, 1fr) 292px";
+
+  const bottomGridColumns = isSmall ? "1fr" : "1.2fr 1fr";
+
   return (
     <div
       style={{
@@ -1035,30 +1064,38 @@ export default function AtlasChartPro() {
         <div
           style={{
             display: "flex",
-            alignItems: "center",
+            alignItems: isSmall ? "flex-start" : "center",
             justifyContent: "space-between",
             gap: 18,
             padding: "10px 16px 10px",
             flexWrap: "wrap",
             borderBottom: "1px solid rgba(255,255,255,0.05)",
-            minHeight: 82,
+            minHeight: isSmall ? "auto" : 82,
           }}
         >
           <div
             style={{
               display: "flex",
-              alignItems: "center",
+              alignItems: isSmall ? "flex-start" : "center",
               gap: 16,
               minWidth: 0,
               flexWrap: "wrap",
               flex: 1,
+              width: "100%",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                minWidth: 0,
+              }}
+            >
               <div
                 style={{
-                  width: 66,
-                  height: 66,
+                  width: isSmall ? 58 : 66,
+                  height: isSmall ? 58 : 66,
                   borderRadius: 14,
                   background: "rgba(255,255,255,0.02)",
                   border: "1px solid rgba(255,255,255,0.06)",
@@ -1073,17 +1110,17 @@ export default function AtlasChartPro() {
                 <Image
                   src="/logo-singularidade.png"
                   alt="Logo Singularidade"
-                  width={60}
-                  height={60}
+                  width={isSmall ? 52 : 60}
+                  height={isSmall ? 52 : 60}
                   style={{ objectFit: "cover" }}
                 />
               </div>
 
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
                 <span
                   style={{
                     fontWeight: 900,
-                    fontSize: 24,
+                    fontSize: isSmall ? 20 : 24,
                     letterSpacing: 0.55,
                     whiteSpace: "nowrap",
                   }}
@@ -1111,6 +1148,8 @@ export default function AtlasChartPro() {
                 flexWrap: "nowrap",
                 overflowX: "auto",
                 scrollbarWidth: "none",
+                width: isSmall ? "100%" : "auto",
+                paddingBottom: 2,
               }}
             >
               <div
@@ -1188,6 +1227,8 @@ export default function AtlasChartPro() {
               fontSize: 13,
               flexShrink: 0,
               whiteSpace: "nowrap",
+              width: isSmall ? "100%" : "auto",
+              justifyContent: isSmall ? "space-between" : "flex-end",
             }}
           >
             <span>Replay</span>
@@ -1223,7 +1264,7 @@ export default function AtlasChartPro() {
                 key={item}
                 onClick={() => setActiveModule(item)}
                 style={{
-                  padding: "11px 16px",
+                  padding: isSmall ? "10px 14px" : "11px 16px",
                   minHeight: 44,
                   display: "flex",
                   alignItems: "center",
@@ -1236,7 +1277,7 @@ export default function AtlasChartPro() {
                     : "rgba(255,255,255,0.03)",
                   color: active ? "#f4f8ff" : "#c2cee4",
                   fontWeight: 800,
-                  fontSize: 14,
+                  fontSize: isSmall ? 13 : 14,
                   whiteSpace: "nowrap",
                   flexShrink: 0,
                   cursor: "pointer",
@@ -1254,7 +1295,7 @@ export default function AtlasChartPro() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1.3fr 1fr 1fr 1fr",
+            gridTemplateColumns: summaryGridColumns,
             gap: 10,
             marginBottom: 10,
           }}
@@ -1272,52 +1313,56 @@ export default function AtlasChartPro() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "50px minmax(0, 1fr) 292px",
+            gridTemplateColumns: mainGridColumns,
             gap: 10,
             alignItems: "start",
           }}
         >
-          <div
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 16,
-              padding: "10px 4px",
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              alignItems: "center",
-              boxShadow: "0 16px 40px rgba(0,0,0,0.24)",
-            }}
-          >
-            {chartTools.map((tool) => {
-              const active = activeTool === tool.key;
-              return (
-                <button
-                  key={tool.key}
-                  title={tool.label}
-                  onClick={() => setActiveTool(tool.key)}
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 9,
-                    border: active
-                      ? `1px solid ${moduleAccent}55`
-                      : "1px solid rgba(255,255,255,0.06)",
-                    background: active
-                      ? `linear-gradient(180deg, ${moduleAccent}28, rgba(255,255,255,0.03))`
-                      : "rgba(255,255,255,0.025)",
-                    color: active ? "#eef4ff" : "#9fb3d4",
-                    fontSize: 13,
-                    cursor: "pointer",
-                  }}
-                >
-                  {tool.icon}
-                </button>
-              );
-            })}
-          </div>
+          {!isSmall && (
+            <div
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
+                border: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: 16,
+                padding: "10px 4px",
+                display: "flex",
+                flexDirection: isMedium ? "row" : "column",
+                flexWrap: isMedium ? "wrap" : "nowrap",
+                gap: 8,
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 16px 40px rgba(0,0,0,0.24)",
+              }}
+            >
+              {chartTools.map((tool) => {
+                const active = activeTool === tool.key;
+                return (
+                  <button
+                    key={tool.key}
+                    title={tool.label}
+                    onClick={() => setActiveTool(tool.key)}
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: 9,
+                      border: active
+                        ? `1px solid ${moduleAccent}55`
+                        : "1px solid rgba(255,255,255,0.06)",
+                      background: active
+                        ? `linear-gradient(180deg, ${moduleAccent}28, rgba(255,255,255,0.03))`
+                        : "rgba(255,255,255,0.025)",
+                      color: active ? "#eef4ff" : "#9fb3d4",
+                      fontSize: 13,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {tool.icon}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           <div
             style={{
@@ -1338,6 +1383,8 @@ export default function AtlasChartPro() {
                 borderBottom: "1px solid rgba(255,255,255,0.05)",
                 background:
                   "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+                gap: 12,
+                flexWrap: "wrap",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1385,6 +1432,47 @@ export default function AtlasChartPro() {
                 <span>⚙</span>
               </div>
             </div>
+
+            {isSmall && (
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  padding: "10px 12px",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  overflowX: "auto",
+                  scrollbarWidth: "none",
+                }}
+              >
+                {chartTools.map((tool) => {
+                  const active = activeTool === tool.key;
+                  return (
+                    <button
+                      key={tool.key}
+                      title={tool.label}
+                      onClick={() => setActiveTool(tool.key)}
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: 10,
+                        border: active
+                          ? `1px solid ${moduleAccent}55`
+                          : "1px solid rgba(255,255,255,0.06)",
+                        background: active
+                          ? `linear-gradient(180deg, ${moduleAccent}28, rgba(255,255,255,0.03))`
+                          : "rgba(255,255,255,0.025)",
+                        color: active ? "#eef4ff" : "#9fb3d4",
+                        fontSize: 14,
+                        cursor: "pointer",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {tool.icon}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             <div
               ref={chartContainerRef}
@@ -1577,7 +1665,7 @@ export default function AtlasChartPro() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1.2fr 1fr",
+              gridTemplateColumns: bottomGridColumns,
               gap: 16,
             }}
           >
@@ -1608,7 +1696,7 @@ export default function AtlasChartPro() {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "1.2fr 1fr 1fr 1fr",
+                      gridTemplateColumns: isSmall ? "1.3fr 1fr 1fr" : "1.2fr 1fr 1fr 1fr",
                       gap: 10,
                       color: "#7f95bb",
                       fontSize: 11,
@@ -1621,25 +1709,48 @@ export default function AtlasChartPro() {
                     <div>Ativo</div>
                     <div>Score</div>
                     <div>Tendência</div>
-                    <div style={{ textAlign: "right" }}>Preço</div>
+                    {!isSmall && <div style={{ textAlign: "right" }}>Preço</div>}
                   </div>
 
-                  {leftRows.map((row) => (
-                    <ScannerRow
-                      key={`${activeModule}-${row.asset}`}
-                      asset={row.asset}
-                      score={row.score}
-                      trend={row.trend}
-                      price={row.price}
-                    />
-                  ))}
+                  {leftRows.map((row) =>
+                    isSmall ? (
+                      <div
+                        key={`${activeModule}-${row.asset}`}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1.3fr 1fr 1fr",
+                          gap: 10,
+                          padding: "12px 0",
+                          borderBottom: "1px solid rgba(255,255,255,0.05)",
+                          color: "#d8e2ff",
+                          fontSize: 13,
+                        }}
+                      >
+                        <div style={{ fontWeight: 800 }}>{row.asset}</div>
+                        <div>{row.score}</div>
+                        <div style={{ color: "#34d399", fontWeight: 800 }}>
+                          {row.trend}
+                        </div>
+                      </div>
+                    ) : (
+                      <ScannerRow
+                        key={`${activeModule}-${row.asset}`}
+                        asset={row.asset}
+                        score={row.score}
+                        trend={row.trend}
+                        price={row.price}
+                      />
+                    )
+                  )}
                 </>
               ) : (
                 <>
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gridTemplateColumns: isSmall
+                        ? "1fr"
+                        : "repeat(2, minmax(0, 1fr))",
                       gap: 10,
                       marginBottom: 12,
                     }}
@@ -1749,7 +1860,7 @@ export default function AtlasChartPro() {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gridTemplateColumns: isSmall ? "1fr" : "repeat(3, 1fr)",
                   gap: 10,
                   marginTop: 12,
                 }}
