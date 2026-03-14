@@ -1,17 +1,17 @@
-import { atlasScore } from "@/lib/atlasMath"
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { createChart, ColorType } from "lightweight-charts";
+import { atlasScore } from "@/lib/atlasMath"
+import { useEffect, useRef, useState } from "react"
+import { createChart, ColorType } from "lightweight-charts"
 
 type Candle = {
-  time: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-};
+  time: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
 
 export default function AtlasChartPro2() {
 
@@ -22,7 +22,7 @@ export default function AtlasChartPro2() {
 
   const [symbol] = useState("BTCUSDT")
   const [price, setPrice] = useState<number | null>(null)
-  const [score, setScore] = useState<number>(73)
+  const [score, setScore] = useState<number>(0)
   const [direction, setDirection] = useState("Neutro")
 
   useEffect(() => {
@@ -40,9 +40,6 @@ export default function AtlasChartPro2() {
         vertLines: { color: "rgba(255,255,255,0.04)" },
         horzLines: { color: "rgba(255,255,255,0.04)" }
       },
-      crosshair: {
-        mode: 0
-      },
       rightPriceScale: {
         borderColor: "#222"
       },
@@ -53,7 +50,7 @@ export default function AtlasChartPro2() {
 
     chartInstance.current = chart
 
-    const candles = chart.addCandlestickSeries({
+    candleSeries.current = chart.addCandlestickSeries({
       upColor: "#2ecc71",
       downColor: "#ff4d6d",
       borderUpColor: "#2ecc71",
@@ -62,13 +59,10 @@ export default function AtlasChartPro2() {
       wickDownColor: "#ff4d6d"
     })
 
-    const volume = chart.addHistogramSeries({
+    volumeSeries.current = chart.addHistogramSeries({
       priceFormat: { type: "volume" },
       priceScaleId: ""
     })
-
-    candleSeries.current = candles
-    volumeSeries.current = volume
 
     async function loadData() {
 
@@ -98,23 +92,28 @@ export default function AtlasChartPro2() {
       )
 
       const last = candles[candles.length - 1]
-      const prev = candles[candles.length - 2]
+      const prev = candles[candles.length - 2] || last
 
+      const score = atlasScore(
+        last.close,
+        prev.close,
+        last.volume,
+        prev.volume
+      )
+
+      setScore(score)
       setPrice(last.close)
 
-      const diff = last.close - prev.close
+      if (score > 70) {
+        setDirection("Bullish")
+      }
+      else if (score < 40) {
+        setDirection("Bearish")
+      }
+      else {
+        setDirection("Neutro")
+      }
 
-      const momentum = Math.min(30, Math.abs(diff) * 10)
-      const trend = last.close > prev.close ? 40 : 20
-      const volumeScore = 20
-
-      const totalScore = Math.round(momentum + trend + volumeScore)
-
-      setScore(totalScore)
-
-      if (totalScore > 70) setDirection("Bullish")
-      else if (totalScore < 40) setDirection("Bearish")
-      else setDirection("Neutro")
     }
 
     loadData()
@@ -170,7 +169,7 @@ export default function AtlasChartPro2() {
         </div>
 
         <div style={{marginTop:"20px",color:"#9aa4c7"}}>
-          <p>Score IA</p>
+          <p>Score Atlas</p>
           <h1 style={{color:"#f1c40f"}}>
             {score}
           </h1>
