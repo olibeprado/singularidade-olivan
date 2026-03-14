@@ -1,3 +1,4 @@
+import { atlasScore } from "@/lib/atlasMath"
 "use client";
 
 import { useEffect, useRef, useState } from "react";
