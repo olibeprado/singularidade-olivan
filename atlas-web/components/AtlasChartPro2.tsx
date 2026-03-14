@@ -1,33 +1,33 @@
 "use client";
 
-import { atlasScore } from "@/lib/atlasMath"
-import { useEffect, useRef, useState } from "react"
-import { createChart, ColorType } from "lightweight-charts"
+import { atlasScore } from "@/lib/atlasMath";
+import { useEffect, useRef, useState } from "react";
+import { createChart, ColorType } from "lightweight-charts";
 
 type Candle = {
-  time: string
-  open: number
-  high: number
-  low: number
-  close: number
-  volume: number
-}
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
 
 export default function AtlasChartPro2() {
 
-  const chartRef = useRef<HTMLDivElement | null>(null)
-  const chartInstance = useRef<any>(null)
-  const candleSeries = useRef<any>(null)
-  const volumeSeries = useRef<any>(null)
+  const chartRef = useRef<HTMLDivElement | null>(null);
+  const chartInstance = useRef<any>(null);
+  const candleSeries = useRef<any>(null);
+  const volumeSeries = useRef<any>(null);
 
-  const [symbol] = useState("BTCUSDT")
-  const [price, setPrice] = useState<number | null>(null)
-  const [score, setScore] = useState<number>(0)
-  const [direction, setDirection] = useState("Neutro")
+  const [symbol] = useState("BTCUSDT");
+  const [price, setPrice] = useState<number | null>(null);
+  const [score, setScore] = useState<number>(0);
+  const [direction, setDirection] = useState("Neutro");
 
   useEffect(() => {
 
-    if (!chartRef.current) return
+    if (!chartRef.current) return;
 
     const chart = createChart(chartRef.current, {
       width: chartRef.current.clientWidth,
@@ -46,9 +46,9 @@ export default function AtlasChartPro2() {
       timeScale: {
         borderColor: "#222"
       }
-    })
+    });
 
-    chartInstance.current = chart
+    chartInstance.current = chart;
 
     candleSeries.current = chart.addCandlestickSeries({
       upColor: "#2ecc71",
@@ -57,20 +57,20 @@ export default function AtlasChartPro2() {
       borderDownColor: "#ff4d6d",
       wickUpColor: "#2ecc71",
       wickDownColor: "#ff4d6d"
-    })
+    });
 
     volumeSeries.current = chart.addHistogramSeries({
       priceFormat: { type: "volume" },
       priceScaleId: ""
-    })
+    });
 
     async function loadData() {
 
       const res = await fetch(
         `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1m&limit=200`
-      )
+      );
 
-      const data = await res.json()
+      const data = await res.json();
 
       const candles: Candle[] = data.map((d: any) => ({
         time: new Date(d[0]).toISOString().slice(0, 10),
@@ -79,9 +79,9 @@ export default function AtlasChartPro2() {
         low: parseFloat(d[3]),
         close: parseFloat(d[4]),
         volume: parseFloat(d[5])
-      }))
+      }));
 
-      candleSeries.current.setData(candles)
+      candleSeries.current.setData(candles);
 
       volumeSeries.current.setData(
         candles.map(c => ({
@@ -89,49 +89,62 @@ export default function AtlasChartPro2() {
           value: c.volume,
           color: c.close >= c.open ? "#2ecc71" : "#ff4d6d"
         }))
-      )
+      );
 
-      const last = candles[candles.length - 1]
-      const prev = candles[candles.length - 2] || last
+      const last = candles[candles.length - 1];
+      const prev = candles[candles.length - 2] || last;
 
       const score = atlasScore(
         last.close,
         prev.close,
         last.volume,
         prev.volume
-      )
+      );
 
-      setScore(score)
-      setPrice(last.close)
+      setScore(score);
+      setPrice(last.close);
 
-      if (score > 70) {
-        setDirection("Bullish")
-      }
-      else if (score < 40) {
-        setDirection("Bearish")
-      }
-      else {
-        setDirection("Neutro")
-      }
+      if (score > 70) setDirection("Bullish");
+      else if (score < 40) setDirection("Bearish");
+      else setDirection("Neutro");
+
+      // CAMPO DE SINGULARIDADE
+      let fieldColor = "#070f22";
+
+      if (score > 80) fieldColor = "#061e14";
+      else if (score > 60) fieldColor = "#08211b";
+      else if (score > 40) fieldColor = "#070f22";
+      else if (score > 20) fieldColor = "#1c0a0a";
+      else fieldColor = "#220707";
+
+      chart.applyOptions({
+        layout: {
+          background: {
+            type: ColorType.Solid,
+            color: fieldColor
+          },
+          textColor: "#9aa4c7"
+        }
+      });
 
     }
 
-    loadData()
+    loadData();
 
     const handleResize = () => {
       chart.applyOptions({
         width: chartRef.current?.clientWidth || 800
-      })
-    }
+      });
+    };
 
-    window.addEventListener("resize", handleResize)
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", handleResize)
-      chart.remove()
-    }
+      window.removeEventListener("resize", handleResize);
+      chart.remove();
+    };
 
-  }, [symbol])
+  }, [symbol]);
 
   return (
 
@@ -186,6 +199,5 @@ export default function AtlasChartPro2() {
 
     </div>
 
-  )
-
+  );
 }
