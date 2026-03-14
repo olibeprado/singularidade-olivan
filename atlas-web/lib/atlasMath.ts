@@ -18,7 +18,6 @@ export function atlasScore(
   const π = Math.sin(price) * pi
 
   const λ = volume / (prevVolume + 1)
-
   const τ = 1 / (Math.abs(price - prevPrice) + 0.0001)
 
   const raw = Φ + δs + e - π + λ + τ
@@ -26,4 +25,5 @@ export function atlasScore(
   const score = Math.max(0, Math.min(100, raw * 10))
 
   return Math.round(score)
+
 }
