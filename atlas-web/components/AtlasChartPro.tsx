@@ -328,6 +328,38 @@ function PremiumButton({
   );
 }
 
+function ControlButton({
+  active,
+  onClick,
+  children,
+}: {
+  active?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        border: active
+          ? "1px solid rgba(94,231,255,0.35)"
+          : "1px solid rgba(255,255,255,0.08)",
+        background: active
+          ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
+          : "rgba(255,255,255,0.03)",
+        color: active ? "#bff8ff" : "#d7e4ff",
+        borderRadius: 10,
+        padding: "7px 10px",
+        fontWeight: 800,
+        fontSize: 11,
+        cursor: "pointer",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function AtlasChartPro() {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<any>(null);
@@ -1153,6 +1185,49 @@ export default function AtlasChartPro() {
 
   const bottomGridColumns = isSmall ? "1fr" : "1.2fr 1fr";
 
+  const zoomIn = () => {
+    const timeScale = chartRef.current?.timeScale();
+    if (!timeScale) return;
+    const range = timeScale.getVisibleLogicalRange();
+    if (!range) return;
+
+    const center = (range.from + range.to) / 2;
+    const currentWidth = range.to - range.from;
+    const nextWidth = Math.max(10, currentWidth * 0.8);
+
+    timeScale.setVisibleLogicalRange({
+      from: center - nextWidth / 2,
+      to: center + nextWidth / 2,
+    });
+  };
+
+  const zoomOut = () => {
+    const timeScale = chartRef.current?.timeScale();
+    if (!timeScale) return;
+    const range = timeScale.getVisibleLogicalRange();
+    if (!range) return;
+
+    const center = (range.from + range.to) / 2;
+    const currentWidth = range.to - range.from;
+    const nextWidth = currentWidth * 1.25;
+
+    timeScale.setVisibleLogicalRange({
+      from: center - nextWidth / 2,
+      to: center + nextWidth / 2,
+    });
+  };
+
+  const goToCurrent = () => {
+    const timeScale = chartRef.current?.timeScale();
+    if (!timeScale) return;
+
+    if (viewMode === "space") {
+      timeScale.scrollToPosition(spaceOffset, false);
+    } else {
+      timeScale.scrollToRealTime();
+    }
+  };
+
   return (
     <div
       style={{
@@ -1538,33 +1613,19 @@ export default function AtlasChartPro() {
                   flexWrap: "wrap",
                 }}
               >
-                <button
+                <ControlButton
+                  active={viewMode === "auto"}
                   onClick={() => {
                     setViewMode("auto");
                     savedScrollPositionRef.current = 0;
                     chartRef.current?.timeScale()?.scrollToRealTime();
                   }}
-                  style={{
-                    border:
-                      viewMode === "auto"
-                        ? "1px solid rgba(255,220,110,0.40)"
-                        : "1px solid rgba(255,255,255,0.08)",
-                    background:
-                      viewMode === "auto"
-                        ? "linear-gradient(180deg, rgba(255,213,79,0.22), rgba(255,170,0,0.08))"
-                        : "rgba(255,255,255,0.03)",
-                    color: viewMode === "auto" ? "#fff0ad" : "#bfd0ea",
-                    borderRadius: 10,
-                    padding: "7px 10px",
-                    fontWeight: 800,
-                    fontSize: 11,
-                    cursor: "pointer",
-                  }}
                 >
                   Auto
-                </button>
+                </ControlButton>
 
-                <button
+                <ControlButton
+                  active={viewMode === "manual"}
                   onClick={() => {
                     setViewMode("manual");
                     const currentScroll =
@@ -1576,53 +1637,26 @@ export default function AtlasChartPro() {
                       savedScrollPositionRef.current = currentScroll;
                     }
                   }}
-                  style={{
-                    border:
-                      viewMode === "manual"
-                        ? "1px solid rgba(94,231,255,0.35)"
-                        : "1px solid rgba(255,255,255,0.08)",
-                    background:
-                      viewMode === "manual"
-                        ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
-                        : "rgba(255,255,255,0.03)",
-                    color: viewMode === "manual" ? "#bff8ff" : "#bfd0ea",
-                    borderRadius: 10,
-                    padding: "7px 10px",
-                    fontWeight: 800,
-                    fontSize: 11,
-                    cursor: "pointer",
-                  }}
                 >
                   Manual
-                </button>
+                </ControlButton>
 
-                <button
+                <ControlButton
+                  active={viewMode === "space"}
                   onClick={() => {
                     setViewMode("space");
                     savedScrollPositionRef.current = spaceOffset;
                     chartRef.current?.timeScale()?.scrollToPosition(spaceOffset, false);
                   }}
-                  style={{
-                    border:
-                      viewMode === "space"
-                        ? "1px solid rgba(94,231,255,0.35)"
-                        : "1px solid rgba(255,255,255,0.08)",
-                    background:
-                      viewMode === "space"
-                        ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
-                        : "rgba(255,255,255,0.03)",
-                    color: viewMode === "space" ? "#bff8ff" : "#bfd0ea",
-                    borderRadius: 10,
-                    padding: "7px 10px",
-                    fontWeight: 800,
-                    fontSize: 11,
-                    cursor: "pointer",
-                  }}
                 >
                   Seguir + Espaço
-                </button>
+                </ControlButton>
 
-                <button
+                <ControlButton onClick={zoomOut}>Zoom -</ControlButton>
+                <ControlButton onClick={zoomIn}>Zoom +</ControlButton>
+                <ControlButton onClick={goToCurrent}>Agora</ControlButton>
+
+                <ControlButton
                   onClick={() => {
                     savedScrollPositionRef.current = 0;
                     setViewMode("auto");
@@ -1634,19 +1668,9 @@ export default function AtlasChartPro() {
                       }, 20);
                     }
                   }}
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(255,255,255,0.03)",
-                    color: "#d7e4ff",
-                    borderRadius: 10,
-                    padding: "7px 10px",
-                    fontWeight: 800,
-                    fontSize: 11,
-                    cursor: "pointer",
-                  }}
                 >
                   Reset
-                </button>
+                </ControlButton>
 
                 <span>♡</span>
                 <span>⚡</span>
