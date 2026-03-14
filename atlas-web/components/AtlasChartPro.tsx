@@ -1,3 +1,5 @@
+import { singularidadeValue, singularidadeScore } from "@/lib/singularidade";
+
 "use client";
 
 import Image from "next/image";
