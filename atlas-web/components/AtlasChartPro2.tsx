@@ -19,7 +19,8 @@ type TopModule =
   | "IA Atlas"
   | "Scanner"
   | "Estrutura"
-  | "Euler";
+  | "Euler"
+  | "Liquidez";
 
 type ToolKey =
   | "cursor"
@@ -43,6 +44,7 @@ const topModules: TopModule[] = [
   "Scanner",
   "Estrutura",
   "Euler",
+  "Liquidez",
 ];
 
 const moduleIcons: Record<TopModule, string> = {
@@ -52,6 +54,7 @@ const moduleIcons: Record<TopModule, string> = {
   Scanner: "⌕",
   Estrutura: "▣",
   Euler: "∑",
+  Liquidez: "≋",
 };
 
 const chartTools: { key: ToolKey; icon: string; label: string }[] = [
@@ -167,7 +170,9 @@ function ScannerRow({
     trend.toLowerCase().includes("alta") ||
     trend.toLowerCase().includes("validação") ||
     trend.toLowerCase().includes("confluência") ||
-    trend.toLowerCase().includes("assistida");
+    trend.toLowerCase().includes("assistida") ||
+    trend.toLowerCase().includes("pool") ||
+    trend.toLowerCase().includes("cluster");
 
   return (
     <div
@@ -632,6 +637,8 @@ export default function AtlasChartPro2() {
         return "Estrutura do Mercado";
       case "Euler":
         return "Leitura Euler";
+      case "Liquidez":
+        return "Mapa de Liquidez";
       default:
         return "Scanner Atlas";
     }
@@ -651,6 +658,8 @@ export default function AtlasChartPro2() {
         return "#34d399";
       case "Euler":
         return "#60a5fa";
+      case "Liquidez":
+        return "#22d3ee";
       default:
         return "#ffd65a";
     }
@@ -667,6 +676,8 @@ export default function AtlasChartPro2() {
       ? ["Estrutura", "Euler", "Ciclo", "Eventos"]
       : activeModule === "Euler"
       ? ["Euler", "Curvatura", "Validação", "Eventos"]
+      : activeModule === "Liquidez"
+      ? ["Map", "Heatmap", "Clusters", "Eventos"]
       : ["Indicadores", "Fluxo", "Scanner", "Eventos"];
 
   const leftPanelTitle =
@@ -680,6 +691,8 @@ export default function AtlasChartPro2() {
       ? "Mapa Estrutural"
       : activeModule === "Euler"
       ? "Validação Euler"
+      : activeModule === "Liquidez"
+      ? "Mapa de Liquidez"
       : "Pulso Singularidade";
 
   const leftRows =
@@ -717,6 +730,13 @@ export default function AtlasChartPro2() {
           { asset: "ETHUSDT", score: "87.1", trend: "Confluência", price: "$3,745" },
           { asset: "SOLUSDT", score: "82.2", trend: "Positivo", price: "$168.40" },
           { asset: "BNBUSDT", score: "75.0", trend: "Aceleração", price: "$611.22" },
+        ]
+      : activeModule === "Liquidez"
+      ? [
+          { asset: "71,600", score: "98.1", trend: "Parede Forte", price: "$12.8M" },
+          { asset: "71,250", score: "91.4", trend: "Cluster Alto", price: "$9.3M" },
+          { asset: "70,980", score: "86.2", trend: "Pool de Stops", price: "$7.1M" },
+          { asset: "70,720", score: "80.9", trend: "Liquidez Ativa", price: "$5.9M" },
         ]
       : [
           { asset: "BTCUSDT", score: "92.4", trend: "Compra Forte", price: "$69,489" },
@@ -757,7 +777,6 @@ export default function AtlasChartPro2() {
             { label: "Ciclo", value: "Forte", positive: true },
           ],
         };
-
       case "Singularidade":
         return {
           panelTitle: "Singularidade",
@@ -788,7 +807,6 @@ export default function AtlasChartPro2() {
             { label: "Ciclo", value: "Acelerado", positive: true },
           ],
         };
-
       case "IA Atlas":
         return {
           panelTitle: "IA Atlas",
@@ -819,7 +837,6 @@ export default function AtlasChartPro2() {
             { label: "Assistência", value: "Ativa", positive: true },
           ],
         };
-
       case "Estrutura":
         return {
           panelTitle: "Estrutura",
@@ -850,7 +867,6 @@ export default function AtlasChartPro2() {
             { label: "Ciclo", value: "Sustentado", positive: true },
           ],
         };
-
       case "Euler":
         return {
           panelTitle: "Euler",
@@ -881,7 +897,28 @@ export default function AtlasChartPro2() {
             { label: "Modelo", value: "Validado", positive: true },
           ],
         };
-
+      case "Liquidez":
+        return {
+          panelTitle: "Liquidez",
+          scoreValue: Math.min(99, Math.max(78, score + 1)),
+          scoreLabel: "Cluster Forte",
+          rowsTop: [
+            { label: "Resumo", value: "Liquidez", positive: true },
+            { label: "Ferramenta", value: chartTools.find((t) => t.key === activeTool)?.label || "--", positive: true },
+            { label: "Parede", value: "71,600", positive: true },
+            { label: "Invalidação", value: lastClose ? `$${(lastClose * 0.982).toLocaleString("en-US", { maximumFractionDigits: 2 })}` : "--" },
+          ],
+          rowsBottomTitle: "Mapa de Liquidez",
+          rowsBottomDescription:
+            "Leitura de clusters, paredes, pools de stops e zonas prováveis de caça de liquidez.",
+          rowsBottom: [
+            { label: "Cluster", value: "Forte", positive: true },
+            { label: "Stops", value: "Acima", positive: true },
+            { label: "Heatmap", value: "Ativo", positive: true },
+            { label: "Caça", value: "Provável", positive: true },
+            { label: "Pool", value: "71,250", positive: true },
+          ],
+        };
       default:
         return {
           panelTitle: "Scanner",
@@ -938,7 +975,6 @@ export default function AtlasChartPro2() {
           biasLabel: "Bias",
           biasValue: "Alta",
         };
-
       case "Singularidade":
         return {
           title: "Pulso da Singularidade",
@@ -956,7 +992,6 @@ export default function AtlasChartPro2() {
           biasLabel: "Pulso",
           biasValue: "Forte",
         };
-
       case "IA Atlas":
         return {
           title: "Leitura IA Atlas",
@@ -974,7 +1009,6 @@ export default function AtlasChartPro2() {
           biasLabel: "Bias",
           biasValue: "Assistido",
         };
-
       case "Scanner":
         return {
           title: "Scanner Atlas",
@@ -996,7 +1030,6 @@ export default function AtlasChartPro2() {
           biasLabel: "Radar",
           biasValue: "Ativo",
         };
-
       case "Estrutura":
         return {
           title: "Estrutura do Mercado",
@@ -1014,7 +1047,6 @@ export default function AtlasChartPro2() {
           biasLabel: "Base",
           biasValue: "Estável",
         };
-
       case "Euler":
         return {
           title: "Leitura Euler",
@@ -1032,7 +1064,23 @@ export default function AtlasChartPro2() {
           biasLabel: "Modelo",
           biasValue: "Validado",
         };
-
+      case "Liquidez":
+        return {
+          title: "Mapa de Liquidez",
+          description:
+            "Leitura dedicada de paredes, clusters, pools de stops e zonas prováveis de atração do preço.",
+          stats: [
+            { title: "Parede", value: "71,600", positive: true },
+            { title: "Cluster", value: "Forte", positive: true },
+            { title: "Stops", value: "Acima", positive: true },
+          ],
+          path1:
+            "M0,120 C50,118 80,114 120,100 C170,84 205,86 240,70 C280,52 320,48 360,46 C410,44 450,28 500,22 C540,18 570,14 600,12",
+          path2:
+            "M0,126 C50,126 100,120 150,112 C210,104 260,96 320,88 C380,78 440,72 500,58 C540,50 570,44 600,36",
+          biasLabel: "Heat",
+          biasValue: "Ativo",
+        };
       default:
         return {
           title: "Scanner Atlas",
@@ -1078,7 +1126,6 @@ export default function AtlasChartPro2() {
             { label: "Liquidez", value: "Saudável", positive: true },
           ],
         };
-
       case "Singularidade":
         return {
           type: "cards" as const,
@@ -1098,7 +1145,6 @@ export default function AtlasChartPro2() {
             { label: "Ciclo", value: "Acelerado", positive: true },
           ],
         };
-
       case "IA Atlas":
         return {
           type: "cards" as const,
@@ -1118,7 +1164,6 @@ export default function AtlasChartPro2() {
             { label: "Condição", value: "Operável", positive: true },
           ],
         };
-
       case "Estrutura":
         return {
           type: "cards" as const,
@@ -1138,7 +1183,6 @@ export default function AtlasChartPro2() {
             { label: "Ciclo", value: "Sustentado", positive: true },
           ],
         };
-
       case "Euler":
         return {
           type: "cards" as const,
@@ -1158,7 +1202,25 @@ export default function AtlasChartPro2() {
             { label: "Leitura", value: "Confiável", positive: true },
           ],
         };
-
+      case "Liquidez":
+        return {
+          type: "cards" as const,
+          title: "Radar de Liquidez",
+          subtitle:
+            "Painel dedicado a paredes, heatmap, stops e clusters relevantes para o preço.",
+          cards: [
+            { title: "Parede", value: "71,600", subtitle: "Oferta dominante", positive: true },
+            { title: "Cluster", value: "Forte", subtitle: "Acúmulo relevante", positive: true },
+            { title: "Stops", value: "Acima", subtitle: "Alvo provável", positive: true },
+            { title: "Heatmap", value: "Ativo", subtitle: "Leitura disponível", positive: true },
+          ],
+          rows: [
+            { label: "Pool", value: "71,250", positive: true },
+            { label: "Caça", value: "Provável", positive: true },
+            { label: "Absorção", value: "Moderada", positive: true },
+            { label: "Atração", value: "Elevada", positive: true },
+          ],
+        };
       default:
         return {
           type: "table" as const,
