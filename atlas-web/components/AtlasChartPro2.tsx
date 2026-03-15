@@ -1,196 +1,201 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { createChart, ColorType } from "lightweight-charts";
 
 export default function AtlasChartPro2() {
 
-const chartContainer = useRef<HTMLDivElement | null>(null);
-const chart = useRef<any>(null);
-const series = useRef<any>(null);
+const chartRef = useRef<any>(null);
+const chartContainerRef = useRef<HTMLDivElement | null>(null);
+const candleSeriesRef = useRef<any>(null);
 
-const [score] = useState(92);
-const [direction] = useState("Compra Forte");
-const [risk] = useState("Médio");
+const [symbol,setSymbol] = useState("BTCUSDT");
+const [price,setPrice] = useState("--");
+const [change,setChange] = useState("--");
 
 useEffect(()=>{
 
-if(!chartContainer.current) return;
+if(!chartContainerRef.current) return;
 
-chart.current = createChart(chartContainer.current,{
+const chart = createChart(chartContainerRef.current,{
 layout:{
-background:{type:ColorType.Solid,color:"#070b11"},
-textColor:"#cbd5ff"
+background:{type:ColorType.Solid,color:"#070d18"},
+textColor:"#8fa3c7"
 },
 grid:{
-vertLines:{color:"#1b2233"},
-horzLines:{color:"#1b2233"}
+vertLines:{color:"rgba(255,255,255,0.05)"},
+horzLines:{color:"rgba(255,255,255,0.05)"}
 },
-crosshair:{
-mode:1
+rightPriceScale:{
+borderColor:"rgba(255,255,255,0.08)"
 },
+timeScale:{
+borderColor:"rgba(255,255,255,0.08)"
+},
+width:chartContainerRef.current.clientWidth,
 height:650
 });
 
-series.current = chart.current.addCandlestickSeries();
+const candleSeries = chart.addCandlestickSeries({
+upColor:"#34d399",
+downColor:"#fb7185",
+borderUpColor:"#34d399",
+borderDownColor:"#fb7185",
+wickUpColor:"#34d399",
+wickDownColor:"#fb7185"
+});
 
-let price = 41000;
-const data:any=[];
+chartRef.current = chart;
+candleSeriesRef.current = candleSeries;
 
-for(let i=0;i<160;i++){
+let priceBase = 40000;
 
-const open = price;
+const candles:any = [];
+
+for(let i=0;i<120;i++){
+
+const open = priceBase;
 const close = open + (Math.random()-0.5)*300;
-const high = Math.max(open,close)+Math.random()*120;
-const low = Math.min(open,close)-Math.random()*120;
+const high = Math.max(open,close)+Math.random()*150;
+const low = Math.min(open,close)-Math.random()*150;
 
-data.push({
+candles.push({
 time:1700000000+i*60,
 open,
 high,
 low,
 close
-})
+});
 
-price = close;
+priceBase = close;
 
 }
 
-series.current.setData(data);
+candleSeries.setData(candles);
+
+setPrice(candles[candles.length-1].close.toFixed(2));
+setChange("+1.23%");
 
 },[]);
 
 return(
 
 <div style={{
-
-width:"100%",
-height:"100vh",
-display:"grid",
-gridTemplateColumns:"60px 1fr 340px",
-gridTemplateRows:"60px 1fr 260px",
-background:"#070b11",
-color:"#e2e8ff"
-
+minHeight:"100vh",
+background:"#030712",
+color:"#e5edff",
+fontFamily:"Inter"
 }}>
 
 {/* TOPBAR */}
 
 <div style={{
-
-gridColumn:"1 / span 3",
 display:"flex",
 alignItems:"center",
-gap:20,
-padding:"10px 20px",
-borderBottom:"1px solid #1b2233"
-
+gap:14,
+padding:"12px 16px",
+borderBottom:"1px solid rgba(255,255,255,0.06)"
 }}>
 
-<img src="/logo-singularidade.png" style={{height:34}}/>
+<Image
+src="/logo-singularidade.png"
+alt="logo"
+width={44}
+height={44}
+/>
 
-<b>SINGULARIDADE</b>
-
-<div style={{marginLeft:20}}>BTCUSDT</div>
-
-<div style={{display:"flex",gap:12}}>
-
-<span>1m</span>
-<span>5m</span>
-<span>15m</span>
-<span>1H</span>
-<span>4H</span>
-<span>1D</span>
-
+<div style={{fontWeight:900,fontSize:20}}>
+SINGULARIDADE
 </div>
 
-<div style={{marginLeft:"auto"}}>
-
-IA Atlas Score:
-
-<b style={{color:"#22c55e",marginLeft:6}}>{score}</b>
-
+<div style={{marginLeft:20,fontWeight:700}}>
+{symbol}
 </div>
 
+<div style={{marginLeft:"auto",fontWeight:800}}>
+{price}
 </div>
-
-{/* TOOLBAR */}
 
 <div style={{
+color:"#34d399",
+fontWeight:800
+}}>
+{change}
+</div>
 
-borderRight:"1px solid #1b2233",
-display:"flex",
-flexDirection:"column",
-alignItems:"center",
-gap:24,
-paddingTop:20
+</div>
 
+{/* MAIN */}
+
+<div style={{
+display:"grid",
+gridTemplateColumns:"50px 1fr 280px",
+gap:10,
+padding:10
 }}>
 
-<span>✚</span>
-<span>／</span>
-<span>▭</span>
-<span>∿</span>
-<span>◎</span>
-<span>⤢</span>
+{/* TOOLS */}
+
+<div style={{
+display:"flex",
+flexDirection:"column",
+gap:10,
+alignItems:"center"
+}}>
+
+<button>⌖</button>
+<button>╱</button>
+<button>◫</button>
+<button>≡</button>
+<button>⚙</button>
 
 </div>
 
 {/* CHART */}
 
-<div
+<div style={{
+background:"#081022",
+borderRadius:12,
+border:"1px solid rgba(255,255,255,0.06)",
+overflow:"hidden"
+}}>
 
-ref={chartContainer}
+<div ref={chartContainerRef}/>
 
-style={{
-
-position:"relative"
-
-}}
-
-/>
+</div>
 
 {/* RIGHT PANEL */}
 
 <div style={{
-
-borderLeft:"1px solid #1b2233",
-padding:20
-
+background:"#081022",
+borderRadius:12,
+border:"1px solid rgba(255,255,255,0.06)",
+padding:14
 }}>
 
-<h3>IA Atlas Insights</h3>
-
-<div style={{marginTop:20}}>
-
-<b>BTCUSDT</b>
+<div style={{fontWeight:800,marginBottom:10}}>
+IA Atlas
+</div>
 
 <div style={{
-fontSize:42,
-marginTop:10,
-color:"#22c55e"
+fontSize:34,
+fontWeight:900,
+color:"#34d399"
 }}>
-{score}
+92
 </div>
 
-<div style={{marginTop:14}}>
-Direção: {direction}
+<div style={{marginTop:10}}>
+Direção: Compra Forte
 </div>
 
-<div style={{marginTop:6}}>
-Risco: {risk}
+<div>
+Risco: Médio
 </div>
 
-<div style={{marginTop:6}}>
+<div>
 Liquidez: Alta
-</div>
-
-<div style={{marginTop:6}}>
-Ciclo: Inicial
-</div>
-
-<div style={{marginTop:6}}>
-Convicção: Forte
 </div>
 
 </div>
@@ -200,78 +205,37 @@ Convicção: Forte
 {/* BOTTOM PANEL */}
 
 <div style={{
-
-gridColumn:"2 / span 2",
-borderTop:"1px solid #1b2233",
-display:"grid",
-gridTemplateColumns:"1fr 1fr",
-padding:20,
-gap:40
-
+marginTop:10,
+padding:10
 }}>
 
-{/* SCANNER */}
+<div style={{
+background:"#081022",
+borderRadius:12,
+border:"1px solid rgba(255,255,255,0.06)",
+padding:14
+}}>
 
-<div>
-
-<b>Scanner de Mercado</b>
-
-<div style={{marginTop:14}}>
-BTCUSDT — Compra Forte
+<div style={{fontWeight:800,marginBottom:10}}>
+Scanner Atlas
 </div>
 
-<div>
-ETHUSDT — Compra
-</div>
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
 
-<div>
-SOLUSDT — Neutro
-</div>
+<div>BTCUSDT</div>
+<div>92</div>
+<div style={{color:"#34d399"}}>Compra</div>
+<div>$69489</div>
 
-<div>
-BNBUSDT — Venda
-</div>
+<div>ETHUSDT</div>
+<div>87</div>
+<div style={{color:"#34d399"}}>Alta</div>
+<div>$3745</div>
 
-<div style={{marginTop:20}}>
-
-<b>Top Volume</b>
-
-<div>BTC</div>
-<div>ETH</div>
-<div>SOL</div>
-
-</div>
-
-</div>
-
-{/* FLOW */}
-
-<div>
-
-<b>Fluxo Institucional</b>
-
-<div style={{marginTop:14}}>
-Volume: Alto
-</div>
-
-<div>
-Momentum: Crescente
-</div>
-
-<div>
-Estrutura: Bullish
-</div>
-
-<div>
-Liquidez: Acumulando
-</div>
-
-<div style={{marginTop:20}}>
-
-<b>Eventos</b>
-
-<div>Whale Activity</div>
-<div>Alta Liquidez</div>
+<div>SOLUSDT</div>
+<div>82</div>
+<div>Neutro</div>
+<div>$168</div>
 
 </div>
 
