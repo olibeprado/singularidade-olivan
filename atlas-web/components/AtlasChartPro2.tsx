@@ -84,7 +84,7 @@ function StatCard({
         background:
           "linear-gradient(180deg, rgba(14,21,39,0.96), rgba(7,11,22,0.985))",
         border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: 14,
+        borderRadius: 12,
         padding: "10px 12px",
         minHeight: 64,
         boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
@@ -211,7 +211,7 @@ function MiniMetricCard({
     <div
       style={{
         border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: 14,
+        borderRadius: 12,
         padding: 12,
         background:
           "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))",
@@ -1330,7 +1330,7 @@ export default function AtlasChartPro2() {
             padding: "10px 16px 10px",
             flexWrap: "wrap",
             borderBottom: "1px solid rgba(255,255,255,0.05)",
-            minHeight: isSmall ? "auto" : 82,
+            minHeight: isSmall ? "auto" : 74,
           }}
         >
           <div
@@ -1356,7 +1356,7 @@ export default function AtlasChartPro2() {
                 style={{
                   width: isSmall ? 58 : 66,
                   height: isSmall ? 58 : 66,
-                  borderRadius: 14,
+                  borderRadius: 12,
                   background:
                     "radial-gradient(circle at 30% 30%, rgba(94,231,255,0.16), rgba(255,255,255,0.02))",
                   border: "1px solid rgba(255,255,255,0.06)",
@@ -1382,10 +1382,10 @@ export default function AtlasChartPro2() {
                 <span
                   style={{
                     fontWeight: 900,
-                    fontSize: isSmall ? 20 : 24,
+                    fontSize: isSmall ? 20 : 22,
                     letterSpacing: 0.55,
                     whiteSpace: "nowrap",
-                    textShadow: "0 0 18px rgba(94,231,255,0.08)",
+                    textShadow: "0 0 10px rgba(94,231,255,0.06)",
                   }}
                 >
                   SINGULARIDADE
@@ -1424,8 +1424,8 @@ export default function AtlasChartPro2() {
                     "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025))",
                   border: "1px solid rgba(255,255,255,0.09)",
                   borderRadius: 12,
-                  padding: "10px 14px",
-                  minHeight: 46,
+                  padding: "9px 12px",
+                  minHeight: 42,
                   flexShrink: 0,
                   boxShadow: "0 8px 18px rgba(0,0,0,0.12)",
                 }}
@@ -1440,7 +1440,7 @@ export default function AtlasChartPro2() {
                     border: "none",
                     outline: "none",
                     fontWeight: 900,
-                    fontSize: 15,
+                    fontSize: 14,
                     cursor: "pointer",
                   }}
                 >
@@ -1481,8 +1481,8 @@ export default function AtlasChartPro2() {
               justifyContent: isSmall ? "space-between" : "flex-end",
             }}
           >
-            <span>Replay</span>
-            <span>IA Atlas</span>
+            <span style={{ opacity: 0.9 }}>Replay</span>
+            <span style={{ opacity: 0.9 }}>IA Atlas</span>
             <span
               style={{
                 color: change.startsWith("-") ? "#ff6b81" : "#2fe19a",
@@ -1503,7 +1503,7 @@ export default function AtlasChartPro2() {
             display: "flex",
             alignItems: "center",
             gap: 8,
-            padding: "9px 16px 12px",
+            padding: "8px 16px 10px",
             overflowX: "auto",
             scrollbarWidth: "none",
             background:
@@ -1622,11 +1622,11 @@ export default function AtlasChartPro2() {
           <div
             style={{
               background:
-                "linear-gradient(180deg, rgba(13,20,38,0.98), rgba(8,12,24,0.98))",
+                "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
               border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 20,
+              borderRadius: 14,
               overflow: "hidden",
-              boxShadow: "0 18px 50px rgba(0,0,0,0.30)",
+              boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
             }}
           >
             <div
@@ -1634,7 +1634,7 @@ export default function AtlasChartPro2() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "12px 14px",
+                padding: "10px 12px",
                 borderBottom: "1px solid rgba(255,255,255,0.05)",
                 background:
                   "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
@@ -1648,8 +1648,8 @@ export default function AtlasChartPro2() {
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    minWidth: 26,
-                    height: 26,
+                    minWidth: 24,
+                    height: 24,
                     borderRadius: 8,
                     background: `${moduleAccent}20`,
                     color: moduleAccent,
@@ -1664,7 +1664,7 @@ export default function AtlasChartPro2() {
                 </div>
 
                 <div>
-                  <div style={{ fontWeight: 900, fontSize: 17 }}>{symbol}</div>
+                  <div style={{ fontWeight: 900, fontSize: 15 }}>{symbol}</div>
                   <div style={{ color: "#8fa3c7", fontSize: 11 }}>
                     {moduleTitle} • Ferramenta:{" "}
                     {chartTools.find((t) => t.key === activeTool)?.label} • TF:{" "}
@@ -1806,11 +1806,11 @@ export default function AtlasChartPro2() {
             <div
               style={{
                 background:
-                  "linear-gradient(180deg, rgba(15,22,40,0.98), rgba(8,12,24,0.98))",
+                  "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
                 border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 18,
+                borderRadius: 14,
                 padding: 14,
-                boxShadow: "0 18px 50px rgba(0,0,0,0.30)",
+                boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
               }}
             >
               <div
@@ -1842,7 +1842,7 @@ export default function AtlasChartPro2() {
                 <div style={{ fontSize: 28, fontWeight: 900 }}>{symbol}</div>
                 <div
                   style={{
-                    fontSize: 42,
+                    fontSize: 34,
                     lineHeight: 1,
                     fontWeight: 900,
                     color: scoreColor,
@@ -1901,11 +1901,11 @@ export default function AtlasChartPro2() {
             <div
               style={{
                 background:
-                  "linear-gradient(180deg, rgba(15,22,40,0.98), rgba(8,12,24,0.98))",
+                  "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
                 border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 18,
+                borderRadius: 14,
                 padding: 14,
-                boxShadow: "0 18px 50px rgba(0,0,0,0.30)",
+                boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
               }}
             >
               <div
@@ -1939,11 +1939,11 @@ export default function AtlasChartPro2() {
           style={{
             marginTop: 10,
             background:
-              "linear-gradient(180deg, rgba(13,20,38,0.98), rgba(8,12,24,0.98))",
+                "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
             border: "1px solid rgba(255,255,255,0.07)",
-            borderRadius: 20,
+            borderRadius: 14,
             padding: 14,
-            boxShadow: "0 18px 50px rgba(0,0,0,0.30)",
+            boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
           }}
         >
           <div
@@ -2004,7 +2004,7 @@ export default function AtlasChartPro2() {
               <div
                 style={{
                   border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: 18,
+                  borderRadius: 14,
                   padding: 16,
                   background:
                     "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
@@ -2075,7 +2075,7 @@ export default function AtlasChartPro2() {
                   <div
                     style={{
                       border: "1px solid rgba(255,255,255,0.07)",
-                      borderRadius: 14,
+                      borderRadius: 12,
                       padding: 14,
                       background:
                         "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.015))",
@@ -2264,7 +2264,7 @@ export default function AtlasChartPro2() {
                 <div
                   style={{
                     height: 104,
-                    borderRadius: 14,
+                    borderRadius: 12,
                     background:
                       "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))",
                     position: "relative",
