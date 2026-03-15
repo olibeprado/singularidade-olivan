@@ -1,250 +1,324 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createChart, ColorType } from "lightweight-charts";
+
+type Candle = {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+type TopModule =
+  | "Fluxo"
+  | "Singularidade"
+  | "IA Atlas"
+  | "Scanner"
+  | "Estrutura"
+  | "Euler";
+
+type ToolKey =
+  | "cursor"
+  | "zoom"
+  | "line"
+  | "zones"
+  | "levels"
+  | "measure"
+  | "magnet"
+  | "clock"
+  | "settings";
+
+type ViewMode = "auto" | "manual" | "space";
+
+const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
+const timeframes = ["1m", "5m", "15m", "1h", "4h"];
+
+const topModules: TopModule[] = [
+  "Fluxo",
+  "Singularidade",
+  "IA Atlas",
+  "Scanner",
+  "Estrutura",
+  "Euler",
+];
+
+const moduleIcons: Record<TopModule, string> = {
+  Fluxo: "≈",
+  Singularidade: "✦",
+  "IA Atlas": "◈",
+  Scanner: "⌕",
+  Estrutura: "▣",
+  Euler: "∑",
+};
 
 export default function AtlasChartPro2() {
 
-const chartRef = useRef<any>(null);
-const chartContainerRef = useRef<HTMLDivElement | null>(null);
-const candleSeriesRef = useRef<any>(null);
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
+  const chartRef = useRef<any>(null);
+  const candleSeriesRef = useRef<any>(null);
+  const volumeSeriesRef = useRef<any>(null);
 
-const [symbol,setSymbol] = useState("BTCUSDT");
-const [price,setPrice] = useState("--");
-const [change,setChange] = useState("--");
+  const [symbol, setSymbol] = useState("BTCUSDT");
+  const [timeframe, setTimeframe] = useState("1m");
+  const [activeModule, setActiveModule] = useState<TopModule>("Scanner");
 
-useEffect(()=>{
+  const [price, setPrice] = useState("--");
+  const [change, setChange] = useState("--");
+  const [volume, setVolume] = useState("--");
+  const [source, setSource] = useState("carregando");
 
-if(!chartContainerRef.current) return;
+  const [chartHeight, setChartHeight] = useState(720);
 
-const chart = createChart(chartContainerRef.current,{
-layout:{
-background:{type:ColorType.Solid,color:"#070d18"},
-textColor:"#8fa3c7"
-},
-grid:{
-vertLines:{color:"rgba(255,255,255,0.05)"},
-horzLines:{color:"rgba(255,255,255,0.05)"}
-},
-rightPriceScale:{
-borderColor:"rgba(255,255,255,0.08)"
-},
-timeScale:{
-borderColor:"rgba(255,255,255,0.08)"
-},
-width:chartContainerRef.current.clientWidth,
-height:650
-});
+  const [viewMode, setViewMode] = useState<ViewMode>("auto");
 
-const candleSeries = chart.addCandlestickSeries({
-upColor:"#34d399",
-downColor:"#fb7185",
-borderUpColor:"#34d399",
-borderDownColor:"#fb7185",
-wickUpColor:"#34d399",
-wickDownColor:"#fb7185"
-});
+  const hasInitialFitRef = useRef(false);
 
-chartRef.current = chart;
-candleSeriesRef.current = candleSeries;
+  useEffect(() => {
 
-let priceBase = 40000;
+    if (!chartContainerRef.current) return;
 
-const candles:any = [];
+    const chart = createChart(chartContainerRef.current, {
+      width: chartContainerRef.current.clientWidth,
+      height: chartHeight,
 
-for(let i=0;i<120;i++){
+      layout: {
+        background: { type: ColorType.Solid, color: "#09111f" },
+        textColor: "#93a9cf",
+      },
 
-const open = priceBase;
-const close = open + (Math.random()-0.5)*300;
-const high = Math.max(open,close)+Math.random()*150;
-const low = Math.min(open,close)-Math.random()*150;
+      grid: {
+        vertLines: { color: "rgba(120,140,180,0.10)" },
+        horzLines: { color: "rgba(120,140,180,0.10)" },
+      },
 
-candles.push({
-time:1700000000+i*60,
-open,
-high,
-low,
-close
-});
+      crosshair: {
+        vertLine: { color: "rgba(255,255,255,0.12)" },
+        horzLine: { color: "rgba(255,255,255,0.12)" },
+      },
 
-priceBase = close;
+      rightPriceScale: {
+        borderColor: "rgba(255,255,255,0.10)",
+      },
 
-}
+      timeScale: {
+        borderColor: "rgba(255,255,255,0.10)",
+        timeVisible: true,
+      },
+    });
 
-candleSeries.setData(candles);
+    const candleSeries = chart.addCandlestickSeries({
+      upColor: "#36e29a",
+      downColor: "#ff5f7a",
+      borderUpColor: "#36e29a",
+      borderDownColor: "#ff5f7a",
+      wickUpColor: "#36e29a",
+      wickDownColor: "#ff5f7a",
+    });
 
-setPrice(candles[candles.length-1].close.toFixed(2));
-setChange("+1.23%");
+    const volumeSeries = chart.addHistogramSeries({
+      priceFormat: { type: "volume" },
+      priceScaleId: "",
+      color: "#3b82f6",
+    });
 
-},[]);
+    volumeSeries.priceScale().applyOptions({
+      scaleMargins: {
+        top: 0.84,
+        bottom: 0,
+      },
+    });
 
-return(
+    chartRef.current = chart;
+    candleSeriesRef.current = candleSeries;
+    volumeSeriesRef.current = volumeSeries;
 
-<div style={{
-minHeight:"100vh",
-background:"#030712",
-color:"#e5edff",
-fontFamily:"Inter"
-}}>
+    return () => chart.remove();
 
-{/* TOPBAR */}
+  }, [chartHeight]);
 
-<div style={{
-display:"flex",
-alignItems:"center",
-gap:14,
-padding:"12px 16px",
-borderBottom:"1px solid rgba(255,255,255,0.06)"
-}}>
 
-<Image
-src="/logo-singularidade.png"
-alt="logo"
-width={44}
-height={44}
-/>
 
-<div style={{fontWeight:900,fontSize:20}}>
-SINGULARIDADE
-</div>
+  useEffect(() => {
 
-<div style={{marginLeft:20,fontWeight:700}}>
-{symbol}
-</div>
+    async function loadData() {
 
-<div style={{marginLeft:"auto",fontWeight:800}}>
-{price}
-</div>
+      try {
 
-<div style={{
-color:"#34d399",
-fontWeight:800
-}}>
-{change}
-</div>
+        const res = await fetch(`/api/market?symbol=${symbol}&interval=${timeframe}&limit=200`);
 
-</div>
+        const data = await res.json();
 
-{/* MAIN */}
+        if (!data?.candles) return;
 
-<div style={{
-display:"grid",
-gridTemplateColumns:"50px 1fr 280px",
-gap:10,
-padding:10
-}}>
+        setSource(data.source);
 
-{/* TOOLS */}
+        const candles: Candle[] = data.candles;
 
-<div style={{
-display:"flex",
-flexDirection:"column",
-gap:10,
-alignItems:"center"
-}}>
+        const normalizedCandles = candles.map((c) => ({
+          time: Math.floor(new Date(c.time).getTime() / 1000),
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+        }));
 
-<button>⌖</button>
-<button>╱</button>
-<button>◫</button>
-<button>≡</button>
-<button>⚙</button>
+        const normalizedVolume = candles.map((c) => ({
+          time: Math.floor(new Date(c.time).getTime() / 1000),
+          value: c.volume,
+          color:
+            c.close >= c.open
+              ? "rgba(54,226,154,0.7)"
+              : "rgba(255,95,122,0.7)",
+        }));
 
-</div>
+        candleSeriesRef.current?.setData(normalizedCandles);
+        volumeSeriesRef.current?.setData(normalizedVolume);
 
-{/* CHART */}
+        if (!hasInitialFitRef.current) {
+          chartRef.current.timeScale().fitContent();
+          hasInitialFitRef.current = true;
+        }
 
-<div style={{
-background:"#081022",
-borderRadius:12,
-border:"1px solid rgba(255,255,255,0.06)",
-overflow:"hidden"
-}}>
+        const last = candles[candles.length - 1];
+        const prev = candles[candles.length - 2] || last;
 
-<div ref={chartContainerRef}/>
+        setPrice(last.close.toFixed(2));
 
-</div>
+        const pct = ((last.close - prev.close) / prev.close) * 100;
 
-{/* RIGHT PANEL */}
+        setChange(`${pct.toFixed(2)}%`);
 
-<div style={{
-background:"#081022",
-borderRadius:12,
-border:"1px solid rgba(255,255,255,0.06)",
-padding:14
-}}>
+        setVolume(last.volume.toFixed(2));
 
-<div style={{fontWeight:800,marginBottom:10}}>
-IA Atlas
-</div>
+      } catch (err) {
+        console.log(err);
+      }
+    }
 
-<div style={{
-fontSize:34,
-fontWeight:900,
-color:"#34d399"
-}}>
-92
-</div>
+    loadData();
 
-<div style={{marginTop:10}}>
-Direção: Compra Forte
-</div>
+    const timer = setInterval(loadData, 15000);
 
-<div>
-Risco: Médio
-</div>
+    return () => clearInterval(timer);
 
-<div>
-Liquidez: Alta
-</div>
+  }, [symbol, timeframe]);
 
-</div>
 
-</div>
 
-{/* BOTTOM PANEL */}
+  return (
 
-<div style={{
-marginTop:10,
-padding:10
-}}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background:
+          "linear-gradient(180deg,#030712 0%,#040913 100%)",
+        color: "#eef4ff",
+        fontFamily: "Inter, sans-serif",
+      }}
+    >
 
-<div style={{
-background:"#081022",
-borderRadius:12,
-border:"1px solid rgba(255,255,255,0.06)",
-padding:14
-}}>
+      <div
+        style={{
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          padding: 14,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
 
-<div style={{fontWeight:800,marginBottom:10}}>
-Scanner Atlas
-</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
 
-<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
+          <Image
+            src="/logo-singularidade.png"
+            alt="logo"
+            width={52}
+            height={52}
+          />
 
-<div>BTCUSDT</div>
-<div>92</div>
-<div style={{color:"#34d399"}}>Compra</div>
-<div>$69489</div>
+          <div style={{ fontWeight: 900, fontSize: 20 }}>
+            SINGULARIDADE
+          </div>
 
-<div>ETHUSDT</div>
-<div>87</div>
-<div style={{color:"#34d399"}}>Alta</div>
-<div>$3745</div>
+        </div>
 
-<div>SOLUSDT</div>
-<div>82</div>
-<div>Neutro</div>
-<div>$168</div>
+        <div style={{ display: "flex", gap: 10 }}>
 
-</div>
+          <select
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value)}
+          >
+            {symbols.map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
 
-</div>
+          {timeframes.map((tf) => (
+            <button
+              key={tf}
+              onClick={() => setTimeframe(tf)}
+              style={{
+                padding: "6px 10px",
+                background: timeframe === tf ? "#ffd65a" : "#111827",
+                borderRadius: 6,
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              {tf}
+            </button>
+          ))}
 
-</div>
+        </div>
 
-</div>
+      </div>
 
-);
 
+
+      <div style={{ padding: 12 }}>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr 1fr",
+            gap: 10,
+            marginBottom: 12,
+          }}
+        >
+
+          <div>Ativo: {symbol}</div>
+          <div>Preço: {price}</div>
+          <div>Variação: {change}</div>
+          <div>Fonte: {source}</div>
+
+        </div>
+
+
+
+        <div
+          style={{
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+
+          <div
+            ref={chartContainerRef}
+            style={{
+              width: "100%",
+              height: chartHeight,
+            }}
+          />
+
+        </div>
+
+      </div>
+
+    </div>
+  );
 }
