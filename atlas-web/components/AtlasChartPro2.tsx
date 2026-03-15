@@ -132,17 +132,17 @@ function RightRow({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "10px 0",
+        padding: "8px 0",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
         gap: 12,
       }}
     >
-      <span style={{ color: "#99a9c8", fontSize: 13 }}>{label}</span>
+      <span style={{ color: "#99a9c8", fontSize: 12 }}>{label}</span>
       <span
         style={{
           color: positive === undefined ? "#eef4ff" : positive ? "#34d399" : "#fb7185",
           fontWeight: 800,
-          fontSize: 13,
+          fontSize: 12,
           textAlign: "right",
         }}
       >
@@ -269,7 +269,7 @@ function LeftInfoRow({
         style={{
           color: positive === false ? "#ff8ea0" : positive ? "#34d399" : "#eaf2ff",
           fontWeight: 800,
-          fontSize: 13,
+          fontSize: 12,
           textAlign: "right",
         }}
       >
@@ -1782,7 +1782,7 @@ export default function AtlasChartPro2() {
                       onClick={() => setActiveTool(tool.key)}
                       style={{
                         width: 34,
-                        height: 34,
+                        height: 30,
                         borderRadius: 10,
                         border: active
                           ? `1px solid ${moduleAccent}55`
@@ -1822,16 +1822,16 @@ export default function AtlasChartPro2() {
                   "linear-gradient(180deg, rgba(9,14,28,0.99), rgba(7,11,22,0.995))",
                 border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 14,
-                padding: 12,
-                boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
+                padding: 10,
+                boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
               }}
             >
               <div
                 style={{
                   color: "#dfe8ff",
                   fontWeight: 900,
-                  fontSize: 14,
-                  marginBottom: 14,
+                  fontSize: 13,
+                  marginBottom: 10,
                 }}
               >
                 {insightConfig.panelTitle}
@@ -1852,10 +1852,10 @@ export default function AtlasChartPro2() {
                   gap: 12,
                 }}
               >
-                <div style={{ fontSize: 28, fontWeight: 900 }}>{symbol}</div>
+                <div style={{ fontSize: 18, fontWeight: 900 }}>{symbol}</div>
                 <div
                   style={{
-                    fontSize: 34,
+                    fontSize: 30,
                     lineHeight: 1,
                     fontWeight: 900,
                     color: scoreColor,
@@ -1917,8 +1917,8 @@ export default function AtlasChartPro2() {
                   "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
                 border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 14,
-                padding: 12,
-                boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
+                padding: 10,
+                boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
               }}
             >
               <div
@@ -1955,8 +1955,8 @@ export default function AtlasChartPro2() {
                 "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
             border: "1px solid rgba(255,255,255,0.07)",
             borderRadius: 14,
-            padding: 12,
-            boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
+            padding: 10,
+                boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
           }}
         >
           <div
@@ -1974,7 +1974,7 @@ export default function AtlasChartPro2() {
                 <div
                   key={tab}
                   style={{
-                    padding: "9px 13px",
+                    padding: "7px 11px",
                     borderRadius: 11,
                     border: "1px solid rgba(255,255,255,0.06)",
                     background:
@@ -1983,7 +1983,7 @@ export default function AtlasChartPro2() {
                         : "rgba(255,255,255,0.025)",
                     color: i === 0 ? "#eef4ff" : "#a8b8d8",
                     fontWeight: 800,
-                    fontSize: 12,
+                    fontSize: 11,
                   }}
                 >
                   {tab}
@@ -2004,7 +2004,7 @@ export default function AtlasChartPro2() {
                     color: "#dfe8ff",
                     fontWeight: 900,
                     marginBottom: 8,
-                    fontSize: 15,
+                    fontSize: 14,
                   }}
                 >
                   Mapa de Liquidez
@@ -2026,17 +2026,17 @@ export default function AtlasChartPro2() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: isSmall ? "1fr" : "120px minmax(0, 1fr) 210px",
+                    gridTemplateColumns: isSmall ? "1fr" : "92px minmax(0, 1fr) 190px",
                     gap: 14,
                     alignItems: "stretch",
                   }}
                 >
-                  <div style={{ display: "grid", gap: 10 }}>
+                  <div style={{ display: "grid", gap: 8 }}>
                     {liquidityHeatRows.map((row) => (
                       <div
                         key={row.level}
                         style={{
-                          height: 34,
+                          height: 30,
                           display: "flex",
                           alignItems: "center",
                           color: "#dfe8ff",
@@ -2055,9 +2055,9 @@ export default function AtlasChartPro2() {
                         key={row.level}
                         style={{
                           position: "relative",
-                          height: 34,
-                          borderRadius: 10,
-                          overflow: "hidden",
+                          height: 30,
+                          borderRadius: 8,
+                          overflow: "hidden"
                           background:
                             idx === 0
                               ? "linear-gradient(90deg, rgba(255,80,80,0.20), rgba(255,120,0,0.92), rgba(255,230,120,0.98))"
@@ -2109,13 +2109,25 @@ export default function AtlasChartPro2() {
                 style={{
                   display: "grid",
                   gridTemplateColumns: isSmall ? "1fr" : "repeat(4, minmax(0, 1fr))",
-                  gap: 10,
+                  gap: 8,
                 }}
               >
-                <StatCard title="Parede" value="71,600" positive />
-                <StatCard title="Cluster" value="Forte" positive />
-                <StatCard title="Heatmap" value="Ativo" positive />
-                <StatCard title="Caça" value="Provável" positive />
+                <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ color: "#7f93b9", fontSize: 10, textTransform: "uppercase", marginBottom: 6 }}>Parede</div>
+                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>71,600</div>
+                </div>
+                <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ color: "#7f93b9", fontSize: 10, textTransform: "uppercase", marginBottom: 6 }}>Cluster</div>
+                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>Forte</div>
+                </div>
+                <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ color: "#7f93b9", fontSize: 10, textTransform: "uppercase", marginBottom: 6 }}>Heatmap</div>
+                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>Ativo</div>
+                </div>
+                <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ color: "#7f93b9", fontSize: 10, textTransform: "uppercase", marginBottom: 6 }}>Caça</div>
+                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>Provável</div>
+                </div>
               </div>
             </div>
           ) : (
@@ -2132,7 +2144,7 @@ export default function AtlasChartPro2() {
                     color: "#dfe8ff",
                     fontWeight: 900,
                     marginBottom: 8,
-                    fontSize: 15,
+                    fontSize: 14,
                   }}
                 >
                   {leftPanelTitle}
