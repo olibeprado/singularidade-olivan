@@ -1247,6 +1247,14 @@ export default function AtlasChartPro2() {
 
   const bottomGridColumns = isSmall ? "1fr" : "1.2fr 1fr";
 
+  const liquidityHeatRows = [
+    { level: "71,600", strength: 96, tag: "Cluster institucional" },
+    { level: "71,520", strength: 82, tag: "Liquidez acumulada" },
+    { level: "71,420", strength: 74, tag: "Zona ativa" },
+    { level: "71,350", strength: 64, tag: "Stops prováveis" },
+    { level: "71,220", strength: 58, tag: "Pool de liquidez" },
+  ];
+
   const zoomIn = () => {
     const timeScale = chartRef.current?.timeScale();
     if (!timeScale) return;
@@ -1975,227 +1983,351 @@ export default function AtlasChartPro2() {
             </div>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: bottomGridColumns,
-              gap: 16,
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  color: "#dfe8ff",
-                  fontWeight: 900,
-                  marginBottom: 8,
-                  fontSize: 15,
-                }}
-              >
-                {leftPanelTitle}
+          {activeModule === "Liquidez" ? (
+            <div style={{ display: "grid", gap: 14 }}>
+              <div>
+                <div
+                  style={{
+                    color: "#dfe8ff",
+                    fontWeight: 900,
+                    marginBottom: 8,
+                    fontSize: 15,
+                  }}
+                >
+                  Mapa de Liquidez
+                </div>
+                <div style={{ color: "#8ea4c8", fontSize: 12, marginBottom: 12 }}>
+                  Heatmap institucional exibido apenas no painel inferior para manter o gráfico principal limpo.
+                </div>
               </div>
 
               <div
                 style={{
-                  color: "#8ea4c8",
-                  fontSize: 12,
-                  marginBottom: 12,
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 18,
+                  padding: 16,
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
                 }}
               >
-                {leftDynamicBlock.subtitle}
-              </div>
-
-              {leftDynamicBlock.type === "table" ? (
-                <>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: isSmall ? "1.3fr 1fr 1fr" : "1.2fr 1fr 1fr 1fr",
-                      gap: 10,
-                      color: "#7f95bb",
-                      fontSize: 11,
-                      textTransform: "uppercase",
-                      letterSpacing: 0.4,
-                      paddingBottom: 10,
-                      borderBottom: "1px solid rgba(255,255,255,0.06)",
-                    }}
-                  >
-                    <div>Ativo</div>
-                    <div>Score</div>
-                    <div>Tendência</div>
-                    {!isSmall && <div style={{ textAlign: "right" }}>Preço</div>}
-                  </div>
-
-                  {leftRows.map((row) =>
-                    isSmall ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isSmall ? "1fr" : "120px minmax(0, 1fr) 210px",
+                    gap: 14,
+                    alignItems: "stretch",
+                  }}
+                >
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {liquidityHeatRows.map((row) => (
                       <div
-                        key={`${activeModule}-${row.asset}`}
+                        key={row.level}
                         style={{
-                          display: "grid",
-                          gridTemplateColumns: "1.3fr 1fr 1fr",
-                          gap: 10,
-                          padding: "12px 0",
-                          borderBottom: "1px solid rgba(255,255,255,0.05)",
-                          color: "#d8e2ff",
+                          height: 34,
+                          display: "flex",
+                          alignItems: "center",
+                          color: "#dfe8ff",
+                          fontWeight: 800,
                           fontSize: 13,
                         }}
                       >
-                        <div style={{ fontWeight: 800 }}>{row.asset}</div>
-                        <div>{row.score}</div>
-                        <div style={{ color: "#34d399", fontWeight: 800 }}>
-                          {row.trend}
-                        </div>
+                        {row.level}
                       </div>
-                    ) : (
-                      <ScannerRow
-                        key={`${activeModule}-${row.asset}`}
-                        asset={row.asset}
-                        score={row.score}
-                        trend={row.trend}
-                        price={row.price}
-                      />
-                    )
-                  )}
-                </>
-              ) : (
-                <>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: isSmall
-                        ? "1fr"
-                        : "repeat(2, minmax(0, 1fr))",
-                      gap: 10,
-                      marginBottom: 12,
-                    }}
-                  >
-                    {leftDynamicBlock.cards.map((card) => (
-                      <MiniMetricCard
-                        key={`${activeModule}-${card.title}`}
-                        title={card.title}
-                        value={card.value}
-                        subtitle={card.subtitle}
-                        positive={card.positive}
-                      />
+                    ))}
+                  </div>
+
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {liquidityHeatRows.map((row, idx) => (
+                      <div
+                        key={row.level}
+                        style={{
+                          position: "relative",
+                          height: 34,
+                          borderRadius: 10,
+                          overflow: "hidden",
+                          background:
+                            idx === 0
+                              ? "linear-gradient(90deg, rgba(255,80,80,0.20), rgba(255,120,0,0.92), rgba(255,230,120,0.98))"
+                              : idx === 1
+                              ? "linear-gradient(90deg, rgba(255,100,60,0.16), rgba(255,150,0,0.78), rgba(255,220,100,0.90))"
+                              : idx === 2
+                              ? "linear-gradient(90deg, rgba(255,120,40,0.12), rgba(255,170,0,0.66), rgba(255,210,90,0.76))"
+                              : idx === 3
+                              ? "linear-gradient(90deg, rgba(255,90,120,0.10), rgba(255,130,0,0.54), rgba(255,200,90,0.62))"
+                              : "linear-gradient(90deg, rgba(70,160,255,0.12), rgba(35,211,238,0.42), rgba(255,210,90,0.48))",
+                          boxShadow: idx < 2 ? "0 0 28px rgba(255,170,0,0.18) inset" : "none",
+                        }}
+                      >
+                        <div
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            width: `${row.strength}%`,
+                            background:
+                              "linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.14), rgba(255,255,255,0.02))",
+                            mixBlendMode: "screen",
+                          }}
+                        />
+                      </div>
                     ))}
                   </div>
 
                   <div
                     style={{
                       border: "1px solid rgba(255,255,255,0.07)",
-                      borderRadius: 16,
+                      borderRadius: 14,
                       padding: 14,
                       background:
-                        "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
+                        "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.015))",
                     }}
                   >
-                    <div
-                      style={{
-                        color: "#dfe8ff",
-                        fontWeight: 800,
-                        marginBottom: 6,
-                        fontSize: 14,
-                      }}
-                    >
-                      {leftDynamicBlock.title}
+                    <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 10 }}>
+                      Resumo de Liquidez
                     </div>
-
-                    {leftDynamicBlock.rows.map((row) => (
-                      <LeftInfoRow
-                        key={`${activeModule}-${row.label}`}
-                        label={row.label}
-                        value={row.value}
-                        positive={row.positive}
-                      />
-                    ))}
+                    <RightRow label="Cluster institucional" value="71,600" positive />
+                    <RightRow label="Liquidez acumulada" value="71,520" positive />
+                    <RightRow label="Zona de stops" value="71,350 - 71,220" positive />
+                    <RightRow label="Alvo provável" value="71,480" positive />
                   </div>
-                </>
-              )}
-            </div>
-
-            <div
-              style={{
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 16,
-                padding: 14,
-                background:
-                  "radial-gradient(circle at top, rgba(38,106,255,0.18), transparent 35%), rgba(255,255,255,0.02)",
-                minHeight: 210,
-              }}
-            >
-              <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8 }}>
-                {pulseConfig.title}
-              </div>
-
-              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 15 }}>
-                {pulseConfig.description}
-              </div>
-
-              <div
-                style={{
-                  height: 104,
-                  borderRadius: 14,
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    background:
-                      "linear-gradient(90deg, rgba(61,229,255,0.0), rgba(61,229,255,0.12), rgba(255,213,79,0.10), rgba(61,229,255,0.0))",
-                  }}
-                />
-                <svg
-                  viewBox="0 0 600 140"
-                  width="100%"
-                  height="100%"
-                  style={{ position: "relative" }}
-                >
-                  <path
-                    d={pulseConfig.path1}
-                    fill="none"
-                    stroke="#5ee7ff"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d={pulseConfig.path2}
-                    fill="none"
-                    stroke="#ffd65a"
-                    strokeWidth="2"
-                    opacity="0.9"
-                  />
-                </svg>
+                </div>
               </div>
 
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: isSmall ? "1fr" : "repeat(3, 1fr)",
+                  gridTemplateColumns: isSmall ? "1fr" : "repeat(4, minmax(0, 1fr))",
                   gap: 10,
-                  marginTop: 12,
                 }}
               >
-                <StatCard
-                  title={pulseConfig.stats[0].title}
-                  value={pulseConfig.stats[0].value}
-                  positive={pulseConfig.stats[0].positive}
-                />
-                <StatCard
-                  title={pulseConfig.stats[1].title}
-                  value={pulseConfig.stats[1].value}
-                  positive={pulseConfig.stats[1].positive}
-                />
-                <StatCard
-                  title={pulseConfig.biasLabel}
-                  value={pulseConfig.biasValue}
-                  positive
-                />
+                <StatCard title="Parede" value="71,600" positive />
+                <StatCard title="Cluster" value="Forte" positive />
+                <StatCard title="Heatmap" value="Ativo" positive />
+                <StatCard title="Caça" value="Provável" positive />
               </div>
             </div>
-          </div>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: bottomGridColumns,
+                gap: 16,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    color: "#dfe8ff",
+                    fontWeight: 900,
+                    marginBottom: 8,
+                    fontSize: 15,
+                  }}
+                >
+                  {leftPanelTitle}
+                </div>
+
+                <div
+                  style={{
+                    color: "#8ea4c8",
+                    fontSize: 12,
+                    marginBottom: 12,
+                  }}
+                >
+                  {leftDynamicBlock.subtitle}
+                </div>
+
+                {leftDynamicBlock.type === "table" ? (
+                  <>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: isSmall ? "1.3fr 1fr 1fr" : "1.2fr 1fr 1fr 1fr",
+                        gap: 10,
+                        color: "#7f95bb",
+                        fontSize: 11,
+                        textTransform: "uppercase",
+                        letterSpacing: 0.4,
+                        paddingBottom: 10,
+                        borderBottom: "1px solid rgba(255,255,255,0.06)",
+                      }}
+                    >
+                      <div>Ativo</div>
+                      <div>Score</div>
+                      <div>Tendência</div>
+                      {!isSmall && <div style={{ textAlign: "right" }}>Preço</div>}
+                    </div>
+
+                    {leftRows.map((row) =>
+                      isSmall ? (
+                        <div
+                          key={`${activeModule}-${row.asset}`}
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1.3fr 1fr 1fr",
+                            gap: 10,
+                            padding: "12px 0",
+                            borderBottom: "1px solid rgba(255,255,255,0.05)",
+                            color: "#d8e2ff",
+                            fontSize: 13,
+                          }}
+                        >
+                          <div style={{ fontWeight: 800 }}>{row.asset}</div>
+                          <div>{row.score}</div>
+                          <div style={{ color: "#34d399", fontWeight: 800 }}>
+                            {row.trend}
+                          </div>
+                        </div>
+                      ) : (
+                        <ScannerRow
+                          key={`${activeModule}-${row.asset}`}
+                          asset={row.asset}
+                          score={row.score}
+                          trend={row.trend}
+                          price={row.price}
+                        />
+                      )
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: isSmall
+                          ? "1fr"
+                          : "repeat(2, minmax(0, 1fr))",
+                        gap: 10,
+                        marginBottom: 12,
+                      }}
+                    >
+                      {leftDynamicBlock.cards.map((card) => (
+                        <MiniMetricCard
+                          key={`${activeModule}-${card.title}`}
+                          title={card.title}
+                          value={card.value}
+                          subtitle={card.subtitle}
+                          positive={card.positive}
+                        />
+                      ))}
+                    </div>
+
+                    <div
+                      style={{
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        borderRadius: 16,
+                        padding: 14,
+                        background:
+                          "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#dfe8ff",
+                          fontWeight: 800,
+                          marginBottom: 6,
+                          fontSize: 14,
+                        }}
+                      >
+                        {leftDynamicBlock.title}
+                      </div>
+
+                      {leftDynamicBlock.rows.map((row) => (
+                        <LeftInfoRow
+                          key={`${activeModule}-${row.label}`}
+                          label={row.label}
+                          value={row.value}
+                          positive={row.positive}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div
+                style={{
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 16,
+                  padding: 14,
+                  background:
+                    "radial-gradient(circle at top, rgba(38,106,255,0.18), transparent 35%), rgba(255,255,255,0.02)",
+                  minHeight: 210,
+                }}
+              >
+                <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8 }}>
+                  {pulseConfig.title}
+                </div>
+
+                <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 15 }}>
+                  {pulseConfig.description}
+                </div>
+
+                <div
+                  style={{
+                    height: 104,
+                    borderRadius: 14,
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background:
+                        "linear-gradient(90deg, rgba(61,229,255,0.0), rgba(61,229,255,0.12), rgba(255,213,79,0.10), rgba(61,229,255,0.0))",
+                    }}
+                  />
+                  <svg
+                    viewBox="0 0 600 140"
+                    width="100%"
+                    height="100%"
+                    style={{ position: "relative" }}
+                  >
+                    <path
+                      d={pulseConfig.path1}
+                      fill="none"
+                      stroke="#5ee7ff"
+                      strokeWidth="3"
+                    />
+                    <path
+                      d={pulseConfig.path2}
+                      fill="none"
+                      stroke="#ffd65a"
+                      strokeWidth="2"
+                      opacity="0.9"
+                    />
+                  </svg>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isSmall ? "1fr" : "repeat(3, 1fr)",
+                    gap: 10,
+                    marginTop: 12,
+                  }}
+                >
+                  <StatCard
+                    title={pulseConfig.stats[0].title}
+                    value={pulseConfig.stats[0].value}
+                    positive={pulseConfig.stats[0].positive}
+                  />
+                  <StatCard
+                    title={pulseConfig.stats[1].title}
+                    value={pulseConfig.stats[1].value}
+                    positive={pulseConfig.stats[1].positive}
+                  />
+                  <StatCard
+                    title={pulseConfig.biasLabel}
+                    value={pulseConfig.biasValue}
+                    positive
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
