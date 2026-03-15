@@ -25,13 +25,15 @@ export default function AtlasChartPro2() {
   const [score, setScore] = useState<number>(0);
   const [direction, setDirection] = useState("Neutro");
 
+  const [scanner, setScanner] = useState<any[]>([]);
+
   useEffect(() => {
 
     if (!chartRef.current) return;
 
     const chart = createChart(chartRef.current, {
       width: chartRef.current.clientWidth,
-      height: 650,
+      height: 550,
       layout: {
         background: { type: ColorType.Solid, color: "#070f22" },
         textColor: "#9aa4c7"
@@ -39,12 +41,6 @@ export default function AtlasChartPro2() {
       grid: {
         vertLines: { color: "rgba(255,255,255,0.04)" },
         horzLines: { color: "rgba(255,255,255,0.04)" }
-      },
-      rightPriceScale: {
-        borderColor: "#222"
-      },
-      timeScale: {
-        borderColor: "#222"
       }
     });
 
@@ -64,7 +60,7 @@ export default function AtlasChartPro2() {
       priceScaleId: ""
     });
 
-    async function loadData() {
+    async function loadChart() {
 
       const res = await fetch(
         `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1m&limit=200`
@@ -94,42 +90,18 @@ export default function AtlasChartPro2() {
       const last = candles[candles.length - 1];
       const prev = candles[candles.length - 2] || last;
 
-      const score = atlasScore(
-        last.close,
-        prev.close,
-        last.volume,
-        prev.volume
-      );
+      const s = atlasScore(last.close, prev.close, last.volume, prev.volume);
 
-      setScore(score);
+      setScore(s);
       setPrice(last.close);
 
-      if (score > 70) setDirection("Bullish");
-      else if (score < 40) setDirection("Bearish");
+      if (s > 70) setDirection("Bullish");
+      else if (s < 40) setDirection("Bearish");
       else setDirection("Neutro");
-
-      // CAMPO DE SINGULARIDADE
-      let fieldColor = "#070f22";
-
-      if (score > 80) fieldColor = "#061e14";
-      else if (score > 60) fieldColor = "#08211b";
-      else if (score > 40) fieldColor = "#070f22";
-      else if (score > 20) fieldColor = "#1c0a0a";
-      else fieldColor = "#220707";
-
-      chart.applyOptions({
-        layout: {
-          background: {
-            type: ColorType.Solid,
-            color: fieldColor
-          },
-          textColor: "#9aa4c7"
-        }
-      });
 
     }
 
-    loadData();
+    loadChart();
 
     const handleResize = () => {
       chart.applyOptions({
@@ -146,17 +118,88 @@ export default function AtlasChartPro2() {
 
   }, [symbol]);
 
+  useEffect(() => {
+
+    async function runScanner() {
+
+      const symbols = [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT",
+        "BNBUSDT",
+        "INJUSDT",
+        "LINKUSDT"
+      ];
+
+      const results: any[] = [];
+
+      for (let s of symbols) {
+
+        const res = await fetch(
+          `https://api.binance.com/api/v3/klines?symbol=${s}&interval=5m&limit=2`
+        );
+
+        const data = await res.json();
+
+        const last = data[1];
+        const prev = data[0];
+
+        const score = atlasScore(
+          parseFloat(last[4]),
+          parseFloat(prev[4]),
+          parseFloat(last[5]),
+          parseFloat(prev[5])
+        );
+
+        results.push({
+          symbol: s,
+          score
+        });
+
+      }
+
+      results.sort((a, b) => b.score - a.score);
+
+      setScanner(results);
+
+    }
+
+    runScanner();
+
+  }, []);
+
   return (
 
     <div style={{display:"flex",height:"100vh",background:"#020817"}}>
 
       <div style={{flex:1,padding:"20px"}}>
 
-        <h2 style={{color:"#fff",marginBottom:"10px"}}>
-          SINGULARIDADE • {symbol}
-        </h2>
+        <h2 style={{color:"#fff"}}>SINGULARIDADE • {symbol}</h2>
 
         <div ref={chartRef} />
+
+        <div style={{
+          marginTop:"20px",
+          background:"#060f2c",
+          padding:"15px",
+          borderRadius:"8px"
+        }}>
+
+          <h3 style={{color:"#fff"}}>Scanner Atlas</h3>
+
+          {scanner.map((s,i)=>(
+            <div key={i} style={{
+              display:"flex",
+              justifyContent:"space-between",
+              padding:"8px 0",
+              borderBottom:"1px solid #111"
+            }}>
+              <span style={{color:"#9aa4c7"}}>{s.symbol}</span>
+              <span style={{color:"#f1c40f"}}>{s.score}</span>
+            </div>
+          ))}
+
+        </div>
 
       </div>
 
@@ -169,35 +212,21 @@ export default function AtlasChartPro2() {
 
         <h3 style={{color:"#fff"}}>IA Atlas</h3>
 
-        <div style={{marginTop:"20px",color:"#9aa4c7"}}>
-          <p>Ativo</p>
-          <h2 style={{color:"#fff"}}>{symbol}</h2>
-        </div>
+        <p style={{color:"#9aa4c7"}}>Preço</p>
+        <h2 style={{color:"#2ecc71"}}>
+          {price ? price.toFixed(2) : "..."}
+        </h2>
 
-        <div style={{marginTop:"20px",color:"#9aa4c7"}}>
-          <p>Preço</p>
-          <h2 style={{color:"#2ecc71"}}>
-            {price ? price.toFixed(2) : "..."}
-          </h2>
-        </div>
+        <p style={{color:"#9aa4c7",marginTop:"20px"}}>Score</p>
+        <h1 style={{color:"#f1c40f"}}>{score}</h1>
 
-        <div style={{marginTop:"20px",color:"#9aa4c7"}}>
-          <p>Score Atlas</p>
-          <h1 style={{color:"#f1c40f"}}>
-            {score}
-          </h1>
-        </div>
-
-        <div style={{marginTop:"20px",color:"#9aa4c7"}}>
-          <p>Direção</p>
-          <h2 style={{color:"#fff"}}>
-            {direction}
-          </h2>
-        </div>
+        <p style={{color:"#9aa4c7",marginTop:"20px"}}>Direção</p>
+        <h2 style={{color:"#fff"}}>{direction}</h2>
 
       </div>
 
     </div>
 
   );
+
 }
