@@ -71,6 +71,7 @@ type Drawing = DrawingLine | DrawingLevel | DrawingZone | DrawingMeasure;
 
 const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const timeframes = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
+
 const topModules: TopModule[] = [
   "Fluxo",
   "Singularidade",
@@ -174,7 +175,8 @@ function RightRow({
       <span style={{ color: "#99a9c8", fontSize: 12 }}>{label}</span>
       <span
         style={{
-          color: positive === undefined ? "#eef4ff" : positive ? "#34d399" : "#fb7185",
+          color:
+            positive === undefined ? "#eef4ff" : positive ? "#34d399" : "#fb7185",
           fontWeight: 800,
           fontSize: 12,
           textAlign: "right",
@@ -564,50 +566,52 @@ function DrawingOverlay({
         />
       )}
 
-      {draftZone && (() => {
-        const rect = getRectFromPoints(draftZone.start, draftZone.end);
-        return (
-          <rect
-            x={rect.left}
-            y={rect.top}
-            width={Math.max(rect.width, 2)}
-            height={Math.max(rect.height, 2)}
-            rx={8}
-            fill="rgba(94,231,255,0.08)"
-            stroke="rgba(94,231,255,0.55)"
-            strokeWidth="1.4"
-            strokeDasharray="5 4"
-          />
-        );
-      })()}
-
-      {draftMeasure && (() => {
-        const rect = getRectFromPoints(draftMeasure.start, draftMeasure.end);
-        return (
-          <g>
+      {draftZone &&
+        (() => {
+          const rect = getRectFromPoints(draftZone.start, draftZone.end);
+          return (
             <rect
               x={rect.left}
               y={rect.top}
               width={Math.max(rect.width, 2)}
               height={Math.max(rect.height, 2)}
               rx={8}
-              fill="rgba(255,214,90,0.08)"
-              stroke="rgba(255,214,90,0.55)"
+              fill="rgba(94,231,255,0.08)"
+              stroke="rgba(94,231,255,0.55)"
               strokeWidth="1.4"
               strokeDasharray="5 4"
             />
-            <line
-              x1={draftMeasure.start.x}
-              y1={draftMeasure.start.y}
-              x2={draftMeasure.end.x}
-              y2={draftMeasure.end.y}
-              stroke="#ffd65a"
-              strokeWidth="1.2"
-              strokeDasharray="4 4"
-            />
-          </g>
-        );
-      })()}
+          );
+        })()}
+
+      {draftMeasure &&
+        (() => {
+          const rect = getRectFromPoints(draftMeasure.start, draftMeasure.end);
+          return (
+            <g>
+              <rect
+                x={rect.left}
+                y={rect.top}
+                width={Math.max(rect.width, 2)}
+                height={Math.max(rect.height, 2)}
+                rx={8}
+                fill="rgba(255,214,90,0.08)"
+                stroke="rgba(255,214,90,0.55)"
+                strokeWidth="1.4"
+                strokeDasharray="5 4"
+              />
+              <line
+                x1={draftMeasure.start.x}
+                y1={draftMeasure.start.y}
+                x2={draftMeasure.end.x}
+                y2={draftMeasure.end.y}
+                stroke="#ffd65a"
+                strokeWidth="1.2"
+                strokeDasharray="4 4"
+              />
+            </g>
+          );
+        })()}
     </svg>
   );
 }
@@ -1043,6 +1047,282 @@ export default function AtlasChartPro2() {
             ],
     };
   }, [activeModule, leftPanelTitle]);
+
+  const insightConfig = useMemo(() => {
+    if (activeModule === "Fluxo") {
+      return {
+        panelTitle: "Fluxo Atlas Insights",
+        scoreValue: 89,
+        scoreLabel: "Fluxo Comprador",
+        rowsTop: [
+          { label: "Direção", value: "Compra Assistida", positive: true },
+          { label: "Fluxo", value: "Agressão Alta", positive: true },
+          { label: "Absorção", value: "Moderada", positive: true },
+          { label: "Invalidação", value: "$68,920", positive: false },
+        ],
+        rowsBottomTitle: "Estrutura de Fluxo",
+        rowsBottomDescription:
+          "Leitura de pressão, absorção e continuidade do movimento.",
+        rowsBottom: [
+          { label: "Pressão", value: "Positiva", positive: true },
+          { label: "Delta", value: "Forte", positive: true },
+          { label: "Liquidez", value: "Entrada", positive: true },
+          { label: "Ritmo", value: "Acelerando", positive: true },
+        ],
+      };
+    }
+
+    if (activeModule === "Singularidade") {
+      return {
+        panelTitle: "Singularidade Insights",
+        scoreValue: 91,
+        scoreLabel: "Confluência Forte",
+        rowsTop: [
+          { label: "Direção", value: "Bullish", positive: true },
+          { label: "Convicção", value: "Alta", positive: true },
+          { label: "Ciclo", value: "Inicial", positive: true },
+          { label: "Invalidação", value: "$68,880", positive: false },
+        ],
+        rowsBottomTitle: "Leitura Singular",
+        rowsBottomDescription:
+          "Confluência entre estrutura, aceleração e contexto.",
+        rowsBottom: [
+          { label: "Estrutura", value: "Positiva", positive: true },
+          { label: "Expansão", value: "Boa", positive: true },
+          { label: "Saturação", value: "Baixa", positive: true },
+          { label: "Liquidez", value: "Favorável", positive: true },
+        ],
+      };
+    }
+
+    if (activeModule === "IA Atlas") {
+      return {
+        panelTitle: "IA Atlas Insights",
+        scoreValue: score,
+        scoreLabel: signal,
+        rowsTop: [
+          {
+            label: "Direção",
+            value: signal,
+            positive: !change.startsWith("-"),
+          },
+          { label: "Risco", value: "Médio", positive: undefined },
+          { label: "Convicção", value: "Alta", positive: true },
+          { label: "Invalidação", value: "$68,950", positive: false },
+        ],
+        rowsBottomTitle: "Modelo Conceitual",
+        rowsBottomDescription:
+          "Combinação entre score, direção, convicção e risco operacional.",
+        rowsBottom: [
+          { label: "Φ Crescimento", value: "0.78", positive: true },
+          { label: "δs Estrutura", value: "0.82", positive: true },
+          { label: "e Aceleração", value: "0.74", positive: true },
+          { label: "π Ciclo", value: "0.29", positive: false },
+          { label: "λ Liquidez", value: "0.88", positive: true },
+          { label: "τ Reação", value: "0.67", positive: true },
+        ],
+      };
+    }
+
+    if (activeModule === "Estrutura") {
+      return {
+        panelTitle: "Estrutura Insights",
+        scoreValue: 87,
+        scoreLabel: "Suporte Sólido",
+        rowsTop: [
+          { label: "Estrutura", value: "Positiva", positive: true },
+          { label: "Euler", value: "Forte", positive: true },
+          { label: "Base", value: "Sólida", positive: true },
+          { label: "Invalidação", value: "$68,700", positive: false },
+        ],
+        rowsBottomTitle: "Leitura Estrutural",
+        rowsBottomDescription: "Validação da sustentação, base e continuidade.",
+        rowsBottom: [
+          { label: "Tendência", value: "Alta", positive: true },
+          { label: "Suporte", value: "Forte", positive: true },
+          { label: "Compressão", value: "Baixa", positive: true },
+          { label: "Ciclo", value: "Limpo", positive: true },
+        ],
+      };
+    }
+
+    if (activeModule === "Euler") {
+      return {
+        panelTitle: "Euler Insights",
+        scoreValue: 84,
+        scoreLabel: "Curvatura Positiva",
+        rowsTop: [
+          { label: "Validação", value: "Forte", positive: true },
+          { label: "Curvatura", value: "Positiva", positive: true },
+          { label: "Assimetria", value: "Boa", positive: true },
+          { label: "Invalidação", value: "$68,640", positive: false },
+        ],
+        rowsBottomTitle: "Leitura Matemática",
+        rowsBottomDescription:
+          "Camada conceitual de validação de curvatura e continuidade.",
+        rowsBottom: [
+          { label: "Inclinação", value: "Alta", positive: true },
+          { label: "Ritmo", value: "Consistente", positive: true },
+          { label: "Aceleração", value: "Moderada", positive: true },
+          { label: "Risco", value: "Controlado", positive: true },
+        ],
+      };
+    }
+
+    if (activeModule === "Liquidez") {
+      return {
+        panelTitle: "Liquidez Insights",
+        scoreValue: 93,
+        scoreLabel: "Caça Provável",
+        rowsTop: [
+          { label: "Cluster", value: "Forte", positive: true },
+          { label: "Stops", value: "Acima", positive: true },
+          { label: "Heatmap", value: "Ativo", positive: true },
+          { label: "Pool", value: "71,250", positive: true },
+        ],
+        rowsBottomTitle: "Estrutura de Liquidez",
+        rowsBottomDescription:
+          "Parede, pools, heatmap e possíveis zonas de captura.",
+        rowsBottom: [
+          { label: "Parede", value: "71,600", positive: true },
+          { label: "Absorção", value: "Moderada", positive: true },
+          { label: "Stops", value: "71,350 - 71,220", positive: true },
+          { label: "Alvo", value: "71,480", positive: true },
+        ],
+      };
+    }
+
+    return {
+      panelTitle: "IA Atlas Insights",
+      scoreValue: score,
+      scoreLabel: signal,
+      rowsTop: [
+        { label: "Direção", value: signal, positive: !change.startsWith("-") },
+        { label: "Risco", value: "Médio", positive: undefined },
+        { label: "Convicção", value: "Alta", positive: true },
+        { label: "Invalidação", value: "$68,950", positive: false },
+      ],
+      rowsBottomTitle: "Estrutura",
+      rowsBottomDescription: "Leitura consolidada dos principais fatores.",
+      rowsBottom: [
+        { label: "Estrutura", value: "Positiva", positive: true },
+        { label: "Euler", value: "Forte", positive: true },
+        { label: "Singularidade", value: "Ativa", positive: true },
+        { label: "Ciclo", value: "Inicial", positive: true },
+      ],
+    };
+  }, [activeModule, score, signal, change]);
+
+  const pulseConfig = useMemo(() => {
+    if (activeModule === "Fluxo") {
+      return {
+        title: "Pulso de Fluxo",
+        description:
+          "Mapa conceitual da pressão compradora e equilíbrio de absorção.",
+        path1: "M0,100 C40,96 70,78 110,82 C150,86 180,60 220,56 C260,52 290,70 330,62 C370,54 410,40 450,46 C500,54 540,28 600,20",
+        path2: "M0,108 C45,104 76,90 112,92 C155,94 190,72 228,70 C268,68 300,78 340,74 C388,70 425,58 470,60 C520,62 555,42 600,36",
+        stats: [
+          { title: "Delta", value: "+18%", positive: true },
+          { title: "Absorção", value: "Boa", positive: true },
+        ],
+        biasLabel: "Bias",
+        biasValue: "Comprador",
+      };
+    }
+
+    if (activeModule === "Singularidade") {
+      return {
+        title: "Pulso Singularidade",
+        description:
+          "Confluência entre aceleração, estrutura e contexto operacional.",
+        path1: "M0,98 C40,95 80,82 120,86 C164,90 198,62 240,58 C280,54 315,72 355,66 C394,60 430,42 470,40 C520,38 560,24 600,18",
+        path2: "M0,110 C48,106 85,94 122,96 C165,98 202,80 244,78 C284,76 320,84 360,82 C400,80 438,64 478,60 C530,56 566,46 600,40",
+        stats: [
+          { title: "Confluência", value: "88%", positive: true },
+          { title: "Ciclo", value: "Inicial", positive: true },
+        ],
+        biasLabel: "Bias",
+        biasValue: "Expansivo",
+      };
+    }
+
+    if (activeModule === "IA Atlas") {
+      return {
+        title: "Pulso IA Atlas",
+        description:
+          "Camada conceitual da fórmula mestre com score, risco e convicção.",
+        path1: "M0,108 C44,100 82,88 120,86 C168,84 204,64 244,54 C290,44 330,58 366,52 C406,46 442,28 486,24 C528,20 560,30 600,14",
+        path2: "M0,116 C48,112 84,102 122,100 C166,98 205,84 244,78 C286,72 322,74 360,72 C404,70 446,58 488,52 C530,46 566,38 600,34",
+        stats: [
+          { title: "Score", value: `${score}`, positive: score >= 70 },
+          { title: "Convicção", value: "Alta", positive: true },
+        ],
+        biasLabel: "Direção",
+        biasValue: signal,
+      };
+    }
+
+    if (activeModule === "Estrutura") {
+      return {
+        title: "Pulso Estrutural",
+        description:
+          "Sustentação de tendência, base e estabilidade do movimento.",
+        path1: "M0,96 C50,92 86,76 122,80 C164,84 196,66 236,58 C278,50 314,60 356,56 C402,52 440,38 486,34 C536,30 566,20 600,12",
+        path2: "M0,108 C52,104 90,90 126,92 C168,94 204,78 246,72 C286,66 326,68 366,66 C408,64 448,56 490,50 C532,44 568,34 600,28",
+        stats: [
+          { title: "Base", value: "Sólida", positive: true },
+          { title: "Força", value: "Alta", positive: true },
+        ],
+        biasLabel: "Bias",
+        biasValue: "Positivo",
+      };
+    }
+
+    if (activeModule === "Euler") {
+      return {
+        title: "Curvatura Euler",
+        description:
+          "Leitura matemática conceitual de curvatura, validação e simetria.",
+        path1: "M0,112 C42,108 76,92 116,88 C158,84 192,68 234,60 C280,52 318,56 358,48 C398,40 438,32 480,28 C528,24 566,20 600,16",
+        path2: "M0,118 C44,114 80,104 118,100 C162,96 198,82 238,76 C284,70 320,70 360,66 C404,62 444,54 484,48 C530,42 568,36 600,30",
+        stats: [
+          { title: "Validação", value: "Forte", positive: true },
+          { title: "Assimetria", value: "Boa", positive: true },
+        ],
+        biasLabel: "Curva",
+        biasValue: "Positiva",
+      };
+    }
+
+    if (activeModule === "Liquidez") {
+      return {
+        title: "Mapa Dinâmico de Liquidez",
+        description:
+          "Camada conceitual de cluster, paredes e alvos prováveis.",
+        path1: "M0,98 C44,96 82,90 122,84 C168,78 206,72 248,58 C290,44 326,58 364,52 C406,46 446,30 486,28 C532,26 562,20 600,16",
+        path2: "M0,116 C46,112 84,106 122,98 C164,90 204,86 242,80 C286,74 324,72 364,70 C408,68 446,60 486,54 C528,48 564,40 600,36",
+        stats: [
+          { title: "Cluster", value: "Forte", positive: true },
+          { title: "Heatmap", value: "Ativo", positive: true },
+        ],
+        biasLabel: "Alvo",
+        biasValue: "71,480",
+      };
+    }
+
+    return {
+      title: "Pulso Scanner",
+      description: "Leitura geral do conjunto de ativos priorizados.",
+      path1: "M0,104 C48,100 86,90 126,88 C164,86 204,74 244,66 C286,58 324,64 364,60 C404,56 444,44 486,36 C530,28 568,24 600,18",
+      path2: "M0,116 C48,114 86,104 126,100 C166,96 206,88 246,84 C286,80 326,80 366,76 C408,72 448,66 488,58 C530,50 568,44 600,38",
+      stats: [
+        { title: "Top Score", value: "92.4", positive: true },
+        { title: "Setup", value: "Bom", positive: true },
+      ],
+      biasLabel: "Bias",
+      biasValue: "Compra Forte",
+    };
+  }, [activeModule, score, signal]);
 
   const mainGridColumns = isSmall
     ? "1fr"
@@ -1591,9 +1871,41 @@ export default function AtlasChartPro2() {
               </div>
 
               <div style={{ display: "flex", gap: 8, color: "#8fa3c7", fontSize: 13, alignItems: "center", flexWrap: "wrap" }}>
-                <ControlButton active={viewMode === "auto"} onClick={() => { setViewMode("auto"); savedScrollPositionRef.current = 0; chartRef.current?.timeScale()?.scrollToRealTime(); }}>Auto</ControlButton>
-                <ControlButton active={viewMode === "manual"} onClick={() => { setViewMode("manual"); const currentScroll = chartRef.current?.timeScale()?.scrollPosition(); if (typeof currentScroll === "number" && Number.isFinite(currentScroll)) savedScrollPositionRef.current = currentScroll; }}>Manual</ControlButton>
-                <ControlButton active={viewMode === "space"} onClick={() => { setViewMode("space"); savedScrollPositionRef.current = spaceOffset; chartRef.current?.timeScale()?.scrollToPosition(spaceOffset, false); }}>Seguir + Espaço</ControlButton>
+                <ControlButton
+                  active={viewMode === "auto"}
+                  onClick={() => {
+                    setViewMode("auto");
+                    savedScrollPositionRef.current = 0;
+                    chartRef.current?.timeScale()?.scrollToRealTime();
+                  }}
+                >
+                  Auto
+                </ControlButton>
+                <ControlButton
+                  active={viewMode === "manual"}
+                  onClick={() => {
+                    setViewMode("manual");
+                    const currentScroll = chartRef.current?.timeScale()?.scrollPosition();
+                    if (
+                      typeof currentScroll === "number" &&
+                      Number.isFinite(currentScroll)
+                    ) {
+                      savedScrollPositionRef.current = currentScroll;
+                    }
+                  }}
+                >
+                  Manual
+                </ControlButton>
+                <ControlButton
+                  active={viewMode === "space"}
+                  onClick={() => {
+                    setViewMode("space");
+                    savedScrollPositionRef.current = spaceOffset;
+                    chartRef.current?.timeScale()?.scrollToPosition(spaceOffset, false);
+                  }}
+                >
+                  Seguir + Espaço
+                </ControlButton>
                 <ControlButton onClick={zoomOut}>Zoom -</ControlButton>
                 <ControlButton onClick={zoomIn}>Zoom +</ControlButton>
                 <ControlButton onClick={goToCurrent}>Agora</ControlButton>
@@ -1631,11 +1943,21 @@ export default function AtlasChartPro2() {
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <span>Spread 0.12</span>
                 <span>Vol {volume}</span>
+                <span>Src {source}</span>
               </div>
             </div>
 
             {isSmall && (
-              <div style={{ display: "flex", gap: 8, padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)", overflowX: "auto", scrollbarWidth: "none" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  padding: "10px 12px",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  overflowX: "auto",
+                  scrollbarWidth: "none",
+                }}
+              >
                 {chartTools.map((tool) => {
                   const active = activeTool === tool.key;
                   return (
@@ -1647,8 +1969,12 @@ export default function AtlasChartPro2() {
                         width: 34,
                         height: 30,
                         borderRadius: 10,
-                        border: active ? `1px solid ${moduleAccent}55` : "1px solid rgba(255,255,255,0.06)",
-                        background: active ? `linear-gradient(180deg, ${moduleAccent}28, rgba(255,255,255,0.03))` : "rgba(255,255,255,0.025)",
+                        border: active
+                          ? `1px solid ${moduleAccent}55`
+                          : "1px solid rgba(255,255,255,0.06)",
+                        background: active
+                          ? `linear-gradient(180deg, ${moduleAccent}28, rgba(255,255,255,0.03))`
+                          : "rgba(255,255,255,0.025)",
                         color: active ? "#eef4ff" : "#9fb3d4",
                         fontSize: 14,
                         cursor: "pointer",
@@ -1704,39 +2030,147 @@ export default function AtlasChartPro2() {
           </div>
 
           <div style={{ display: "grid", gap: 8 }}>
-            <div style={{ background: "linear-gradient(180deg, rgba(9,14,28,0.99), rgba(7,11,22,0.995))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: 10, boxShadow: "0 8px 18px rgba(0,0,0,0.22)" }}>
-              <div style={{ color: "#dfe8ff", fontWeight: 900, fontSize: 13, marginBottom: 10 }}>{insightConfig.panelTitle}</div>
-              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 8 }}>{symbol}</div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 12, gap: 12 }}>
-                <div style={{ fontSize: 18, fontWeight: 900 }}>{symbol}</div>
-                <div style={{ fontSize: 30, lineHeight: 1, fontWeight: 900, color: scoreColor, textShadow: `0 0 18px ${moduleAccent}22` }}>{insightConfig.scoreValue}</div>
+            <div
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(9,14,28,0.99), rgba(7,11,22,0.995))",
+                border: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: 14,
+                padding: 10,
+                boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
+              }}
+            >
+              <div
+                style={{
+                  color: "#dfe8ff",
+                  fontWeight: 900,
+                  fontSize: 13,
+                  marginBottom: 10,
+                }}
+              >
+                {insightConfig.panelTitle}
               </div>
-              <div style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, overflow: "hidden", marginBottom: 10 }}>
-                <div style={{ height: 6, background: "rgba(255,255,255,0.05)" }}>
-                  <div style={{ width: `${insightConfig.scoreValue}%`, height: "100%", background: `linear-gradient(90deg, ${moduleAccent}70, rgba(61,229,255,0.95))`, boxShadow: `0 0 18px ${moduleAccent}35` }} />
+              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 8 }}>{symbol}</div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-end",
+                  marginBottom: 12,
+                  gap: 12,
+                }}
+              >
+                <div style={{ fontSize: 18, fontWeight: 900 }}>{symbol}</div>
+                <div
+                  style={{
+                    fontSize: 30,
+                    lineHeight: 1,
+                    fontWeight: 900,
+                    color: scoreColor,
+                    textShadow: `0 0 18px ${moduleAccent}22`,
+                  }}
+                >
+                  {insightConfig.scoreValue}
                 </div>
-                <div style={{ padding: "10px 11px", display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 800, fontSize: 12 }}>
+              </div>
+              <div
+                style={{
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  marginBottom: 10,
+                }}
+              >
+                <div style={{ height: 6, background: "rgba(255,255,255,0.05)" }}>
+                  <div
+                    style={{
+                      width: `${insightConfig.scoreValue}%`,
+                      height: "100%",
+                      background: `linear-gradient(90deg, ${moduleAccent}70, rgba(61,229,255,0.95))`,
+                      boxShadow: `0 0 18px ${moduleAccent}35`,
+                    }}
+                  />
+                </div>
+                <div
+                  style={{
+                    padding: "10px 11px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    fontWeight: 800,
+                    fontSize: 12,
+                  }}
+                >
                   <span style={{ color: "#8fa3c7" }}>Score</span>
                   <span style={{ color: "#eef4ff" }}>{insightConfig.scoreLabel}</span>
                 </div>
               </div>
               {insightConfig.rowsTop.map((row) => (
-                <RightRow key={`${activeModule}-top-${row.label}`} label={row.label} value={row.value} positive={row.positive} />
+                <RightRow
+                  key={`${activeModule}-top-${row.label}`}
+                  label={row.label}
+                  value={row.value}
+                  positive={row.positive}
+                />
               ))}
             </div>
 
-            <div style={{ background: "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: 10, boxShadow: "0 8px 18px rgba(0,0,0,0.22)" }}>
-              <div style={{ color: "#dfe8ff", fontWeight: 900, fontSize: 14, marginBottom: 8 }}>{insightConfig.rowsBottomTitle}</div>
-              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 12 }}>{insightConfig.rowsBottomDescription}</div>
+            <div
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
+                border: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: 14,
+                padding: 10,
+                boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
+              }}
+            >
+              <div
+                style={{
+                  color: "#dfe8ff",
+                  fontWeight: 900,
+                  fontSize: 14,
+                  marginBottom: 8,
+                }}
+              >
+                {insightConfig.rowsBottomTitle}
+              </div>
+              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 12 }}>
+                {insightConfig.rowsBottomDescription}
+              </div>
               {insightConfig.rowsBottom.map((row) => (
-                <RightRow key={`${activeModule}-bottom-${row.label}`} label={row.label} value={row.value} positive={row.positive} />
+                <RightRow
+                  key={`${activeModule}-bottom-${row.label}`}
+                  label={row.label}
+                  value={row.value}
+                  positive={row.positive}
+                />
               ))}
             </div>
           </div>
         </div>
 
-        <div style={{ marginTop: 6, background: "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: 10, boxShadow: "0 8px 18px rgba(0,0,0,0.22)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+        <div
+          style={{
+            marginTop: 6,
+            background:
+              "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 14,
+            padding: 10,
+            boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 12,
+              flexWrap: "wrap",
+              marginBottom: 14,
+            }}
+          >
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {bottomTabs.map((tab, i) => (
                 <div
@@ -1745,7 +2179,10 @@ export default function AtlasChartPro2() {
                     padding: "7px 11px",
                     borderRadius: 11,
                     border: "1px solid rgba(255,255,255,0.06)",
-                    background: i === 0 ? `linear-gradient(180deg, ${moduleAccent}24, rgba(255,255,255,0.03))` : "rgba(255,255,255,0.025)",
+                    background:
+                      i === 0
+                        ? `linear-gradient(180deg, ${moduleAccent}24, rgba(255,255,255,0.03))`
+                        : "rgba(255,255,255,0.025)",
                     color: i === 0 ? "#eef4ff" : "#a8b8d8",
                     fontWeight: 800,
                     fontSize: 11,
@@ -1755,21 +2192,62 @@ export default function AtlasChartPro2() {
                 </div>
               ))}
             </div>
-            <div style={{ color: "#88a0c9", fontSize: 12 }}>{moduleTitle} • Volume • RSI • Fluxo</div>
+            <div style={{ color: "#88a0c9", fontSize: 12 }}>
+              {moduleTitle} • Volume • RSI • Fluxo
+            </div>
           </div>
 
           {activeModule === "Liquidez" ? (
             <div style={{ display: "grid", gap: 14 }}>
               <div>
-                <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8, fontSize: 14 }}>Mapa de Liquidez</div>
-                <div style={{ color: "#8ea4c8", fontSize: 12, marginBottom: 12 }}>Heatmap institucional exibido apenas no painel inferior para manter o gráfico principal limpo.</div>
+                <div
+                  style={{
+                    color: "#dfe8ff",
+                    fontWeight: 900,
+                    marginBottom: 8,
+                    fontSize: 14,
+                  }}
+                >
+                  Mapa de Liquidez
+                </div>
+                <div style={{ color: "#8ea4c8", fontSize: 12, marginBottom: 12 }}>
+                  Heatmap institucional exibido apenas no painel inferior para manter
+                  o gráfico principal limpo.
+                </div>
               </div>
 
-              <div style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: 16, background: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))" }}>
-                <div style={{ display: "grid", gridTemplateColumns: isSmall ? "1fr" : "92px minmax(0, 1fr) 190px", gap: 14, alignItems: "stretch" }}>
+              <div
+                style={{
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 14,
+                  padding: 16,
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+                }}
+              >
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isSmall ? "1fr" : "92px minmax(0, 1fr) 190px",
+                    gap: 14,
+                    alignItems: "stretch",
+                  }}
+                >
                   <div style={{ display: "grid", gap: 8 }}>
                     {liquidityHeatRows.map((row) => (
-                      <div key={row.level} style={{ height: 30, display: "flex", alignItems: "center", color: "#dfe8ff", fontWeight: 800, fontSize: 13 }}>{row.level}</div>
+                      <div
+                        key={row.level}
+                        style={{
+                          height: 30,
+                          display: "flex",
+                          alignItems: "center",
+                          color: "#dfe8ff",
+                          fontWeight: 800,
+                          fontSize: 13,
+                        }}
+                      >
+                        {row.level}
+                      </div>
                     ))}
                   </div>
 
@@ -1792,7 +2270,8 @@ export default function AtlasChartPro2() {
                               : idx === 3
                               ? "linear-gradient(90deg, rgba(255,90,120,0.10), rgba(255,130,0,0.54), rgba(255,200,90,0.62))"
                               : "linear-gradient(90deg, rgba(70,160,255,0.12), rgba(35,211,238,0.42), rgba(255,210,90,0.48))",
-                          boxShadow: idx < 2 ? "0 0 28px rgba(255,170,0,0.18) inset" : "none",
+                          boxShadow:
+                            idx < 2 ? "0 0 28px rgba(255,170,0,0.18) inset" : "none",
                         }}
                       >
                         <div
@@ -1800,7 +2279,8 @@ export default function AtlasChartPro2() {
                             position: "absolute",
                             inset: 0,
                             width: `${row.strength}%`,
-                            background: "linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.14), rgba(255,255,255,0.02))",
+                            background:
+                              "linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.14), rgba(255,255,255,0.02))",
                             mixBlendMode: "screen",
                           }}
                         />
@@ -1808,8 +2288,18 @@ export default function AtlasChartPro2() {
                     ))}
                   </div>
 
-                  <div style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 12, background: "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.015))" }}>
-                    <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 10 }}>Resumo de Liquidez</div>
+                  <div
+                    style={{
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      borderRadius: 12,
+                      padding: 12,
+                      background:
+                        "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.015))",
+                    }}
+                  >
+                    <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 10 }}>
+                      Resumo de Liquidez
+                    </div>
                     <RightRow label="Cluster institucional" value="71,600" positive />
                     <RightRow label="Liquidez acumulada" value="71,520" positive />
                     <RightRow label="Zona de stops" value="71,350 - 71,220" positive />
@@ -1818,7 +2308,13 @@ export default function AtlasChartPro2() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: isSmall ? "1fr" : "repeat(4, minmax(0, 1fr))", gap: 8 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: isSmall ? "1fr" : "repeat(4, minmax(0, 1fr))",
+                  gap: 8,
+                }}
+              >
                 <StatCard title="Parede" value="71,600" positive />
                 <StatCard title="Cluster" value="Forte" positive />
                 <StatCard title="Heatmap" value="Ativo" positive />
@@ -1826,14 +2322,45 @@ export default function AtlasChartPro2() {
               </div>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: bottomGridColumns, gap: 16 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: bottomGridColumns,
+                gap: 16,
+              }}
+            >
               <div>
-                <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8, fontSize: 14 }}>{leftPanelTitle}</div>
-                <div style={{ color: "#8ea4c8", fontSize: 12, marginBottom: 12 }}>{leftDynamicBlock.subtitle}</div>
+                <div
+                  style={{
+                    color: "#dfe8ff",
+                    fontWeight: 900,
+                    marginBottom: 8,
+                    fontSize: 14,
+                  }}
+                >
+                  {leftPanelTitle}
+                </div>
+                <div style={{ color: "#8ea4c8", fontSize: 12, marginBottom: 12 }}>
+                  {leftDynamicBlock.subtitle}
+                </div>
 
                 {leftDynamicBlock.type === "table" ? (
                   <>
-                    <div style={{ display: "grid", gridTemplateColumns: isSmall ? "1.3fr 1fr 1fr" : "1.2fr 1fr 1fr 1fr", gap: 10, color: "#7f95bb", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4, paddingBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: isSmall
+                          ? "1.3fr 1fr 1fr"
+                          : "1.2fr 1fr 1fr 1fr",
+                        gap: 10,
+                        color: "#7f95bb",
+                        fontSize: 11,
+                        textTransform: "uppercase",
+                        letterSpacing: 0.4,
+                        paddingBottom: 10,
+                        borderBottom: "1px solid rgba(255,255,255,0.06)",
+                      }}
+                    >
                       <div>Ativo</div>
                       <div>Score</div>
                       <div>Tendência</div>
@@ -1841,51 +2368,179 @@ export default function AtlasChartPro2() {
                     </div>
                     {leftRows.map((row) =>
                       isSmall ? (
-                        <div key={`${activeModule}-${row.asset}`} style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr", gap: 10, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#d8e2ff", fontSize: 13 }}>
+                        <div
+                          key={`${activeModule}-${row.asset}`}
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1.3fr 1fr 1fr",
+                            gap: 10,
+                            padding: "12px 0",
+                            borderBottom: "1px solid rgba(255,255,255,0.05)",
+                            color: "#d8e2ff",
+                            fontSize: 13,
+                          }}
+                        >
                           <div style={{ fontWeight: 800 }}>{row.asset}</div>
                           <div>{row.score}</div>
-                          <div style={{ color: "#34d399", fontWeight: 800 }}>{row.trend}</div>
+                          <div style={{ color: "#34d399", fontWeight: 800 }}>
+                            {row.trend}
+                          </div>
                         </div>
                       ) : (
-                        <ScannerRow key={`${activeModule}-${row.asset}`} asset={row.asset} score={row.score} trend={row.trend} price={row.price} />
+                        <ScannerRow
+                          key={`${activeModule}-${row.asset}`}
+                          asset={row.asset}
+                          score={row.score}
+                          trend={row.trend}
+                          price={row.price}
+                        />
                       )
                     )}
                   </>
                 ) : (
                   <>
-                    <div style={{ display: "grid", gridTemplateColumns: isSmall ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: isSmall
+                          ? "1fr"
+                          : "repeat(2, minmax(0, 1fr))",
+                        gap: 10,
+                        marginBottom: 12,
+                      }}
+                    >
                       {leftDynamicBlock.cards.map((card) => (
-                        <MiniMetricCard key={`${activeModule}-${card.title}`} title={card.title} value={card.value} subtitle={card.subtitle} positive={card.positive} />
+                        <MiniMetricCard
+                          key={`${activeModule}-${card.title}`}
+                          title={card.title}
+                          value={card.value}
+                          subtitle={card.subtitle}
+                          positive={card.positive}
+                        />
                       ))}
                     </div>
-                    <div style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: 12, background: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))" }}>
-                      <div style={{ color: "#dfe8ff", fontWeight: 800, marginBottom: 6, fontSize: 14 }}>{leftDynamicBlock.title}</div>
+                    <div
+                      style={{
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        borderRadius: 16,
+                        padding: 12,
+                        background:
+                          "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#dfe8ff",
+                          fontWeight: 800,
+                          marginBottom: 6,
+                          fontSize: 14,
+                        }}
+                      >
+                        {leftDynamicBlock.title}
+                      </div>
                       {leftDynamicBlock.rows.map((row) => (
-                        <LeftInfoRow key={`${activeModule}-${row.label}`} label={row.label} value={row.value} positive={row.positive} />
+                        <LeftInfoRow
+                          key={`${activeModule}-${row.label}`}
+                          label={row.label}
+                          value={row.value}
+                          positive={row.positive}
+                        />
                       ))}
                     </div>
                   </>
                 )}
               </div>
 
-              <div style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: 12, background: "radial-gradient(circle at top, rgba(38,106,255,0.18), transparent 35%), rgba(255,255,255,0.02)", minHeight: 210 }}>
-                <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8 }}>{pulseConfig.title}</div>
-                <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 15 }}>{pulseConfig.description}</div>
-                <div style={{ height: 104, borderRadius: 12, background: "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(61,229,255,0.0), rgba(61,229,255,0.12), rgba(255,213,79,0.10), rgba(61,229,255,0.0))" }} />
-                  <svg viewBox="0 0 600 140" width="100%" height="100%" style={{ position: "relative" }}>
+              <div
+                style={{
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 16,
+                  padding: 12,
+                  background:
+                    "radial-gradient(circle at top, rgba(38,106,255,0.18), transparent 35%), rgba(255,255,255,0.02)",
+                  minHeight: 210,
+                }}
+              >
+                <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8 }}>
+                  {pulseConfig.title}
+                </div>
+                <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 15 }}>
+                  {pulseConfig.description}
+                </div>
+                <div
+                  style={{
+                    height: 104,
+                    borderRadius: 12,
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background:
+                        "linear-gradient(90deg, rgba(61,229,255,0.0), rgba(61,229,255,0.12), rgba(255,213,79,0.10), rgba(61,229,255,0.0))",
+                    }}
+                  />
+                  <svg
+                    viewBox="0 0 600 140"
+                    width="100%"
+                    height="100%"
+                    style={{ position: "relative" }}
+                  >
                     <path d={pulseConfig.path1} fill="none" stroke="#5ee7ff" strokeWidth="3" />
-                    <path d={pulseConfig.path2} fill="none" stroke="#ffd65a" strokeWidth="2" opacity="0.9" />
+                    <path
+                      d={pulseConfig.path2}
+                      fill="none"
+                      stroke="#ffd65a"
+                      strokeWidth="2"
+                      opacity="0.9"
+                    />
                   </svg>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: isSmall ? "1fr" : "repeat(3, 1fr)", gap: 10, marginTop: 12 }}>
-                  <StatCard title={pulseConfig.stats[0].title} value={pulseConfig.stats[0].value} positive={pulseConfig.stats[0].positive} />
-                  <StatCard title={pulseConfig.stats[1].title} value={pulseConfig.stats[1].value} positive={pulseConfig.stats[1].positive} />
-                  <StatCard title={pulseConfig.biasLabel} value={pulseConfig.biasValue} positive />
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isSmall ? "1fr" : "repeat(3, 1fr)",
+                    gap: 10,
+                    marginTop: 12,
+                  }}
+                >
+                  <StatCard
+                    title={pulseConfig.stats[0].title}
+                    value={pulseConfig.stats[0].value}
+                    positive={pulseConfig.stats[0].positive}
+                  />
+                  <StatCard
+                    title={pulseConfig.stats[1].title}
+                    value={pulseConfig.stats[1].value}
+                    positive={pulseConfig.stats[1].positive}
+                  />
+                  <StatCard
+                    title={pulseConfig.biasLabel}
+                    value={pulseConfig.biasValue}
+                    positive
+                  />
                 </div>
               </div>
             </div>
           )}
+        </div>
+
+        <div
+          style={{
+            marginTop: 8,
+            display: "grid",
+            gridTemplateColumns: isSmall ? "1fr" : "repeat(3, minmax(0, 1fr))",
+            gap: 8,
+          }}
+        >
+          <StatCard title="Preço" value={price} positive={!change.startsWith("-")} />
+          <StatCard title="Variação" value={change} positive={!change.startsWith("-")} />
+          <StatCard title="Volume" value={volume} positive />
         </div>
       </div>
     </div>
