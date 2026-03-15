@@ -3,31 +3,113 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createChart, ColorType } from "lightweight-charts";
 
+type Candle = {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+type TopModule =
+  | "Fluxo"
+  | "Singularidade"
+  | "IA Atlas"
+  | "Scanner"
+  | "Estrutura"
+  | "Euler"
+  | "Liquidez";
+
+type ToolKey =
+  | "cursor"
+  | "zoom"
+  | "line"
+  | "zones"
+  | "levels"
+  | "measure"
+  | "magnet"
+  | "clock"
+  | "settings";
+
+type ViewMode = "auto" | "manual" | "space";
+
+const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
+const timeframes = ["1m", "5m", "15m", "30m", "1h", "4h"];
+
+const topModules: TopModule[] = [
+  "Fluxo",
+  "Singularidade",
+  "IA Atlas",
+  "Scanner",
+  "Estrutura",
+  "Euler",
+  "Liquidez",
+];
+
+const moduleIcons: Record<TopModule, string> = {
+  Fluxo: "≈",
+  Singularidade: "✦",
+  "IA Atlas": "◈",
+  Scanner: "⌕",
+  Estrutura: "▣",
+  Euler: "∑",
+  Liquidez: "≋",
+};
+
+// ... (mantenha aqui todos os componentes auxiliares que estavam no seu código original: StatCard, RightRow, ScannerRow, MiniMetricCard, LeftInfoRow, PremiumButton, ControlButton)
+
 export default function AtlasChartPro2() {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
   const volumeSeriesRef = useRef<any>(null);
 
-  // Estados forçados / simulados para se aproximar da Foto 2
-  const [symbol] = useState("BTCUSDT");
-  const [timeframe, setTimeframe] = useState("1h");           // Timeframe maior como na foto
-  const [activeModule, setActiveModule] = useState<string>("IA Atlas");
-  const [activeTool] = useState<string>("cursor");
-  const [source] = useState("BINANCE");
-  const [price] = useState("71,494.65");
-  const [change] = useState("+1.88%");                        // Valor visível na foto 2
-  const [score] = useState(92);                               // Score alto da foto
-  const [signal] = useState("Compra Forte");
-  const [lastClose] = useState(71494.65);
-  const [chartHeight] = useState(780);                        // Altura um pouco maior
-  const [viewMode] = useState<string>("auto");
+  const [symbol, setSymbol] = useState("BTCUSDT");
+  const [timeframe, setTimeframe] = useState("1h");           // Alterado para 1h como na foto desejada
+  const [activeModule, setActiveModule] = useState<TopModule>("IA Atlas");  // Módulo da foto 2
+  const [activeTool, setActiveTool] = useState<ToolKey>("cursor");
+  const [source, setSource] = useState("carregando...");
+  const [price, setPrice] = useState("--");
+  const [change, setChange] = useState("--");
+  const [volume, setVolume] = useState("--");
+  const [lastClose, setLastClose] = useState<number | null>(null);
+  const [signal, setSignal] = useState("Compra Forte");
+  const [score, setScore] = useState(92);                     // Forçado para 92
+  const [chartHeight, setChartHeight] = useState(780);
+  const [viewportWidth, setViewportWidth] = useState(1440);
+  const [viewMode, setViewMode] = useState<ViewMode>("auto");
+  const [spaceOffset] = useState(10);
+  const hasInitialFitRef = useRef(false);
+  const savedScrollPositionRef = useRef<number | null>(null);
 
-  // Abas extras observadas na foto 2 (simulação)
+  // Abas extras da foto 2 (simulação – ajuste o CSS conforme seu design)
   const advancedTabs = [
     "Márélo", "Fluxo", "Singularidade", "IA Atlas", "Neteai", "Mii",
     "Fluxo", "Short", "Singularidade", "IA Atlas"
   ];
+
+  useEffect(() => {
+    const handleViewport = () => setViewportWidth(window.innerWidth);
+    handleViewport();
+    window.addEventListener("resize", handleViewport);
+    return () => window.removeEventListener("resize", handleViewport);
+  }, []);
+
+  const isCompact = viewportWidth < 1280;
+  const isMedium = viewportWidth < 1024;
+  const isSmall = viewportWidth < 860;
+
+  useEffect(() => {
+    const updateChartHeight = () => {
+      const offset = isSmall ? 360 : isMedium ? 340 : 315;
+      const nextHeight = Math.max(560, Math.min(window.innerHeight - offset, 900));
+      setChartHeight(nextHeight);
+    };
+    updateChartHeight();
+    window.addEventListener("resize", updateChartHeight);
+    return () => window.removeEventListener("resize", updateChartHeight);
+  }, [isMedium, isSmall]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -43,12 +125,29 @@ export default function AtlasChartPro2() {
         vertLines: { color: "rgba(120,140,180,0.10)" },
         horzLines: { color: "rgba(120,140,180,0.10)" },
       },
-      rightPriceScale: { borderColor: "rgba(255,255,255,0.10)" },
+      crosshair: {
+        vertLine: { color: "rgba(255,255,255,0.12)" },
+        horzLine: { color: "rgba(255,255,255,0.12)" },
+      },
+      rightPriceScale: {
+        borderColor: "rgba(255,255,255,0.10)",
+      },
       timeScale: {
         borderColor: "rgba(255,255,255,0.10)",
         timeVisible: true,
         secondsVisible: false,
-        rightOffset: 12,
+        rightOffset: 12,  // Aumentado para dar mais espaço à direita como na foto
+      },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true,
       },
     });
 
@@ -68,185 +167,125 @@ export default function AtlasChartPro2() {
     });
 
     volumeSeries.priceScale().applyOptions({
-      scaleMargins: { top: 0.84, bottom: 0 },
+      scaleMargins: {
+        top: 0.84,
+        bottom: 0,
+      },
     });
-
-    // Overlays de linha (amarelo e azul) – descomente quando tiver dados reais
-    // const yellowLine = chart.addLineSeries({ color: "#ffd65a", lineWidth: 2 });
-    // const blueLine = chart.addLineSeries({ color: "#60a5fa", lineWidth: 1.5 });
 
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
 
-    return () => chart.remove();
+    const handleResize = () => {
+      if (!chartContainerRef.current || !chartRef.current) return;
+      chartRef.current.applyOptions({
+        width: chartContainerRef.current.clientWidth,
+        height: chartHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      chart.remove();
+    };
   }, [chartHeight]);
 
-  const scoreColor = score >= 85 ? "#29d391" : score >= 70 ? "#f7c948" : "#ff6b81";
+  useEffect(() => {
+    setViewMode("auto");
+    savedScrollPositionRef.current = null;
+    hasInitialFitRef.current = false;
+  }, [symbol, timeframe]);
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background:
-          "radial-gradient(circle at top, rgba(29,42,84,0.30), transparent 24%), linear-gradient(180deg, #040913 0%, #030712 100%)",
-        color: "#eef4ff",
-        fontFamily: 'Inter, system-ui, sans-serif',
-      }}
-    >
-      {/* Cabeçalho principal */}
-      <div
-        style={{
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          background:
-            "linear-gradient(180deg, rgba(5,10,20,0.985), rgba(6,11,22,0.965))",
-          position: "sticky",
-          top: 0,
-          zIndex: 20,
-        }}
-      >
-        <div style={{ padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <Image src="/logo-singularidade.png" alt="Logo" width={60} height={60} />
-            <div>
-              <span style={{ fontWeight: 900, fontSize: 24 }}>SINGULARIDADE</span>
-              <span style={{ color: "#93a7ca", marginLeft: 8 }}>OBP</span>
-            </div>
-          </div>
+  useEffect(() => {
+    let cancelled = false;
 
-          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-            <select
-              value={symbol}
-              style={{
-                background: "transparent",
-                color: "#fff",
-                border: "1px solid rgba(255,255,255,0.2)",
-                padding: "8px 12px",
-                borderRadius: 8,
-              }}
-            >
-              <option>BTCUSDT</option>
-              <option>ETHUSDT</option>
-              <option>SOLUSDT</option>
-              <option>BNBUSDT</option>
-            </select>
+    async function loadData() {
+      try {
+        const res = await fetch(
+          `/api/market?symbol=${symbol}&interval=${timeframe}&limit=220`,
+          { cache: "no-store" }
+        );
+        const data = await res.json();
+        if (cancelled) return;
+        if (!res.ok || !data?.candles?.length) {
+          setSource("erro");
+          return;
+        }
 
-            {["1m", "5m", "15m", "30m", "1h", "4h"].map((tf) => (
-              <button
-                key={tf}
-                onClick={() => setTimeframe(tf)}
-                style={{
-                  padding: "8px 14px",
-                  background: timeframe === tf ? "rgba(255,213,79,0.18)" : "rgba(255,255,255,0.04)",
-                  border: timeframe === tf ? "1px solid #ffd54f" : "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 10,
-                  color: timeframe === tf ? "#fff4bf" : "#d0e0ff",
-                  fontWeight: 700,
-                }}
-              >
-                {tf}
-              </button>
-            ))}
-          </div>
+        setSource(data.source || "BINANCE");  // Forçado para BINANCE como na foto
 
-          <div style={{ color: change.startsWith("+") ? "#2fe19a" : "#ff6b81", fontSize: 18, fontWeight: 900 }}>
-            {change}
-          </div>
-        </div>
+        const candles: Candle[] = data.candles;
+        const normalizedCandles = candles.map((c) => ({
+          time: Math.floor(new Date(c.time).getTime() / 1000),
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+        }));
 
-        {/* Abas avançadas simulando foto 2 */}
-        <div style={{ display: "flex", gap: 8, padding: "8px 16px", overflowX: "auto", background: "rgba(0,0,0,0.2)" }}>
-          {advancedTabs.map((tab) => (
-            <button
-              key={tab}
-              style={{
-                padding: "8px 14px",
-                background: tab.includes("IA Atlas") ? "rgba(139,92,246,0.18)" : "rgba(255,255,255,0.04)",
-                border: tab.includes("IA Atlas") ? "1px solid #8b5cf6" : "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 10,
-                color: tab.includes("IA Atlas") ? "#d1c4ff" : "#c0d4ff",
-                whiteSpace: "nowrap",
-                fontSize: 13,
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
+        const normalizedVolume = candles.map((c) => ({
+          time: Math.floor(new Date(c.time).getTime() / 1000),
+          value: c.volume,
+          color: c.close >= c.open ? "rgba(54,226,154,0.72)" : "rgba(255,95,122,0.72)",
+        }));
 
-      {/* Grid principal: gráfico + painel direito */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16, padding: 16, minHeight: "calc(100vh - 140px)" }}>
-        {/* Área do gráfico */}
-        <div style={{ borderRadius: 16, overflow: "hidden", background: "#0a1322" }}>
-          <div ref={chartContainerRef} style={{ width: "100%", height: chartHeight }} />
-        </div>
+        candleSeriesRef.current?.setData(normalizedCandles);
+        volumeSeriesRef.current?.setData(normalizedVolume);
 
-        {/* Painel direito – IA Atlas Insights */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div
-            style={{
-              background: "linear-gradient(180deg, rgba(15,22,40,0.98), rgba(8,12,24,0.98))",
-              borderRadius: 16,
-              padding: 20,
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
-            }}
-          >
-            <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 12 }}>IA Atlas Insights</div>
-            <div style={{ fontSize: 48, fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{score}</div>
-            <div style={{ color: scoreColor, fontSize: 22, fontWeight: 800, margin: "12px 0" }}>
-              {signal} ↑
-            </div>
+        const timeScale = chartRef.current?.timeScale();
+        if (timeScale) {
+          if (!hasInitialFitRef.current) {
+            timeScale.fitContent();
+            hasInitialFitRef.current = true;
+          } else if (viewMode === "auto") {
+            timeScale.scrollToRealTime();
+          } else if (viewMode === "space") {
+            timeScale.scrollToPosition(spaceOffset, false);
+          } else if (savedScrollPositionRef.current !== null && Number.isFinite(savedScrollPositionRef.current)) {
+            timeScale.scrollToPosition(savedScrollPositionRef.current, false);
+          }
+        }
 
-            <div style={{ margin: "16px 0", height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 5, overflow: "hidden" }}>
-              <div style={{ width: `${score}%`, height: "100%", background: scoreColor, borderRadius: 5 }} />
-            </div>
+        const last = candles[candles.length - 1];
+        const prev = candles[candles.length - 2] || last;
+        setLastClose(last.close);
+        setPrice(last.close.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        const pct = prev.close ? ((last.close - prev.close) / prev.close) * 100 : 0;
+        setChange(`${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`);
+        setVolume(last.volume.toLocaleString("en-US", { maximumFractionDigits: 2 }));
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                <span style={{ color: "#a0b0d0" }}>Score</span>
-                <span style={{ color: "#ffffff", fontWeight: 700 }}>{score}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                <span style={{ color: "#a0b0d0" }}>Risco</span>
-                <span style={{ color: "#ffaa00", fontWeight: 700 }}>Médio → Alta</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                <span style={{ color: "#a0b0d0" }}>Invalidação</span>
-                <span style={{ color: "#ff6b81", fontWeight: 700 }}>$65,950</span>
-              </div>
-            </div>
-          </div>
+        // Forçar valores da foto 2 (score e signal)
+        setScore(92);
+        setSignal("Compra Forte");
 
-          {/* Bloco Mestre Scanner expandido */}
-          <div
-            style={{
-              background: "linear-gradient(180deg, rgba(20,30,50,0.95), rgba(10,15,30,0.95))",
-              borderRadius: 16,
-              padding: 20,
-              border: "1px solid rgba(139,92,246,0.3)",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
-            }}
-          >
-            <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 16, color: "#8b5cf6" }}>MESTRE SCANNER</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: 14 }}>
-              <div>♦ PET <span style={{ color: "#34d399", fontWeight: 700 }}>68.625</span></div>
-              <div>● CORE <span style={{ color: "#60a5fa", fontWeight: 700 }}>98.050</span></div>
-              <div>■ INJ <span style={{ color: "#fb923c", fontWeight: 700 }}>10.055</span></div>
-              <div>◆ RENDER <span style={{ color: "#fbbf24", fontWeight: 700 }}>16.055</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
+      } catch {
+        if (!cancelled) setSource("erro");
+      }
+    }
 
-      {/* Rodapé com informações estruturais */}
-      <div style={{ padding: "16px 24px", color: "#a0b0d0", fontSize: 14, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-        Estrutura: <strong style={{ color: "#34d399" }}>Positivo</strong> • 
-        Euler: <strong style={{ color: "#60a5fa" }}>Forte</strong> • 
-        Singularidade: <strong>5/6</strong> • 
-        Ciclo: <strong style={{ color: "#fbbf24" }}>Acelerado</strong>
-      </div>
-    </div>
-  );
+    loadData();
+    const timer = window.setInterval(loadData, 15000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [symbol, timeframe, viewMode, spaceOffset]);
+
+  // ... (mantenha aqui todo o resto do seu código original: scoreColor, moduleTitle, moduleAccent, bottomTabs, leftRows, insightConfig, pulseConfig, leftDynamicBlock, etc.)
+
+  // No return JSX, adicione as abas extras logo após o bloco de topModules:
+  // <div style={{ display: "flex", gap: 8, padding: "8px 16px", overflowX: "auto", background: "linear-gradient(180deg, rgba(12,18,34,0.55), rgba(8,12,24,0.10))" }}>
+  //   {advancedTabs.map(tab => (
+  //     <PremiumButton key={tab} active={tab.includes("IA Atlas")} compact={isSmall}>
+  //       {tab}
+  //     </PremiumButton>
+  //   ))}
+  // </div>
+
+  // O restante do return JSX deve permanecer como no seu código original,
+  // pois ele já contém o gráfico, painéis, scanner, etc.
+
+  // Se quiser, posso enviar o return JSX completo ajustado na próxima mensagem.
 }
