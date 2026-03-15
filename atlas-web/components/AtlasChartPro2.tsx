@@ -36,7 +36,7 @@ type ToolKey =
 type ViewMode = "auto" | "manual" | "space";
 
 const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
-const timeframes = ["1m", "5m", "15m", "1h", "4h"];
+const timeframes = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
 const topModules: TopModule[] = [
   "Fluxo",
   "Singularidade",
@@ -403,7 +403,7 @@ export default function AtlasChartPro2() {
 
   useEffect(() => {
     const updateChartHeight = () => {
-      const offset = isSmall ? 320 : isMedium ? 285 : 220;
+      const offset = isSmall ? 310 : isMedium ? 255 : 155;
       const nextHeight = Math.max(560, Math.min(window.innerHeight - offset, 900));
       setChartHeight(nextHeight);
     };
@@ -1242,8 +1242,8 @@ export default function AtlasChartPro2() {
     : isMedium
     ? "minmax(0, 1fr)"
     : isCompact
-    ? "42px minmax(0, 1fr) 300px"
-    : "44px minmax(0, 1fr) 360px";
+    ? "38px minmax(0, 1fr) 320px"
+    : "40px minmax(0, 1fr) 410px";
 
   const bottomGridColumns = isSmall ? "1fr" : "1.2fr 1fr";
 
@@ -1733,6 +1733,35 @@ export default function AtlasChartPro2() {
               </div>
             </div>
 
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+                padding: "7px 12px",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                background:
+                  "linear-gradient(180deg, rgba(8,12,24,0.75), rgba(8,12,24,0.35))",
+                color: "#6f84ab",
+                fontSize: 10,
+                letterSpacing: 0.35,
+                textTransform: "uppercase",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <span style={{ color: "#00d4ff", fontWeight: 800 }}>{symbol}</span>
+                <span>OBP Engine</span>
+                <span style={{ padding: "2px 6px", borderRadius: 6, background: "rgba(255,255,255,0.04)" }}>A</span>
+                <span style={{ padding: "2px 6px", borderRadius: 6, background: "rgba(255,255,255,0.04)" }}>OO</span>
+                <span style={{ padding: "2px 6px", borderRadius: 6, background: "rgba(255,255,255,0.04)" }}>3</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span>Spread 0.12</span>
+                <span>Vol {volume}</span>
+              </div>
+            </div>
+
             {isSmall && (
               <div
                 style={{
@@ -1786,11 +1815,11 @@ export default function AtlasChartPro2() {
             />
           </div>
 
-          <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ display: "grid", gap: 8 }}>
             <div
               style={{
                 background:
-                  "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
+                  "linear-gradient(180deg, rgba(9,14,28,0.99), rgba(7,11,22,0.995))",
                 border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 14,
                 padding: 12,
