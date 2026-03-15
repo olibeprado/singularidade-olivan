@@ -1,285 +1,195 @@
 "use client";
 
-import { atlasScore } from "@/lib/atlasMath";
 import { useEffect, useRef, useState } from "react";
 import { createChart, ColorType } from "lightweight-charts";
 
 type Candle = {
-  time: string;
+  time: number;
   open: number;
   high: number;
   low: number;
   close: number;
-  volume: number;
 };
 
 export default function AtlasChartPro2() {
-
-  const chartRef = useRef<HTMLDivElement | null>(null);
-  const chart = useRef<any>(null);
-  const candleSeries = useRef<any>(null);
-  const volumeSeries = useRef<any>(null);
+  const chartContainer = useRef<HTMLDivElement | null>(null);
+  const chartRef = useRef<any>(null);
+  const seriesRef = useRef<any>(null);
 
   const [symbol] = useState("BTCUSDT");
-  const [price,setPrice] = useState<number | null>(null);
-  const [score,setScore] = useState(0);
-  const [direction,setDirection] = useState("Neutro");
+  const [direction, setDirection] = useState("Neutro");
 
-  const [activeBottom,setActiveBottom] = useState("Euler");
+  const [scanner, setScanner] = useState([
+    { symbol: "BTCUSDT", signal: "Compra Forte" },
+    { symbol: "ETHUSDT", signal: "Compra" },
+    { symbol: "SOLUSDT", signal: "Neutro" },
+    { symbol: "BNBUSDT", signal: "Venda" },
+  ]);
 
-  const [scanner,setScanner] = useState<any[]>([]);
+  useEffect(() => {
+    if (!chartContainer.current) return;
 
-  useEffect(()=>{
-
-    if(!chartRef.current) return;
-
-    chart.current = createChart(chartRef.current,{
-      width:chartRef.current.clientWidth,
-      height:520,
-      layout:{
-        background:{type:ColorType.Solid,color:"#070f22"},
-        textColor:"#9aa4c7"
+    chartRef.current = createChart(chartContainer.current, {
+      height: 520,
+      layout: {
+        background: {
+          type: ColorType.Solid,
+          color: "#0b0f17",
+        },
+        textColor: "#9aa4c7",
       },
-      grid:{
-        vertLines:{color:"rgba(255,255,255,0.04)"},
-        horzLines:{color:"rgba(255,255,255,0.04)"}
-      }
+      grid: {
+        vertLines: { color: "#1e2330" },
+        horzLines: { color: "#1e2330" },
+      },
     });
 
-    candleSeries.current = chart.current.addCandlestickSeries({
-      upColor:"#2ecc71",
-      downColor:"#ff4d6d",
-      borderUpColor:"#2ecc71",
-      borderDownColor:"#ff4d6d",
-      wickUpColor:"#2ecc71",
-      wickDownColor:"#ff4d6d"
-    });
+    seriesRef.current = chartRef.current.addCandlestickSeries();
 
-    volumeSeries.current = chart.current.addHistogramSeries({
-      priceFormat:{type:"volume"},
-      priceScaleId:""
-    });
+    const data: Candle[] = [];
 
-    loadChart();
+    let price = 40000;
 
-    window.addEventListener("resize",resize);
+    for (let i = 0; i < 120; i++) {
+      const open = price;
+      const close = open + (Math.random() - 0.5) * 400;
+      const high = Math.max(open, close) + Math.random() * 200;
+      const low = Math.min(open, close) - Math.random() * 200;
 
-    return()=>{
-      window.removeEventListener("resize",resize);
-      chart.current.remove();
-    }
-
-  },[]);
-
-  function resize(){
-
-    if(!chartRef.current) return;
-
-    chart.current.applyOptions({
-      width:chartRef.current.clientWidth
-    });
-
-  }
-
-  async function loadChart(){
-
-    const res = await fetch(
-      `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1m&limit=200`
-    );
-
-    const data = await res.json();
-
-    const candles:Candle[] = data.map((d:any)=>({
-      time:new Date(d[0]).toISOString().slice(0,10),
-      open:parseFloat(d[1]),
-      high:parseFloat(d[2]),
-      low:parseFloat(d[3]),
-      close:parseFloat(d[4]),
-      volume:parseFloat(d[5])
-    }));
-
-    candleSeries.current.setData(candles);
-
-    volumeSeries.current.setData(
-      candles.map(c=>({
-        time:c.time,
-        value:c.volume,
-        color:c.close>=c.open?"#2ecc71":"#ff4d6d"
-      }))
-    );
-
-    const last = candles[candles.length-1];
-    const prev = candles[candles.length-2] || last;
-
-    const s = atlasScore(
-      last.close,
-      prev.close,
-      last.volume,
-      prev.volume
-    );
-
-    setScore(s);
-    setPrice(last.close);
-
-    if(s>70) setDirection("Bullish");
-    else if(s<40) setDirection("Bearish");
-    else setDirection("Neutro");
-
-    // MAPA DE LIQUIDEZ
-    const liquidityLevels = candles
-      .slice(-50)
-      .sort((a,b)=>b.volume-a.volume)
-      .slice(0,3);
-
-    liquidityLevels.forEach(level=>{
-
-      candleSeries.current.createPriceLine({
-        price:level.close,
-        color:"#f1c40f",
-        lineWidth:1,
-        lineStyle:2,
-        axisLabelVisible:true,
-        title:"Liquidez"
+      data.push({
+        time: 1700000000 + i * 60,
+        open,
+        high,
+        low,
+        close,
       });
 
-    });
-
-  }
-
-  useEffect(()=>{
-
-    async function runScanner(){
-
-      const symbols=[
-        "BTCUSDT",
-        "ETHUSDT",
-        "SOLUSDT",
-        "BNBUSDT",
-        "INJUSDT",
-        "LINKUSDT"
-      ];
-
-      const results:any[]=[];
-
-      for(const s of symbols){
-
-        const res=await fetch(
-          `https://api.binance.com/api/v3/klines?symbol=${s}&interval=5m&limit=2`
-        );
-
-        const data=await res.json();
-
-        const last=data[1];
-        const prev=data[0];
-
-        const sc=atlasScore(
-          parseFloat(last[4]),
-          parseFloat(prev[4]),
-          parseFloat(last[5]),
-          parseFloat(prev[5])
-        );
-
-        results.push({
-          symbol:s,
-          score:sc
-        });
-
-      }
-
-      results.sort((a,b)=>b.score-a.score);
-
-      setScanner(results);
-
+      price = close;
     }
 
-    runScanner();
+    seriesRef.current.setData(data);
 
-  },[]);
+    const interval = setInterval(() => {
+      const move = (Math.random() - 0.5) * 150;
+      price += move;
 
-  return(
+      seriesRef.current.update({
+        time: Math.floor(Date.now() / 1000),
+        open: price - move,
+        high: price + Math.random() * 50,
+        low: price - Math.random() * 50,
+        close: price,
+      });
 
-<div style={{display:"flex",flexDirection:"column",height:"100vh",background:"#020817"}}>
+      if (move > 40) setDirection("Alta");
+      else if (move < -40) setDirection("Baixa");
+      else setDirection("Neutro");
+    }, 2000);
 
-<div style={{display:"flex",flex:1}}>
+    return () => clearInterval(interval);
+  }, []);
 
-<div style={{flex:1,padding:"20px"}}>
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        background: "#070b11",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* TOP BAR */}
 
-<h2 style={{color:"#fff"}}>SINGULARIDADE • {symbol}</h2>
+      <div
+        style={{
+          display: "flex",
+          gap: 20,
+          padding: "10px 20px",
+          borderBottom: "1px solid #1b2233",
+          color: "#cbd5ff",
+        }}
+      >
+        <b>{symbol}</b>
 
-<div ref={chartRef} />
+        <span>Fluxo</span>
+        <span>Singularidade</span>
+        <span>Scanner</span>
 
-</div>
+        <span
+          style={{
+            marginLeft: "auto",
+            color:
+              direction === "Alta"
+                ? "#22c55e"
+                : direction === "Baixa"
+                ? "#ef4444"
+                : "#eab308",
+          }}
+        >
+          Direção: {direction}
+        </span>
+      </div>
 
-<div style={{
-width:"280px",
-background:"#060f2c",
-padding:"20px",
-borderLeft:"1px solid #111"
-}}>
+      {/* CHART */}
 
-<h3 style={{color:"#fff"}}>IA Atlas</h3>
+      <div
+        ref={chartContainer}
+        style={{
+          flex: 1,
+        }}
+      />
 
-<p style={{color:"#9aa4c7"}}>Preço</p>
-<h2 style={{color:"#2ecc71"}}>
-{price?price.toFixed(2):"..."}
-</h2>
+      {/* PAINEL INFERIOR */}
 
-<p style={{color:"#9aa4c7",marginTop:"20px"}}>Score</p>
-<h1 style={{color:"#f1c40f"}}>{score}</h1>
+      <div
+        style={{
+          height: 160,
+          borderTop: "1px solid #1b2233",
+          display: "flex",
+          padding: 10,
+          gap: 20,
+        }}
+      >
+        {/* LIQUIDITY MAP */}
 
-<p style={{color:"#9aa4c7",marginTop:"20px"}}>Direção</p>
-<h2 style={{color:"#fff"}}>{direction}</h2>
+        <div
+          style={{
+            flex: 1,
+            background: "#0f1420",
+            padding: 10,
+          }}
+        >
+          <b>Mapa de Liquidez</b>
 
-</div>
+          <div
+            style={{
+              marginTop: 10,
+              height: 80,
+              background:
+                "linear-gradient(90deg,#1f2937,#3b82f6,#22c55e,#f59e0b,#ef4444)",
+            }}
+          />
+        </div>
 
-</div>
+        {/* SCANNER */}
 
-<div style={{
-background:"#060f2c",
-padding:"15px",
-borderTop:"1px solid #111"
-}}>
+        <div
+          style={{
+            flex: 1,
+            background: "#0f1420",
+            padding: 10,
+          }}
+        >
+          <b>Scanner de Mercado</b>
 
-<div style={{display:"flex",gap:"10px",marginBottom:"15px"}}>
-
-<button onClick={()=>setActiveBottom("Euler")}>Euler</button>
-<button onClick={()=>setActiveBottom("Curvatura")}>Curvatura</button>
-<button onClick={()=>setActiveBottom("Validação")}>Validação</button>
-<button onClick={()=>setActiveBottom("Eventos")}>Eventos</button>
-<button onClick={()=>setActiveBottom("Scanner")}>Scanner</button>
-
-</div>
-
-{activeBottom==="Scanner"&&(
-
-<div>
-
-<h3 style={{color:"#fff"}}>Scanner Atlas</h3>
-
-{scanner.map((s,i)=>(
-<div key={i}
-style={{
-display:"flex",
-justifyContent:"space-between",
-padding:"8px 0",
-borderBottom:"1px solid #111"
-}}
->
-
-<span style={{color:"#9aa4c7"}}>{s.symbol}</span>
-<span style={{color:"#f1c40f"}}>{s.score}</span>
-
-</div>
-))}
-
-</div>
-
-)}
-
-</div>
-
-</div>
-
+          {scanner.map((s, i) => (
+            <div key={i}>
+              {s.symbol} — {s.signal}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
-
 }
