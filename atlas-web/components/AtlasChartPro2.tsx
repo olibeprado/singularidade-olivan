@@ -24,19 +24,43 @@ type TopModule =
 
 type ToolKey =
   | "cursor"
-  | "zoom"
-  | "line"
-  | "zones"
-  | "levels"
+  | "search"
+  | "draw"
+  | "shapes"
   | "measure"
+  | "text"
+  | "patterns"
+  | "brush"
+  | "path"
+  | "fib"
+  | "longshort"
+  | "forecast"
+  | "geom"
+  | "favorite"
+  | "more"
   | "magnet"
-  | "clock"
-  | "settings";
+  | "hide";
 
 type ViewMode = "auto" | "manual" | "space";
 
+type ToolOption = {
+  id: string;
+  label: string;
+  icon: string;
+  description: string;
+};
+
+type ToolGroup = {
+  key: ToolKey;
+  icon: string;
+  label: string;
+  accent?: string;
+  items: ToolOption[];
+};
+
 const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const timeframes = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
+
 const topModules: TopModule[] = [
   "Fluxo",
   "Singularidade",
@@ -57,16 +81,396 @@ const moduleIcons: Record<TopModule, string> = {
   Liquidez: "≋",
 };
 
-const chartTools: { key: ToolKey; icon: string; label: string }[] = [
-  { key: "cursor", icon: "⌖", label: "Cursor" },
-  { key: "zoom", icon: "⊕", label: "Zoom" },
-  { key: "line", icon: "╱", label: "Linha" },
-  { key: "zones", icon: "◫", label: "Zonas" },
-  { key: "levels", icon: "≡", label: "Níveis" },
-  { key: "measure", icon: "⎘", label: "Medida" },
-  { key: "magnet", icon: "⌬", label: "Magnet" },
-  { key: "clock", icon: "◷", label: "Replay" },
-  { key: "settings", icon: "⚙", label: "Config" },
+const toolGroups: ToolGroup[] = [
+  {
+    key: "cursor",
+    icon: "⌖",
+    label: "Cursor",
+    items: [
+      {
+        id: "cursor-default",
+        label: "Cursor padrão",
+        icon: "⌖",
+        description: "Navegação livre no gráfico.",
+      },
+      {
+        id: "cursor-cross",
+        label: "Crosshair",
+        icon: "✛",
+        description: "Cursor de precisão para leitura.",
+      },
+      {
+        id: "cursor-select",
+        label: "Selecionar objetos",
+        icon: "⬚",
+        description: "Base para futura seleção de objetos.",
+      },
+    ],
+  },
+  {
+    key: "search",
+    icon: "⌕",
+    label: "Busca",
+    items: [
+      {
+        id: "search-symbol",
+        label: "Buscar ativo",
+        icon: "⌕",
+        description: "Busca rápida de símbolo.",
+      },
+      {
+        id: "search-indicator",
+        label: "Buscar indicador",
+        icon: "ƒ",
+        description: "Abre a futura central de indicadores.",
+      },
+    ],
+  },
+  {
+    key: "draw",
+    icon: "╱",
+    label: "Linhas",
+    items: [
+      {
+        id: "line-trend",
+        label: "Linha de tendência",
+        icon: "╱",
+        description: "Linha principal de tendência.",
+      },
+      {
+        id: "line-ray",
+        label: "Raio",
+        icon: "⟍",
+        description: "Linha projetada para frente.",
+      },
+      {
+        id: "line-horizontal",
+        label: "Linha horizontal",
+        icon: "―",
+        description: "Marcação horizontal de preço.",
+      },
+      {
+        id: "line-vertical",
+        label: "Linha vertical",
+        icon: "│",
+        description: "Marca ponto no tempo.",
+      },
+    ],
+  },
+  {
+    key: "shapes",
+    icon: "◫",
+    label: "Zonas",
+    items: [
+      {
+        id: "zone-supply",
+        label: "Zona de oferta",
+        icon: "▭",
+        description: "Área de oferta/venda.",
+      },
+      {
+        id: "zone-demand",
+        label: "Zona de demanda",
+        icon: "▯",
+        description: "Área de demanda/compra.",
+      },
+      {
+        id: "zone-premium",
+        label: "Premium",
+        icon: "⬒",
+        description: "Marcação de região premium.",
+      },
+      {
+        id: "zone-discount",
+        label: "Discount",
+        icon: "⬓",
+        description: "Marcação de região discount.",
+      },
+    ],
+  },
+  {
+    key: "measure",
+    icon: "⎘",
+    label: "Medidas",
+    items: [
+      {
+        id: "measure-price",
+        label: "Medir preço",
+        icon: "↕",
+        description: "Variação de preço entre pontos.",
+      },
+      {
+        id: "measure-range",
+        label: "Medir range",
+        icon: "⬍",
+        description: "Range completo do movimento.",
+      },
+      {
+        id: "measure-rr",
+        label: "Risco x retorno",
+        icon: "⚖",
+        description: "Base para futura ferramenta RR.",
+      },
+      {
+        id: "measure-bars",
+        label: "Contar candles",
+        icon: "▥",
+        description: "Mede candles e tempo.",
+      },
+    ],
+  },
+  {
+    key: "text",
+    icon: "T",
+    label: "Texto",
+    items: [
+      {
+        id: "text-note",
+        label: "Nota",
+        icon: "T",
+        description: "Texto simples no gráfico.",
+      },
+      {
+        id: "text-tag",
+        label: "Etiqueta",
+        icon: "🏷",
+        description: "Tag curta de observação.",
+      },
+      {
+        id: "text-arrow",
+        label: "Texto com seta",
+        icon: "➜",
+        description: "Comentário apontando região.",
+      },
+    ],
+  },
+  {
+    key: "patterns",
+    icon: "⌁",
+    label: "Padrões",
+    items: [
+      {
+        id: "pattern-channel",
+        label: "Canal",
+        icon: "∥",
+        description: "Estrutura em canal.",
+      },
+      {
+        id: "pattern-triangle",
+        label: "Triângulo",
+        icon: "△",
+        description: "Padrão triangular.",
+      },
+      {
+        id: "pattern-wedge",
+        label: "Cunha",
+        icon: "⋔",
+        description: "Padrão em cunha.",
+      },
+    ],
+  },
+  {
+    key: "brush",
+    icon: "✎",
+    label: "Pincel",
+    items: [
+      {
+        id: "brush-free",
+        label: "Traço livre",
+        icon: "✎",
+        description: "Desenho livre futuro.",
+      },
+      {
+        id: "brush-highlight",
+        label: "Marca-texto",
+        icon: "🖍",
+        description: "Realce visual.",
+      },
+    ],
+  },
+  {
+    key: "path",
+    icon: "⤳",
+    label: "Caminho",
+    items: [
+      {
+        id: "path-arrow",
+        label: "Caminho com seta",
+        icon: "⤳",
+        description: "Projeção manual do movimento.",
+      },
+      {
+        id: "path-scenario",
+        label: "Cenário",
+        icon: "↝",
+        description: "Rascunho de cenário futuro.",
+      },
+    ],
+  },
+  {
+    key: "fib",
+    icon: "ϕ",
+    label: "Fibonacci",
+    items: [
+      {
+        id: "fib-retracement",
+        label: "Retração",
+        icon: "ϕ",
+        description: "Ferramenta de retração.",
+      },
+      {
+        id: "fib-extension",
+        label: "Expansão",
+        icon: "Φ",
+        description: "Ferramenta de expansão.",
+      },
+    ],
+  },
+  {
+    key: "longshort",
+    icon: "⇅",
+    label: "Trade",
+    items: [
+      {
+        id: "tool-long",
+        label: "Long",
+        icon: "▲",
+        description: "Simulação visual de compra.",
+      },
+      {
+        id: "tool-short",
+        label: "Short",
+        icon: "▼",
+        description: "Simulação visual de venda.",
+      },
+    ],
+  },
+  {
+    key: "forecast",
+    icon: "◔",
+    label: "Forecast",
+    items: [
+      {
+        id: "forecast-up",
+        label: "Projeção alta",
+        icon: "↗",
+        description: "Cenário otimista.",
+      },
+      {
+        id: "forecast-down",
+        label: "Projeção baixa",
+        icon: "↘",
+        description: "Cenário de queda.",
+      },
+      {
+        id: "forecast-neutral",
+        label: "Projeção lateral",
+        icon: "→",
+        description: "Cenário de consolidação.",
+      },
+    ],
+  },
+  {
+    key: "geom",
+    icon: "◌",
+    label: "Geométricas",
+    items: [
+      {
+        id: "geom-circle",
+        label: "Círculo",
+        icon: "◯",
+        description: "Marcações circulares.",
+      },
+      {
+        id: "geom-rect",
+        label: "Retângulo",
+        icon: "▭",
+        description: "Caixa geométrica.",
+      },
+      {
+        id: "geom-ellipse",
+        label: "Elipse",
+        icon: "⬭",
+        description: "Marcação elíptica.",
+      },
+    ],
+  },
+  {
+    key: "favorite",
+    icon: "★",
+    label: "Favoritos",
+    items: [
+      {
+        id: "favorites-open",
+        label: "Abrir favoritos",
+        icon: "★",
+        description: "Atalhos fixados por estrela.",
+      },
+    ],
+  },
+  {
+    key: "more",
+    icon: "☰",
+    label: "Mais",
+    items: [
+      {
+        id: "tool-alerts",
+        label: "Alertas",
+        icon: "🔔",
+        description: "Base futura para alertas.",
+      },
+      {
+        id: "tool-objects",
+        label: "Objetos",
+        icon: "☷",
+        description: "Gerenciador futuro de objetos.",
+      },
+      {
+        id: "tool-templates",
+        label: "Templates",
+        icon: "📁",
+        description: "Salvar layouts/ferramentas.",
+      },
+    ],
+  },
+  {
+    key: "magnet",
+    icon: "⌬",
+    label: "Magnet",
+    items: [
+      {
+        id: "magnet-on",
+        label: "Magnet ligado",
+        icon: "⌬",
+        description: "Snap futuro em preços e candles.",
+      },
+      {
+        id: "magnet-soft",
+        label: "Magnet suave",
+        icon: "◈",
+        description: "Atração leve.",
+      },
+    ],
+  },
+  {
+    key: "hide",
+    icon: "◐",
+    label: "Visual",
+    items: [
+      {
+        id: "visual-hide-tools",
+        label: "Ocultar ferramentas",
+        icon: "◐",
+        description: "Modo limpo do painel.",
+      },
+      {
+        id: "visual-minimal",
+        label: "Modo minimal",
+        icon: "◌",
+        description: "Interface mais limpa.",
+      },
+    ],
+  },
 ];
 
 function StatCard({
@@ -140,7 +544,8 @@ function RightRow({
       <span style={{ color: "#99a9c8", fontSize: 12 }}>{label}</span>
       <span
         style={{
-          color: positive === undefined ? "#eef4ff" : positive ? "#34d399" : "#fb7185",
+          color:
+            positive === undefined ? "#eef4ff" : positive ? "#34d399" : "#fb7185",
           fontWeight: 800,
           fontSize: 12,
           textAlign: "right",
@@ -365,6 +770,364 @@ function ControlButton({
   );
 }
 
+function ToolSidebar({
+  groups,
+  activeGroup,
+  activeOptionId,
+  favorites,
+  onOpenGroup,
+  onSelectOption,
+  onToggleFavorite,
+  accent,
+  compact,
+}: {
+  groups: ToolGroup[];
+  activeGroup: ToolKey | null;
+  activeOptionId: string;
+  favorites: string[];
+  onOpenGroup: (key: ToolKey) => void;
+  onSelectOption: (groupKey: ToolKey, optionId: string) => void;
+  onToggleFavorite: (optionId: string) => void;
+  accent: string;
+  compact?: boolean;
+}) {
+  const activeGroupData =
+    groups.find((group) => group.key === activeGroup) ?? groups[0];
+
+  const favoriteItems = groups.flatMap((group) =>
+    group.items
+      .filter((item) => favorites.includes(item.id))
+      .map((item) => ({ ...item, groupKey: group.key, groupLabel: group.label }))
+  );
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 10,
+        alignItems: "flex-start",
+      }}
+    >
+      <div
+        style={{
+          width: compact ? 40 : 46,
+          background:
+            "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
+          border: "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 16,
+          padding: "8px 4px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          alignItems: "center",
+          boxShadow: "0 16px 40px rgba(0,0,0,0.24)",
+          position: "sticky",
+          top: 98,
+        }}
+      >
+        {groups.map((group) => {
+          const active = activeGroup === group.key;
+          const hasFavorite = group.items.some((item) => favorites.includes(item.id));
+          return (
+            <button
+              key={group.key}
+              title={group.label}
+              onClick={() => onOpenGroup(group.key)}
+              style={{
+                width: compact ? 28 : 32,
+                height: compact ? 28 : 32,
+                borderRadius: 9,
+                border: active
+                  ? `1px solid ${accent}55`
+                  : "1px solid rgba(255,255,255,0.06)",
+                background: active
+                  ? `linear-gradient(180deg, ${accent}28, rgba(255,255,255,0.03))`
+                  : "rgba(255,255,255,0.025)",
+                color: active ? "#eef4ff" : hasFavorite ? "#dce7ff" : "#9fb3d4",
+                fontSize: 13,
+                cursor: "pointer",
+                boxShadow: active ? `0 0 18px ${accent}22` : "none",
+                position: "relative",
+              }}
+            >
+              {group.icon}
+              {hasFavorite && (
+                <span
+                  style={{
+                    position: "absolute",
+                    right: -2,
+                    top: -3,
+                    fontSize: 9,
+                    color: "#ffd65a",
+                  }}
+                >
+                  ★
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {!compact && (
+        <div
+          style={{
+            width: 270,
+            background:
+              "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.995))",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 16,
+            padding: 12,
+            boxShadow: "0 14px 36px rgba(0,0,0,0.22)",
+            position: "sticky",
+            top: 98,
+            maxHeight: "calc(100vh - 120px)",
+            overflowY: "auto",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              marginBottom: 10,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 900,
+                  color: "#e9f1ff",
+                  marginBottom: 4,
+                }}
+              >
+                {activeGroupData.label}
+              </div>
+              <div style={{ fontSize: 11, color: "#89a0c9" }}>
+                Pasta de ferramentas interligadas
+              </div>
+            </div>
+            <div
+              style={{
+                minWidth: 32,
+                height: 32,
+                borderRadius: 10,
+                border: `1px solid ${accent}33`,
+                background: `${accent}18`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#eef4ff",
+                fontWeight: 900,
+              }}
+            >
+              {activeGroupData.icon}
+            </div>
+          </div>
+
+          {favoriteItems.length > 0 && (
+            <div
+              style={{
+                marginBottom: 12,
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 12,
+                padding: 10,
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
+              }}
+            >
+              <div
+                style={{
+                  color: "#ffe9a8",
+                  fontWeight: 800,
+                  fontSize: 12,
+                  marginBottom: 8,
+                }}
+              >
+                ★ Favoritos
+              </div>
+
+              <div style={{ display: "grid", gap: 8 }}>
+                {favoriteItems.map((item) => {
+                  const active = activeOptionId === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => onSelectOption(item.groupKey, item.id)}
+                      style={{
+                        border: active
+                          ? `1px solid ${accent}55`
+                          : "1px solid rgba(255,255,255,0.06)",
+                        background: active
+                          ? `linear-gradient(180deg, ${accent}20, rgba(255,255,255,0.03))`
+                          : "rgba(255,255,255,0.02)",
+                        borderRadius: 10,
+                        padding: "8px 10px",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          alignItems: "center",
+                        }}
+                      >
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <span style={{ color: "#dfe8ff" }}>{item.icon}</span>
+                          <div>
+                            <div
+                              style={{
+                                color: "#eef4ff",
+                                fontSize: 12,
+                                fontWeight: 800,
+                              }}
+                            >
+                              {item.label}
+                            </div>
+                            <div style={{ color: "#8ca3cc", fontSize: 10 }}>
+                              {item.groupLabel}
+                            </div>
+                          </div>
+                        </div>
+                        <span style={{ color: "#ffd65a", fontSize: 12 }}>★</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div
+            style={{
+              color: "#8ca3cc",
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: 0.45,
+              marginBottom: 8,
+              fontWeight: 800,
+            }}
+          >
+            Ferramentas
+          </div>
+
+          <div style={{ display: "grid", gap: 8 }}>
+            {activeGroupData.items.map((item) => {
+              const active = activeOptionId === item.id;
+              const starred = favorites.includes(item.id);
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    border: active
+                      ? `1px solid ${accent}55`
+                      : "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 12,
+                    background: active
+                      ? `linear-gradient(180deg, ${accent}20, rgba(255,255,255,0.03))`
+                      : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
+                    padding: 10,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <button
+                      onClick={() => onSelectOption(activeGroupData.key, item.id)}
+                      style={{
+                        flex: 1,
+                        background: "transparent",
+                        border: "none",
+                        padding: 0,
+                        textAlign: "left",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 10,
+                          alignItems: "center",
+                          marginBottom: 6,
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 24,
+                            height: 24,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 8,
+                            background: "rgba(255,255,255,0.04)",
+                            color: "#e6efff",
+                            fontSize: 13,
+                          }}
+                        >
+                          {item.icon}
+                        </span>
+                        <div
+                          style={{
+                            color: "#eef4ff",
+                            fontSize: 12,
+                            fontWeight: 800,
+                          }}
+                        >
+                          {item.label}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          color: "#8ea4c8",
+                          fontSize: 11,
+                          lineHeight: 1.35,
+                        }}
+                      >
+                        {item.description}
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => onToggleFavorite(item.id)}
+                      title={starred ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 9,
+                        border: starred
+                          ? "1px solid rgba(255,214,90,0.38)"
+                          : "1px solid rgba(255,255,255,0.06)",
+                        background: starred
+                          ? "linear-gradient(180deg, rgba(255,214,90,0.18), rgba(255,214,90,0.06))"
+                          : "rgba(255,255,255,0.02)",
+                        color: starred ? "#ffd65a" : "#7d93bc",
+                        cursor: "pointer",
+                        flexShrink: 0,
+                      }}
+                    >
+                      ★
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AtlasChartPro2() {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<any>(null);
@@ -375,6 +1138,14 @@ export default function AtlasChartPro2() {
   const [timeframe, setTimeframe] = useState("1m");
   const [activeModule, setActiveModule] = useState<TopModule>("Scanner");
   const [activeTool, setActiveTool] = useState<ToolKey>("cursor");
+  const [activeToolOption, setActiveToolOption] = useState("cursor-default");
+  const [favoriteTools, setFavoriteTools] = useState<string[]>([
+    "line-trend",
+    "measure-price",
+    "fib-retracement",
+  ]);
+  const [showToolPanel, setShowToolPanel] = useState(true);
+
   const [source, setSource] = useState("carregando...");
   const [price, setPrice] = useState("--");
   const [change, setChange] = useState("--");
@@ -397,8 +1168,8 @@ export default function AtlasChartPro2() {
     return () => window.removeEventListener("resize", handleViewport);
   }, []);
 
-  const isCompact = viewportWidth < 1280;
-  const isMedium = viewportWidth < 1024;
+  const isCompact = viewportWidth < 1380;
+  const isMedium = viewportWidth < 1140;
   const isSmall = viewportWidth < 860;
 
   useEffect(() => {
@@ -585,9 +1356,7 @@ export default function AtlasChartPro2() {
           })
         );
 
-        const pct = prev.close
-          ? ((last.close - prev.close) / prev.close) * 100
-          : 0;
+        const pct = prev.close ? ((last.close - prev.close) / prev.close) * 100 : 0;
 
         setChange(`${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`);
 
@@ -664,6 +1433,23 @@ export default function AtlasChartPro2() {
         return "#ffd65a";
     }
   }, [activeModule]);
+
+  const activeToolGroup = useMemo(
+    () => toolGroups.find((group) => group.key === activeTool) ?? toolGroups[0],
+    [activeTool]
+  );
+
+  const activeToolOptionData = useMemo(() => {
+    const fromActiveGroup = activeToolGroup.items.find((item) => item.id === activeToolOption);
+    if (fromActiveGroup) return fromActiveGroup;
+
+    for (const group of toolGroups) {
+      const found = group.items.find((item) => item.id === activeToolOption);
+      if (found) return found;
+    }
+
+    return toolGroups[0].items[0];
+  }, [activeToolGroup, activeToolOption]);
 
   const bottomTabs =
     activeModule === "Fluxo"
@@ -754,12 +1540,8 @@ export default function AtlasChartPro2() {
           scoreLabel: "Pressão Compradora",
           rowsTop: [
             { label: "Resumo", value: "Fluxo", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
-            { label: "Força", value: "Alta", positive: true },
+            { label: "Pasta", value: activeToolGroup.label, positive: true },
+            { label: "Seleção", value: activeToolOptionData.label, positive: true },
             {
               label: "Invalidação",
               value:
@@ -788,12 +1570,8 @@ export default function AtlasChartPro2() {
           scoreLabel: "Pulso Forte",
           rowsTop: [
             { label: "Resumo", value: "Singularidade", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
-            { label: "Pulso", value: "Expandindo", positive: true },
+            { label: "Pasta", value: activeToolGroup.label, positive: true },
+            { label: "Seleção", value: activeToolOptionData.label, positive: true },
             {
               label: "Invalidação",
               value:
@@ -822,12 +1600,8 @@ export default function AtlasChartPro2() {
           scoreLabel: "Convicção Alta",
           rowsTop: [
             { label: "Resumo", value: "IA Atlas", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
-            { label: "Risco", value: "Médio", positive: true },
+            { label: "Pasta", value: activeToolGroup.label, positive: true },
+            { label: "Seleção", value: activeToolOptionData.label, positive: true },
             {
               label: "Invalidação",
               value:
@@ -856,12 +1630,8 @@ export default function AtlasChartPro2() {
           scoreLabel: "Base Sólida",
           rowsTop: [
             { label: "Resumo", value: "Estrutura", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
-            { label: "Força", value: "Alta", positive: true },
+            { label: "Pasta", value: activeToolGroup.label, positive: true },
+            { label: "Seleção", value: activeToolOptionData.label, positive: true },
             {
               label: "Invalidação",
               value:
@@ -890,12 +1660,8 @@ export default function AtlasChartPro2() {
           scoreLabel: "Validação Forte",
           rowsTop: [
             { label: "Resumo", value: "Euler", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
-            { label: "Validação", value: "Alta", positive: true },
+            { label: "Pasta", value: activeToolGroup.label, positive: true },
+            { label: "Seleção", value: activeToolOptionData.label, positive: true },
             {
               label: "Invalidação",
               value:
@@ -924,12 +1690,8 @@ export default function AtlasChartPro2() {
           scoreLabel: "Cluster Forte",
           rowsTop: [
             { label: "Resumo", value: "Liquidez", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
-            { label: "Parede", value: "71,600", positive: true },
+            { label: "Pasta", value: activeToolGroup.label, positive: true },
+            { label: "Seleção", value: activeToolOptionData.label, positive: true },
             {
               label: "Invalidação",
               value: lastClose
@@ -941,7 +1703,7 @@ export default function AtlasChartPro2() {
           ],
           rowsBottomTitle: "Mapa de Liquidez",
           rowsBottomDescription:
-            "Leitura de clusters, paredes, pools de stops e zonas prováveis de caça de liquidez.",
+            "Leitura de clusters, paredes, pools de stops e zonas prováveis.",
           rowsBottom: [
             { label: "Cluster", value: "Forte", positive: true },
             { label: "Stops", value: "Acima", positive: true },
@@ -957,16 +1719,8 @@ export default function AtlasChartPro2() {
           scoreLabel: signal,
           rowsTop: [
             { label: "Resumo", value: "Scanner", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
-            {
-              label: "Força",
-              value: score >= 85 ? "Alta" : "Moderada",
-              positive: true,
-            },
+            { label: "Pasta", value: activeToolGroup.label, positive: true },
+            { label: "Seleção", value: activeToolOptionData.label, positive: true },
             {
               label: "Invalidação",
               value:
@@ -989,7 +1743,14 @@ export default function AtlasChartPro2() {
           ],
         };
     }
-  }, [activeModule, activeTool, lastClose, score, signal]);
+  }, [
+    activeModule,
+    activeToolGroup.label,
+    activeToolOptionData.label,
+    lastClose,
+    score,
+    signal,
+  ]);
 
   const pulseConfig = useMemo(() => {
     switch (activeModule) {
@@ -1000,11 +1761,7 @@ export default function AtlasChartPro2() {
             "Mapeamento do fluxo, volume e pressão compradora versus vendedora com leitura de impulso e continuidade.",
           stats: [
             { title: "Fluxo", value: "Forte", positive: true },
-            {
-              title: "Volume",
-              value: volume === "--" ? "18.4" : volume,
-              positive: true,
-            },
+            { title: "Volume", value: volume === "--" ? "18.4" : volume, positive: true },
             { title: "Pressão", value: "Compradora", positive: true },
           ],
           path1:
@@ -1055,11 +1812,7 @@ export default function AtlasChartPro2() {
             "Leitura resumida dos ativos monitorados em tempo real com prioridade, tendência e força relativa.",
           stats: [
             { title: "Top Score", value: "BTC", positive: true },
-            {
-              title: "Volume",
-              value: volume === "--" ? "10.29" : volume,
-              positive: true,
-            },
+            { title: "Volume", value: volume === "--" ? "10.29" : volume, positive: true },
             { title: "Radar", value: "Ativo", positive: true },
           ],
           path1:
@@ -1127,11 +1880,7 @@ export default function AtlasChartPro2() {
             "Leitura resumida dos ativos monitorados em tempo real com prioridade, tendência e força relativa.",
           stats: [
             { title: "Top Score", value: "BTC", positive: true },
-            {
-              title: "Volume",
-              value: volume === "--" ? "10.29" : volume,
-              positive: true,
-            },
+            { title: "Volume", value: volume === "--" ? "10.29" : volume, positive: true },
             { title: "Radar", value: "Ativo", positive: true },
           ],
           path1:
@@ -1274,9 +2023,13 @@ export default function AtlasChartPro2() {
     ? "1fr"
     : isMedium
     ? "minmax(0, 1fr)"
+    : showToolPanel
+    ? isCompact
+      ? "320px minmax(0, 1fr) 320px"
+      : "330px minmax(0, 1fr) 410px"
     : isCompact
-    ? "38px minmax(0, 1fr) 320px"
-    : "40px minmax(0, 1fr) 410px";
+    ? "56px minmax(0, 1fr) 320px"
+    : "60px minmax(0, 1fr) 410px";
 
   const bottomGridColumns = isSmall ? "1fr" : "1.2fr 1fr";
 
@@ -1329,6 +2082,34 @@ export default function AtlasChartPro2() {
     } else {
       timeScale.scrollToRealTime();
     }
+  };
+
+  const handleOpenToolGroup = (key: ToolKey) => {
+    if (key === activeTool) {
+      setShowToolPanel((prev) => !prev);
+      return;
+    }
+    setActiveTool(key);
+    setShowToolPanel(true);
+
+    const group = toolGroups.find((item) => item.key === key);
+    if (group?.items[0]) {
+      setActiveToolOption(group.items[0].id);
+    }
+  };
+
+  const handleSelectToolOption = (groupKey: ToolKey, optionId: string) => {
+    setActiveTool(groupKey);
+    setActiveToolOption(optionId);
+    setShowToolPanel(true);
+  };
+
+  const toggleFavoriteTool = (optionId: string) => {
+    setFavoriteTools((prev) =>
+      prev.includes(optionId)
+        ? prev.filter((id) => id !== optionId)
+        : [...prev, optionId]
+    );
   };
 
   return (
@@ -1586,52 +2367,17 @@ export default function AtlasChartPro2() {
           }}
         >
           {!isSmall && (
-            <div
-              style={{
-                background:
-                  "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 16,
-                padding: "10px 4px",
-                display: "flex",
-                flexDirection: isMedium ? "row" : "column",
-                flexWrap: isMedium ? "wrap" : "nowrap",
-                gap: 8,
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 16px 40px rgba(0,0,0,0.24)",
-              }}
-            >
-              {chartTools.map((tool) => {
-                const active = activeTool === tool.key;
-                return (
-                  <button
-                    key={tool.key}
-                    title={tool.label}
-                    onClick={() => setActiveTool(tool.key)}
-                    style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: 9,
-                      border: active
-                        ? `1px solid ${moduleAccent}55`
-                        : "1px solid rgba(255,255,255,0.06)",
-                      background: active
-                        ? `linear-gradient(180deg, ${moduleAccent}28, rgba(255,255,255,0.03))`
-                        : "rgba(255,255,255,0.025)",
-                      color: active ? "#eef4ff" : "#9fb3d4",
-                      fontSize: 13,
-                      cursor: "pointer",
-                      boxShadow: active
-                        ? `0 0 18px ${moduleAccent}22`
-                        : "none",
-                    }}
-                  >
-                    {tool.icon}
-                  </button>
-                );
-              })}
-            </div>
+            <ToolSidebar
+              groups={toolGroups}
+              activeGroup={activeTool}
+              activeOptionId={activeToolOption}
+              favorites={favoriteTools}
+              onOpenGroup={handleOpenToolGroup}
+              onSelectOption={handleSelectToolOption}
+              onToggleFavorite={toggleFavoriteTool}
+              accent={moduleAccent}
+              compact={!showToolPanel}
+            />
           )}
 
           <div
@@ -1681,8 +2427,7 @@ export default function AtlasChartPro2() {
                 <div>
                   <div style={{ fontWeight: 900, fontSize: 15 }}>{symbol}</div>
                   <div style={{ color: "#8fa3c7", fontSize: 11 }}>
-                    {moduleTitle} • Ferramenta:{" "}
-                    {chartTools.find((t) => t.key === activeTool)?.label} • TF:{" "}
+                    {moduleTitle} • Pasta: {activeToolGroup.label} • Item: {activeToolOptionData.label} • TF:{" "}
                     {timeframe}
                   </div>
                 </div>
@@ -1698,6 +2443,10 @@ export default function AtlasChartPro2() {
                   flexWrap: "wrap",
                 }}
               >
+                <ControlButton active={showToolPanel} onClick={() => setShowToolPanel((prev) => !prev)}>
+                  Ferramentas
+                </ControlButton>
+
                 <ControlButton
                   active={viewMode === "auto"}
                   onClick={() => {
@@ -1756,11 +2505,6 @@ export default function AtlasChartPro2() {
                 >
                   Reset
                 </ControlButton>
-
-                <span>♡</span>
-                <span>⚡</span>
-                <span>◎</span>
-                <span>⚙</span>
               </div>
             </div>
 
@@ -1778,6 +2522,7 @@ export default function AtlasChartPro2() {
                 fontSize: 10,
                 letterSpacing: 0.35,
                 textTransform: "uppercase",
+                flexWrap: "wrap",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -1790,7 +2535,7 @@ export default function AtlasChartPro2() {
                     background: "rgba(255,255,255,0.04)",
                   }}
                 >
-                  A
+                  {activeToolGroup.label}
                 </span>
                 <span
                   style={{
@@ -1799,21 +2544,25 @@ export default function AtlasChartPro2() {
                     background: "rgba(255,255,255,0.04)",
                   }}
                 >
-                  OO
+                  {activeToolOptionData.label}
                 </span>
-                <span
-                  style={{
-                    padding: "2px 6px",
-                    borderRadius: 6,
-                    background: "rgba(255,255,255,0.04)",
-                  }}
-                >
-                  3
-                </span>
+                {favoriteTools.includes(activeToolOptionData.id) && (
+                  <span
+                    style={{
+                      padding: "2px 6px",
+                      borderRadius: 6,
+                      background: "rgba(255,214,90,0.10)",
+                      color: "#ffd65a",
+                    }}
+                  >
+                    ★ favorito
+                  </span>
+                )}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <span>Spread 0.12</span>
                 <span>Vol {volume}</span>
+                <span>Src {source}</span>
               </div>
             </div>
 
@@ -1828,13 +2577,13 @@ export default function AtlasChartPro2() {
                   scrollbarWidth: "none",
                 }}
               >
-                {chartTools.map((tool) => {
+                {toolGroups.map((tool) => {
                   const active = activeTool === tool.key;
                   return (
                     <button
                       key={tool.key}
                       title={tool.label}
-                      onClick={() => setActiveTool(tool.key)}
+                      onClick={() => handleOpenToolGroup(tool.key)}
                       style={{
                         width: 34,
                         height: 30,
@@ -1849,9 +2598,7 @@ export default function AtlasChartPro2() {
                         fontSize: 14,
                         cursor: "pointer",
                         flexShrink: 0,
-                        boxShadow: active
-                          ? `0 0 18px ${moduleAccent}22`
-                          : "none",
+                        boxShadow: active ? `0 0 18px ${moduleAccent}22` : "none",
                       }}
                     >
                       {tool.icon}
@@ -1866,6 +2613,10 @@ export default function AtlasChartPro2() {
               style={{
                 width: "100%",
                 height: chartHeight,
+                cursor:
+                  activeTool === "cursor" || activeTool === "search"
+                    ? "crosshair"
+                    : "default",
               }}
             />
           </div>
@@ -1996,6 +2747,52 @@ export default function AtlasChartPro2() {
                 />
               ))}
             </div>
+
+            <div
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
+                border: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: 14,
+                padding: 10,
+                boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
+              }}
+            >
+              <div
+                style={{
+                  color: "#dfe8ff",
+                  fontWeight: 900,
+                  fontSize: 13,
+                  marginBottom: 10,
+                }}
+              >
+                Ferramenta Ativa
+              </div>
+              <RightRow label="Pasta" value={activeToolGroup.label} positive />
+              <RightRow label="Item" value={activeToolOptionData.label} positive />
+              <RightRow
+                label="Favorito"
+                value={favoriteTools.includes(activeToolOptionData.id) ? "Sim" : "Não"}
+                positive={favoriteTools.includes(activeToolOptionData.id)}
+              />
+              <div
+                style={{
+                  marginTop: 10,
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 12,
+                  padding: 10,
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
+                }}
+              >
+                <div style={{ color: "#8ea4c8", fontSize: 11, marginBottom: 6 }}>
+                  Descrição
+                </div>
+                <div style={{ color: "#dfe8ff", fontSize: 12, lineHeight: 1.45 }}>
+                  {activeToolOptionData.description}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2043,7 +2840,7 @@ export default function AtlasChartPro2() {
             </div>
 
             <div style={{ color: "#88a0c9", fontSize: 12 }}>
-              {moduleTitle} • Volume • RSI • Fluxo
+              {moduleTitle} • {activeToolGroup.label} • {activeToolOptionData.label}
             </div>
           </div>
 
@@ -2164,97 +2961,10 @@ export default function AtlasChartPro2() {
                   gap: 8,
                 }}
               >
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 10,
-                    padding: 10,
-                    background: "rgba(255,255,255,0.02)",
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#7f93b9",
-                      fontSize: 10,
-                      textTransform: "uppercase",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Parede
-                  </div>
-                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>
-                    71,600
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 10,
-                    padding: 10,
-                    background: "rgba(255,255,255,0.02)",
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#7f93b9",
-                      fontSize: 10,
-                      textTransform: "uppercase",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Cluster
-                  </div>
-                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>
-                    Forte
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 10,
-                    padding: 10,
-                    background: "rgba(255,255,255,0.02)",
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#7f93b9",
-                      fontSize: 10,
-                      textTransform: "uppercase",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Heatmap
-                  </div>
-                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>
-                    Ativo
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 10,
-                    padding: 10,
-                    background: "rgba(255,255,255,0.02)",
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#7f93b9",
-                      fontSize: 10,
-                      textTransform: "uppercase",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Caça
-                  </div>
-                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>
-                    Provável
-                  </div>
-                </div>
+                <StatCard title="Parede" value="71,600" positive />
+                <StatCard title="Cluster" value="Forte" positive />
+                <StatCard title="Heatmap" value="Ativo" positive />
+                <StatCard title="Caça" value="Provável" positive />
               </div>
             </div>
           ) : (
@@ -2469,6 +3179,20 @@ export default function AtlasChartPro2() {
               </div>
             </div>
           )}
+        </div>
+
+        <div
+          style={{
+            marginTop: 8,
+            display: "grid",
+            gridTemplateColumns: isSmall ? "1fr" : "repeat(4, minmax(0, 1fr))",
+            gap: 8,
+          }}
+        >
+          <StatCard title="Preço" value={price} positive={!change.startsWith("-")} />
+          <StatCard title="Variação" value={change} positive={!change.startsWith("-")} />
+          <StatCard title="Volume" value={volume} positive />
+          <StatCard title="Ferramenta" value={activeToolOptionData.label} positive />
         </div>
       </div>
     </div>
