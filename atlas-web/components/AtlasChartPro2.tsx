@@ -3,193 +3,219 @@
 import { useEffect, useRef, useState } from "react";
 import { createChart, ColorType } from "lightweight-charts";
 
-type Candle = {
-  time: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-};
-
 export default function AtlasChartPro2() {
-  const chartContainer = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<any>(null);
-  const seriesRef = useRef<any>(null);
 
-  const [symbol] = useState("BTCUSDT");
-  const [direction, setDirection] = useState("Neutro");
+const chartContainer = useRef<HTMLDivElement | null>(null);
+const chart = useRef<any>(null);
+const series = useRef<any>(null);
 
-  const [scanner, setScanner] = useState([
-    { symbol: "BTCUSDT", signal: "Compra Forte" },
-    { symbol: "ETHUSDT", signal: "Compra" },
-    { symbol: "SOLUSDT", signal: "Neutro" },
-    { symbol: "BNBUSDT", signal: "Venda" },
-  ]);
+const [score] = useState(92);
+const [direction] = useState("Compra Forte");
+const [risk] = useState("Médio");
 
-  useEffect(() => {
-    if (!chartContainer.current) return;
+useEffect(() => {
 
-    chartRef.current = createChart(chartContainer.current, {
-      height: 520,
-      layout: {
-        background: {
-          type: ColorType.Solid,
-          color: "#0b0f17",
-        },
-        textColor: "#9aa4c7",
-      },
-      grid: {
-        vertLines: { color: "#1e2330" },
-        horzLines: { color: "#1e2330" },
-      },
-    });
+if (!chartContainer.current) return;
 
-    seriesRef.current = chartRef.current.addCandlestickSeries();
+chart.current = createChart(chartContainer.current,{
+layout:{
+background:{type:ColorType.Solid,color:"#070b11"},
+textColor:"#9aa4c7"
+},
+grid:{
+vertLines:{color:"#1b2233"},
+horzLines:{color:"#1b2233"}
+},
+height:520
+});
 
-    const data: Candle[] = [];
+series.current = chart.current.addCandlestickSeries();
 
-    let price = 40000;
+let price = 40000;
 
-    for (let i = 0; i < 120; i++) {
-      const open = price;
-      const close = open + (Math.random() - 0.5) * 400;
-      const high = Math.max(open, close) + Math.random() * 200;
-      const low = Math.min(open, close) - Math.random() * 200;
+const data:any=[];
 
-      data.push({
-        time: 1700000000 + i * 60,
-        open,
-        high,
-        low,
-        close,
-      });
+for(let i=0;i<120;i++){
 
-      price = close;
-    }
+const open = price;
+const close = open + (Math.random()-0.5)*300;
+const high = Math.max(open,close)+Math.random()*120;
+const low = Math.min(open,close)-Math.random()*120;
 
-    seriesRef.current.setData(data);
+data.push({
+time:1700000000+i*60,
+open,
+high,
+low,
+close
+})
 
-    const interval = setInterval(() => {
-      const move = (Math.random() - 0.5) * 150;
-      price += move;
+price=close
+}
 
-      seriesRef.current.update({
-        time: Math.floor(Date.now() / 1000),
-        open: price - move,
-        high: price + Math.random() * 50,
-        low: price - Math.random() * 50,
-        close: price,
-      });
+series.current.setData(data)
 
-      if (move > 40) setDirection("Alta");
-      else if (move < -40) setDirection("Baixa");
-      else setDirection("Neutro");
-    }, 2000);
+},[])
 
-    return () => clearInterval(interval);
-  }, []);
+return (
 
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: "100vh",
-        background: "#070b11",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* TOP BAR */}
+<div style={{
+width:"100%",
+height:"100vh",
+display:"grid",
+gridTemplateColumns:"60px 1fr 320px",
+gridTemplateRows:"60px 1fr 200px",
+background:"#070b11",
+color:"#e2e8ff"
+}}>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 20,
-          padding: "10px 20px",
-          borderBottom: "1px solid #1b2233",
-          color: "#cbd5ff",
-        }}
-      >
-        <b>{symbol}</b>
+{/* TOPBAR */}
 
-        <span>Fluxo</span>
-        <span>Singularidade</span>
-        <span>Scanner</span>
+<div style={{
+gridColumn:"1 / span 3",
+display:"flex",
+alignItems:"center",
+padding:"10px 20px",
+borderBottom:"1px solid #1b2233",
+gap:20
+}}>
 
-        <span
-          style={{
-            marginLeft: "auto",
-            color:
-              direction === "Alta"
-                ? "#22c55e"
-                : direction === "Baixa"
-                ? "#ef4444"
-                : "#eab308",
-          }}
-        >
-          Direção: {direction}
-        </span>
-      </div>
+<img src="/logo.png" style={{height:36}}/>
 
-      {/* CHART */}
+<b>SINGULARIDADE</b>
 
-      <div
-        ref={chartContainer}
-        style={{
-          flex: 1,
-        }}
-      />
+<div style={{marginLeft:20}}>BTCUSDT</div>
 
-      {/* PAINEL INFERIOR */}
+<div style={{display:"flex",gap:10}}>
 
-      <div
-        style={{
-          height: 160,
-          borderTop: "1px solid #1b2233",
-          display: "flex",
-          padding: 10,
-          gap: 20,
-        }}
-      >
-        {/* LIQUIDITY MAP */}
+<span>1m</span>
+<span>5m</span>
+<span>15m</span>
+<span>1H</span>
+<span>4H</span>
 
-        <div
-          style={{
-            flex: 1,
-            background: "#0f1420",
-            padding: 10,
-          }}
-        >
-          <b>Mapa de Liquidez</b>
+</div>
 
-          <div
-            style={{
-              marginTop: 10,
-              height: 80,
-              background:
-                "linear-gradient(90deg,#1f2937,#3b82f6,#22c55e,#f59e0b,#ef4444)",
-            }}
-          />
-        </div>
+<div style={{marginLeft:"auto"}}>
 
-        {/* SCANNER */}
+IA Atlas Score: <b style={{color:"#22c55e"}}>{score}</b>
 
-        <div
-          style={{
-            flex: 1,
-            background: "#0f1420",
-            padding: 10,
-          }}
-        >
-          <b>Scanner de Mercado</b>
+</div>
 
-          {scanner.map((s, i) => (
-            <div key={i}>
-              {s.symbol} — {s.signal}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+</div>
+
+{/* LEFT TOOLBAR */}
+
+<div style={{
+borderRight:"1px solid #1b2233",
+display:"flex",
+flexDirection:"column",
+alignItems:"center",
+gap:20,
+paddingTop:20
+}}>
+
+<span>✚</span>
+<span>／</span>
+<span>▭</span>
+<span>∿</span>
+<span>◎</span>
+
+</div>
+
+{/* CHART */}
+
+<div
+ref={chartContainer}
+style={{
+position:"relative"
+}}
+/>
+
+{/* RIGHT PANEL */}
+
+<div style={{
+borderLeft:"1px solid #1b2233",
+padding:20
+}}>
+
+<h3>IA Atlas Insights</h3>
+
+<div style={{marginTop:20}}>
+
+<b>BTCUSDT</b>
+
+<div style={{
+fontSize:40,
+marginTop:10,
+color:"#22c55e"
+}}>
+{score}
+</div>
+
+<div style={{marginTop:10}}>
+Direção: {direction}
+</div>
+
+<div style={{marginTop:6}}>
+Risco: {risk}
+</div>
+
+<div style={{marginTop:6}}>
+Liquidez: Alta
+</div>
+
+<div style={{marginTop:6}}>
+Ciclo: Inicial
+</div>
+
+</div>
+
+</div>
+
+{/* BOTTOM PANEL */}
+
+<div style={{
+gridColumn:"2 / span 2",
+borderTop:"1px solid #1b2233",
+display:"flex",
+padding:20,
+gap:40
+}}>
+
+<div style={{flex:1}}>
+
+<b>Scanner de Mercado</b>
+
+<div style={{marginTop:10}}>
+BTCUSDT — Compra Forte
+</div>
+
+<div>ETHUSDT — Compra</div>
+
+<div>SOLUSDT — Neutro</div>
+
+<div>BNBUSDT — Venda</div>
+
+</div>
+
+<div style={{flex:1}}>
+
+<b>Fluxo</b>
+
+<div style={{marginTop:10}}>
+Volume: Alto
+</div>
+
+<div>Momentum: Crescente</div>
+
+<div>Estrutura: Bullish</div>
+
+</div>
+
+</div>
+
+</div>
+
+)
 }
