@@ -360,7 +360,7 @@ function ControlButton({
   );
 }
 
-export default function AtlasChartPro() {
+export default function AtlasChartPro2() {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
