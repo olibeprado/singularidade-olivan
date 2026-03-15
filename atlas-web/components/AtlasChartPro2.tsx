@@ -157,6 +157,7 @@ export default function AtlasChartPro2() {
         "BNBUSDT",
         "INJUSDT",
         "LINKUSDT"
+        "rayUSDT",
       ];
 
       const results:any[]=[];
