@@ -754,11 +754,7 @@ export default function AtlasChartPro2() {
           scoreLabel: "Pressão Compradora",
           rowsTop: [
             { label: "Resumo", value: "Fluxo", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
+            { label: "Ferramenta", value: chartTools.find((t) => t.key === activeTool)?.label || "--", positive: true },
             { label: "Força", value: "Alta", positive: true },
             {
               label: "Invalidação",
@@ -788,11 +784,7 @@ export default function AtlasChartPro2() {
           scoreLabel: "Pulso Forte",
           rowsTop: [
             { label: "Resumo", value: "Singularidade", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
+            { label: "Ferramenta", value: chartTools.find((t) => t.key === activeTool)?.label || "--", positive: true },
             { label: "Pulso", value: "Expandindo", positive: true },
             {
               label: "Invalidação",
@@ -822,11 +814,7 @@ export default function AtlasChartPro2() {
           scoreLabel: "Convicção Alta",
           rowsTop: [
             { label: "Resumo", value: "IA Atlas", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
+            { label: "Ferramenta", value: chartTools.find((t) => t.key === activeTool)?.label || "--", positive: true },
             { label: "Risco", value: "Médio", positive: true },
             {
               label: "Invalidação",
@@ -856,11 +844,7 @@ export default function AtlasChartPro2() {
           scoreLabel: "Base Sólida",
           rowsTop: [
             { label: "Resumo", value: "Estrutura", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
+            { label: "Ferramenta", value: chartTools.find((t) => t.key === activeTool)?.label || "--", positive: true },
             { label: "Força", value: "Alta", positive: true },
             {
               label: "Invalidação",
@@ -890,11 +874,7 @@ export default function AtlasChartPro2() {
           scoreLabel: "Validação Forte",
           rowsTop: [
             { label: "Resumo", value: "Euler", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
+            { label: "Ferramenta", value: chartTools.find((t) => t.key === activeTool)?.label || "--", positive: true },
             { label: "Validação", value: "Alta", positive: true },
             {
               label: "Invalidação",
@@ -924,20 +904,9 @@ export default function AtlasChartPro2() {
           scoreLabel: "Cluster Forte",
           rowsTop: [
             { label: "Resumo", value: "Liquidez", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
+            { label: "Ferramenta", value: chartTools.find((t) => t.key === activeTool)?.label || "--", positive: true },
             { label: "Parede", value: "71,600", positive: true },
-            {
-              label: "Invalidação",
-              value: lastClose
-                ? `$${(lastClose * 0.982).toLocaleString("en-US", {
-                    maximumFractionDigits: 2,
-                  })}`
-                : "--",
-            },
+            { label: "Invalidação", value: lastClose ? `$${(lastClose * 0.982).toLocaleString("en-US", { maximumFractionDigits: 2 })}` : "--" },
           ],
           rowsBottomTitle: "Mapa de Liquidez",
           rowsBottomDescription:
@@ -957,16 +926,8 @@ export default function AtlasChartPro2() {
           scoreLabel: signal,
           rowsTop: [
             { label: "Resumo", value: "Scanner", positive: true },
-            {
-              label: "Ferramenta",
-              value: chartTools.find((t) => t.key === activeTool)?.label || "--",
-              positive: true,
-            },
-            {
-              label: "Força",
-              value: score >= 85 ? "Alta" : "Moderada",
-              positive: true,
-            },
+            { label: "Ferramenta", value: chartTools.find((t) => t.key === activeTool)?.label || "--", positive: true },
+            { label: "Força", value: score >= 85 ? "Alta" : "Moderada", positive: true },
             {
               label: "Invalidação",
               value:
@@ -1269,6 +1230,12 @@ export default function AtlasChartPro2() {
         };
     }
   }, [activeModule]);
+
+  const summaryGridColumns = isSmall
+    ? "1fr"
+    : isMedium
+    ? "repeat(2, minmax(0, 1fr))"
+    : "1.3fr 1fr 1fr 1fr";
 
   const mainGridColumns = isSmall
     ? "1fr"
@@ -1577,6 +1544,8 @@ export default function AtlasChartPro2() {
       </div>
 
       <div style={{ padding: 12 }}>
+        
+
         <div
           style={{
             display: "grid",
@@ -1783,33 +1752,9 @@ export default function AtlasChartPro2() {
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <span style={{ color: "#00d4ff", fontWeight: 800 }}>{symbol}</span>
                 <span>OBP Engine</span>
-                <span
-                  style={{
-                    padding: "2px 6px",
-                    borderRadius: 6,
-                    background: "rgba(255,255,255,0.04)",
-                  }}
-                >
-                  A
-                </span>
-                <span
-                  style={{
-                    padding: "2px 6px",
-                    borderRadius: 6,
-                    background: "rgba(255,255,255,0.04)",
-                  }}
-                >
-                  OO
-                </span>
-                <span
-                  style={{
-                    padding: "2px 6px",
-                    borderRadius: 6,
-                    background: "rgba(255,255,255,0.04)",
-                  }}
-                >
-                  3
-                </span>
+                <span style={{ padding: "2px 6px", borderRadius: 6, background: "rgba(255,255,255,0.04)" }}>A</span>
+                <span style={{ padding: "2px 6px", borderRadius: 6, background: "rgba(255,255,255,0.04)" }}>OO</span>
+                <span style={{ padding: "2px 6px", borderRadius: 6, background: "rgba(255,255,255,0.04)" }}>3</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <span>Spread 0.12</span>
@@ -1892,7 +1837,9 @@ export default function AtlasChartPro2() {
                 {insightConfig.panelTitle}
               </div>
 
-              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 8 }}>
+              <div
+                style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 8 }}
+              >
                 {symbol}
               </div>
 
@@ -1927,7 +1874,9 @@ export default function AtlasChartPro2() {
                   marginBottom: 10,
                 }}
               >
-                <div style={{ height: 6, background: "rgba(255,255,255,0.05)" }}>
+                <div
+                  style={{ height: 6, background: "rgba(255,255,255,0.05)" }}
+                >
                   <div
                     style={{
                       width: `${insightConfig.scoreValue}%`,
@@ -2003,11 +1952,11 @@ export default function AtlasChartPro2() {
           style={{
             marginTop: 6,
             background:
-              "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
+                "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
             border: "1px solid rgba(255,255,255,0.07)",
             borderRadius: 14,
             padding: 10,
-            boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
+                boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
           }}
         >
           <div
@@ -2119,8 +2068,7 @@ export default function AtlasChartPro2() {
                               : idx === 3
                               ? "linear-gradient(90deg, rgba(255,90,120,0.10), rgba(255,130,0,0.54), rgba(255,200,90,0.62))"
                               : "linear-gradient(90deg, rgba(70,160,255,0.12), rgba(35,211,238,0.42), rgba(255,210,90,0.48))",
-                          boxShadow:
-                            idx < 2 ? "0 0 28px rgba(255,170,0,0.18) inset" : "none",
+                          boxShadow: idx < 2 ? "0 0 28px rgba(255,170,0,0.18) inset" : "none",
                         }}
                       >
                         <div
@@ -2164,96 +2112,21 @@ export default function AtlasChartPro2() {
                   gap: 8,
                 }}
               >
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 10,
-                    padding: 10,
-                    background: "rgba(255,255,255,0.02)",
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#7f93b9",
-                      fontSize: 10,
-                      textTransform: "uppercase",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Parede
-                  </div>
-                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>
-                    71,600
-                  </div>
+                <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ color: "#7f93b9", fontSize: 10, textTransform: "uppercase", marginBottom: 6 }}>Parede</div>
+                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>71,600</div>
                 </div>
-
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 10,
-                    padding: 10,
-                    background: "rgba(255,255,255,0.02)",
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#7f93b9",
-                      fontSize: 10,
-                      textTransform: "uppercase",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Cluster
-                  </div>
-                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>
-                    Forte
-                  </div>
+                <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ color: "#7f93b9", fontSize: 10, textTransform: "uppercase", marginBottom: 6 }}>Cluster</div>
+                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>Forte</div>
                 </div>
-
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 10,
-                    padding: 10,
-                    background: "rgba(255,255,255,0.02)",
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#7f93b9",
-                      fontSize: 10,
-                      textTransform: "uppercase",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Heatmap
-                  </div>
-                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>
-                    Ativo
-                  </div>
+                <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ color: "#7f93b9", fontSize: 10, textTransform: "uppercase", marginBottom: 6 }}>Heatmap</div>
+                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>Ativo</div>
                 </div>
-
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 10,
-                    padding: 10,
-                    background: "rgba(255,255,255,0.02)",
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#7f93b9",
-                      fontSize: 10,
-                      textTransform: "uppercase",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Caça
-                  </div>
-                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>
-                    Provável
-                  </div>
+                <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ color: "#7f93b9", fontSize: 10, textTransform: "uppercase", marginBottom: 6 }}>Caça</div>
+                  <div style={{ color: "#2fe19a", fontSize: 14, fontWeight: 900 }}>Provável</div>
                 </div>
               </div>
             </div>
@@ -2344,7 +2217,9 @@ export default function AtlasChartPro2() {
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: isSmall ? "1fr" : "repeat(2, minmax(0, 1fr))",
+                        gridTemplateColumns: isSmall
+                          ? "1fr"
+                          : "repeat(2, minmax(0, 1fr))",
                         gap: 10,
                         marginBottom: 12,
                       }}
@@ -2435,7 +2310,12 @@ export default function AtlasChartPro2() {
                     height="100%"
                     style={{ position: "relative" }}
                   >
-                    <path d={pulseConfig.path1} fill="none" stroke="#5ee7ff" strokeWidth="3" />
+                    <path
+                      d={pulseConfig.path1}
+                      fill="none"
+                      stroke="#5ee7ff"
+                      strokeWidth="3"
+                    />
                     <path
                       d={pulseConfig.path2}
                       fill="none"
@@ -2464,7 +2344,11 @@ export default function AtlasChartPro2() {
                     value={pulseConfig.stats[1].value}
                     positive={pulseConfig.stats[1].positive}
                   />
-                  <StatCard title={pulseConfig.biasLabel} value={pulseConfig.biasValue} positive />
+                  <StatCard
+                    title={pulseConfig.biasLabel}
+                    value={pulseConfig.biasValue}
+                    positive
+                  />
                 </div>
               </div>
             </div>
