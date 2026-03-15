@@ -212,7 +212,7 @@ function MiniMetricCard({
       style={{
         border: "1px solid rgba(255,255,255,0.07)",
         borderRadius: 12,
-        padding: 12,
+        padding: 8,
         background:
           "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))",
       }}
@@ -403,7 +403,7 @@ export default function AtlasChartPro2() {
 
   useEffect(() => {
     const updateChartHeight = () => {
-      const offset = isSmall ? 360 : isMedium ? 340 : 315;
+      const offset = isSmall ? 320 : isMedium ? 285 : 220;
       const nextHeight = Math.max(560, Math.min(window.innerHeight - offset, 900));
       setChartHeight(nextHeight);
     };
@@ -1242,8 +1242,8 @@ export default function AtlasChartPro2() {
     : isMedium
     ? "minmax(0, 1fr)"
     : isCompact
-    ? "46px minmax(0, 1fr) 270px"
-    : "50px minmax(0, 1fr) 292px";
+    ? "42px minmax(0, 1fr) 300px"
+    : "44px minmax(0, 1fr) 360px";
 
   const bottomGridColumns = isSmall ? "1fr" : "1.2fr 1fr";
 
@@ -1544,23 +1544,7 @@ export default function AtlasChartPro2() {
       </div>
 
       <div style={{ padding: 12 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: summaryGridColumns,
-            gap: 10,
-            marginBottom: 10,
-          }}
-        >
-          <StatCard title="Ativo" value={symbol} />
-          <StatCard title="Preço" value={price} positive />
-          <StatCard
-            title="Variação"
-            value={change}
-            positive={!change.startsWith("-")}
-          />
-          <StatCard title="Fonte" value={source.toUpperCase()} />
-        </div>
+        
 
         <div
           style={{
@@ -1809,7 +1793,7 @@ export default function AtlasChartPro2() {
                   "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
                 border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 14,
-                padding: 14,
+                padding: 12,
                 boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
               }}
             >
@@ -1904,7 +1888,7 @@ export default function AtlasChartPro2() {
                   "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
                 border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 14,
-                padding: 14,
+                padding: 12,
                 boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
               }}
             >
@@ -1937,12 +1921,12 @@ export default function AtlasChartPro2() {
 
         <div
           style={{
-            marginTop: 10,
+            marginTop: 6,
             background:
                 "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
             border: "1px solid rgba(255,255,255,0.07)",
             borderRadius: 14,
-            padding: 14,
+            padding: 12,
             boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
           }}
         >
@@ -2076,7 +2060,7 @@ export default function AtlasChartPro2() {
                     style={{
                       border: "1px solid rgba(255,255,255,0.07)",
                       borderRadius: 12,
-                      padding: 14,
+                      padding: 12,
                       background:
                         "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.015))",
                     }}
@@ -2214,7 +2198,7 @@ export default function AtlasChartPro2() {
                       style={{
                         border: "1px solid rgba(255,255,255,0.07)",
                         borderRadius: 16,
-                        padding: 14,
+                        padding: 12,
                         background:
                           "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
                       }}
@@ -2247,7 +2231,7 @@ export default function AtlasChartPro2() {
                 style={{
                   border: "1px solid rgba(255,255,255,0.07)",
                   borderRadius: 16,
-                  padding: 14,
+                  padding: 12,
                   background:
                     "radial-gradient(circle at top, rgba(38,106,255,0.18), transparent 35%), rgba(255,255,255,0.02)",
                   minHeight: 210,
