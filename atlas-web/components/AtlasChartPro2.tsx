@@ -54,9 +54,46 @@ type ToolGroup = {
   key: ToolKey;
   icon: string;
   label: string;
-  accent?: string;
   items: ToolOption[];
 };
+
+type Point = { x: number; y: number };
+
+type DrawingLine = {
+  id: string;
+  type: "line";
+  start: Point;
+  end: Point;
+  color: string;
+};
+
+type DrawingLevel = {
+  id: string;
+  type: "level";
+  y: number;
+  priceLabel: string;
+  color: string;
+};
+
+type DrawingZone = {
+  id: string;
+  type: "zone";
+  start: Point;
+  end: Point;
+  stroke: string;
+  fill: string;
+};
+
+type DrawingMeasure = {
+  id: string;
+  type: "measure";
+  start: Point;
+  end: Point;
+  delta: string;
+  pct: string;
+};
+
+type Drawing = DrawingLine | DrawingLevel | DrawingZone | DrawingMeasure;
 
 const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const timeframes = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
@@ -101,7 +138,7 @@ const toolGroups: ToolGroup[] = [
       },
       {
         id: "cursor-select",
-        label: "Selecionar objetos",
+        label: "Selecionar",
         icon: "⬚",
         description: "Base para futura seleção de objetos.",
       },
@@ -122,7 +159,7 @@ const toolGroups: ToolGroup[] = [
         id: "search-indicator",
         label: "Buscar indicador",
         icon: "ƒ",
-        description: "Abre a futura central de indicadores.",
+        description: "Central futura de indicadores.",
       },
     ],
   },
@@ -135,25 +172,25 @@ const toolGroups: ToolGroup[] = [
         id: "line-trend",
         label: "Linha de tendência",
         icon: "╱",
-        description: "Linha principal de tendência.",
+        description: "Desenha linha livre no gráfico.",
       },
       {
         id: "line-ray",
         label: "Raio",
         icon: "⟍",
-        description: "Linha projetada para frente.",
+        description: "Base visual para evolução futura.",
       },
       {
         id: "line-horizontal",
         label: "Linha horizontal",
         icon: "―",
-        description: "Marcação horizontal de preço.",
+        description: "Marca nível horizontal.",
       },
       {
         id: "line-vertical",
         label: "Linha vertical",
         icon: "│",
-        description: "Marca ponto no tempo.",
+        description: "Base visual para evolução futura.",
       },
     ],
   },
@@ -166,25 +203,25 @@ const toolGroups: ToolGroup[] = [
         id: "zone-supply",
         label: "Zona de oferta",
         icon: "▭",
-        description: "Área de oferta/venda.",
+        description: "Desenha zona de oferta.",
       },
       {
         id: "zone-demand",
         label: "Zona de demanda",
         icon: "▯",
-        description: "Área de demanda/compra.",
+        description: "Desenha zona de demanda.",
       },
       {
         id: "zone-premium",
         label: "Premium",
         icon: "⬒",
-        description: "Marcação de região premium.",
+        description: "Base visual para evolução futura.",
       },
       {
         id: "zone-discount",
         label: "Discount",
         icon: "⬓",
-        description: "Marcação de região discount.",
+        description: "Base visual para evolução futura.",
       },
     ],
   },
@@ -197,13 +234,13 @@ const toolGroups: ToolGroup[] = [
         id: "measure-price",
         label: "Medir preço",
         icon: "↕",
-        description: "Variação de preço entre pontos.",
+        description: "Mede diferença de preço e percentual.",
       },
       {
         id: "measure-range",
         label: "Medir range",
         icon: "⬍",
-        description: "Range completo do movimento.",
+        description: "Mede área/range visual.",
       },
       {
         id: "measure-rr",
@@ -215,7 +252,7 @@ const toolGroups: ToolGroup[] = [
         id: "measure-bars",
         label: "Contar candles",
         icon: "▥",
-        description: "Mede candles e tempo.",
+        description: "Base para futura contagem de candles.",
       },
     ],
   },
@@ -228,19 +265,13 @@ const toolGroups: ToolGroup[] = [
         id: "text-note",
         label: "Nota",
         icon: "T",
-        description: "Texto simples no gráfico.",
+        description: "Base futura para textos no gráfico.",
       },
       {
         id: "text-tag",
         label: "Etiqueta",
         icon: "🏷",
-        description: "Tag curta de observação.",
-      },
-      {
-        id: "text-arrow",
-        label: "Texto com seta",
-        icon: "➜",
-        description: "Comentário apontando região.",
+        description: "Base futura para etiquetas.",
       },
     ],
   },
@@ -253,19 +284,13 @@ const toolGroups: ToolGroup[] = [
         id: "pattern-channel",
         label: "Canal",
         icon: "∥",
-        description: "Estrutura em canal.",
+        description: "Base futura para canal.",
       },
       {
         id: "pattern-triangle",
         label: "Triângulo",
         icon: "△",
-        description: "Padrão triangular.",
-      },
-      {
-        id: "pattern-wedge",
-        label: "Cunha",
-        icon: "⋔",
-        description: "Padrão em cunha.",
+        description: "Base futura para triângulo.",
       },
     ],
   },
@@ -278,13 +303,7 @@ const toolGroups: ToolGroup[] = [
         id: "brush-free",
         label: "Traço livre",
         icon: "✎",
-        description: "Desenho livre futuro.",
-      },
-      {
-        id: "brush-highlight",
-        label: "Marca-texto",
-        icon: "🖍",
-        description: "Realce visual.",
+        description: "Base futura para desenho livre.",
       },
     ],
   },
@@ -297,13 +316,7 @@ const toolGroups: ToolGroup[] = [
         id: "path-arrow",
         label: "Caminho com seta",
         icon: "⤳",
-        description: "Projeção manual do movimento.",
-      },
-      {
-        id: "path-scenario",
-        label: "Cenário",
-        icon: "↝",
-        description: "Rascunho de cenário futuro.",
+        description: "Base futura para projeção manual.",
       },
     ],
   },
@@ -316,13 +329,13 @@ const toolGroups: ToolGroup[] = [
         id: "fib-retracement",
         label: "Retração",
         icon: "ϕ",
-        description: "Ferramenta de retração.",
+        description: "Base visual para futura retração Fibonacci.",
       },
       {
         id: "fib-extension",
         label: "Expansão",
         icon: "Φ",
-        description: "Ferramenta de expansão.",
+        description: "Base visual para futura expansão Fibonacci.",
       },
     ],
   },
@@ -335,13 +348,13 @@ const toolGroups: ToolGroup[] = [
         id: "tool-long",
         label: "Long",
         icon: "▲",
-        description: "Simulação visual de compra.",
+        description: "Base futura para simulação long.",
       },
       {
         id: "tool-short",
         label: "Short",
         icon: "▼",
-        description: "Simulação visual de venda.",
+        description: "Base futura para simulação short.",
       },
     ],
   },
@@ -354,19 +367,13 @@ const toolGroups: ToolGroup[] = [
         id: "forecast-up",
         label: "Projeção alta",
         icon: "↗",
-        description: "Cenário otimista.",
+        description: "Base visual para projeção.",
       },
       {
         id: "forecast-down",
         label: "Projeção baixa",
         icon: "↘",
-        description: "Cenário de queda.",
-      },
-      {
-        id: "forecast-neutral",
-        label: "Projeção lateral",
-        icon: "→",
-        description: "Cenário de consolidação.",
+        description: "Base visual para projeção.",
       },
     ],
   },
@@ -379,19 +386,13 @@ const toolGroups: ToolGroup[] = [
         id: "geom-circle",
         label: "Círculo",
         icon: "◯",
-        description: "Marcações circulares.",
+        description: "Base futura para formas geométricas.",
       },
       {
         id: "geom-rect",
         label: "Retângulo",
         icon: "▭",
-        description: "Caixa geométrica.",
-      },
-      {
-        id: "geom-ellipse",
-        label: "Elipse",
-        icon: "⬭",
-        description: "Marcação elíptica.",
+        description: "Base futura para retângulos geométricos.",
       },
     ],
   },
@@ -423,13 +424,7 @@ const toolGroups: ToolGroup[] = [
         id: "tool-objects",
         label: "Objetos",
         icon: "☷",
-        description: "Gerenciador futuro de objetos.",
-      },
-      {
-        id: "tool-templates",
-        label: "Templates",
-        icon: "📁",
-        description: "Salvar layouts/ferramentas.",
+        description: "Base futura para gerenciador de objetos.",
       },
     ],
   },
@@ -442,13 +437,7 @@ const toolGroups: ToolGroup[] = [
         id: "magnet-on",
         label: "Magnet ligado",
         icon: "⌬",
-        description: "Snap futuro em preços e candles.",
-      },
-      {
-        id: "magnet-soft",
-        label: "Magnet suave",
-        icon: "◈",
-        description: "Atração leve.",
+        description: "Base futura para snap em preços e candles.",
       },
     ],
   },
@@ -472,6 +461,19 @@ const toolGroups: ToolGroup[] = [
     ],
   },
 ];
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getRectFromPoints(a: Point, b: Point) {
+  return {
+    left: Math.min(a.x, b.x),
+    top: Math.min(a.y, b.y),
+    width: Math.abs(a.x - b.x),
+    height: Math.abs(a.y - b.y),
+  };
+}
 
 function StatCard({
   title,
@@ -804,13 +806,16 @@ function ToolSidebar({
     <div
       style={{
         display: "flex",
-        gap: 10,
+        gap: compact ? 0 : 10,
         alignItems: "flex-start",
+        width: compact ? 48 : 320,
+        minWidth: compact ? 48 : 320,
       }}
     >
       <div
         style={{
-          width: compact ? 40 : 46,
+          width: 48,
+          minWidth: 48,
           background:
             "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
           border: "1px solid rgba(255,255,255,0.07)",
@@ -834,8 +839,8 @@ function ToolSidebar({
               title={group.label}
               onClick={() => onOpenGroup(group.key)}
               style={{
-                width: compact ? 28 : 32,
-                height: compact ? 28 : 32,
+                width: 32,
+                height: 32,
                 borderRadius: 9,
                 border: active
                   ? `1px solid ${accent}55`
@@ -872,7 +877,8 @@ function ToolSidebar({
       {!compact && (
         <div
           style={{
-            width: 270,
+            width: 262,
+            minWidth: 262,
             background:
               "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.995))",
             border: "1px solid rgba(255,255,255,0.07)",
@@ -1128,7 +1134,210 @@ function ToolSidebar({
   );
 }
 
+function DrawingOverlay({
+  width,
+  height,
+  drawings,
+  draftLine,
+  draftZone,
+  draftMeasure,
+}: {
+  width: number;
+  height: number;
+  drawings: Drawing[];
+  draftLine: DrawingLine | null;
+  draftZone: DrawingZone | null;
+  draftMeasure: DrawingMeasure | null;
+}) {
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        zIndex: 6,
+      }}
+    >
+      {drawings.map((drawing) => {
+        if (drawing.type === "line") {
+          return (
+            <g key={drawing.id}>
+              <line
+                x1={drawing.start.x}
+                y1={drawing.start.y}
+                x2={drawing.end.x}
+                y2={drawing.end.y}
+                stroke={drawing.color}
+                strokeWidth="1.8"
+              />
+              <circle cx={drawing.start.x} cy={drawing.start.y} r="2.4" fill={drawing.color} />
+              <circle cx={drawing.end.x} cy={drawing.end.y} r="2.4" fill={drawing.color} />
+            </g>
+          );
+        }
+
+        if (drawing.type === "level") {
+          return (
+            <g key={drawing.id}>
+              <line
+                x1={0}
+                y1={drawing.y}
+                x2={width}
+                y2={drawing.y}
+                stroke={drawing.color}
+                strokeWidth="1.5"
+                strokeDasharray="6 5"
+              />
+              <rect
+                x={Math.max(width - 86, 8)}
+                y={drawing.y - 12}
+                width={78}
+                height={18}
+                rx={6}
+                fill="rgba(255,214,90,0.16)"
+                stroke="rgba(255,214,90,0.40)"
+              />
+              <text
+                x={Math.max(width - 47, 16)}
+                y={drawing.y}
+                fill="#fff4bf"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize="10"
+                fontWeight="700"
+              >
+                {drawing.priceLabel}
+              </text>
+            </g>
+          );
+        }
+
+        if (drawing.type === "zone") {
+          const rect = getRectFromPoints(drawing.start, drawing.end);
+          return (
+            <g key={drawing.id}>
+              <rect
+                x={rect.left}
+                y={rect.top}
+                width={Math.max(rect.width, 2)}
+                height={Math.max(rect.height, 2)}
+                rx={8}
+                fill={drawing.fill}
+                stroke={drawing.stroke}
+                strokeWidth="1.4"
+              />
+            </g>
+          );
+        }
+
+        const rect = getRectFromPoints(drawing.start, drawing.end);
+        return (
+          <g key={drawing.id}>
+            <rect
+              x={rect.left}
+              y={rect.top}
+              width={Math.max(rect.width, 2)}
+              height={Math.max(rect.height, 2)}
+              rx={8}
+              fill="rgba(255,214,90,0.10)"
+              stroke="rgba(255,214,90,0.60)"
+              strokeWidth="1.4"
+            />
+            <line
+              x1={drawing.start.x}
+              y1={drawing.start.y}
+              x2={drawing.end.x}
+              y2={drawing.end.y}
+              stroke="#ffd65a"
+              strokeWidth="1.2"
+              strokeDasharray="4 4"
+            />
+            <rect
+              x={rect.left + 8}
+              y={rect.top + 8}
+              width={98}
+              height={36}
+              rx={8}
+              fill="rgba(6,10,20,0.82)"
+              stroke="rgba(255,214,90,0.35)"
+            />
+            <text x={rect.left + 16} y={rect.top + 22} fill="#fff4bf" fontSize="10" fontWeight="700">
+              {drawing.delta}
+            </text>
+            <text x={rect.left + 16} y={rect.top + 35} fill="#cfe4ff" fontSize="10" fontWeight="700">
+              {drawing.pct}
+            </text>
+          </g>
+        );
+      })}
+
+      {draftLine && (
+        <line
+          x1={draftLine.start.x}
+          y1={draftLine.start.y}
+          x2={draftLine.end.x}
+          y2={draftLine.end.y}
+          stroke={draftLine.color}
+          strokeWidth="1.5"
+          strokeDasharray="5 5"
+        />
+      )}
+
+      {draftZone &&
+        (() => {
+          const rect = getRectFromPoints(draftZone.start, draftZone.end);
+          return (
+            <rect
+              x={rect.left}
+              y={rect.top}
+              width={Math.max(rect.width, 2)}
+              height={Math.max(rect.height, 2)}
+              rx={8}
+              fill={draftZone.fill}
+              stroke={draftZone.stroke}
+              strokeWidth="1.4"
+              strokeDasharray="5 4"
+            />
+          );
+        })()}
+
+      {draftMeasure &&
+        (() => {
+          const rect = getRectFromPoints(draftMeasure.start, draftMeasure.end);
+          return (
+            <g>
+              <rect
+                x={rect.left}
+                y={rect.top}
+                width={Math.max(rect.width, 2)}
+                height={Math.max(rect.height, 2)}
+                rx={8}
+                fill="rgba(255,214,90,0.08)"
+                stroke="rgba(255,214,90,0.55)"
+                strokeWidth="1.4"
+                strokeDasharray="5 4"
+              />
+              <line
+                x1={draftMeasure.start.x}
+                y1={draftMeasure.start.y}
+                x2={draftMeasure.end.x}
+                y2={draftMeasure.end.y}
+                stroke="#ffd65a"
+                strokeWidth="1.2"
+                strokeDasharray="4 4"
+              />
+            </g>
+          );
+        })()}
+    </svg>
+  );
+}
+
 export default function AtlasChartPro2() {
+  const chartShellRef = useRef<HTMLDivElement | null>(null);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
@@ -1140,7 +1349,7 @@ export default function AtlasChartPro2() {
   const [activeTool, setActiveTool] = useState<ToolKey>("cursor");
   const [activeToolOption, setActiveToolOption] = useState("cursor-default");
   const [favoriteTools, setFavoriteTools] = useState<string[]>([
-    "line-trend",
+    "line-horizontal",
     "measure-price",
     "fib-retracement",
   ]);
@@ -1157,6 +1366,14 @@ export default function AtlasChartPro2() {
   const [viewportWidth, setViewportWidth] = useState(1440);
   const [viewMode, setViewMode] = useState<ViewMode>("auto");
   const [spaceOffset] = useState(10);
+  const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
+
+  const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [firstPoint, setFirstPoint] = useState<Point | null>(null);
+  const [draftLine, setDraftLine] = useState<DrawingLine | null>(null);
+  const [draftZone, setDraftZone] = useState<DrawingZone | null>(null);
+  const [draftMeasure, setDraftMeasure] = useState<DrawingMeasure | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const hasInitialFitRef = useRef(false);
   const savedScrollPositionRef = useRef<number | null>(null);
@@ -1244,8 +1461,8 @@ export default function AtlasChartPro2() {
 
     volumeSeries.priceScale().applyOptions({
       scaleMargins: {
-        top: 0.84,
-        bottom: 0,
+        top: 0.76,
+        bottom: 0.02,
       },
     });
 
@@ -1253,21 +1470,44 @@ export default function AtlasChartPro2() {
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
 
-    const handleResize = () => {
+    const syncChartSize = () => {
       if (!chartContainerRef.current || !chartRef.current) return;
+      const width = chartContainerRef.current.clientWidth;
+      const height = chartContainerRef.current.clientHeight;
       chartRef.current.applyOptions({
-        width: chartContainerRef.current.clientWidth,
+        width,
         height: chartHeight,
       });
+      setChartSize({ width, height });
     };
 
-    window.addEventListener("resize", handleResize);
+    const resizeObserver = new ResizeObserver(() => {
+      syncChartSize();
+    });
+
+    resizeObserver.observe(chartContainerRef.current);
+    syncChartSize();
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       chart.remove();
     };
   }, [chartHeight]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (!chartContainerRef.current || !chartRef.current) return;
+      const width = chartContainerRef.current.clientWidth;
+      const height = chartContainerRef.current.clientHeight;
+      chartRef.current.applyOptions({
+        width,
+        height: chartHeight,
+      });
+      setChartSize({ width, height });
+    }, 40);
+
+    return () => window.clearTimeout(timer);
+  }, [showToolPanel, viewportWidth, chartHeight]);
 
   useEffect(() => {
     setViewMode("auto");
@@ -1450,6 +1690,22 @@ export default function AtlasChartPro2() {
 
     return toolGroups[0].items[0];
   }, [activeToolGroup, activeToolOption]);
+
+  const isInteractiveTool = useMemo(() => {
+    return [
+      "line-trend",
+      "line-horizontal",
+      "zone-supply",
+      "zone-demand",
+      "measure-price",
+      "measure-range",
+    ].includes(activeToolOption);
+  }, [activeToolOption]);
+
+  const overlayCursor = useMemo(() => {
+    if (!isInteractiveTool) return "default";
+    return "crosshair";
+  }, [isInteractiveTool]);
 
   const bottomTabs =
     activeModule === "Fluxo"
@@ -2019,17 +2275,13 @@ export default function AtlasChartPro2() {
     }
   }, [activeModule]);
 
+  const sidebarWidth = isSmall ? 0 : showToolPanel ? 320 : 48;
+
   const mainGridColumns = isSmall
     ? "1fr"
     : isMedium
-    ? "minmax(0, 1fr)"
-    : showToolPanel
-    ? isCompact
-      ? "320px minmax(0, 1fr) 320px"
-      : "330px minmax(0, 1fr) 410px"
-    : isCompact
-    ? "56px minmax(0, 1fr) 320px"
-    : "60px minmax(0, 1fr) 410px";
+    ? `${sidebarWidth}px minmax(0, 1fr)`
+    : `${sidebarWidth}px minmax(0, 1fr) 410px`;
 
   const bottomGridColumns = isSmall ? "1fr" : "1.2fr 1fr";
 
@@ -2040,6 +2292,215 @@ export default function AtlasChartPro2() {
     { level: "71,350", strength: 64, tag: "Stops prováveis" },
     { level: "71,220", strength: 58, tag: "Pool de liquidez" },
   ];
+
+  const clearDrafts = () => {
+    setFirstPoint(null);
+    setDraftLine(null);
+    setDraftZone(null);
+    setDraftMeasure(null);
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    clearDrafts();
+  }, [activeToolOption]);
+
+  const getPointFromEvent = (event: React.MouseEvent<HTMLDivElement>): Point | null => {
+    if (!chartShellRef.current) return null;
+    const rect = chartShellRef.current.getBoundingClientRect();
+    return {
+      x: clamp(event.clientX - rect.left, 0, rect.width),
+      y: clamp(event.clientY - rect.top, 0, rect.height),
+    };
+  };
+
+  const pointToPrice = (point: Point) => {
+    const priceValue = candleSeriesRef.current?.coordinateToPrice?.(point.y);
+    return typeof priceValue === "number" ? priceValue : lastClose ?? 0;
+  };
+
+  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!isInteractiveTool) return;
+    const point = getPointFromEvent(event);
+    if (!point) return;
+
+    if (activeToolOption === "line-horizontal") {
+      const priceValue = pointToPrice(point);
+      setDrawings((prev) => [
+        ...prev,
+        {
+          id: `level-${Date.now()}`,
+          type: "level",
+          y: point.y,
+          priceLabel: priceValue.toLocaleString("en-US", {
+            maximumFractionDigits: 2,
+          }),
+          color: "#ffd65a",
+        },
+      ]);
+      return;
+    }
+
+    if (activeToolOption === "line-trend") {
+      if (!firstPoint) {
+        setFirstPoint(point);
+        setDraftLine({
+          id: "draft-line",
+          type: "line",
+          start: point,
+          end: point,
+          color: "#7fe8ff",
+        });
+        return;
+      }
+      setDrawings((prev) => [
+        ...prev,
+        {
+          id: `line-${Date.now()}`,
+          type: "line",
+          start: firstPoint,
+          end: point,
+          color: "#7fe8ff",
+        },
+      ]);
+      clearDrafts();
+      return;
+    }
+
+    if (activeToolOption === "measure-price" || activeToolOption === "measure-range") {
+      if (!firstPoint) {
+        setFirstPoint(point);
+        setDraftMeasure({
+          id: "draft-measure",
+          type: "measure",
+          start: point,
+          end: point,
+          delta: "0.00",
+          pct: "0.00%",
+        });
+        return;
+      }
+      const startPrice = pointToPrice(firstPoint);
+      const endPrice = pointToPrice(point);
+      const delta = endPrice - startPrice;
+      const pct = startPrice !== 0 ? (delta / startPrice) * 100 : 0;
+
+      setDrawings((prev) => [
+        ...prev,
+        {
+          id: `measure-${Date.now()}`,
+          type: "measure",
+          start: firstPoint,
+          end: point,
+          delta: `${delta >= 0 ? "+" : ""}${delta.toLocaleString("en-US", {
+            maximumFractionDigits: 2,
+          })}`,
+          pct: `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
+        },
+      ]);
+      clearDrafts();
+    }
+  };
+
+  const handleOverlayMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (activeToolOption !== "zone-supply" && activeToolOption !== "zone-demand") return;
+    const point = getPointFromEvent(event);
+    if (!point) return;
+
+    const isSupply = activeToolOption === "zone-supply";
+
+    setIsDragging(true);
+    setFirstPoint(point);
+    setDraftZone({
+      id: "draft-zone",
+      type: "zone",
+      start: point,
+      end: point,
+      stroke: isSupply ? "rgba(255,123,123,0.75)" : "rgba(94,231,255,0.75)",
+      fill: isSupply ? "rgba(255,123,123,0.10)" : "rgba(94,231,255,0.10)",
+    });
+  };
+
+  const handleOverlayMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!isInteractiveTool) return;
+    const point = getPointFromEvent(event);
+    if (!point) return;
+
+    if (activeToolOption === "line-trend" && firstPoint) {
+      setDraftLine({
+        id: "draft-line",
+        type: "line",
+        start: firstPoint,
+        end: point,
+        color: "#7fe8ff",
+      });
+    }
+
+    if (
+      (activeToolOption === "zone-supply" || activeToolOption === "zone-demand") &&
+      isDragging &&
+      firstPoint
+    ) {
+      const isSupply = activeToolOption === "zone-supply";
+      setDraftZone({
+        id: "draft-zone",
+        type: "zone",
+        start: firstPoint,
+        end: point,
+        stroke: isSupply ? "rgba(255,123,123,0.75)" : "rgba(94,231,255,0.75)",
+        fill: isSupply ? "rgba(255,123,123,0.10)" : "rgba(94,231,255,0.10)",
+      });
+    }
+
+    if (
+      (activeToolOption === "measure-price" || activeToolOption === "measure-range") &&
+      firstPoint
+    ) {
+      const startPrice = pointToPrice(firstPoint);
+      const endPrice = pointToPrice(point);
+      const delta = endPrice - startPrice;
+      const pct = startPrice !== 0 ? (delta / startPrice) * 100 : 0;
+
+      setDraftMeasure({
+        id: "draft-measure",
+        type: "measure",
+        start: firstPoint,
+        end: point,
+        delta: `${delta >= 0 ? "+" : ""}${delta.toLocaleString("en-US", {
+          maximumFractionDigits: 2,
+        })}`,
+        pct: `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
+      });
+    }
+  };
+
+  const handleOverlayMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (
+      (activeToolOption !== "zone-supply" && activeToolOption !== "zone-demand") ||
+      !isDragging ||
+      !firstPoint
+    ) {
+      return;
+    }
+
+    const point = getPointFromEvent(event);
+    if (!point) return;
+
+    const isSupply = activeToolOption === "zone-supply";
+
+    setDrawings((prev) => [
+      ...prev,
+      {
+        id: `zone-${Date.now()}`,
+        type: "zone",
+        start: firstPoint,
+        end: point,
+        stroke: isSupply ? "rgba(255,123,123,0.75)" : "rgba(94,231,255,0.75)",
+        fill: isSupply ? "rgba(255,123,123,0.10)" : "rgba(94,231,255,0.10)",
+      },
+    ]);
+    clearDrafts();
+  };
 
   const zoomIn = () => {
     const timeScale = chartRef.current?.timeScale();
@@ -2110,6 +2571,11 @@ export default function AtlasChartPro2() {
         ? prev.filter((id) => id !== optionId)
         : [...prev, optionId]
     );
+  };
+
+  const clearDrawings = () => {
+    setDrawings([]);
+    clearDrafts();
   };
 
   return (
@@ -2367,17 +2833,19 @@ export default function AtlasChartPro2() {
           }}
         >
           {!isSmall && (
-            <ToolSidebar
-              groups={toolGroups}
-              activeGroup={activeTool}
-              activeOptionId={activeToolOption}
-              favorites={favoriteTools}
-              onOpenGroup={handleOpenToolGroup}
-              onSelectOption={handleSelectToolOption}
-              onToggleFavorite={toggleFavoriteTool}
-              accent={moduleAccent}
-              compact={!showToolPanel}
-            />
+            <div style={{ width: sidebarWidth, overflow: "hidden" }}>
+              <ToolSidebar
+                groups={toolGroups}
+                activeGroup={activeTool}
+                activeOptionId={activeToolOption}
+                favorites={favoriteTools}
+                onOpenGroup={handleOpenToolGroup}
+                onSelectOption={handleSelectToolOption}
+                onToggleFavorite={toggleFavoriteTool}
+                accent={moduleAccent}
+                compact={!showToolPanel}
+              />
+            </div>
           )}
 
           <div
@@ -2489,6 +2957,7 @@ export default function AtlasChartPro2() {
                 <ControlButton onClick={zoomOut}>Zoom -</ControlButton>
                 <ControlButton onClick={zoomIn}>Zoom +</ControlButton>
                 <ControlButton onClick={goToCurrent}>Agora</ControlButton>
+                <ControlButton onClick={clearDrawings}>Limpar desenhos</ControlButton>
 
                 <ControlButton
                   onClick={() => {
@@ -2609,191 +3078,226 @@ export default function AtlasChartPro2() {
             )}
 
             <div
-              ref={chartContainerRef}
+              ref={chartShellRef}
               style={{
+                position: "relative",
                 width: "100%",
                 height: chartHeight,
-                cursor:
-                  activeTool === "cursor" || activeTool === "search"
-                    ? "crosshair"
-                    : "default",
-              }}
-            />
-          </div>
-
-          <div style={{ display: "grid", gap: 8 }}>
-            <div
-              style={{
-                background:
-                  "linear-gradient(180deg, rgba(9,14,28,0.99), rgba(7,11,22,0.995))",
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 14,
-                padding: 10,
-                boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
               }}
             >
               <div
+                ref={chartContainerRef}
                 style={{
-                  color: "#dfe8ff",
-                  fontWeight: 900,
-                  fontSize: 13,
-                  marginBottom: 10,
+                  width: "100%",
+                  height: chartHeight,
                 }}
-              >
-                {insightConfig.panelTitle}
-              </div>
-
-              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 8 }}>
-                {symbol}
-              </div>
+              />
 
               <div
+                onClick={handleOverlayClick}
+                onMouseDown={handleOverlayMouseDown}
+                onMouseMove={handleOverlayMouseMove}
+                onMouseUp={handleOverlayMouseUp}
+                onMouseLeave={() => {
+                  if (isDragging) clearDrafts();
+                }}
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-end",
-                  marginBottom: 12,
-                  gap: 12,
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 5,
+                  background: "transparent",
+                  pointerEvents: isInteractiveTool ? "auto" : "none",
+                  cursor: overlayCursor,
+                }}
+              />
+
+              <DrawingOverlay
+                width={chartSize.width}
+                height={chartSize.height}
+                drawings={drawings}
+                draftLine={draftLine}
+                draftZone={draftZone}
+                draftMeasure={draftMeasure}
+              />
+            </div>
+          </div>
+
+          {!isMedium && (
+            <div style={{ display: "grid", gap: 8 }}>
+              <div
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(9,14,28,0.99), rgba(7,11,22,0.995))",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 14,
+                  padding: 10,
+                  boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
                 }}
               >
-                <div style={{ fontSize: 18, fontWeight: 900 }}>{symbol}</div>
                 <div
                   style={{
-                    fontSize: 30,
-                    lineHeight: 1,
+                    color: "#dfe8ff",
                     fontWeight: 900,
-                    color: scoreColor,
-                    textShadow: `0 0 18px ${moduleAccent}22`,
+                    fontSize: 13,
+                    marginBottom: 10,
                   }}
                 >
-                  {insightConfig.scoreValue}
+                  {insightConfig.panelTitle}
                 </div>
-              </div>
 
-              <div
-                style={{
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  marginBottom: 10,
-                }}
-              >
-                <div style={{ height: 6, background: "rgba(255,255,255,0.05)" }}>
-                  <div
-                    style={{
-                      width: `${insightConfig.scoreValue}%`,
-                      height: "100%",
-                      background: `linear-gradient(90deg, ${moduleAccent}70, rgba(61,229,255,0.95))`,
-                      boxShadow: `0 0 18px ${moduleAccent}35`,
-                    }}
-                  />
+                <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 8 }}>
+                  {symbol}
                 </div>
+
                 <div
                   style={{
-                    padding: "10px 11px",
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: "center",
-                    fontWeight: 800,
-                    fontSize: 12,
+                    alignItems: "flex-end",
+                    marginBottom: 12,
+                    gap: 12,
                   }}
                 >
-                  <span style={{ color: "#8fa3c7" }}>Score</span>
-                  <span style={{ color: "#eef4ff" }}>{insightConfig.scoreLabel}</span>
+                  <div style={{ fontSize: 18, fontWeight: 900 }}>{symbol}</div>
+                  <div
+                    style={{
+                      fontSize: 30,
+                      lineHeight: 1,
+                      fontWeight: 900,
+                      color: scoreColor,
+                      textShadow: `0 0 18px ${moduleAccent}22`,
+                    }}
+                  >
+                    {insightConfig.scoreValue}
+                  </div>
                 </div>
+
+                <div
+                  style={{
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    marginBottom: 10,
+                  }}
+                >
+                  <div style={{ height: 6, background: "rgba(255,255,255,0.05)" }}>
+                    <div
+                      style={{
+                        width: `${insightConfig.scoreValue}%`,
+                        height: "100%",
+                        background: `linear-gradient(90deg, ${moduleAccent}70, rgba(61,229,255,0.95))`,
+                        boxShadow: `0 0 18px ${moduleAccent}35`,
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      padding: "10px 11px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontWeight: 800,
+                      fontSize: 12,
+                    }}
+                  >
+                    <span style={{ color: "#8fa3c7" }}>Score</span>
+                    <span style={{ color: "#eef4ff" }}>{insightConfig.scoreLabel}</span>
+                  </div>
+                </div>
+
+                {insightConfig.rowsTop.map((row) => (
+                  <RightRow
+                    key={`${activeModule}-top-${row.label}`}
+                    label={row.label}
+                    value={row.value}
+                    positive={row.positive}
+                  />
+                ))}
               </div>
 
-              {insightConfig.rowsTop.map((row) => (
-                <RightRow
-                  key={`${activeModule}-top-${row.label}`}
-                  label={row.label}
-                  value={row.value}
-                  positive={row.positive}
-                />
-              ))}
-            </div>
-
-            <div
-              style={{
-                background:
-                  "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 14,
-                padding: 10,
-                boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
-              }}
-            >
               <div
                 style={{
-                  color: "#dfe8ff",
-                  fontWeight: 900,
-                  fontSize: 14,
-                  marginBottom: 8,
-                }}
-              >
-                {insightConfig.rowsBottomTitle}
-              </div>
-
-              <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 12 }}>
-                {insightConfig.rowsBottomDescription}
-              </div>
-
-              {insightConfig.rowsBottom.map((row) => (
-                <RightRow
-                  key={`${activeModule}-bottom-${row.label}`}
-                  label={row.label}
-                  value={row.value}
-                  positive={row.positive}
-                />
-              ))}
-            </div>
-
-            <div
-              style={{
-                background:
-                  "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 14,
-                padding: 10,
-                boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
-              }}
-            >
-              <div
-                style={{
-                  color: "#dfe8ff",
-                  fontWeight: 900,
-                  fontSize: 13,
-                  marginBottom: 10,
-                }}
-              >
-                Ferramenta Ativa
-              </div>
-              <RightRow label="Pasta" value={activeToolGroup.label} positive />
-              <RightRow label="Item" value={activeToolOptionData.label} positive />
-              <RightRow
-                label="Favorito"
-                value={favoriteTools.includes(activeToolOptionData.id) ? "Sim" : "Não"}
-                positive={favoriteTools.includes(activeToolOptionData.id)}
-              />
-              <div
-                style={{
-                  marginTop: 10,
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: 12,
-                  padding: 10,
                   background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
+                    "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 14,
+                  padding: 10,
+                  boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
                 }}
               >
-                <div style={{ color: "#8ea4c8", fontSize: 11, marginBottom: 6 }}>
-                  Descrição
+                <div
+                  style={{
+                    color: "#dfe8ff",
+                    fontWeight: 900,
+                    fontSize: 14,
+                    marginBottom: 8,
+                  }}
+                >
+                  {insightConfig.rowsBottomTitle}
                 </div>
-                <div style={{ color: "#dfe8ff", fontSize: 12, lineHeight: 1.45 }}>
-                  {activeToolOptionData.description}
+
+                <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 12 }}>
+                  {insightConfig.rowsBottomDescription}
+                </div>
+
+                {insightConfig.rowsBottom.map((row) => (
+                  <RightRow
+                    key={`${activeModule}-bottom-${row.label}`}
+                    label={row.label}
+                    value={row.value}
+                    positive={row.positive}
+                  />
+                ))}
+              </div>
+
+              <div
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 14,
+                  padding: 10,
+                  boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
+                }}
+              >
+                <div
+                  style={{
+                    color: "#dfe8ff",
+                    fontWeight: 900,
+                    fontSize: 13,
+                    marginBottom: 10,
+                  }}
+                >
+                  Ferramenta Ativa
+                </div>
+                <RightRow label="Pasta" value={activeToolGroup.label} positive />
+                <RightRow label="Item" value={activeToolOptionData.label} positive />
+                <RightRow
+                  label="Favorito"
+                  value={favoriteTools.includes(activeToolOptionData.id) ? "Sim" : "Não"}
+                  positive={favoriteTools.includes(activeToolOptionData.id)}
+                />
+                <RightRow label="Desenhos" value={`${drawings.length}`} positive={drawings.length > 0} />
+                <div
+                  style={{
+                    marginTop: 10,
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    borderRadius: 12,
+                    padding: 10,
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
+                  }}
+                >
+                  <div style={{ color: "#8ea4c8", fontSize: 11, marginBottom: 6 }}>
+                    Descrição
+                  </div>
+                  <div style={{ color: "#dfe8ff", fontSize: 12, lineHeight: 1.45 }}>
+                    {activeToolOptionData.description}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div
@@ -3192,7 +3696,7 @@ export default function AtlasChartPro2() {
           <StatCard title="Preço" value={price} positive={!change.startsWith("-")} />
           <StatCard title="Variação" value={change} positive={!change.startsWith("-")} />
           <StatCard title="Volume" value={volume} positive />
-          <StatCard title="Ferramenta" value={activeToolOptionData.label} positive />
+          <StatCard title="Desenhos" value={`${drawings.length}`} positive={drawings.length > 0} />
         </div>
       </div>
     </div>
