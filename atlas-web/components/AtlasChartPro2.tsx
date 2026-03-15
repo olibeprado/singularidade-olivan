@@ -87,7 +87,7 @@ borderBottom:"1px solid #1b2233"
 
 }}>
 
-<img src="/logo.png" style={{height:34}}/>
+<img src="/logo-singularidade.png" style={{height:34}}/>
 
 <b>SINGULARIDADE</b>
 
