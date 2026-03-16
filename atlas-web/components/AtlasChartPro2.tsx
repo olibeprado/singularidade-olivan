@@ -493,6 +493,19 @@ function getHitTarget(
   return null;
 }
 
+function miniIconBtn(color: string): React.CSSProperties {
+  return {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
+    color,
+    cursor: "pointer",
+    fontSize: 12,
+  };
+}
+
 function ControlButton({
   children,
   active,
@@ -705,6 +718,7 @@ function ToolSidebar({
   onToggleFavorite,
   accent,
   compact,
+  expanded,
 }: {
   groups: ToolGroup[];
   activeGroup: ToolKey | null;
@@ -715,6 +729,7 @@ function ToolSidebar({
   onToggleFavorite: (optionId: string) => void;
   accent: string;
   compact?: boolean;
+  expanded?: boolean;
 }) {
   const activeGroupData = groups.find((g) => g.key === activeGroup) ?? groups[0];
 
@@ -722,10 +737,11 @@ function ToolSidebar({
     <div
       style={{
         display: "flex",
-        gap: compact ? 0 : 10,
+        gap: expanded ? 10 : 0,
         alignItems: "flex-start",
-        width: compact ? 48 : 300,
-        minWidth: compact ? 48 : 300,
+        width: expanded ? 300 : 48,
+        minWidth: expanded ? 300 : 48,
+        transition: "width 0.18s ease",
       }}
     >
       <div
@@ -788,7 +804,7 @@ function ToolSidebar({
         })}
       </div>
 
-      {!compact && (
+      {expanded && !compact && (
         <div
           style={{
             width: 242,
@@ -1067,19 +1083,6 @@ function ObjectsPanel({
       )}
     </div>
   );
-}
-
-function miniIconBtn(color: string): React.CSSProperties {
-  return {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
-    color,
-    cursor: "pointer",
-    fontSize: 12,
-  };
 }
 
 function DrawingOverlay({
@@ -1397,6 +1400,8 @@ function DrawingOverlay({
 export default function AtlasChartPro2() {
   const chartShellRef = useRef<HTMLDivElement | null>(null);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
+  const sidebarHoverTimeoutRef = useRef<number | null>(null);
+
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
   const volumeSeriesRef = useRef<any>(null);
@@ -1411,7 +1416,9 @@ export default function AtlasChartPro2() {
     "measure-price",
     "fib-retracement",
   ]);
-  const [showToolPanel, setShowToolPanel] = useState(true);
+
+  const [showToolPanel, setShowToolPanel] = useState(false);
+  const [showObjectsPanel, setShowObjectsPanel] = useState(false);
 
   const [source, setSource] = useState("carregando...");
   const [price, setPrice] = useState("--");
@@ -1543,11 +1550,27 @@ export default function AtlasChartPro2() {
     resizeObserver.observe(chartContainerRef.current);
     syncChartSize();
 
+    const timeScale = chart.timeScale();
+    const handleManualInteraction = () => {
+      if (viewMode === "manual") {
+        const currentScrollPosition = timeScale.scrollPosition();
+        if (
+          typeof currentScrollPosition === "number" &&
+          Number.isFinite(currentScrollPosition)
+        ) {
+          savedScrollPositionRef.current = currentScrollPosition;
+        }
+      }
+    };
+
+    timeScale.subscribeVisibleLogicalRangeChange(handleManualInteraction);
+
     return () => {
+      timeScale.unsubscribeVisibleLogicalRangeChange(handleManualInteraction);
       resizeObserver.disconnect();
       chart.remove();
     };
-  }, [chartHeight]);
+  }, [chartHeight, viewMode]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -1559,7 +1582,7 @@ export default function AtlasChartPro2() {
     }, 40);
 
     return () => window.clearTimeout(timer);
-  }, [showToolPanel, viewportWidth, chartHeight]);
+  }, [showToolPanel, viewportWidth, chartHeight, showObjectsPanel]);
 
   useEffect(() => {
     setViewMode("auto");
@@ -1588,7 +1611,10 @@ export default function AtlasChartPro2() {
 
         if (timeScale && viewMode === "manual") {
           const currentScrollPosition = timeScale.scrollPosition();
-          if (typeof currentScrollPosition === "number" && Number.isFinite(currentScrollPosition)) {
+          if (
+            typeof currentScrollPosition === "number" &&
+            Number.isFinite(currentScrollPosition)
+          ) {
             savedScrollPositionRef.current = currentScrollPosition;
           }
         }
@@ -1844,15 +1870,19 @@ export default function AtlasChartPro2() {
     setDrawings((prev) => prev.map((d) => (d.id === id ? updater(d) : d)));
   };
 
+  const enterSelectionMode = () => {
+    setActiveTool("cursor");
+    setActiveToolOption("cursor-default");
+  };
+
+  const finishDrawingAndAutoSelect = (drawing: Drawing) => {
+    addDrawing(drawing);
+    clearDraftState();
+    enterSelectionMode();
+  };
+
   const handleOpenToolGroup = (key: ToolKey) => {
-    if (key === activeTool) {
-      setShowToolPanel((prev) => !prev);
-      return;
-    }
-
     setActiveTool(key);
-    setShowToolPanel(true);
-
     const found = toolGroups.find((g) => g.key === key);
     if (found?.items[0]) {
       setActiveToolOption(found.items[0].id);
@@ -1862,14 +1892,36 @@ export default function AtlasChartPro2() {
   const handleSelectToolOption = (groupKey: ToolKey, optionId: string) => {
     setActiveTool(groupKey);
     setActiveToolOption(optionId);
-    setShowToolPanel(true);
     clearDraftState();
+    if (!isSmall) {
+      setShowToolPanel(false);
+    }
   };
 
   const toggleFavoriteTool = (optionId: string) => {
     setFavoriteTools((prev) =>
       prev.includes(optionId) ? prev.filter((id) => id !== optionId) : [...prev, optionId]
     );
+  };
+
+  const handleSidebarMouseEnter = () => {
+    if (isSmall) return;
+    if (sidebarHoverTimeoutRef.current) {
+      window.clearTimeout(sidebarHoverTimeoutRef.current);
+    }
+    sidebarHoverTimeoutRef.current = window.setTimeout(() => {
+      setShowToolPanel(true);
+    }, 2000);
+  };
+
+  const handleSidebarMouseLeave = () => {
+    if (sidebarHoverTimeoutRef.current) {
+      window.clearTimeout(sidebarHoverTimeoutRef.current);
+      sidebarHoverTimeoutRef.current = null;
+    }
+    if (!isSmall) {
+      setShowToolPanel(false);
+    }
   };
 
   const handleOverlayMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -1879,23 +1931,17 @@ export default function AtlasChartPro2() {
 
     setLastPointerPoint(point);
 
-    if (isCursorMode) {
-      const hit = getHitTarget(point, drawings);
-      if (hit) {
-        setSelectedDrawingId(hit.id);
-        setSelectedHandle(hit.handle);
-        setDragMode("edit");
-      } else {
-        setSelectedDrawingId(null);
-        setDragMode(null);
-        setSelectedHandle(null);
-      }
+    const hit = getHitTarget(point, drawings);
+    if (hit) {
+      setSelectedDrawingId(hit.id);
+      setSelectedHandle(hit.handle);
+      setDragMode("edit");
       return;
     }
 
     if (activeToolOption === "line-horizontal") {
       const priceValue = pointToPrice(point);
-      addDrawing({
+      finishDrawingAndAutoSelect({
         id: makeId("level"),
         type: "level",
         name: "Linha Horizontal",
@@ -1905,6 +1951,13 @@ export default function AtlasChartPro2() {
         }),
         color: "#ffd65a",
       });
+      return;
+    }
+
+    if (activeToolOption === "cursor-default") {
+      setSelectedDrawingId(null);
+      setDragMode(null);
+      setSelectedHandle(null);
       return;
     }
 
@@ -1989,17 +2042,15 @@ export default function AtlasChartPro2() {
     }
 
     if (activeToolOption === "forecast-up") {
-      if (!creationFirstPoint) {
-        setDraftDrawing({
-          id: "draft-projection",
-          type: "projection",
-          name: "Projeção",
-          start: point,
-          mid: point,
-          end: point,
-          color: "#ffd65a",
-        });
-      }
+      setDraftDrawing({
+        id: "draft-projection",
+        type: "projection",
+        name: "Projeção",
+        start: point,
+        mid: point,
+        end: point,
+        color: "#ffd65a",
+      });
     }
   };
 
@@ -2256,7 +2307,7 @@ export default function AtlasChartPro2() {
 
     if (activeToolOption === "zone-supply" || activeToolOption === "zone-demand") {
       const isSupply = activeToolOption === "zone-supply";
-      addDrawing({
+      finishDrawingAndAutoSelect({
         id: makeId("zone"),
         type: "zone",
         name: isSupply ? "Zona de Oferta" : "Zona de Demanda",
@@ -2265,13 +2316,12 @@ export default function AtlasChartPro2() {
         stroke: isSupply ? "rgba(255,123,123,0.75)" : "rgba(94,231,255,0.75)",
         fill: isSupply ? "rgba(255,123,123,0.10)" : "rgba(94,231,255,0.10)",
       });
-      clearDraftState();
       return;
     }
 
     if (activeToolOption === "measure-price") {
       const values = buildMeasureValues(creationFirstPoint, point);
-      addDrawing({
+      finishDrawingAndAutoSelect({
         id: makeId("measure"),
         type: "measure",
         name: "Medir Preço",
@@ -2280,12 +2330,11 @@ export default function AtlasChartPro2() {
         delta: values.delta,
         pct: values.pct,
       });
-      clearDraftState();
       return;
     }
 
     if (activeToolOption === "fib-retracement") {
-      addDrawing({
+      finishDrawingAndAutoSelect({
         id: makeId("fib"),
         type: "fib",
         name: "Fibonacci",
@@ -2294,12 +2343,11 @@ export default function AtlasChartPro2() {
         color: "#7fe8ff",
         levels: [0, 0.236, 0.382, 0.5, 0.618, 1],
       });
-      clearDraftState();
       return;
     }
 
     if (activeToolOption === "pattern-channel") {
-      addDrawing({
+      finishDrawingAndAutoSelect({
         id: makeId("channel"),
         type: "channel",
         name: "Canal",
@@ -2308,24 +2356,22 @@ export default function AtlasChartPro2() {
         offset: 38,
         color: "#8de0ff",
       });
-      clearDraftState();
       return;
     }
 
     if (activeToolOption === "tool-long" || activeToolOption === "tool-short") {
-      addDrawing({
+      finishDrawingAndAutoSelect({
         id: makeId("trade"),
         type: activeToolOption === "tool-long" ? "long" : "short",
         name: activeToolOption === "tool-long" ? "Long" : "Short",
         start: creationFirstPoint,
         end: point,
       });
-      clearDraftState();
       return;
     }
 
     if (activeToolOption === "line-trend") {
-      addDrawing({
+      finishDrawingAndAutoSelect({
         id: makeId("line"),
         type: "line",
         name: "Linha de Tendência",
@@ -2333,7 +2379,6 @@ export default function AtlasChartPro2() {
         end: point,
         color: "#7fe8ff",
       });
-      clearDraftState();
       return;
     }
 
@@ -2352,7 +2397,7 @@ export default function AtlasChartPro2() {
         return;
       }
 
-      addDrawing({
+      finishDrawingAndAutoSelect({
         id: makeId("projection"),
         type: "projection",
         name: "Projeção",
@@ -2361,7 +2406,6 @@ export default function AtlasChartPro2() {
         end: point,
         color: "#ffd65a",
       });
-      clearDraftState();
     }
   };
 
@@ -2469,7 +2513,14 @@ export default function AtlasChartPro2() {
     setSelectedDrawingId(id);
   };
 
-  const overlayCursor = isCursorMode ? "default" : isInteractiveTool ? "crosshair" : "default";
+  const overlayCursor =
+    dragMode === "edit"
+      ? "grabbing"
+      : isCursorMode
+      ? "default"
+      : isInteractiveTool
+      ? "crosshair"
+      : "default";
 
   return (
     <div
@@ -2697,7 +2748,11 @@ export default function AtlasChartPro2() {
           }}
         >
           {!isSmall && (
-            <div style={{ width: sidebarWidth, overflow: "hidden" }}>
+            <div
+              style={{ width: sidebarWidth, overflow: "hidden" }}
+              onMouseEnter={handleSidebarMouseEnter}
+              onMouseLeave={handleSidebarMouseLeave}
+            >
               <ToolSidebar
                 groups={toolGroups}
                 activeGroup={activeTool}
@@ -2707,7 +2762,8 @@ export default function AtlasChartPro2() {
                 onSelectOption={handleSelectToolOption}
                 onToggleFavorite={toggleFavoriteTool}
                 accent={moduleAccent}
-                compact={!showToolPanel}
+                compact={false}
+                expanded={showToolPanel}
               />
             </div>
           )}
@@ -2772,29 +2828,40 @@ export default function AtlasChartPro2() {
                   flexWrap: "wrap",
                 }}
               >
-                <ControlButton active={viewMode === "auto"} onClick={() => {
-                  setViewMode("auto");
-                  savedScrollPositionRef.current = 0;
-                  chartRef.current?.timeScale()?.scrollToRealTime();
-                }}>
+                <ControlButton
+                  active={viewMode === "auto"}
+                  onClick={() => {
+                    setViewMode("auto");
+                    savedScrollPositionRef.current = 0;
+                    chartRef.current?.timeScale()?.scrollToRealTime();
+                  }}
+                >
                   Auto
                 </ControlButton>
 
-                <ControlButton active={viewMode === "manual"} onClick={() => {
-                  setViewMode("manual");
-                  const currentScroll = chartRef.current?.timeScale()?.scrollPosition();
-                  if (typeof currentScroll === "number" && Number.isFinite(currentScroll)) {
-                    savedScrollPositionRef.current = currentScroll;
-                  }
-                }}>
+                <ControlButton
+                  active={viewMode === "manual"}
+                  onClick={() => {
+                    setViewMode("manual");
+                    const timeScale = chartRef.current?.timeScale();
+                    if (!timeScale) return;
+                    const currentScroll = timeScale.scrollPosition();
+                    if (typeof currentScroll === "number" && Number.isFinite(currentScroll)) {
+                      savedScrollPositionRef.current = currentScroll;
+                    }
+                  }}
+                >
                   Manual
                 </ControlButton>
 
-                <ControlButton active={viewMode === "space"} onClick={() => {
-                  setViewMode("space");
-                  savedScrollPositionRef.current = spaceOffset;
-                  chartRef.current?.timeScale()?.scrollToPosition(spaceOffset, false);
-                }}>
+                <ControlButton
+                  active={viewMode === "space"}
+                  onClick={() => {
+                    setViewMode("space");
+                    savedScrollPositionRef.current = spaceOffset;
+                    chartRef.current?.timeScale()?.scrollToPosition(spaceOffset, false);
+                  }}
+                >
                   Seguir + Espaço
                 </ControlButton>
 
@@ -2816,22 +2883,8 @@ export default function AtlasChartPro2() {
                 flexWrap: "wrap",
               }}
             >
-              <ControlButton
-                active={showToolPanel}
-                onClick={() => setShowToolPanel((prev) => !prev)}
-              >
-                Ferramentas
-              </ControlButton>
-
-              <ControlButton
-                active={isCursorMode}
-                onClick={() => {
-                  setActiveTool("cursor");
-                  setActiveToolOption("cursor-default");
-                  clearDraftState();
-                }}
-              >
-                Seleção
+              <ControlButton onClick={() => setShowObjectsPanel((prev) => !prev)}>
+                {showObjectsPanel ? "Fechar objetos" : "Objetos"}
               </ControlButton>
 
               <ControlButton
@@ -2892,6 +2945,38 @@ export default function AtlasChartPro2() {
                     </button>
                   );
                 })}
+              </div>
+            )}
+
+            {showObjectsPanel && (
+              <div
+                style={{
+                  padding: 10,
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01))",
+                }}
+              >
+                <ObjectsPanel
+                  drawings={drawings}
+                  selectedId={selectedDrawingId}
+                  onSelect={setSelectedDrawingId}
+                  onToggleHide={(id) =>
+                    setDrawings((prev) =>
+                      prev.map((d) => (d.id === id ? { ...d, hidden: !d.hidden } : d))
+                    )
+                  }
+                  onToggleLock={(id) =>
+                    setDrawings((prev) =>
+                      prev.map((d) => (d.id === id ? { ...d, locked: !d.locked } : d))
+                    )
+                  }
+                  onDelete={(id) => {
+                    setDrawings((prev) => prev.filter((d) => d.id !== id));
+                    if (selectedDrawingId === id) setSelectedDrawingId(null);
+                  }}
+                  onBringFront={bringFront}
+                />
               </div>
             )}
 
@@ -3081,27 +3166,6 @@ export default function AtlasChartPro2() {
                   </>
                 )}
               </div>
-
-              <ObjectsPanel
-                drawings={drawings}
-                selectedId={selectedDrawingId}
-                onSelect={setSelectedDrawingId}
-                onToggleHide={(id) =>
-                  setDrawings((prev) =>
-                    prev.map((d) => (d.id === id ? { ...d, hidden: !d.hidden } : d))
-                  )
-                }
-                onToggleLock={(id) =>
-                  setDrawings((prev) =>
-                    prev.map((d) => (d.id === id ? { ...d, locked: !d.locked } : d))
-                  )
-                }
-                onDelete={(id) => {
-                  setDrawings((prev) => prev.filter((d) => d.id !== id));
-                  if (selectedDrawingId === id) setSelectedDrawingId(null);
-                }}
-                onBringFront={bringFront}
-              />
             </div>
           )}
         </div>
@@ -3429,31 +3493,6 @@ export default function AtlasChartPro2() {
           <StatCard title="Volume" value={volume} positive />
           <StatCard title="Desenhos" value={`${drawings.length}`} positive={drawings.length > 0} />
         </div>
-
-        {isMedium && (
-          <div style={{ marginTop: 8 }}>
-            <ObjectsPanel
-              drawings={drawings}
-              selectedId={selectedDrawingId}
-              onSelect={setSelectedDrawingId}
-              onToggleHide={(id) =>
-                setDrawings((prev) =>
-                  prev.map((d) => (d.id === id ? { ...d, hidden: !d.hidden } : d))
-                )
-              }
-              onToggleLock={(id) =>
-                setDrawings((prev) =>
-                  prev.map((d) => (d.id === id ? { ...d, locked: !d.locked } : d))
-                )
-              }
-              onDelete={(id) => {
-                setDrawings((prev) => prev.filter((d) => d.id !== id));
-                if (selectedDrawingId === id) setSelectedDrawingId(null);
-              }}
-              onBringFront={bringFront}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
