@@ -405,6 +405,7 @@ function getDrawingHandles(d: Drawing): { key: DragHandle; point: Point }[] {
     const len = Math.max(1, Math.hypot(dx, dy));
     const nx = -dy / len;
     const ny = dx / len;
+
     return [
       { key: "start", point: d.start },
       { key: "end", point: d.end },
@@ -610,6 +611,86 @@ function StatCard({
       >
         {value}
       </div>
+    </div>
+  );
+}
+
+function RightRow({
+  label,
+  value,
+  positive,
+}: {
+  label: string;
+  value: string;
+  positive?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "8px 0",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        gap: 12,
+      }}
+    >
+      <span style={{ color: "#99a9c8", fontSize: 12 }}>{label}</span>
+      <span
+        style={{
+          color:
+            positive === undefined ? "#eef4ff" : positive ? "#34d399" : "#fb7185",
+          fontWeight: 800,
+          fontSize: 12,
+          textAlign: "right",
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function ScannerRow({
+  asset,
+  score,
+  trend,
+  price,
+}: {
+  asset: string;
+  score: string;
+  trend: string;
+  price: string;
+}) {
+  const up =
+    trend.toLowerCase().includes("forte") ||
+    trend.toLowerCase().includes("positivo") ||
+    trend.toLowerCase().includes("compra") ||
+    trend.toLowerCase().includes("alta") ||
+    trend.toLowerCase().includes("validação") ||
+    trend.toLowerCase().includes("confluência") ||
+    trend.toLowerCase().includes("assistida") ||
+    trend.toLowerCase().includes("pool") ||
+    trend.toLowerCase().includes("cluster");
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1.2fr 1fr 1fr 1fr",
+        gap: 10,
+        padding: "12px 0",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+        color: "#d8e2ff",
+        fontSize: 13,
+      }}
+    >
+      <div style={{ fontWeight: 800 }}>{asset}</div>
+      <div>{score}</div>
+      <div style={{ color: up ? "#34d399" : "#f59e0b", fontWeight: 800 }}>
+        {trend}
+      </div>
+      <div style={{ textAlign: "right" }}>{price}</div>
     </div>
   );
 }
@@ -1655,6 +1736,68 @@ export default function AtlasChartPro2() {
     ? `${sidebarWidth}px minmax(0, 1fr)`
     : `${sidebarWidth}px minmax(0, 1fr) 360px`;
 
+  const bottomGridColumns = isSmall ? "1fr" : "1.2fr 1fr";
+
+  const leftRows =
+    activeModule === "Fluxo"
+      ? [
+          { asset: "BTCUSDT", score: "91.7", trend: "Pressão Compradora", price: "$69,489" },
+          { asset: "ETHUSDT", score: "84.1", trend: "Fluxo Positivo", price: "$3,745" },
+          { asset: "SOLUSDT", score: "79.4", trend: "Absorção", price: "$168.40" },
+          { asset: "BNBUSDT", score: "72.3", trend: "Aceleração", price: "$611.22" },
+        ]
+      : activeModule === "Liquidez"
+      ? [
+          { asset: "71,600", score: "98.1", trend: "Parede Forte", price: "$12.8M" },
+          { asset: "71,250", score: "91.4", trend: "Cluster Alto", price: "$9.3M" },
+          { asset: "70,980", score: "86.2", trend: "Pool de Stops", price: "$7.1M" },
+          { asset: "70,720", score: "80.9", trend: "Liquidez Ativa", price: "$5.9M" },
+        ]
+      : [
+          { asset: "BTCUSDT", score: "92.4", trend: "Compra Forte", price: "$69,489" },
+          { asset: "ETHUSDT", score: "87.2", trend: "Positivo", price: "$3,745" },
+          { asset: "SOLUSDT", score: "82.8", trend: "Positivo", price: "$168.40" },
+          { asset: "BNBUSDT", score: "74.9", trend: "Aceleração", price: "$611.22" },
+        ];
+
+  const liquidityHeatRows = [
+    { level: "71,600", strength: 96, tag: "Cluster institucional" },
+    { level: "71,520", strength: 82, tag: "Liquidez acumulada" },
+    { level: "71,420", strength: 74, tag: "Zona ativa" },
+    { level: "71,350", strength: 64, tag: "Stops prováveis" },
+    { level: "71,220", strength: 58, tag: "Pool de liquidez" },
+  ];
+
+  const bottomTabs =
+    activeModule === "Fluxo"
+      ? ["Fluxo", "Pressão", "Volume", "Eventos"]
+      : activeModule === "Singularidade"
+      ? ["Singularidade", "Confluência", "Pulso", "Eventos"]
+      : activeModule === "IA Atlas"
+      ? ["IA Atlas", "Score", "Risco", "Eventos"]
+      : activeModule === "Estrutura"
+      ? ["Estrutura", "Euler", "Ciclo", "Eventos"]
+      : activeModule === "Euler"
+      ? ["Euler", "Curvatura", "Validação", "Eventos"]
+      : activeModule === "Liquidez"
+      ? ["Map", "Heatmap", "Clusters", "Eventos"]
+      : ["Indicadores", "Fluxo", "Scanner", "Eventos"];
+
+  const rightPanelTitle =
+    activeModule === "Scanner"
+      ? "Scanner"
+      : activeModule === "Fluxo"
+      ? "Fluxo"
+      : activeModule === "IA Atlas"
+      ? "IA Atlas"
+      : activeModule === "Estrutura"
+      ? "Estrutura"
+      : activeModule === "Euler"
+      ? "Euler"
+      : activeModule === "Liquidez"
+      ? "Liquidez"
+      : "Singularidade";
+
   const clearDraftState = () => {
     setCreationFirstPoint(null);
     setCreationSecondPoint(null);
@@ -2277,6 +2420,18 @@ export default function AtlasChartPro2() {
     }
   };
 
+  const resetChart = () => {
+    savedScrollPositionRef.current = 0;
+    setViewMode("auto");
+    const timeScale = chartRef.current?.timeScale();
+    if (timeScale) {
+      timeScale.fitContent();
+      window.setTimeout(() => {
+        chartRef.current?.timeScale()?.scrollToRealTime();
+      }, 20);
+    }
+  };
+
   const clearAllDrawings = () => {
     setDrawings([]);
     setSelectedDrawingId(null);
@@ -2617,22 +2772,36 @@ export default function AtlasChartPro2() {
                   flexWrap: "wrap",
                 }}
               >
-                <ControlButton active={showToolPanel} onClick={() => setShowToolPanel((prev) => !prev)}>
-                  Ferramentas
-                </ControlButton>
-                <ControlButton active={viewMode === "auto"} onClick={() => setViewMode("auto")}>
+                <ControlButton active={viewMode === "auto"} onClick={() => {
+                  setViewMode("auto");
+                  savedScrollPositionRef.current = 0;
+                  chartRef.current?.timeScale()?.scrollToRealTime();
+                }}>
                   Auto
                 </ControlButton>
-                <ControlButton active={viewMode === "manual"} onClick={() => setViewMode("manual")}>
+
+                <ControlButton active={viewMode === "manual"} onClick={() => {
+                  setViewMode("manual");
+                  const currentScroll = chartRef.current?.timeScale()?.scrollPosition();
+                  if (typeof currentScroll === "number" && Number.isFinite(currentScroll)) {
+                    savedScrollPositionRef.current = currentScroll;
+                  }
+                }}>
                   Manual
                 </ControlButton>
-                <ControlButton active={viewMode === "space"} onClick={() => setViewMode("space")}>
+
+                <ControlButton active={viewMode === "space"} onClick={() => {
+                  setViewMode("space");
+                  savedScrollPositionRef.current = spaceOffset;
+                  chartRef.current?.timeScale()?.scrollToPosition(spaceOffset, false);
+                }}>
                   Seguir + Espaço
                 </ControlButton>
+
                 <ControlButton onClick={zoomOut}>Zoom -</ControlButton>
                 <ControlButton onClick={zoomIn}>Zoom +</ControlButton>
                 <ControlButton onClick={goToCurrent}>Agora</ControlButton>
-                <ControlButton onClick={clearAllDrawings}>Limpar</ControlButton>
+                <ControlButton onClick={resetChart}>Reset</ControlButton>
               </div>
             </div>
 
@@ -2647,6 +2816,13 @@ export default function AtlasChartPro2() {
                 flexWrap: "wrap",
               }}
             >
+              <ControlButton
+                active={showToolPanel}
+                onClick={() => setShowToolPanel((prev) => !prev)}
+              >
+                Ferramentas
+              </ControlButton>
+
               <ControlButton
                 active={isCursorMode}
                 onClick={() => {
@@ -2671,6 +2847,8 @@ export default function AtlasChartPro2() {
               >
                 {selectedDrawing?.hidden ? "Mostrar" : "Ocultar"}
               </ControlButton>
+
+              <ControlButton onClick={clearAllDrawings}>Limpar desenhos</ControlButton>
 
               <ControlButton danger onClick={deleteSelected}>
                 Apagar selecionado
@@ -2783,7 +2961,7 @@ export default function AtlasChartPro2() {
                     marginBottom: 10,
                   }}
                 >
-                  {activeModule}
+                  {rightPanelTitle}
                 </div>
 
                 <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 8 }}>
@@ -2829,11 +3007,79 @@ export default function AtlasChartPro2() {
                       }}
                     />
                   </div>
+                  <div
+                    style={{
+                      padding: "10px 11px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontWeight: 800,
+                      fontSize: 12,
+                    }}
+                  >
+                    <span style={{ color: "#8fa3c7" }}>Score</span>
+                    <span style={{ color: "#eef4ff" }}>
+                      {change.startsWith("-") ? "Pressão Vendedora" : "Compra Forte"}
+                    </span>
+                  </div>
                 </div>
 
-                <div style={{ color: "#8ea4c8", fontSize: 12, lineHeight: 1.5 }}>
-                  Motor V3 leve com seleção, mover objeto, editar pontas, travar, ocultar, deletar e painel de objetos.
+                <RightRow label="Resumo" value={activeModule} positive />
+                <RightRow label="Ferramenta" value={activeToolGroup.label} positive />
+                <RightRow
+                  label="Força"
+                  value={score >= 85 ? "Forte" : score >= 70 ? "Moderada" : "Fraca"}
+                  positive={score >= 70}
+                />
+                <RightRow
+                  label="Invalidação"
+                  value={
+                    lastClose
+                      ? `$${(lastClose * 0.985).toLocaleString("en-US", {
+                          maximumFractionDigits: 2,
+                        })}`
+                      : "--"
+                  }
+                />
+              </div>
+
+              <div
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 14,
+                  padding: 10,
+                }}
+              >
+                <div
+                  style={{
+                    color: "#dfe8ff",
+                    fontWeight: 900,
+                    fontSize: 13,
+                    marginBottom: 10,
+                  }}
+                >
+                  {activeModule === "Liquidez" ? "Mapa de Liquidez" : "Scanner Atlas"}
                 </div>
+
+                {activeModule === "Liquidez" ? (
+                  <>
+                    <RightRow label="Parede" value="71,600" positive />
+                    <RightRow label="Cluster" value="Forte" positive />
+                    <RightRow label="Heatmap" value="Ativo" positive />
+                    <RightRow label="Stops" value="Acima" positive />
+                    <RightRow label="Pool" value="71,250" positive />
+                  </>
+                ) : (
+                  <>
+                    <RightRow label="Estrutura" value="Positivo" positive />
+                    <RightRow label="Euler" value="Forte" positive />
+                    <RightRow label="Singularidade" value="5 / 6" positive />
+                    <RightRow label="Razão de Prata" value="Suporte Sólido" positive />
+                    <RightRow label="Ciclo" value="Acelerado" positive />
+                  </>
+                )}
               </div>
 
               <ObjectsPanel
@@ -2856,6 +3102,316 @@ export default function AtlasChartPro2() {
                 }}
                 onBringFront={bringFront}
               />
+            </div>
+          )}
+        </div>
+
+        <div
+          style={{
+            marginTop: 6,
+            background:
+              "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 14,
+            padding: 10,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 12,
+              flexWrap: "wrap",
+              marginBottom: 14,
+            }}
+          >
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {bottomTabs.map((tab, i) => (
+                <div
+                  key={tab}
+                  style={{
+                    padding: "7px 11px",
+                    borderRadius: 11,
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    background:
+                      i === 0
+                        ? `linear-gradient(180deg, ${moduleAccent}24, rgba(255,255,255,0.03))`
+                        : "rgba(255,255,255,0.025)",
+                    color: i === 0 ? "#eef4ff" : "#a8b8d8",
+                    fontWeight: 800,
+                    fontSize: 11,
+                  }}
+                >
+                  {tab}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ color: "#88a0c9", fontSize: 12 }}>
+              {activeModule} • {activeToolGroup.label} • {activeToolOptionData.label}
+            </div>
+          </div>
+
+          {activeModule === "Liquidez" ? (
+            <div style={{ display: "grid", gap: 14 }}>
+              <div>
+                <div
+                  style={{
+                    color: "#dfe8ff",
+                    fontWeight: 900,
+                    marginBottom: 8,
+                    fontSize: 14,
+                  }}
+                >
+                  Mapa de Liquidez
+                </div>
+                <div style={{ color: "#8ea4c8", fontSize: 12, marginBottom: 12 }}>
+                  Heatmap institucional no painel inferior para manter o gráfico limpo.
+                </div>
+              </div>
+
+              <div
+                style={{
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 14,
+                  padding: 16,
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+                }}
+              >
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isSmall ? "1fr" : "92px minmax(0, 1fr) 190px",
+                    gap: 14,
+                    alignItems: "stretch",
+                  }}
+                >
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {liquidityHeatRows.map((row) => (
+                      <div
+                        key={row.level}
+                        style={{
+                          height: 30,
+                          display: "flex",
+                          alignItems: "center",
+                          color: "#dfe8ff",
+                          fontWeight: 800,
+                          fontSize: 13,
+                        }}
+                      >
+                        {row.level}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {liquidityHeatRows.map((row, idx) => (
+                      <div
+                        key={row.level}
+                        style={{
+                          position: "relative",
+                          height: 30,
+                          borderRadius: 8,
+                          overflow: "hidden",
+                          background:
+                            idx === 0
+                              ? "linear-gradient(90deg, rgba(255,80,80,0.20), rgba(255,120,0,0.92), rgba(255,230,120,0.98))"
+                              : idx === 1
+                              ? "linear-gradient(90deg, rgba(255,100,60,0.16), rgba(255,150,0,0.78), rgba(255,220,100,0.90))"
+                              : idx === 2
+                              ? "linear-gradient(90deg, rgba(255,120,40,0.12), rgba(255,170,0,0.66), rgba(255,210,90,0.76))"
+                              : idx === 3
+                              ? "linear-gradient(90deg, rgba(255,90,120,0.10), rgba(255,130,0,0.54), rgba(255,200,90,0.62))"
+                              : "linear-gradient(90deg, rgba(70,160,255,0.12), rgba(35,211,238,0.42), rgba(255,210,90,0.48))",
+                        }}
+                      >
+                        <div
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            width: `${row.strength}%`,
+                            background:
+                              "linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.14), rgba(255,255,255,0.02))",
+                            mixBlendMode: "screen",
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div
+                    style={{
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      borderRadius: 12,
+                      padding: 12,
+                      background:
+                        "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.015))",
+                    }}
+                  >
+                    <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 10 }}>
+                      Resumo de Liquidez
+                    </div>
+                    <RightRow label="Cluster institucional" value="71,600" positive />
+                    <RightRow label="Liquidez acumulada" value="71,520" positive />
+                    <RightRow label="Zona de stops" value="71,350 - 71,220" positive />
+                    <RightRow label="Alvo provável" value="71,480" positive />
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: isSmall ? "1fr" : "repeat(4, minmax(0, 1fr))",
+                  gap: 8,
+                }}
+              >
+                <StatCard title="Parede" value="71,600" positive />
+                <StatCard title="Cluster" value="Forte" positive />
+                <StatCard title="Heatmap" value="Ativo" positive />
+                <StatCard title="Caça" value="Provável" positive />
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: bottomGridColumns,
+                gap: 16,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    color: "#dfe8ff",
+                    fontWeight: 900,
+                    marginBottom: 8,
+                    fontSize: 14,
+                  }}
+                >
+                  Mestre Scanner
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isSmall ? "1.3fr 1fr 1fr" : "1.2fr 1fr 1fr 1fr",
+                    gap: 10,
+                    color: "#7f95bb",
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                    paddingBottom: 10,
+                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <div>Ativo</div>
+                  <div>Score</div>
+                  <div>Tendência</div>
+                  {!isSmall && <div style={{ textAlign: "right" }}>Preço</div>}
+                </div>
+
+                {leftRows.map((row) =>
+                  isSmall ? (
+                    <div
+                      key={`${activeModule}-${row.asset}`}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1.3fr 1fr 1fr",
+                        gap: 10,
+                        padding: "12px 0",
+                        borderBottom: "1px solid rgba(255,255,255,0.05)",
+                        color: "#d8e2ff",
+                        fontSize: 13,
+                      }}
+                    >
+                      <div style={{ fontWeight: 800 }}>{row.asset}</div>
+                      <div>{row.score}</div>
+                      <div style={{ color: "#34d399", fontWeight: 800 }}>
+                        {row.trend}
+                      </div>
+                    </div>
+                  ) : (
+                    <ScannerRow
+                      key={`${activeModule}-${row.asset}`}
+                      asset={row.asset}
+                      score={row.score}
+                      trend={row.trend}
+                      price={row.price}
+                    />
+                  )
+                )}
+              </div>
+
+              <div
+                style={{
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 16,
+                  padding: 12,
+                  background:
+                    "radial-gradient(circle at top, rgba(38,106,255,0.18), transparent 35%), rgba(255,255,255,0.02)",
+                  minHeight: 210,
+                }}
+              >
+                <div style={{ color: "#dfe8ff", fontWeight: 900, marginBottom: 8 }}>
+                  Pulso do Módulo
+                </div>
+
+                <div style={{ color: "#8fa3c7", fontSize: 12, marginBottom: 15 }}>
+                  Leitura resumida do módulo ativo com apoio visual rápido.
+                </div>
+
+                <div
+                  style={{
+                    height: 104,
+                    borderRadius: 12,
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
+                  <svg
+                    viewBox="0 0 600 140"
+                    width="100%"
+                    height="100%"
+                    style={{ position: "relative" }}
+                  >
+                    <path
+                      d="M0,96 C40,96 60,98 90,88 C140,68 180,72 210,58 C250,42 285,52 320,38 C370,18 410,26 450,22 C490,18 530,8 600,16"
+                      fill="none"
+                      stroke="#5ee7ff"
+                      strokeWidth="3"
+                    />
+                    <path
+                      d="M0,105 C60,110 110,98 160,94 C220,88 255,92 320,74 C370,60 410,62 470,52 C520,43 560,46 600,36"
+                      fill="none"
+                      stroke="#ffd65a"
+                      strokeWidth="2"
+                      opacity="0.9"
+                    />
+                  </svg>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isSmall ? "1fr" : "repeat(3, 1fr)",
+                    gap: 10,
+                    marginTop: 12,
+                  }}
+                >
+                  <StatCard title="Score" value={`${score}`} positive />
+                  <StatCard title="Volume" value={volume === "--" ? "10.29" : volume} positive />
+                  <StatCard
+                    title="Bias"
+                    value={change.startsWith("-") ? "Baixa" : "Alta"}
+                    positive={!change.startsWith("-")}
+                  />
+                </div>
+              </div>
             </div>
           )}
         </div>
