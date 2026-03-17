@@ -7,6 +7,20 @@ import LiquidityPanel from "./atlas-v3/LiquidityPanel";
 import BottomTabsPanel from "./atlas-v3/BottomTabsPanel";
 import ScannerPanel from "./atlas-v3/ScannerPanel";
 import ToolEnhancements from "./atlas-v3/ToolEnhancements";
+import {
+  type ProfessionalDrawing,
+  type ChartPoint,
+  type ScreenPoint,
+  type DragTarget,
+  makeDrawingId,
+  formatPriceLabel,
+  screenPointToChartPoint,
+  chartPointToScreenPoint,
+  getProfessionalDrawingHandles,
+  getProfessionalDrawingHitTarget,
+  moveProfessionalDrawing,
+  updateProfessionalDrawingHandle,
+} from "./atlas-v3/drawingEngine";
 
 type Candle = {
   time: string;
@@ -50,97 +64,6 @@ type ToolGroup = {
   label: string;
   items: ToolOption[];
 };
-
-type Point = { x: number; y: number };
-
-type DrawingBase = {
-  id: string;
-  name: string;
-  locked?: boolean;
-  hidden?: boolean;
-};
-
-type DrawingLine = DrawingBase & {
-  type: "line";
-  start: Point;
-  end: Point;
-  color: string;
-};
-
-type DrawingLevel = DrawingBase & {
-  type: "level";
-  y: number;
-  priceLabel: string;
-  color: string;
-};
-
-type DrawingZone = DrawingBase & {
-  type: "zone";
-  start: Point;
-  end: Point;
-  stroke: string;
-  fill: string;
-};
-
-type DrawingMeasure = DrawingBase & {
-  type: "measure";
-  start: Point;
-  end: Point;
-  delta: string;
-  pct: string;
-};
-
-type DrawingFib = DrawingBase & {
-  type: "fib";
-  start: Point;
-  end: Point;
-  color: string;
-  levels: number[];
-};
-
-type DrawingChannel = DrawingBase & {
-  type: "channel";
-  start: Point;
-  end: Point;
-  offset: number;
-  color: string;
-};
-
-type DrawingTrade = DrawingBase & {
-  type: "long" | "short";
-  start: Point;
-  end: Point;
-};
-
-type DrawingProjection = DrawingBase & {
-  type: "projection";
-  start: Point;
-  mid: Point;
-  end: Point;
-  color: string;
-};
-
-type Drawing =
-  | DrawingLine
-  | DrawingLevel
-  | DrawingZone
-  | DrawingMeasure
-  | DrawingFib
-  | DrawingChannel
-  | DrawingTrade
-  | DrawingProjection;
-
-type DragHandle =
-  | "body"
-  | "start"
-  | "end"
-  | "mid"
-  | "topLeft"
-  | "topRight"
-  | "bottomLeft"
-  | "bottomRight"
-  | "level"
-  | "channel";
 
 type ViewMode = "auto" | "manual" | "space";
 
@@ -190,13 +113,13 @@ const toolGroups: ToolGroup[] = [
         id: "line-trend",
         label: "Linha de tendência",
         icon: "╱",
-        description: "Linha com edição pelas pontas.",
+        description: "Linha profissional ligada ao gráfico.",
       },
       {
         id: "line-horizontal",
         label: "Linha horizontal",
         icon: "―",
-        description: "Nível horizontal editável.",
+        description: "Nível horizontal profissional.",
       },
     ],
   },
@@ -209,13 +132,13 @@ const toolGroups: ToolGroup[] = [
         id: "zone-supply",
         label: "Zona de oferta",
         icon: "▭",
-        description: "Zona editável.",
+        description: "Em breve no novo motor.",
       },
       {
         id: "zone-demand",
         label: "Zona de demanda",
         icon: "▯",
-        description: "Zona editável.",
+        description: "Em breve no novo motor.",
       },
     ],
   },
@@ -228,7 +151,7 @@ const toolGroups: ToolGroup[] = [
         id: "measure-price",
         label: "Medir preço",
         icon: "↕",
-        description: "Diferença de preço e percentual.",
+        description: "Em breve no novo motor.",
       },
     ],
   },
@@ -241,7 +164,7 @@ const toolGroups: ToolGroup[] = [
         id: "fib-retracement",
         label: "Retração",
         icon: "ϕ",
-        description: "Fibonacci base editável.",
+        description: "Fibonacci profissional ligado ao gráfico.",
       },
     ],
   },
@@ -254,7 +177,7 @@ const toolGroups: ToolGroup[] = [
         id: "pattern-channel",
         label: "Canal",
         icon: "∥",
-        description: "Canal editável.",
+        description: "Em breve no novo motor.",
       },
     ],
   },
@@ -267,13 +190,13 @@ const toolGroups: ToolGroup[] = [
         id: "tool-long",
         label: "Long",
         icon: "▲",
-        description: "Box de operação long.",
+        description: "Em breve no novo motor.",
       },
       {
         id: "tool-short",
         label: "Short",
         icon: "▼",
-        description: "Box de operação short.",
+        description: "Em breve no novo motor.",
       },
     ],
   },
@@ -286,7 +209,7 @@ const toolGroups: ToolGroup[] = [
         id: "forecast-up",
         label: "Projeção",
         icon: "↗",
-        description: "Projeção em 3 pontos.",
+        description: "Em breve no novo motor.",
       },
     ],
   },
@@ -307,97 +230,6 @@ const toolGroups: ToolGroup[] = [
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
-}
-
-function makeId(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
-}
-
-function getRect(a: Point, b: Point) {
-  return {
-    left: Math.min(a.x, b.x),
-    top: Math.min(a.y, b.y),
-    right: Math.max(a.x, b.x),
-    bottom: Math.max(a.y, b.y),
-    width: Math.abs(a.x - b.x),
-    height: Math.abs(a.y - b.y),
-  };
-}
-
-function movePoint(p: Point, dx: number, dy: number): Point {
-  return { x: p.x + dx, y: p.y + dy };
-}
-
-function distance(a: Point, b: Point) {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
-function pointNearLine(p: Point, a: Point, b: Point, tolerance = 8) {
-  const A = p.x - a.x;
-  const B = p.y - a.y;
-  const C = b.x - a.x;
-  const D = b.y - a.y;
-  const dot = A * C + B * D;
-  const lenSq = C * C + D * D;
-  const param = lenSq !== 0 ? dot / lenSq : -1;
-
-  let xx = a.x;
-  let yy = a.y;
-
-  if (param < 0) {
-    xx = a.x;
-    yy = a.y;
-  } else if (param > 1) {
-    xx = b.x;
-    yy = b.y;
-  } else {
-    xx = a.x + param * C;
-    yy = a.y + param * D;
-  }
-
-  return Math.hypot(p.x - xx, p.y - yy) <= tolerance;
-}
-
-function pointInRect(p: Point, a: Point, b: Point, tolerance = 4) {
-  const rect = getRect(a, b);
-  return (
-    p.x >= rect.left - tolerance &&
-    p.x <= rect.right + tolerance &&
-    p.y >= rect.top - tolerance &&
-    p.y <= rect.bottom + tolerance
-  );
-}
-
-function formatPriceLabel(value: number) {
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function buildDynamicLiquidityRows(lastClose: number | null) {
-  const base = lastClose ?? 71600;
-  const steps = [0.0053, 0.0038, 0.0022, -0.0014, -0.0032];
-
-  return steps.map((step, idx) => {
-    const levelValue = base * (1 + step);
-    const level = formatPriceLabel(levelValue);
-    const strength = [96, 88, 76, 67, 59][idx];
-    const tags = [
-      "Cluster institucional",
-      "Liquidez acumulada",
-      "Zona ativa",
-      "Stops prováveis",
-      "Pool de liquidez",
-    ];
-
-    return {
-      level,
-      numeric: levelValue,
-      strength,
-      tag: tags[idx],
-    };
-  });
 }
 
 function miniIconBtn(color: string): React.CSSProperties {
@@ -569,134 +401,6 @@ function RightRow({
       </span>
     </div>
   );
-}
-
-function getDrawingHandles(d: Drawing): { key: DragHandle; point: Point }[] {
-  if (d.type === "line") {
-    return [
-      { key: "start", point: d.start },
-      { key: "end", point: d.end },
-    ];
-  }
-
-  if (d.type === "level") {
-    return [{ key: "level", point: { x: 40, y: d.y } }];
-  }
-
-  if (
-    d.type === "zone" ||
-    d.type === "measure" ||
-    d.type === "long" ||
-    d.type === "short"
-  ) {
-    const r = getRect(d.start, d.end);
-    return [
-      { key: "topLeft", point: { x: r.left, y: r.top } },
-      { key: "topRight", point: { x: r.right, y: r.top } },
-      { key: "bottomLeft", point: { x: r.left, y: r.bottom } },
-      { key: "bottomRight", point: { x: r.right, y: r.bottom } },
-    ];
-  }
-
-  if (d.type === "fib") {
-    return [
-      { key: "start", point: d.start },
-      { key: "end", point: d.end },
-    ];
-  }
-
-  if (d.type === "channel") {
-    const dx = d.end.x - d.start.x;
-    const dy = d.end.y - d.start.y;
-    const len = Math.max(1, Math.hypot(dx, dy));
-    const nx = -dy / len;
-    const ny = dx / len;
-
-    return [
-      { key: "start", point: d.start },
-      { key: "end", point: d.end },
-      {
-        key: "channel",
-        point: {
-          x: (d.start.x + d.end.x) / 2 + nx * d.offset,
-          y: (d.start.y + d.end.y) / 2 + ny * d.offset,
-        },
-      },
-    ];
-  }
-
-  if (d.type === "projection") {
-    return [
-      { key: "start", point: d.start },
-      { key: "mid", point: d.mid },
-      { key: "end", point: d.end },
-    ];
-  }
-
-  return [];
-}
-
-function getHitTarget(
-  point: Point,
-  drawings: Drawing[]
-): { id: string; handle: DragHandle } | null {
-  for (let i = drawings.length - 1; i >= 0; i--) {
-    const d = drawings[i];
-    if (d.hidden || d.locked) continue;
-
-    const handles = getDrawingHandles(d);
-    for (const h of handles) {
-      if (distance(point, h.point) <= 9) {
-        return { id: d.id, handle: h.key };
-      }
-    }
-
-    if (d.type === "line") {
-      if (pointNearLine(point, d.start, d.end, 8)) return { id: d.id, handle: "body" };
-    }
-
-    if (d.type === "level") {
-      if (Math.abs(point.y - d.y) <= 7) return { id: d.id, handle: "body" };
-    }
-
-    if (
-      d.type === "zone" ||
-      d.type === "measure" ||
-      d.type === "long" ||
-      d.type === "short" ||
-      d.type === "fib"
-    ) {
-      if (pointInRect(point, d.start, d.end, 4)) return { id: d.id, handle: "body" };
-    }
-
-    if (d.type === "channel") {
-      const dx = d.end.x - d.start.x;
-      const dy = d.end.y - d.start.y;
-      const len = Math.max(1, Math.hypot(dx, dy));
-      const nx = -dy / len;
-      const ny = dx / len;
-      const topA = { x: d.start.x + nx * d.offset, y: d.start.y + ny * d.offset };
-      const topB = { x: d.end.x + nx * d.offset, y: d.end.y + ny * d.offset };
-
-      if (
-        pointNearLine(point, d.start, d.end, 8) ||
-        pointNearLine(point, topA, topB, 8)
-      ) {
-        return { id: d.id, handle: "body" };
-      }
-    }
-
-    if (d.type === "projection") {
-      if (
-        pointNearLine(point, d.start, d.mid, 8) ||
-        pointNearLine(point, d.mid, d.end, 8)
-      ) {
-        return { id: d.id, handle: "body" };
-      }
-    }
-  }
-
-  return null;
 }
 
 function ToolSidebar({
@@ -943,7 +647,7 @@ function ObjectsPanel({
   onDelete,
   onBringFront,
 }: {
-  drawings: Drawing[];
+  drawings: ProfessionalDrawing[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onToggleHide: (id: string) => void;
@@ -1076,23 +780,27 @@ function ObjectsPanel({
   );
 }
 
-function DrawingOverlay({
+function ProfessionalDrawingOverlay({
   width,
   height,
   drawings,
   draftDrawing,
   selectedId,
+  chart,
+  series,
 }: {
   width: number;
   height: number;
-  drawings: Drawing[];
-  draftDrawing: Drawing | null;
+  drawings: ProfessionalDrawing[];
+  draftDrawing: ProfessionalDrawing | null;
   selectedId: string | null;
+  chart: any;
+  series: any;
 }) {
-  const renderHandles = (drawing: Drawing) => {
+  const renderHandles = (drawing: ProfessionalDrawing) => {
     if (drawing.id !== selectedId) return null;
 
-    return getDrawingHandles(drawing).map((h) => (
+    return getProfessionalDrawingHandles(drawing, chart, series).map((h) => (
       <g key={`${drawing.id}-${h.key}`}>
         <circle
           cx={h.point.x}
@@ -1107,19 +815,23 @@ function DrawingOverlay({
     ));
   };
 
-  const renderDrawing = (drawing: Drawing, isDraft = false) => {
+  const renderDrawing = (drawing: ProfessionalDrawing, isDraft = false) => {
     if (drawing.hidden) return null;
     const selected = drawing.id === selectedId;
     const opacity = isDraft ? 0.92 : 1;
 
     if (drawing.type === "line") {
+      const start = chartPointToScreenPoint(drawing.start, chart, series);
+      const end = chartPointToScreenPoint(drawing.end, chart, series);
+      if (!start || !end) return null;
+
       return (
         <g key={drawing.id} opacity={opacity}>
           <line
-            x1={drawing.start.x}
-            y1={drawing.start.y}
-            x2={drawing.end.x}
-            y2={drawing.end.y}
+            x1={start.x}
+            y1={start.y}
+            x2={end.x}
+            y2={end.y}
             stroke={drawing.color}
             strokeWidth={selected ? "2.4" : "1.7"}
             strokeDasharray={isDraft ? "5 4" : undefined}
@@ -1130,20 +842,23 @@ function DrawingOverlay({
     }
 
     if (drawing.type === "level") {
+      const point = chartPointToScreenPoint(drawing.point, chart, series);
+      if (!point) return null;
+
       return (
         <g key={drawing.id} opacity={opacity}>
           <line
             x1={0}
-            y1={drawing.y}
+            y1={point.y}
             x2={width}
-            y2={drawing.y}
+            y2={point.y}
             stroke={drawing.color}
             strokeWidth={selected ? "2.2" : "1.5"}
             strokeDasharray="6 5"
           />
           <rect
             x={Math.max(width - 90, 8)}
-            y={drawing.y - 12}
+            y={point.y - 12}
             width={80}
             height={18}
             rx={6}
@@ -1152,97 +867,32 @@ function DrawingOverlay({
           />
           <text
             x={Math.max(width - 50, 18)}
-            y={drawing.y}
+            y={point.y}
             fill="#fff4bf"
             textAnchor="middle"
             dominantBaseline="middle"
             fontSize="10"
             fontWeight="700"
           >
-            {drawing.priceLabel}
+            {formatPriceLabel(drawing.point.price)}
           </text>
           {renderHandles(drawing)}
         </g>
       );
     }
 
-    if (drawing.type === "zone") {
-      const r = getRect(drawing.start, drawing.end);
-      return (
-        <g key={drawing.id} opacity={opacity}>
-          <rect
-            x={r.left}
-            y={r.top}
-            width={Math.max(2, r.width)}
-            height={Math.max(2, r.height)}
-            rx={8}
-            fill={drawing.fill}
-            stroke={drawing.stroke}
-            strokeWidth={selected ? "2.2" : "1.4"}
-            strokeDasharray={isDraft ? "5 4" : undefined}
-          />
-          {renderHandles(drawing)}
-        </g>
-      );
-    }
-
-    if (drawing.type === "measure") {
-      const r = getRect(drawing.start, drawing.end);
-      return (
-        <g key={drawing.id} opacity={opacity}>
-          <rect
-            x={r.left}
-            y={r.top}
-            width={Math.max(2, r.width)}
-            height={Math.max(2, r.height)}
-            rx={8}
-            fill="rgba(255,214,90,0.10)"
-            stroke="rgba(255,214,90,0.60)"
-            strokeWidth={selected ? "2.2" : "1.4"}
-            strokeDasharray="5 4"
-          />
-          <line
-            x1={drawing.start.x}
-            y1={drawing.start.y}
-            x2={drawing.end.x}
-            y2={drawing.end.y}
-            stroke="#ffd65a"
-            strokeWidth="1.2"
-            strokeDasharray="4 4"
-          />
-          {!isDraft && (
-            <>
-              <rect
-                x={r.left + 8}
-                y={r.top + 8}
-                width={98}
-                height={36}
-                rx={8}
-                fill="rgba(6,10,20,0.82)"
-                stroke="rgba(255,214,90,0.35)"
-              />
-              <text x={r.left + 16} y={r.top + 22} fill="#fff4bf" fontSize="10" fontWeight="700">
-                {drawing.delta}
-              </text>
-              <text x={r.left + 16} y={r.top + 35} fill="#cfe4ff" fontSize="10" fontWeight="700">
-                {drawing.pct}
-              </text>
-            </>
-          )}
-          {renderHandles(drawing)}
-        </g>
-      );
-    }
-
     if (drawing.type === "fib") {
-      const levels = drawing.levels;
-      const left = Math.min(drawing.start.x, drawing.end.x);
-      const right = Math.max(drawing.start.x, drawing.end.x);
+      const start = chartPointToScreenPoint(drawing.start, chart, series);
+      const end = chartPointToScreenPoint(drawing.end, chart, series);
+      if (!start || !end) return null;
+
+      const left = Math.min(start.x, end.x);
+      const right = Math.max(start.x, end.x);
 
       return (
         <g key={drawing.id} opacity={opacity}>
-          {levels.map((level) => {
-            const y = drawing.start.y + (drawing.end.y - drawing.start.y) * level;
+          {drawing.levels.map((level) => {
+            const y = start.y + (end.y - start.y) * level;
             return (
               <g key={`${drawing.id}-${level}`}>
                 <line
@@ -1265,103 +915,6 @@ function DrawingOverlay({
               </g>
             );
           })}
-          {renderHandles(drawing)}
-        </g>
-      );
-    }
-
-    if (drawing.type === "channel") {
-      const dx = drawing.end.x - drawing.start.x;
-      const dy = drawing.end.y - drawing.start.y;
-      const len = Math.max(1, Math.hypot(dx, dy));
-      const nx = -dy / len;
-      const ny = dx / len;
-
-      const topA = { x: drawing.start.x + nx * drawing.offset, y: drawing.start.y + ny * drawing.offset };
-      const topB = { x: drawing.end.x + nx * drawing.offset, y: drawing.end.y + ny * drawing.offset };
-
-      return (
-        <g key={drawing.id} opacity={opacity}>
-          <line
-            x1={drawing.start.x}
-            y1={drawing.start.y}
-            x2={drawing.end.x}
-            y2={drawing.end.y}
-            stroke={drawing.color}
-            strokeWidth={selected ? "2.2" : "1.5"}
-          />
-          <line
-            x1={topA.x}
-            y1={topA.y}
-            x2={topB.x}
-            y2={topB.y}
-            stroke={drawing.color}
-            strokeWidth={selected ? "2.2" : "1.5"}
-          />
-          <line
-            x1={(drawing.start.x + topA.x) / 2}
-            y1={(drawing.start.y + topA.y) / 2}
-            x2={(drawing.end.x + topB.x) / 2}
-            y2={(drawing.end.y + topB.y) / 2}
-            stroke={drawing.color}
-            strokeWidth="1"
-            strokeDasharray="5 5"
-            opacity="0.8"
-          />
-          {renderHandles(drawing)}
-        </g>
-      );
-    }
-
-    if (drawing.type === "projection") {
-      return (
-        <g key={drawing.id} opacity={opacity}>
-          <polyline
-            points={`${drawing.start.x},${drawing.start.y} ${drawing.mid.x},${drawing.mid.y} ${drawing.end.x},${drawing.end.y}`}
-            fill="none"
-            stroke={drawing.color}
-            strokeWidth={selected ? "2.4" : "1.7"}
-            strokeDasharray="6 5"
-          />
-          <circle cx={drawing.end.x} cy={drawing.end.y} r="3.2" fill={drawing.color} />
-          {renderHandles(drawing)}
-        </g>
-      );
-    }
-
-    if (drawing.type === "long" || drawing.type === "short") {
-      const r = getRect(drawing.start, drawing.end);
-      const positive = drawing.type === "long";
-
-      return (
-        <g key={drawing.id} opacity={opacity}>
-          <rect
-            x={r.left}
-            y={r.top}
-            width={Math.max(2, r.width)}
-            height={Math.max(2, r.height)}
-            rx={8}
-            fill={positive ? "rgba(52,211,153,0.12)" : "rgba(255,107,129,0.12)"}
-            stroke={positive ? "rgba(52,211,153,0.82)" : "rgba(255,107,129,0.82)"}
-            strokeWidth={selected ? "2.2" : "1.4"}
-          />
-          <line
-            x1={r.left}
-            y1={(r.top + r.bottom) / 2}
-            x2={r.right}
-            y2={(r.top + r.bottom) / 2}
-            stroke={positive ? "#34d399" : "#ff6b81"}
-            strokeDasharray="5 4"
-          />
-          <text
-            x={r.left + 10}
-            y={r.top + 18}
-            fill={positive ? "#bff7dd" : "#ffd6dd"}
-            fontSize="11"
-            fontWeight="800"
-          >
-            {positive ? "LONG" : "SHORT"}
-          </text>
           {renderHandles(drawing)}
         </g>
       );
@@ -1404,7 +957,7 @@ export default function AtlasChartPro2() {
   const [activeToolOption, setActiveToolOption] = useState("cursor-default");
   const [favoriteTools, setFavoriteTools] = useState<string[]>([
     "line-horizontal",
-    "measure-price",
+    "line-trend",
     "fib-retracement",
   ]);
 
@@ -1425,16 +978,14 @@ export default function AtlasChartPro2() {
   const [spaceOffset] = useState(10);
   const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
 
-  const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [drawings, setDrawings] = useState<ProfessionalDrawing[]>([]);
   const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(null);
-  const [draftDrawing, setDraftDrawing] = useState<Drawing | null>(null);
+  const [draftDrawing, setDraftDrawing] = useState<ProfessionalDrawing | null>(null);
 
-  const [creationFirstPoint, setCreationFirstPoint] = useState<Point | null>(null);
-  const [creationSecondPoint, setCreationSecondPoint] = useState<Point | null>(null);
-
+  const [creationFirstPoint, setCreationFirstPoint] = useState<ChartPoint | null>(null);
   const [dragMode, setDragMode] = useState<"create" | "edit" | null>(null);
-  const [selectedHandle, setSelectedHandle] = useState<DragHandle | null>(null);
-  const [lastPointerPoint, setLastPointerPoint] = useState<Point | null>(null);
+  const [selectedHandle, setSelectedHandle] = useState<DragTarget | null>(null);
+  const [lastPointerChartPoint, setLastPointerChartPoint] = useState<ChartPoint | null>(null);
 
   const hasInitialFitRef = useRef(false);
   const savedScrollPositionRef = useRef<number | null>(null);
@@ -1726,20 +1277,9 @@ export default function AtlasChartPro2() {
   }, [activeToolGroup, activeToolOption]);
 
   const isCursorMode = activeToolOption === "cursor-default";
-
-  const isInteractiveTool = [
-    "cursor-default",
-    "line-trend",
-    "line-horizontal",
-    "zone-supply",
-    "zone-demand",
-    "measure-price",
-    "fib-retracement",
-    "pattern-channel",
-    "tool-long",
-    "tool-short",
-    "forecast-up",
-  ].includes(activeToolOption);
+  const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].includes(
+    activeToolOption
+  );
 
   const sidebarWidth = isSmall ? 0 : showToolPanel ? 300 : 48;
   const mainGridColumns = isSmall
@@ -2042,10 +1582,30 @@ export default function AtlasChartPro2() {
     setActiveBottomTab(bottomTabs[0]);
   }, [activeModule]);
 
-  const liquidityHeatRows = useMemo(
-    () => buildDynamicLiquidityRows(lastClose),
-    [lastClose]
-  );
+  const liquidityHeatRows = useMemo(() => {
+    const base = lastClose ?? 71600;
+    const steps = [0.0053, 0.0038, 0.0022, -0.0014, -0.0032];
+
+    return steps.map((step, idx) => {
+      const levelValue = base * (1 + step);
+      const level = formatPriceLabel(levelValue);
+      const strength = [96, 88, 76, 67, 59][idx];
+      const tags = [
+        "Cluster institucional",
+        "Liquidez acumulada",
+        "Zona ativa",
+        "Stops prováveis",
+        "Pool de liquidez",
+      ];
+
+      return {
+        level,
+        numeric: levelValue,
+        strength,
+        tag: tags[idx],
+      };
+    });
+  }, [lastClose]);
 
   const liquiditySummary = useMemo(() => {
     const first = liquidityHeatRows[0];
@@ -2066,61 +1626,15 @@ export default function AtlasChartPro2() {
     };
   }, [liquidityHeatRows, lastClose]);
 
-  const clearDraftState = () => {
-    setCreationFirstPoint(null);
-    setCreationSecondPoint(null);
-    setDraftDrawing(null);
-    setDragMode(null);
-    setSelectedHandle(null);
-    setLastPointerPoint(null);
-  };
-
-  const getPointFromEvent = (event: React.MouseEvent<HTMLDivElement>): Point | null => {
+  const getScreenPointFromEvent = (
+    event: React.MouseEvent<HTMLDivElement>
+  ): ScreenPoint | null => {
     if (!chartShellRef.current) return null;
     const rect = chartShellRef.current.getBoundingClientRect();
     return {
       x: clamp(event.clientX - rect.left, 0, rect.width),
       y: clamp(event.clientY - rect.top, 0, rect.height),
     };
-  };
-
-  const pointToPrice = (point: Point) => {
-    const priceValue = candleSeriesRef.current?.coordinateToPrice?.(point.y);
-    return typeof priceValue === "number" ? priceValue : lastClose ?? 0;
-  };
-
-  const buildMeasureValues = (start: Point, end: Point) => {
-    const startPrice = pointToPrice(start);
-    const endPrice = pointToPrice(end);
-    const delta = endPrice - startPrice;
-    const pct = startPrice !== 0 ? (delta / startPrice) * 100 : 0;
-
-    return {
-      delta: `${delta >= 0 ? "+" : ""}${delta.toLocaleString("en-US", {
-        maximumFractionDigits: 2,
-      })}`,
-      pct: `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
-    };
-  };
-
-  const addDrawing = (drawing: Drawing) => {
-    setDrawings((prev) => [...prev, drawing]);
-    setSelectedDrawingId(drawing.id);
-  };
-
-  const updateDrawing = (id: string, updater: (d: Drawing) => Drawing) => {
-    setDrawings((prev) => prev.map((d) => (d.id === id ? updater(d) : d)));
-  };
-
-  const enterSelectionMode = () => {
-    setActiveTool("cursor");
-    setActiveToolOption("cursor-default");
-  };
-
-  const finishDrawingAndAutoSelect = (drawing: Drawing) => {
-    addDrawing(drawing);
-    clearDraftState();
-    enterSelectionMode();
   };
 
   const handleOpenToolGroup = (key: ToolKey) => {
@@ -2134,7 +1648,11 @@ export default function AtlasChartPro2() {
   const handleSelectToolOption = (groupKey: ToolKey, optionId: string) => {
     setActiveTool(groupKey);
     setActiveToolOption(optionId);
-    clearDraftState();
+    setCreationFirstPoint(null);
+    setDraftDrawing(null);
+    setDragMode(null);
+    setSelectedHandle(null);
+    setLastPointerChartPoint(null);
     if (!isSmall) {
       setShowToolPanel(false);
     }
@@ -2167,487 +1685,186 @@ export default function AtlasChartPro2() {
   };
 
   const handleOverlayMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!isInteractiveTool) return;
-    const point = getPointFromEvent(event);
-    if (!point) return;
+    const screenPoint = getScreenPointFromEvent(event);
+    if (!screenPoint) return;
 
-    setLastPointerPoint(point);
+    const chartPoint = screenPointToChartPoint(
+      screenPoint,
+      chartRef.current,
+      candleSeriesRef.current
+    );
+    if (!chartPoint) return;
 
-    const hit = getHitTarget(point, drawings);
-    if (hit) {
-      setSelectedDrawingId(hit.id);
-      setSelectedHandle(hit.handle);
-      setDragMode("edit");
+    if (isCursorMode) {
+      const hit = getProfessionalDrawingHitTarget(
+        screenPoint,
+        drawings,
+        chartRef.current,
+        candleSeriesRef.current
+      );
+
+      if (hit) {
+        setSelectedDrawingId(hit.id);
+        setSelectedHandle(hit.handle);
+        setDragMode("edit");
+        setLastPointerChartPoint(chartPoint);
+      } else {
+        setSelectedDrawingId(null);
+        setSelectedHandle(null);
+        setDragMode(null);
+        setLastPointerChartPoint(null);
+      }
       return;
     }
+
+    if (!isProfessionalTool) return;
 
     if (activeToolOption === "line-horizontal") {
-      const priceValue = pointToPrice(point);
-      finishDrawingAndAutoSelect({
-        id: makeId("level"),
+      const drawing: ProfessionalDrawing = {
+        id: makeDrawingId("level"),
         type: "level",
         name: "Linha Horizontal",
-        y: point.y,
-        priceLabel: priceValue.toLocaleString("en-US", {
-          maximumFractionDigits: 2,
-        }),
+        point: chartPoint,
         color: "#ffd65a",
-      });
+      };
+      setDrawings((prev) => [...prev, drawing]);
+      setSelectedDrawingId(drawing.id);
+      setActiveTool("cursor");
+      setActiveToolOption("cursor-default");
       return;
     }
 
-    if (activeToolOption === "cursor-default") {
-      setSelectedDrawingId(null);
-      setDragMode(null);
-      setSelectedHandle(null);
-      return;
-    }
+    if (!creationFirstPoint) {
+      setCreationFirstPoint(chartPoint);
+      setDragMode("create");
 
-    setCreationFirstPoint(point);
-    setDragMode("create");
+      if (activeToolOption === "line-trend") {
+        setDraftDrawing({
+          id: "draft-line",
+          type: "line",
+          name: "Linha de Tendência",
+          start: chartPoint,
+          end: chartPoint,
+          color: "#7fe8ff",
+        });
+      }
 
-    if (activeToolOption === "zone-supply" || activeToolOption === "zone-demand") {
-      const isSupply = activeToolOption === "zone-supply";
-      setDraftDrawing({
-        id: "draft-zone",
-        type: "zone",
-        name: isSupply ? "Zona de Oferta" : "Zona de Demanda",
-        start: point,
-        end: point,
-        stroke: isSupply ? "rgba(255,123,123,0.75)" : "rgba(94,231,255,0.75)",
-        fill: isSupply ? "rgba(255,123,123,0.10)" : "rgba(94,231,255,0.10)",
-      });
-      return;
-    }
-
-    if (activeToolOption === "measure-price") {
-      const values = buildMeasureValues(point, point);
-      setDraftDrawing({
-        id: "draft-measure",
-        type: "measure",
-        name: "Medir Preço",
-        start: point,
-        end: point,
-        delta: values.delta,
-        pct: values.pct,
-      });
-      return;
-    }
-
-    if (activeToolOption === "fib-retracement") {
-      setDraftDrawing({
-        id: "draft-fib",
-        type: "fib",
-        name: "Fibonacci",
-        start: point,
-        end: point,
-        color: "#7fe8ff",
-        levels: [0, 0.236, 0.382, 0.5, 0.618, 1],
-      });
-      return;
-    }
-
-    if (activeToolOption === "pattern-channel") {
-      setDraftDrawing({
-        id: "draft-channel",
-        type: "channel",
-        name: "Canal",
-        start: point,
-        end: point,
-        offset: 38,
-        color: "#8de0ff",
-      });
-      return;
-    }
-
-    if (activeToolOption === "tool-long" || activeToolOption === "tool-short") {
-      setDraftDrawing({
-        id: "draft-trade",
-        type: activeToolOption === "tool-long" ? "long" : "short",
-        name: activeToolOption === "tool-long" ? "Long" : "Short",
-        start: point,
-        end: point,
-      });
-      return;
-    }
-
-    if (activeToolOption === "line-trend") {
-      setDraftDrawing({
-        id: "draft-line",
-        type: "line",
-        name: "Linha de Tendência",
-        start: point,
-        end: point,
-        color: "#7fe8ff",
-      });
-      return;
-    }
-
-    if (activeToolOption === "forecast-up") {
-      setDraftDrawing({
-        id: "draft-projection",
-        type: "projection",
-        name: "Projeção",
-        start: point,
-        mid: point,
-        end: point,
-        color: "#ffd65a",
-      });
+      if (activeToolOption === "fib-retracement") {
+        setDraftDrawing({
+          id: "draft-fib",
+          type: "fib",
+          name: "Fibonacci",
+          start: chartPoint,
+          end: chartPoint,
+          color: "#7fe8ff",
+          levels: [0, 0.236, 0.382, 0.5, 0.618, 1],
+        });
+      }
     }
   };
 
   const handleOverlayMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!isInteractiveTool) return;
-    const point = getPointFromEvent(event);
-    if (!point) return;
+    const screenPoint = getScreenPointFromEvent(event);
+    if (!screenPoint) return;
 
-    if (dragMode === "edit" && selectedDrawingId && selectedHandle && lastPointerPoint) {
-      const dx = point.x - lastPointerPoint.x;
-      const dy = point.y - lastPointerPoint.y;
+    const chartPoint = screenPointToChartPoint(
+      screenPoint,
+      chartRef.current,
+      candleSeriesRef.current
+    );
+    if (!chartPoint) return;
 
-      updateDrawing(selectedDrawingId, (drawing) => {
-        if (drawing.locked) return drawing;
+    if (
+      dragMode === "edit" &&
+      selectedDrawingId &&
+      selectedHandle &&
+      lastPointerChartPoint
+    ) {
+      setDrawings((prev) =>
+        prev.map((drawing) => {
+          if (drawing.id !== selectedDrawingId || drawing.locked) return drawing;
 
-        if (drawing.type === "line") {
-          if (selectedHandle === "start") return { ...drawing, start: point };
-          if (selectedHandle === "end") return { ...drawing, end: point };
           if (selectedHandle === "body") {
-            return {
-              ...drawing,
-              start: movePoint(drawing.start, dx, dy),
-              end: movePoint(drawing.end, dx, dy),
-            };
-          }
-        }
-
-        if (drawing.type === "level") {
-          if (selectedHandle === "body" || selectedHandle === "level") {
-            const priceValue = pointToPrice(point);
-            return {
-              ...drawing,
-              y: point.y,
-              priceLabel: priceValue.toLocaleString("en-US", {
-                maximumFractionDigits: 2,
-              }),
-            };
-          }
-        }
-
-        if (
-          drawing.type === "zone" ||
-          drawing.type === "measure" ||
-          drawing.type === "long" ||
-          drawing.type === "short"
-        ) {
-          if (selectedHandle === "body") {
-            const start = movePoint(drawing.start, dx, dy);
-            const end = movePoint(drawing.end, dx, dy);
-
-            if (drawing.type === "measure") {
-              const values = buildMeasureValues(start, end);
-              return { ...drawing, start, end, ...values };
-            }
-
-            return { ...drawing, start, end };
+            const deltaLogical = chartPoint.logical - lastPointerChartPoint.logical;
+            const deltaPrice = chartPoint.price - lastPointerChartPoint.price;
+            return moveProfessionalDrawing(drawing, deltaLogical, deltaPrice);
           }
 
-          const r = getRect(drawing.start, drawing.end);
-          let start = drawing.start;
-          let end = drawing.end;
+          return updateProfessionalDrawingHandle(drawing, selectedHandle, chartPoint);
+        })
+      );
 
-          if (selectedHandle === "topLeft") {
-            start = { x: point.x, y: point.y };
-            end = { x: r.right, y: r.bottom };
-          } else if (selectedHandle === "topRight") {
-            start = { x: r.left, y: point.y };
-            end = { x: point.x, y: r.bottom };
-          } else if (selectedHandle === "bottomLeft") {
-            start = { x: point.x, y: r.top };
-            end = { x: r.right, y: point.y };
-          } else if (selectedHandle === "bottomRight") {
-            start = { x: r.left, y: r.top };
-            end = { x: point.x, y: point.y };
-          }
-
-          if (drawing.type === "measure") {
-            const values = buildMeasureValues(start, end);
-            return { ...drawing, start, end, ...values };
-          }
-
-          return { ...drawing, start, end };
-        }
-
-        if (drawing.type === "fib") {
-          if (selectedHandle === "start") return { ...drawing, start: point };
-          if (selectedHandle === "end") return { ...drawing, end: point };
-          if (selectedHandle === "body") {
-            return {
-              ...drawing,
-              start: movePoint(drawing.start, dx, dy),
-              end: movePoint(drawing.end, dx, dy),
-            };
-          }
-        }
-
-        if (drawing.type === "channel") {
-          if (selectedHandle === "start") return { ...drawing, start: point };
-          if (selectedHandle === "end") return { ...drawing, end: point };
-          if (selectedHandle === "channel") {
-            const mid = {
-              x: (drawing.start.x + drawing.end.x) / 2,
-              y: (drawing.start.y + drawing.end.y) / 2,
-            };
-            return { ...drawing, offset: distance(mid, point) };
-          }
-          if (selectedHandle === "body") {
-            return {
-              ...drawing,
-              start: movePoint(drawing.start, dx, dy),
-              end: movePoint(drawing.end, dx, dy),
-            };
-          }
-        }
-
-        if (drawing.type === "projection") {
-          if (selectedHandle === "start") return { ...drawing, start: point };
-          if (selectedHandle === "mid") return { ...drawing, mid: point };
-          if (selectedHandle === "end") return { ...drawing, end: point };
-          if (selectedHandle === "body") {
-            return {
-              ...drawing,
-              start: movePoint(drawing.start, dx, dy),
-              mid: movePoint(drawing.mid, dx, dy),
-              end: movePoint(drawing.end, dx, dy),
-            };
-          }
-        }
-
-        return drawing;
-      });
-
-      setLastPointerPoint(point);
+      setLastPointerChartPoint(chartPoint);
       return;
     }
 
-    if (dragMode !== "create" || !creationFirstPoint) return;
+    if (dragMode === "create" && creationFirstPoint && draftDrawing) {
+      if (draftDrawing.type === "line") {
+        setDraftDrawing({ ...draftDrawing, end: chartPoint });
+      }
 
-    if (activeToolOption === "zone-supply" || activeToolOption === "zone-demand") {
-      const isSupply = activeToolOption === "zone-supply";
-      setDraftDrawing({
-        id: "draft-zone",
-        type: "zone",
-        name: isSupply ? "Zona de Oferta" : "Zona de Demanda",
-        start: creationFirstPoint,
-        end: point,
-        stroke: isSupply ? "rgba(255,123,123,0.75)" : "rgba(94,231,255,0.75)",
-        fill: isSupply ? "rgba(255,123,123,0.10)" : "rgba(94,231,255,0.10)",
-      });
-      return;
-    }
-
-    if (activeToolOption === "measure-price") {
-      const values = buildMeasureValues(creationFirstPoint, point);
-      setDraftDrawing({
-        id: "draft-measure",
-        type: "measure",
-        name: "Medir Preço",
-        start: creationFirstPoint,
-        end: point,
-        delta: values.delta,
-        pct: values.pct,
-      });
-      return;
-    }
-
-    if (activeToolOption === "fib-retracement") {
-      setDraftDrawing({
-        id: "draft-fib",
-        type: "fib",
-        name: "Fibonacci",
-        start: creationFirstPoint,
-        end: point,
-        color: "#7fe8ff",
-        levels: [0, 0.236, 0.382, 0.5, 0.618, 1],
-      });
-      return;
-    }
-
-    if (activeToolOption === "pattern-channel") {
-      setDraftDrawing({
-        id: "draft-channel",
-        type: "channel",
-        name: "Canal",
-        start: creationFirstPoint,
-        end: point,
-        offset: 38,
-        color: "#8de0ff",
-      });
-      return;
-    }
-
-    if (activeToolOption === "tool-long" || activeToolOption === "tool-short") {
-      setDraftDrawing({
-        id: "draft-trade",
-        type: activeToolOption === "tool-long" ? "long" : "short",
-        name: activeToolOption === "tool-long" ? "Long" : "Short",
-        start: creationFirstPoint,
-        end: point,
-      });
-      return;
-    }
-
-    if (activeToolOption === "line-trend") {
-      setDraftDrawing({
-        id: "draft-line",
-        type: "line",
-        name: "Linha de Tendência",
-        start: creationFirstPoint,
-        end: point,
-        color: "#7fe8ff",
-      });
-      return;
-    }
-
-    if (activeToolOption === "forecast-up") {
-      if (!creationSecondPoint) {
-        setDraftDrawing({
-          id: "draft-projection",
-          type: "projection",
-          name: "Projeção",
-          start: creationFirstPoint,
-          mid: point,
-          end: point,
-          color: "#ffd65a",
-        });
-      } else {
-        setDraftDrawing({
-          id: "draft-projection",
-          type: "projection",
-          name: "Projeção",
-          start: creationFirstPoint,
-          mid: creationSecondPoint,
-          end: point,
-          color: "#ffd65a",
-        });
+      if (draftDrawing.type === "fib") {
+        setDraftDrawing({ ...draftDrawing, end: chartPoint });
       }
     }
   };
 
   const handleOverlayMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!isInteractiveTool) return;
-    const point = getPointFromEvent(event);
-    if (!point) return;
+    const screenPoint = getScreenPointFromEvent(event);
+    if (!screenPoint) return;
+
+    const chartPoint = screenPointToChartPoint(
+      screenPoint,
+      chartRef.current,
+      candleSeriesRef.current
+    );
+    if (!chartPoint) return;
 
     if (dragMode === "edit") {
       setDragMode(null);
       setSelectedHandle(null);
-      setLastPointerPoint(null);
+      setLastPointerChartPoint(null);
       return;
     }
 
-    if (dragMode !== "create" || !creationFirstPoint) return;
+    if (dragMode === "create" && creationFirstPoint && draftDrawing) {
+      let finalDrawing: ProfessionalDrawing | null = null;
 
-    if (activeToolOption === "zone-supply" || activeToolOption === "zone-demand") {
-      const isSupply = activeToolOption === "zone-supply";
-      finishDrawingAndAutoSelect({
-        id: makeId("zone"),
-        type: "zone",
-        name: isSupply ? "Zona de Oferta" : "Zona de Demanda",
-        start: creationFirstPoint,
-        end: point,
-        stroke: isSupply ? "rgba(255,123,123,0.75)" : "rgba(94,231,255,0.75)",
-        fill: isSupply ? "rgba(255,123,123,0.10)" : "rgba(94,231,255,0.10)",
-      });
-      return;
-    }
-
-    if (activeToolOption === "measure-price") {
-      const values = buildMeasureValues(creationFirstPoint, point);
-      finishDrawingAndAutoSelect({
-        id: makeId("measure"),
-        type: "measure",
-        name: "Medir Preço",
-        start: creationFirstPoint,
-        end: point,
-        delta: values.delta,
-        pct: values.pct,
-      });
-      return;
-    }
-
-    if (activeToolOption === "fib-retracement") {
-      finishDrawingAndAutoSelect({
-        id: makeId("fib"),
-        type: "fib",
-        name: "Fibonacci",
-        start: creationFirstPoint,
-        end: point,
-        color: "#7fe8ff",
-        levels: [0, 0.236, 0.382, 0.5, 0.618, 1],
-      });
-      return;
-    }
-
-    if (activeToolOption === "pattern-channel") {
-      finishDrawingAndAutoSelect({
-        id: makeId("channel"),
-        type: "channel",
-        name: "Canal",
-        start: creationFirstPoint,
-        end: point,
-        offset: 38,
-        color: "#8de0ff",
-      });
-      return;
-    }
-
-    if (activeToolOption === "tool-long" || activeToolOption === "tool-short") {
-      finishDrawingAndAutoSelect({
-        id: makeId("trade"),
-        type: activeToolOption === "tool-long" ? "long" : "short",
-        name: activeToolOption === "tool-long" ? "Long" : "Short",
-        start: creationFirstPoint,
-        end: point,
-      });
-      return;
-    }
-
-    if (activeToolOption === "line-trend") {
-      finishDrawingAndAutoSelect({
-        id: makeId("line"),
-        type: "line",
-        name: "Linha de Tendência",
-        start: creationFirstPoint,
-        end: point,
-        color: "#7fe8ff",
-      });
-      return;
-    }
-
-    if (activeToolOption === "forecast-up") {
-      if (!creationSecondPoint) {
-        setCreationSecondPoint(point);
-        setDraftDrawing({
-          id: "draft-projection",
-          type: "projection",
-          name: "Projeção",
+      if (draftDrawing.type === "line") {
+        finalDrawing = {
+          id: makeDrawingId("line"),
+          type: "line",
+          name: "Linha de Tendência",
           start: creationFirstPoint,
-          mid: point,
-          end: point,
-          color: "#ffd65a",
-        });
-        return;
+          end: chartPoint,
+          color: "#7fe8ff",
+        };
       }
 
-      finishDrawingAndAutoSelect({
-        id: makeId("projection"),
-        type: "projection",
-        name: "Projeção",
-        start: creationFirstPoint,
-        mid: creationSecondPoint,
-        end: point,
-        color: "#ffd65a",
-      });
+      if (draftDrawing.type === "fib") {
+        finalDrawing = {
+          id: makeDrawingId("fib"),
+          type: "fib",
+          name: "Fibonacci",
+          start: creationFirstPoint,
+          end: chartPoint,
+          color: "#7fe8ff",
+          levels: [0, 0.236, 0.382, 0.5, 0.618, 1],
+        };
+      }
+
+      if (finalDrawing) {
+        setDrawings((prev) => [...prev, finalDrawing]);
+        setSelectedDrawingId(finalDrawing.id);
+      }
+
+      setCreationFirstPoint(null);
+      setDraftDrawing(null);
+      setDragMode(null);
+      setSelectedHandle(null);
+      setLastPointerChartPoint(null);
+      setActiveTool("cursor");
+      setActiveToolOption("cursor-default");
     }
   };
 
@@ -2721,7 +1938,11 @@ export default function AtlasChartPro2() {
   const clearAllDrawings = () => {
     setDrawings([]);
     setSelectedDrawingId(null);
-    clearDraftState();
+    setCreationFirstPoint(null);
+    setDraftDrawing(null);
+    setDragMode(null);
+    setSelectedHandle(null);
+    setLastPointerChartPoint(null);
   };
 
   const selectedDrawing = drawings.find((d) => d.id === selectedDrawingId) ?? null;
@@ -2760,15 +1981,12 @@ export default function AtlasChartPro2() {
       ? "grabbing"
       : isCursorMode
       ? "default"
-      : isInteractiveTool
+      : isProfessionalTool
       ? "crosshair"
       : "default";
-  
-const shouldEnableOverlay =
-  dragMode === "edit" ||
-  dragMode === "create" ||
-  (!isCursorMode && isInteractiveTool);
-  
+
+  const shouldEnableOverlay = isCursorMode || dragMode === "edit" || dragMode === "create" || isProfessionalTool;
+
   const topMetrics = [
     { title: "Preço", value: price, positive: !change.startsWith("-") },
     { title: "Variação", value: change, positive: !change.startsWith("-") },
@@ -3268,7 +2486,7 @@ const shouldEnableOverlay =
                   if (dragMode === "edit") {
                     setDragMode(null);
                     setSelectedHandle(null);
-                    setLastPointerPoint(null);
+                    setLastPointerChartPoint(null);
                   }
                 }}
                 style={{
@@ -3281,12 +2499,14 @@ const shouldEnableOverlay =
                 }}
               />
 
-              <DrawingOverlay
+              <ProfessionalDrawingOverlay
                 width={chartSize.width}
                 height={chartSize.height}
                 drawings={drawings}
                 draftDrawing={draftDrawing}
                 selectedId={selectedDrawingId}
+                chart={chartRef.current}
+                series={candleSeriesRef.current}
               />
             </div>
           </div>
