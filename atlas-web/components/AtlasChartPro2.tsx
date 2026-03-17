@@ -2763,6 +2763,7 @@ export default function AtlasChartPro2() {
       : isInteractiveTool
       ? "crosshair"
       : "default";
+  
 const shouldEnableOverlay =
   dragMode === "edit" ||
   dragMode === "create" ||
