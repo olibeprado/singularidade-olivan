@@ -1985,7 +1985,7 @@ export default function AtlasChartPro2() {
       ? "crosshair"
       : "default";
 
-  const shouldEnableOverlay = isCursorMode || dragMode === "edit" || dragMode === "create" || isProfessionalTool;
+  const shouldEnableOverlay =dragMode === "edit" || dragMode === "create" || (!isCursorMode && isProfessionalTool);
 
   const topMetrics = [
     { title: "Preço", value: price, positive: !change.startsWith("-") },
