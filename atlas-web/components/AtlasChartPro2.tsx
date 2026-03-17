@@ -92,18 +92,24 @@ const moduleIcons: Record<TopModule, string> = {
 
 const toolGroups: ToolGroup[] = [
   {
-    key: "cursor",
-    icon: "⌖",
-    label: "Cursor",
-    items: [
-      {
-        id: "cursor-default",
-        label: "Selecionar",
-        icon: "⌖",
-        description: "Seleciona, move e edita objetos.",
-      },
-    ],
-  },
+  key: "cursor",
+  icon: "⌖",
+  label: "Cursor",
+  items: [
+    {
+      id: "cursor-default",
+      label: "Navegar",
+      icon: "⌖",
+      description: "Gráfico livre para pan e zoom.",
+    },
+    {
+      id: "cursor-edit",
+      label: "Editar desenho",
+      icon: "✥",
+      description: "Seleciona, move e edita desenhos.",
+    },
+  ],
+},
   {
     key: "draw",
     icon: "╱",
