@@ -9,14 +9,16 @@ type LiquidityRow = {
   tag: string;
 };
 
+type LiquiditySummary = {
+  wall: string;
+  cluster: string;
+  stopZone: string;
+  probableTarget: string;
+};
+
 type Props = {
   rows: LiquidityRow[];
-  summary: {
-    wall: string;
-    cluster: string;
-    stopZone: string;
-    probableTarget: string;
-  };
+  summary: LiquiditySummary;
   isSmall?: boolean;
   activeTab: string;
 };
@@ -104,12 +106,49 @@ function StatCard({
   );
 }
 
+function EventCard({
+  time,
+  title,
+  detail,
+}: {
+  time: string;
+  title: string;
+  detail: string;
+}) {
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: 14,
+        padding: 14,
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 12,
+          marginBottom: 6,
+        }}
+      >
+        <div style={{ fontWeight: 900, color: "#eef4ff" }}>{title}</div>
+        <div style={{ color: "#8fa3c7", fontSize: 12 }}>{time}</div>
+      </div>
+      <div style={{ color: "#9ab0d4", fontSize: 13 }}>{detail}</div>
+    </div>
+  );
+}
+
 export default function LiquidityPanel({
   rows,
   summary,
   isSmall,
   activeTab,
 }: Props) {
+  const safeRows = rows ?? [];
+
   const events = [
     {
       time: "Agora",
@@ -166,7 +205,7 @@ export default function LiquidityPanel({
               }}
             >
               <div style={{ display: "grid", gap: 8 }}>
-                {rows.map((row) => (
+                {safeRows.map((row) => (
                   <div
                     key={row.level}
                     style={{
@@ -184,9 +223,9 @@ export default function LiquidityPanel({
               </div>
 
               <div style={{ display: "grid", gap: 10 }}>
-                {rows.map((row, idx) => (
+                {safeRows.map((row, idx) => (
                   <div
-                    key={row.level}
+                    key={`${row.level}-${idx}`}
                     style={{
                       position: "relative",
                       height: 30,
@@ -265,8 +304,8 @@ export default function LiquidityPanel({
               "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
           }}
         >
-          {rows.map((row, idx) => (
-            <div key={row.level}>
+          {safeRows.map((row, idx) => (
+            <div key={`${row.level}-${row.tag}`}>
               <div
                 style={{
                   display: "flex",
@@ -275,10 +314,11 @@ export default function LiquidityPanel({
                   color: "#dfe8ff",
                   fontSize: 12,
                   fontWeight: 800,
+                  gap: 10,
                 }}
               >
                 <span>{row.level}</span>
-                <span>{row.tag}</span>
+                <span style={{ textAlign: "right" }}>{row.tag}</span>
               </div>
               <div
                 style={{
@@ -312,9 +352,9 @@ export default function LiquidityPanel({
             gap: 10,
           }}
         >
-          {rows.slice(0, 3).map((row) => (
+          {safeRows.slice(0, 3).map((row, idx) => (
             <div
-              key={row.level}
+              key={`${row.level}-${idx}`}
               style={{
                 border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 14,
@@ -353,29 +393,12 @@ export default function LiquidityPanel({
       {activeTab === "Eventos" && (
         <div style={{ display: "grid", gap: 10 }}>
           {events.map((event) => (
-            <div
+            <EventCard
               key={event.title}
-              style={{
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 14,
-                padding: 14,
-                background:
-                  "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  marginBottom: 6,
-                }}
-              >
-                <div style={{ fontWeight: 900, color: "#eef4ff" }}>{event.title}</div>
-                <div style={{ color: "#8fa3c7", fontSize: 12 }}>{event.time}</div>
-              </div>
-              <div style={{ color: "#9ab0d4", fontSize: 13 }}>{event.detail}</div>
-            </div>
+              time={event.time}
+              title={event.title}
+              detail={event.detail}
+            />
           ))}
         </div>
       )}
