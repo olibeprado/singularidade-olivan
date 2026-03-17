@@ -2693,7 +2693,7 @@ const shouldEnableOverlay =
             padding: 10,
           }}
         >
-          <BottomTabsPanel
+                    <BottomTabsPanel
             tabs={bottomTabs}
             activeTab={activeBottomTab}
             activeModule={activeModule}
@@ -2721,11 +2721,14 @@ const shouldEnableOverlay =
                     "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
                 }}
               >
-                <div style={{ fontWeight: 900, marginBottom: 6 }}>Evento monitorado</div>
+                <div style={{ fontWeight: 900, marginBottom: 6 }}>
+                  Evento monitorado
+                </div>
                 <div style={{ color: "#9ab0d4", fontSize: 13 }}>
                   Singularidade ativa com continuidade estrutural e leitura favorável.
                 </div>
               </div>
+
               <div
                 style={{
                   border: "1px solid rgba(255,255,255,0.07)",
@@ -2735,31 +2738,45 @@ const shouldEnableOverlay =
                     "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
                 }}
               >
-                <div style={{ fontWeight: 900, marginBottom: 6 }}>Alerta interno</div>
+                <div style={{ fontWeight: 900, marginBottom: 6 }}>
+                  Alerta interno
+                </div>
                 <div style={{ color: "#9ab0d4", fontSize: 13 }}>
                   Volume em acompanhamento e score alinhado com o módulo atual.
                 </div>
               </div>
             </div>
-            ) : ["Pressão", "Volume", "Confluência", "Pulso", "Score", "Risco", "Curvatura", "Validação", "Ciclo"].includes(activeBottomTab) ? (
+          ) : [
+              "Pressão",
+              "Volume",
+              "Confluência",
+              "Pulso",
+              "Score",
+              "Risco",
+              "Curvatura",
+              "Validação",
+              "Ciclo",
+            ].includes(activeBottomTab) ? (
             <div
-            style={{
-            display: "grid",
-            gridTemplateColumns: isSmall ? "1fr" : "repeat(3, minmax(0, 1fr))",
-            gap: 10,
-            }}
+              style={{
+                display: "grid",
+                gridTemplateColumns: isSmall
+                  ? "1fr"
+                  : "repeat(3, minmax(0, 1fr))",
+                gap: 10,
+              }}
             >
-    <StatCard title={activeBottomTab} value="Ativo" positive />
-    <StatCard title="Confirmação" value="Alta" positive />
-    <StatCard title="Leitura" value="Positiva" positive />
-  </div>
-) : (
-  <ScannerPanel
-    rows={scannerRows}
-    pulseConfig={pulseConfig}
-    isSmall={isSmall}
-  />
-)}
+              <StatCard title={activeBottomTab} value="Ativo" positive />
+              <StatCard title="Confirmação" value="Alta" positive />
+              <StatCard title="Leitura" value="Positiva" positive />
+            </div>
+          ) : (
+            <ScannerPanel
+              rows={scannerRows}
+              pulseConfig={pulseConfig}
+              isSmall={isSmall}
+            />
+          )}
         </div>
       </div>
     </div>
