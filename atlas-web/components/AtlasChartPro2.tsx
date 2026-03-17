@@ -975,6 +975,7 @@ export default function AtlasChartPro2() {
   const [chartHeight, setChartHeight] = useState(720);
   const [viewportWidth, setViewportWidth] = useState(1440);
   const [viewMode, setViewMode] = useState<ViewMode>("auto");
+  const [, setOverlayTick] = useState(0);
   const [spaceOffset] = useState(10);
   const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
 
