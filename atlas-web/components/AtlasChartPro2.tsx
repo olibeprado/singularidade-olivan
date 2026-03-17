@@ -2011,15 +2011,18 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
   };
 
   const overlayCursor =
-    dragMode === "edit"
-      ? "grabbing"
-      : isCursorMode
-      ? "default"
-      : isProfessionalTool
-      ? "crosshair"
-      : "default";
+  dragMode === "edit"
+    ? "grabbing"
+    : isEditMode
+    ? "grab"
+    : isCursorMode
+    ? "default"
+    : isProfessionalTool
+    ? "crosshair"
+    : "default";
 
-  const shouldEnableOverlay =dragMode === "edit" || dragMode === "create" || (!isCursorMode && isProfessionalTool);
+const shouldEnableOverlay =
+  isEditMode || dragMode === "edit" || dragMode === "create" || (!isCursorMode && isProfessionalTool);
 
   const topMetrics = [
     { title: "Preço", value: price, positive: !change.startsWith("-") },
