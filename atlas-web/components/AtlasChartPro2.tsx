@@ -1095,9 +1095,16 @@ export default function AtlasChartPro2() {
     syncChartSize();
 
     const timeScale = chart.timeScale();
-    const handleManualInteraction = () => {
-      if (viewMode === "manual") {
-        const currentScrollPosition = timeScale.scrollPosition();
+
+const refreshOverlay = () => {
+  setOverlayTick((t) => t + 1);
+};
+
+const handleManualInteraction = () => {
+  refreshOverlay();
+
+  if (viewMode === "manual") {
+    const currentScrollPosition = timeScale.scrollPosition();
         if (
           typeof currentScrollPosition === "number" &&
           Number.isFinite(currentScrollPosition)
