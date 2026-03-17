@@ -1292,9 +1292,10 @@ const handleManualInteraction = () => {
   }, [activeToolGroup, activeToolOption]);
 
   const isCursorMode = activeToolOption === "cursor-default";
-  const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].includes(
-    activeToolOption
-  );
+const isEditMode = activeToolOption === "cursor-edit";
+const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].includes(
+  activeToolOption
+);
 
   const sidebarWidth = isSmall ? 0 : showToolPanel ? 300 : 48;
   const mainGridColumns = isSmall
