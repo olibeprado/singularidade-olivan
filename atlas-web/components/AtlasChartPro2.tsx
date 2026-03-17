@@ -3275,7 +3275,7 @@ const shouldEnableOverlay =
                   inset: 0,
                   zIndex: 5,
                   background: "transparent",
-                  pointerEvents: isInteractiveTool ? "auto" : "none",
+                  pointerEvents: shouldEnableOverlay ? "auto" : "none",
                   cursor: overlayCursor,
                 }}
               />
