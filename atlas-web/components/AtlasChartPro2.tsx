@@ -1737,20 +1737,6 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
     return;
   }
 
-      if (hit) {
-        setSelectedDrawingId(hit.id);
-        setSelectedHandle(hit.handle);
-        setDragMode("edit");
-        setLastPointerChartPoint(chartPoint);
-      } else {
-        setSelectedDrawingId(null);
-        setSelectedHandle(null);
-        setDragMode(null);
-        setLastPointerChartPoint(null);
-      }
-      return;
-    }
-
     if (!isProfessionalTool) return;
 
     if (activeToolOption === "line-horizontal") {
