@@ -2741,14 +2741,14 @@ const shouldEnableOverlay =
                 </div>
               </div>
             </div>
-         ) : ["Pressão", "Volume", "Confluência", "Pulso", "Score", "Risco", "Curvatura", "Validação", "Ciclo"].includes(activeBottomTab) ? (
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: isSmall ? "1fr" : "repeat(3, minmax(0, 1fr))",
-      gap: 10,
-    }}
-  >
+            ) : ["Pressão", "Volume", "Confluência", "Pulso", "Score", "Risco", "Curvatura", "Validação", "Ciclo"].includes(activeBottomTab) ? (
+            <div
+            style={{
+            display: "grid",
+            gridTemplateColumns: isSmall ? "1fr" : "repeat(3, minmax(0, 1fr))",
+            gap: 10,
+            }}
+            >
     <StatCard title={activeBottomTab} value="Ativo" positive />
     <StatCard title="Confirmação" value="Alta" positive />
     <StatCard title="Leitura" value="Positiva" positive />
