@@ -1701,23 +1701,41 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
   };
 
   const handleOverlayMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-    const screenPoint = getScreenPointFromEvent(event);
-    if (!screenPoint) return;
+  const screenPoint = getScreenPointFromEvent(event);
+  if (!screenPoint) return;
 
-    const chartPoint = screenPointToChartPoint(
+  const chartPoint = screenPointToChartPoint(
+    screenPoint,
+    chartRef.current,
+    candleSeriesRef.current
+  );
+  if (!chartPoint) return;
+
+  if (isEditMode) {
+    const hit = getProfessionalDrawingHitTarget(
       screenPoint,
+      drawings,
       chartRef.current,
       candleSeriesRef.current
     );
-    if (!chartPoint) return;
 
-    if (isCursorMode) {
-      const hit = getProfessionalDrawingHitTarget(
-        screenPoint,
-        drawings,
-        chartRef.current,
-        candleSeriesRef.current
-      );
+    if (hit) {
+      setSelectedDrawingId(hit.id);
+      setSelectedHandle(hit.handle);
+      setDragMode("edit");
+      setLastPointerChartPoint(chartPoint);
+    } else {
+      setSelectedDrawingId(null);
+      setSelectedHandle(null);
+      setDragMode(null);
+      setLastPointerChartPoint(null);
+    }
+    return;
+  }
+
+  if (isCursorMode) {
+    return;
+  }
 
       if (hit) {
         setSelectedDrawingId(hit.id);
