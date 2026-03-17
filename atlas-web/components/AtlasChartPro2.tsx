@@ -1115,6 +1115,7 @@ const handleManualInteraction = () => {
     };
 
     timeScale.subscribeVisibleLogicalRangeChange(handleManualInteraction);
+    chart.subscribeCrosshairMove(refreshOverlay);
 
     return () => {
       timeScale.unsubscribeVisibleLogicalRangeChange(handleManualInteraction);
