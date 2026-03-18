@@ -2502,26 +2502,31 @@ export default function AtlasChartPro2() {
                 series={candleSeriesRef.current}
               />
 
-              <div
-                onMouseDown={handleOverlayMouseDown}
-                onMouseMove={handleOverlayMouseMove}
-                onMouseUp={handleOverlayMouseUp}
-                onMouseLeave={() => {
-                  if (dragMode === "edit") {
-                    setDragMode(null);
-                    setSelectedHandle(null);
-                    setLastPointerChartPoint(null);
-                  }
-                }}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  zIndex: 5,
-                  background: "transparent",
-                  pointerEvents: shouldEnableOverlay ? "auto" : "none",
-                  cursor: overlayCursor,
-                }}
-              />
+             <div
+  onMouseDown={handleOverlayMouseDown}
+  onMouseMove={handleOverlayMouseMove}
+  onMouseUp={handleOverlayMouseUp}
+  onMouseLeave={() => {
+    if (dragMode === "edit") {
+      setDragMode(null);
+      setSelectedHandle(null);
+      setLastPointerChartPoint(null);
+    }
+    if (dragMode === "create") {
+      setDragMode(null);
+      setDraftDrawing(null);
+      setCreationFirstPoint(null);
+    }
+  }}
+  style={{
+    position: "absolute",
+    inset: 0,
+    zIndex: 5,
+    background: "transparent",
+    pointerEvents: shouldEnableOverlay ? "auto" : "none",
+    cursor: overlayCursor,
+  }}
+/>
             </div>
           </div>
 
