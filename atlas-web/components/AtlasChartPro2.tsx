@@ -1989,18 +1989,17 @@ export default function AtlasChartPro2() {
   };
 
   const overlayCursor =
-    dragMode === "edit"
-      ? "grabbing"
-      : isEditMode
-      ? "grab"
-      : isCursorMode
-      ? "default"
-      : isProfessionalTool
-      ? "crosshair"
-      : "default";
+  dragMode === "edit"
+    ? "default"
+    : isEditMode
+    ? "default"
+    : isCursorMode
+    ? "default"
+    : isProfessionalTool
+    ? "crosshair"
+    : "default";
 
-  const shouldEnableOverlay =
-    isEditMode || dragMode === "edit" || dragMode === "create" || (!isCursorMode && isProfessionalTool);
+  const shouldEnableOverlay = dragMode === "edit" || dragMode === "create";
 
   const topMetrics = [
     { title: "Preço", value: price, positive: !change.startsWith("-") },
