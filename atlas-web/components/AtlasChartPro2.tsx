@@ -867,18 +867,6 @@ export default function AtlasChartPro2() {
     }
   }, [activeModule]);
 
-  // --- FIM DO COMPONENTE ---
-}
-
-// Notas de Implementação para o Comandante:
-// 1. O gráfico agora permite "clicar e arrastar" o eixo de preços (escala manual).
-// 2. Os desenhos possuem uma hitbox de 20px, tornando o clique 100% preciso.
-// 3. A Singularidade (ícone superior) agora pulsa com sombra real sem bordas quadradas.
-// 4. A deleção via tecla 'Delete' ou 'Backspace' está ativa para o objeto selecionado.
-
-/* PROTOCOLO TITÂNIO FINALIZADO PARA O ARQUIVO CLARA2.TSX
-   SISTEMA ATLAS V3 - STATUS: OPERACIONAL
-*/
 // --- MÓDULO EULER: CÁLCULOS DE CURVATURA E TENDÊNCIA ---
   const calculateEulerConfluence = useCallback((data: Candle[]) => {
     if (data.length < 20) return 0;
