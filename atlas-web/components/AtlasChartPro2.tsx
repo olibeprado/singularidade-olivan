@@ -891,21 +891,35 @@ function ProfessionalDrawingOverlay({
       );
     }
 
-    if (drawing.type === "fib") {
-      const start = chartPointToScreenPoint(drawing.start, chart, series);
-      const end = chartPointToScreenPoint(drawing.end, chart, series);
-      if (!start || !end) return null;
-
-      const left = Math.min(start.x, end.x);
-      const right = Math.max(start.x, end.x);
-
+    return (
+  <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
+    {drawing.levels.map((level) => {
+      const y = start.y + (end.y - start.y) * level;
       return (
-      <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
-            {drawing.levels.map((level) => {
-            const y = start.y + (end.y - start.y) * level;
-            return (
-              <g key={`${drawing.id}-${level}`}>
-                <>
+        <g key={`${drawing.id}-${level}`}>
+          <line
+            x1={left}
+            y1={y}
+            x2={right}
+            y2={y}
+            stroke={drawing.color}
+            strokeWidth={selected ? "2.1" : "1.3"}
+          />
+          <text
+            x={left + 6}
+            y={y - 4}
+            fill="#dff6ff"
+            fontSize="10"
+            fontWeight="700"
+          >
+            {level.toFixed(3)}
+          </text>
+        </g>
+      );
+    })}
+    {renderHandles(drawing)}
+  </g>
+);
   <line
     x1={start.x}
     y1={start.y}
