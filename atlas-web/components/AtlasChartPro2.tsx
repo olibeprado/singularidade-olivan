@@ -951,7 +951,12 @@ export default function AtlasChartPro2() {
               overflowY: "auto",
             }}
           >
-            <LiquidityPanel activeModule={activeModule} onClose={() => {}} />
+            <LiquidityPanel
+            rows={liquidityHeatRows}
+            summary={liquiditySummary}
+            isSmall={false}
+            activeTab={activeBottomTab}
+          />
           </div>
         </div>
       </div>
