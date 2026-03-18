@@ -826,26 +826,30 @@ function ProfessionalDrawingOverlay({
     const selected = drawing.id === selectedId;
     const opacity = isDraft ? 0.92 : 1;
 
-    if (drawing.type === "line") {
-      const start = chartPointToScreenPoint(drawing.start, chart, series);
-      const end = chartPointToScreenPoint(drawing.end, chart, series);
-      if (!start || !end) return null;
-
-      return (
-        <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
-          <line
-            x1={start.x}
-            y1={start.y}
-            x2={end.x}
-            y2={end.y}
-            stroke={drawing.color}
-            strokeWidth={selected ? "2.8" : "1.8"}
-            strokeDasharray={isDraft ? "5 4" : undefined}
-          />
-          {renderHandles(drawing)}
-        </g>
-      );
-    }
+    return (
+  <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
+    <>
+      <line
+        x1={start.x}
+        y1={start.y}
+        x2={end.x}
+        y2={end.y}
+        stroke="transparent"
+        strokeWidth={18}
+      />
+      <line
+        x1={start.x}
+        y1={start.y}
+        x2={end.x}
+        y2={end.y}
+        stroke={drawing.color}
+        strokeWidth={selected ? "2.8" : "1.8"}
+        strokeDasharray={isDraft ? "5 4" : undefined}
+      />
+    </>
+    {renderHandles(drawing)}
+  </g>
+);
 
     if (drawing.type === "level") {
       const point = chartPointToScreenPoint(drawing.point, chart, series);
