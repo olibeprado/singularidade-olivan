@@ -937,7 +937,7 @@ function ProfessionalDrawingOverlay({
       style={{
         position: "absolute",
         inset: 0,
-        pointerEvents: "none",
+        pointerEvents: "auto",
         zIndex: 6,
       }}
     >
