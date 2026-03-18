@@ -650,16 +650,39 @@ export default function AtlasChartPro2() {
           
           <div style={{ flex: 1 }} />
           
+          {/* BOTÃO LIMPAR TUDO - CORRIGIDO */}
           <button 
             onClick={handleClearAll}
             style={{ 
-              width: 38,
-{/* ÁREA CENTRAL: GRÁFICO + SVG + LIQUIDEZ */}
+              width: 38, 
+              height: 38, 
+              borderRadius: 8, 
+              background: "rgba(255, 62, 96, 0.1)", 
+              color: "#ff3e60", 
+              border: "1px solid rgba(255, 62, 96, 0.2)", 
+              cursor: "pointer",
+              fontSize: "14px",
+              marginBottom: "10px"
+            }}
+            title="Limpar Estudos"
+          >
+            🗑️
+          </button>
+          
+        </div> {/* Fim da Sidebar */}
+
+        {/* ÁREA CENTRAL: GRÁFICO + SVG + LIQUIDEZ */}
         <div style={{ flex: 1, position: "relative", display: "flex", overflow: "hidden" }}>
           
           {/* O MOTOR DO GRÁFICO (ABAIXO) */}
           <div 
             ref={chartContainerRef} 
+            style={{ 
+              flex: 1, 
+              position: "relative",
+              cursor: activeToolOption === "cursor-default" ? "crosshair" : "crosshair"
+            }} 
+          />
             style={{ 
               flex: 1, 
               position: "relative",
