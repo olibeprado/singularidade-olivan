@@ -92,24 +92,24 @@ const moduleIcons: Record<TopModule, string> = {
 
 const toolGroups: ToolGroup[] = [
   {
-  key: "cursor",
-  icon: "⌖",
-  label: "Cursor",
-  items: [
-    {
-      id: "cursor-default",
-      label: "Navegar",
-      icon: "⌖",
-      description: "Gráfico livre para pan e zoom.",
-    },
-    {
-      id: "cursor-edit",
-      label: "Editar desenho",
-      icon: "✥",
-      description: "Seleciona, move e edita desenhos.",
-    },
-  ],
-},
+    key: "cursor",
+    icon: "⌖",
+    label: "Cursor",
+    items: [
+      {
+        id: "cursor-default",
+        label: "Navegar",
+        icon: "⌖",
+        description: "Gráfico livre para pan e zoom.",
+      },
+      {
+        id: "cursor-edit",
+        label: "Editar desenho",
+        icon: "✥",
+        description: "Seleciona, move e edita desenhos.",
+      },
+    ],
+  },
   {
     key: "draw",
     icon: "╱",
@@ -811,12 +811,12 @@ function ProfessionalDrawingOverlay({
         <circle
           cx={h.point.x}
           cy={h.point.y}
-          r="5"
+          r="6"
           fill="#07111c"
           stroke="#ffffff"
           strokeWidth="1.6"
         />
-        <circle cx={h.point.x} cy={h.point.y} r="2" fill="#5ee7ff" />
+        <circle cx={h.point.x} cy={h.point.y} r="2.4" fill="#5ee7ff" />
       </g>
     ));
   };
@@ -839,7 +839,7 @@ function ProfessionalDrawingOverlay({
             x2={end.x}
             y2={end.y}
             stroke={drawing.color}
-            strokeWidth={selected ? "2.4" : "1.7"}
+            strokeWidth={selected ? "2.8" : "1.8"}
             strokeDasharray={isDraft ? "5 4" : undefined}
           />
           {renderHandles(drawing)}
@@ -859,20 +859,20 @@ function ProfessionalDrawingOverlay({
             x2={width}
             y2={point.y}
             stroke={drawing.color}
-            strokeWidth={selected ? "2.2" : "1.5"}
+            strokeWidth={selected ? "2.4" : "1.5"}
             strokeDasharray="6 5"
           />
           <rect
-            x={Math.max(width - 90, 8)}
+            x={Math.max(width - 102, 8)}
             y={point.y - 12}
-            width={80}
+            width={92}
             height={18}
             rx={6}
             fill="rgba(255,214,90,0.16)"
             stroke="rgba(255,214,90,0.40)"
           />
           <text
-            x={Math.max(width - 50, 18)}
+            x={Math.max(width - 56, 18)}
             y={point.y}
             fill="#fff4bf"
             textAnchor="middle"
@@ -907,7 +907,7 @@ function ProfessionalDrawingOverlay({
                   x2={right}
                   y2={y}
                   stroke={drawing.color}
-                  strokeWidth={selected ? "2" : "1.3"}
+                  strokeWidth={selected ? "2.1" : "1.3"}
                 />
                 <text
                   x={left + 6}
@@ -937,7 +937,7 @@ function ProfessionalDrawingOverlay({
       style={{
         position: "absolute",
         inset: 0,
-        pointerEvents: "auto",
+        pointerEvents: "none",
         zIndex: 4,
       }}
     >
@@ -1102,15 +1102,15 @@ export default function AtlasChartPro2() {
 
     const timeScale = chart.timeScale();
 
-const refreshOverlay = () => {
-  setOverlayTick((t) => t + 1);
-};
+    const refreshOverlay = () => {
+      setOverlayTick((t) => t + 1);
+    };
 
-const handleManualInteraction = () => {
-  refreshOverlay();
+    const handleManualInteraction = () => {
+      refreshOverlay();
 
-  if (viewMode === "manual") {
-    const currentScrollPosition = timeScale.scrollPosition();
+      if (viewMode === "manual") {
+        const currentScrollPosition = timeScale.scrollPosition();
         if (
           typeof currentScrollPosition === "number" &&
           Number.isFinite(currentScrollPosition)
@@ -1125,6 +1125,7 @@ const handleManualInteraction = () => {
 
     return () => {
       timeScale.unsubscribeVisibleLogicalRangeChange(handleManualInteraction);
+      chart.unsubscribeCrosshairMove(refreshOverlay);
       resizeObserver.disconnect();
       chart.remove();
     };
@@ -1292,11 +1293,10 @@ const handleManualInteraction = () => {
   }, [activeToolGroup, activeToolOption]);
 
   const isCursorMode = activeToolOption === "cursor-default";
-const isEditMode = activeToolOption === "cursor-edit";
-  console.log("Modo atual:", activeToolOption);
-const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].includes(
-  activeToolOption
-);
+  const isEditMode = activeToolOption === "cursor-edit";
+  const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].includes(
+    activeToolOption
+  );
 
   const sidebarWidth = isSmall ? 0 : showToolPanel ? 300 : 48;
   const mainGridColumns = isSmall
@@ -1597,7 +1597,7 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
 
   useEffect(() => {
     setActiveBottomTab(bottomTabs[0]);
-  }, [activeModule]);
+  }, [activeModule]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const liquidityHeatRows = useMemo(() => {
     const base = lastClose ?? 71600;
@@ -1654,6 +1654,14 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
     };
   };
 
+  const clearDraftState = () => {
+    setCreationFirstPoint(null);
+    setDraftDrawing(null);
+    setDragMode(null);
+    setSelectedHandle(null);
+    setLastPointerChartPoint(null);
+  };
+
   const handleOpenToolGroup = (key: ToolKey) => {
     setActiveTool(key);
     const found = toolGroups.find((g) => g.key === key);
@@ -1665,14 +1673,8 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
   const handleSelectToolOption = (groupKey: ToolKey, optionId: string) => {
     setActiveTool(groupKey);
     setActiveToolOption(optionId);
-    setCreationFirstPoint(null);
-    setDraftDrawing(null);
-    setDragMode(null);
-    setSelectedHandle(null);
-    setLastPointerChartPoint(null);
-    if (!isSmall) {
-      setShowToolPanel(false);
-    }
+    clearDraftState();
+    if (!isSmall) setShowToolPanel(false);
   };
 
   const toggleFavoriteTool = (optionId: string) => {
@@ -1702,45 +1704,39 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
   };
 
   const handleOverlayMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-  const screenPoint = getScreenPointFromEvent(event);
-  if (!screenPoint) return;
+    const screenPoint = getScreenPointFromEvent(event);
+    if (!screenPoint) return;
 
-  const chartPoint = screenPointToChartPoint(
-    screenPoint,
-    chartRef.current,
-    candleSeriesRef.current
-  );
-  if (!chartPoint) return;
-
-  if (isEditMode) {
-    console.log("CLICOU EM EDIT MODE");
-    
-    const hit = getProfessionalDrawingHitTarget(
+    const chartPoint = screenPointToChartPoint(
       screenPoint,
-      drawings,
       chartRef.current,
       candleSeriesRef.current
     );
-    
-    console.log("HIT:", hit);
-    if (hit) {
-      setSelectedDrawingId(hit.id);
-      setSelectedHandle(hit.handle);
-      setDragMode("edit");
-      setLastPointerChartPoint(chartPoint);
-    } else {
-      setSelectedDrawingId(null);
-      setSelectedHandle(null);
-      setDragMode(null);
-      setLastPointerChartPoint(null);
+    if (!chartPoint) return;
+
+    if (isEditMode) {
+      const hit = getProfessionalDrawingHitTarget(
+        screenPoint,
+        drawings,
+        chartRef.current,
+        candleSeriesRef.current
+      );
+
+      if (hit) {
+        setSelectedDrawingId(hit.id);
+        setSelectedHandle(hit.handle);
+        setDragMode("edit");
+        setLastPointerChartPoint(chartPoint);
+      } else {
+        setSelectedDrawingId(null);
+        setSelectedHandle(null);
+        setDragMode(null);
+        setLastPointerChartPoint(null);
+      }
+      return;
     }
-    return;
-  }
 
-  if (isCursorMode) {
-    return;
-  }
-
+    if (isCursorMode) return;
     if (!isProfessionalTool) return;
 
     if (activeToolOption === "line-horizontal") {
@@ -1754,7 +1750,7 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
       setDrawings((prev) => [...prev, drawing]);
       setSelectedDrawingId(drawing.id);
       setActiveTool("cursor");
-      setActiveToolOption("cursor-default");
+      setActiveToolOption("cursor-edit");
       return;
     }
 
@@ -1882,13 +1878,9 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
         setSelectedDrawingId(finalDrawing.id);
       }
 
-      setCreationFirstPoint(null);
-      setDraftDrawing(null);
-      setDragMode(null);
-      setSelectedHandle(null);
-      setLastPointerChartPoint(null);
+      clearDraftState();
       setActiveTool("cursor");
-      setActiveToolOption("cursor-default");
+      setActiveToolOption("cursor-edit");
     }
   };
 
@@ -1962,11 +1954,7 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
   const clearAllDrawings = () => {
     setDrawings([]);
     setSelectedDrawingId(null);
-    setCreationFirstPoint(null);
-    setDraftDrawing(null);
-    setDragMode(null);
-    setSelectedHandle(null);
-    setLastPointerChartPoint(null);
+    clearDraftState();
   };
 
   const selectedDrawing = drawings.find((d) => d.id === selectedDrawingId) ?? null;
@@ -2001,18 +1989,18 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
   };
 
   const overlayCursor =
-  dragMode === "edit"
-    ? "grabbing"
-    : isEditMode
-    ? "grab"
-    : isCursorMode
-    ? "default"
-    : isProfessionalTool
-    ? "crosshair"
-    : "default";
+    dragMode === "edit"
+      ? "grabbing"
+      : isEditMode
+      ? "grab"
+      : isCursorMode
+      ? "default"
+      : isProfessionalTool
+      ? "crosshair"
+      : "default";
 
-const shouldEnableOverlay =
-  isEditMode || dragMode === "edit" || dragMode === "create" || (!isCursorMode && isProfessionalTool);
+  const shouldEnableOverlay =
+    isEditMode || dragMode === "edit" || dragMode === "create" || (!isCursorMode && isProfessionalTool);
 
   const topMetrics = [
     { title: "Preço", value: price, positive: !change.startsWith("-") },
@@ -2505,6 +2493,16 @@ const shouldEnableOverlay =
                 }}
               />
 
+              <ProfessionalDrawingOverlay
+                width={chartSize.width}
+                height={chartSize.height}
+                drawings={drawings}
+                draftDrawing={draftDrawing}
+                selectedId={selectedDrawingId}
+                chart={chartRef.current}
+                series={candleSeriesRef.current}
+              />
+
               <div
                 onMouseDown={handleOverlayMouseDown}
                 onMouseMove={handleOverlayMouseMove}
@@ -2524,16 +2522,6 @@ const shouldEnableOverlay =
                   pointerEvents: shouldEnableOverlay ? "auto" : "none",
                   cursor: overlayCursor,
                 }}
-              />
-
-              <ProfessionalDrawingOverlay
-                width={chartSize.width}
-                height={chartSize.height}
-                drawings={drawings}
-                draftDrawing={draftDrawing}
-                selectedId={selectedDrawingId}
-                chart={chartRef.current}
-                series={candleSeriesRef.current}
               />
             </div>
           </div>
@@ -2683,7 +2671,7 @@ const shouldEnableOverlay =
             padding: 10,
           }}
         >
-                    <BottomTabsPanel
+          <BottomTabsPanel
             tabs={bottomTabs}
             activeTab={activeBottomTab}
             activeModule={activeModule}
@@ -2750,9 +2738,7 @@ const shouldEnableOverlay =
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: isSmall
-                  ? "1fr"
-                  : "repeat(3, minmax(0, 1fr))",
+                gridTemplateColumns: isSmall ? "1fr" : "repeat(3, minmax(0, 1fr))",
                 gap: 10,
               }}
             >
