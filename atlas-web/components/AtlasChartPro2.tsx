@@ -832,7 +832,7 @@ function ProfessionalDrawingOverlay({
       if (!start || !end) return null;
 
       return (
-        <g key={drawing.id} opacity={opacity}>
+        <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
           <line
             x1={start.x}
             y1={start.y}
@@ -852,7 +852,7 @@ function ProfessionalDrawingOverlay({
       if (!point) return null;
 
       return (
-        <g key={drawing.id} opacity={opacity}>
+        <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
           <line
             x1={0}
             y1={point.y}
