@@ -1293,6 +1293,7 @@ const handleManualInteraction = () => {
 
   const isCursorMode = activeToolOption === "cursor-default";
 const isEditMode = activeToolOption === "cursor-edit";
+  console.log("Modo atual:", activeToolOption);
 const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].includes(
   activeToolOption
 );
