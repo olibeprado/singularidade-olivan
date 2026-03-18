@@ -208,7 +208,7 @@ export function getProfessionalDrawingHitTarget(
 
       if (!start || !end) continue;
 
-      if (pointNearLine(screenPoint, start, end, 8)) {
+      if (pointNearLine(screenPoint, start, end, 14)) {
         return { id: drawing.id, handle: "body" };
       }
     }
@@ -217,7 +217,7 @@ export function getProfessionalDrawingHitTarget(
       const point = chartPointToScreenPoint(drawing.point, chart, series);
       if (!point) continue;
 
-      if (Math.abs(screenPoint.y - point.y) <= 7) {
+      if (Math.abs(screenPoint.y - point.y) <= 12) {
         return { id: drawing.id, handle: "body" };
       }
     }
@@ -234,10 +234,10 @@ export function getProfessionalDrawingHitTarget(
       const bottom = Math.max(start.y, end.y);
 
       if (
-        screenPoint.x >= left - 4 &&
-        screenPoint.x <= right + 4 &&
-        screenPoint.y >= top - 4 &&
-        screenPoint.y <= bottom + 4
+        screenPoint.x >= left - 10 &&
+        screenPoint.x <= right + 10 &&
+        screenPoint.y >= top - 10 &&
+        screenPoint.y <= bottom + 10
       ) {
         return { id: drawing.id, handle: "body" };
       }
