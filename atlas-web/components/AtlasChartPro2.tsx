@@ -938,7 +938,7 @@ function ProfessionalDrawingOverlay({
         position: "absolute",
         inset: 0,
         pointerEvents: "auto",
-        zIndex: 6,
+        zIndex: 4,
       }}
     >
       {drawings.map((d) => renderDrawing(d))}
