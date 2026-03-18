@@ -1,16 +1,26 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  createChart,
-  ColorType,
-  type IChartApi,
-  type ISeriesApi,
-  type UTCTimestamp,
-  type Time,
-} from "lightweight-charts";
+import Image from "next/image";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createChart, ColorType } from "lightweight-charts";
 import LiquidityPanel from "./atlas-v3/LiquidityPanel";
+import BottomTabsPanel from "./atlas-v3/BottomTabsPanel";
 import ScannerPanel from "./atlas-v3/ScannerPanel";
+import ToolEnhancements from "./atlas-v3/ToolEnhancements";
+import {
+  type ProfessionalDrawing,
+  type ChartPoint,
+  type ScreenPoint,
+  type DragTarget,
+  makeDrawingId,
+  formatPriceLabel,
+  screenPointToChartPoint,
+  chartPointToScreenPoint,
+  getProfessionalDrawingHandles,
+  getProfessionalDrawingHitTarget,
+  moveProfessionalDrawing,
+  updateProfessionalDrawingHandle,
+} from "./atlas-v3/drawingEngine";
 
 type Candle = {
   time: UTCTimestamp;
