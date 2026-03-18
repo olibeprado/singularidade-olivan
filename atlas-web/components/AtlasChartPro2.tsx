@@ -698,17 +698,19 @@ export default function AtlasChartPro2() {
     handleResize();
     window.addEventListener("resize", handleResize);
 
-    const unsubscribeCrosshair = chart.subscribeCrosshairMove((param) => {
-      if (!param.point) return;
-      setMousePos({ x: param.point.x, y: param.point.y });
-    });
+    const handleCrosshairMove = (param: any) => {
+    if (!param.point) return;
+    setMousePos({ x: param.point.x, y: param.point.y });
+    };
+
+    chart.subscribeCrosshairMove(handleCrosshairMove);
 
     chart.timeScale().subscribeVisibleLogicalRangeChange(() => setTick((t) => t + 1));
     chart.subscribeCrosshairMove(() => setTick((t) => t + 1));
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      unsubscribeCrosshair?.();
+      chart.unsubscribeCrosshairMove(handleCrosshairMove);
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
