@@ -3742,6 +3742,21 @@ export default AtlasV3;
     return () => { clearInterval(swanTimer); clearInterval(bridgeTimer); clearInterval(healthTimer); };
   }, [monitorSystemicRisk, scanBridgeFlow]);
 
-  // --- EXPORTAÇÃO E SELO FINAL ---
-  // ATLAS V3 CONCLUÍDO COM 6.012 LINHAS DE CÓDIGO.
-  // ESTABILIDADE: ALPHA | DENSIDADE: MÁXIMA | STATUS: OPERACIONAL.
+{/* SEÇÃO DE ESTILOS GLOBAIS */}
+      <style jsx global>{`
+        @keyframes pulseAura {
+          0% { transform: scale(0.95); opacity: 0.3; }
+          50% { transform: scale(1.1); opacity: 0.6; }
+          100% { transform: scale(0.95); opacity: 0.3; }
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+      `}</style>
+    </div>
+  );
+}
+
+// --- FUNÇÃO AUXILIAR DE ID (FORA DO COMPONENTE) ---
+function makeDrawingId(): string {
+  return Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+}
