@@ -951,12 +951,22 @@ export default function AtlasChartPro2() {
               overflowY: "auto",
             }}
           >
-            <LiquidityPanel
-            rows={liquidityHeatRows}
-            summary={liquiditySummary}
-            isSmall={false}
-            activeTab={activeBottomTab}
-          />
+           <div
+  style={{
+    width: 320,
+    borderLeft: "1px solid rgba(255,255,255,0.05)",
+    background: "rgba(10, 13, 20, 0.5)",
+    backdropFilter: "blur(10px)",
+    display: "flex",
+    flexDirection: "column",
+    overflowY: "auto",
+    padding: 16,
+    color: "#8ea4c8",
+    fontSize: 12,
+  }}
+>
+  Painel de liquidez temporariamente desativado.
+</div>
           </div>
         </div>
       </div>
