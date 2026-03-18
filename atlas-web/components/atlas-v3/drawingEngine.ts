@@ -197,7 +197,7 @@ export function getProfessionalDrawingHitTarget(
     const handles = getProfessionalDrawingHandles(drawing, chart, series);
 
     for (const handle of handles) {
-      if (getDistance(screenPoint, handle.point) <= 9) {
+      if (getDistance(screenPoint, handle.point) <= 16) {
         return { id: drawing.id, handle: handle.key };
       }
     }
