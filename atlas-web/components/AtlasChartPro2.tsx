@@ -1181,12 +1181,11 @@ export default function AtlasChartPro2() {
     marketData.slice(-50).forEach(c => {
       const priceBin = Math.floor(c.close / 10) * 10;
       bins[priceBin] = (bins[priceBin] || 0) + c.volume;
-    });
-    
-    return (
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '100px', pointerEvents: 'none', zIndex: 5 }}>
-        {Object.entries(bins).map(([p, v]) => (
-          <div key={
+  });
+
+    return null; 
+  }, [marketData]);
+
 // --- MÓDULO IA ATLAS: PROCESSAMENTO NEURAL ---
   const [iaLogs, setIaLogs] = useState<{msg: string, type: 'info'|'warn'|'alert'}[]>([]);
   
