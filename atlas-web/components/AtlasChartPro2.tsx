@@ -704,7 +704,7 @@ export default function AtlasChartPro2() {
     });
 
     chart.timeScale().subscribeVisibleLogicalRangeChange(() => setTick((t) => t + 1));
-    chart.priceScale("right").subscribeVisiblePriceRangeChange(() => setTick((t) => t + 1));
+    chart.subscribeCrosshairMove(() => setTick((t) => t + 1));
 
     return () => {
       window.removeEventListener("resize", handleResize);
