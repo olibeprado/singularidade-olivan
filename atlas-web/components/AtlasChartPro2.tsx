@@ -259,7 +259,7 @@ export default function AtlasChartPro2() {
     asset: ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT"][i % 5],
     price: (40000 + Math.random() * 20000).toFixed(2),
     change: (Math.random() * 10 - 5).toFixed(2),
-    score: Math.floor(Math.random() * 100),
+    score: String(Math.floor(Math.random() * 100)),
     trend: Math.random() > 0.5 ? "up" : "down",
     signal: Math.random() > 0.7 ? "BUY" : Math.random() > 0.7 ? "SELL" : "WAIT",
   }));
