@@ -1713,13 +1713,16 @@ const isProfessionalTool = ["line-trend", "line-horizontal", "fib-retracement"].
   if (!chartPoint) return;
 
   if (isEditMode) {
+    console.log("CLICOU EM EDIT MODE");
+    
     const hit = getProfessionalDrawingHitTarget(
       screenPoint,
       drawings,
       chartRef.current,
       candleSeriesRef.current
     );
-
+    
+    console.log("HIT:", hit);
     if (hit) {
       setSelectedDrawingId(hit.id);
       setSelectedHandle(hit.handle);
