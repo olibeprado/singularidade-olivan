@@ -896,18 +896,30 @@ function ProfessionalDrawingOverlay({
       const right = Math.max(start.x, end.x);
 
       return (
-        <g key={drawing.id} opacity={opacity}>
-          {drawing.levels.map((level) => {
+      <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
+            {drawing.levels.map((level) => {
             const y = start.y + (end.y - start.y) * level;
             return (
               <g key={`${drawing.id}-${level}`}>
-                <line
-                  x1={left}
-                  y1={y}
-                  x2={right}
-                  y2={y}
-                  stroke={drawing.color}
-                  strokeWidth={selected ? "2.1" : "1.3"}
+                <>
+  <line
+    x1={start.x}
+    y1={start.y}
+    x2={end.x}
+    y2={end.y}
+    stroke="transparent"
+    strokeWidth={18}
+  />
+  <line
+    x1={start.x}
+    y1={start.y}
+    x2={end.x}
+    y2={end.y}
+    stroke={drawing.color}
+    strokeWidth={selected ? "2.8" : "1.8"}
+    strokeDasharray={isDraft ? "5 4" : undefined}
+  />
+</>
                 />
                 <text
                   x={left + 6}
