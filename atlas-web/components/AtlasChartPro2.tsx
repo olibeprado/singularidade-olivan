@@ -1056,7 +1056,6 @@ export default function AtlasChartPro2() {
             </div>
           </div>
         ) : activeModule === "Scanner" ? (
-          <ScannerPanel rows={scannerRows} pulseConfig={pulseConfig} isSmall={false} />
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
