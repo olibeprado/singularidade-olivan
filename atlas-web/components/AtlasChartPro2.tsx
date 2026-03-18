@@ -675,21 +675,14 @@ export default function AtlasChartPro2() {
         <div style={{ flex: 1, position: "relative", display: "flex", overflow: "hidden" }}>
           
           {/* O MOTOR DO GRÁFICO (ABAIXO) */}
-          <div 
-            ref={chartContainerRef} 
-            style={{ 
-              flex: 1, 
-              position: "relative",
-              cursor: activeToolOption === "cursor-default" ? "crosshair" : "crosshair"
-            }} 
-          />
-            style={{ 
-              flex: 1, 
-              position: "relative",
-              cursor: activeToolOption === "cursor-default" ? "crosshair" : "crosshair"
-            }} 
-          />
-
+          <div
+          ref={chartContainerRef}
+          style={{
+            flex: 1,
+            position: "relative",
+            cursor: activeToolOption === "cursor-default" ? "crosshair" : "crosshair"
+          }}
+        > {/* <--- AQUI VOCÊ SÓ ADICIONA O '>' PARA ABRIR */}
           {/* O MOTOR DE DESENHOS (SOBREPOSTO) */}
           <svg
             ref={svgRef}
@@ -1270,16 +1263,17 @@ export default function AtlasChartPro2() {
     // Critério 4: Proximidade de Liquidez (Order Flow)
     score += 30; // Baseado no LiquidityCascade
 
-    return Math.min(score, 100);
-  }, [marketData]);
-
   // --- CALCULADORA DE RISCO DINÂMICO ---
   const riskAnalysis = useMemo(() => {
-    const vol = Math.random() * 10; // Volatilidade implícita
+    const vol = Math.random() * 10;
     return {
       ratio: "1:3.5",
       stopLoss: "49.850",
       takeProfit: "52.400",
+      status: vol > 7 ? "ALTO" : "MODERADO",
+      color: vol > 7 ? "#ff5e5e" : "#ffcc00"
+    };
+  }, [marketData]); // <--- ADICIONE ESTE FECHAMENTO CORRETO AQUI
       status: vol > 7 ? "ALTO" : "MODERADO",
       color: vol > 7 ? "#ff3e60" : "#ffcc00"
     };
