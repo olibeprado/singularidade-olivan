@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import ToolEnhancements from "./ToolEnhancements";
-
+import ToolEnhancements from "./atlas-v3/ToolEnhancements";
 type DrawingType = "line" | "ray" | "fibo" | "rect";
 
 type DrawingItem = {
