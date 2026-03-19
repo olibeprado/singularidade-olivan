@@ -1,28 +1,10 @@
 "use client";
-
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createChart, ColorType } from "lightweight-charts";
 import ToolEnhancements from "./atlas-v3/ToolEnhancements";
-import ToolsSidebar, {
-  type ToolGroup,
-  type ToolKey,
-} from "./atlas-v3/ToolsSidebar";
+import ToolsSidebar, { type ToolGroup, type ToolKey } from "./atlas-v3/ToolsSidebar";
 import BottomContextPanel from "./atlas-v3/BottomContextPanel";
-import {
-  type ProfessionalDrawing,
-  type ChartPoint,
-  type ScreenPoint,
-  type DragTarget,
-  makeDrawingId,
-  formatPriceLabel,
-  screenPointToChartPoint,
-  chartPointToScreenPoint,
-  getProfessionalDrawingHandles,
-  getProfessionalDrawingHitTarget,
-  moveProfessionalDrawing,
-  updateProfessionalDrawingHandle,
-} from "./atlas-v3/drawingEngine";
 
 type Candle = {
   time: string;
@@ -33,36 +15,12 @@ type Candle = {
   volume: number;
 };
 
-type TopModule =
-  | "Fluxo"
-  | "Singularidade"
-  | "IA Atlas"
-  | "Scanner"
-  | "Estrutura"
-  | "Euler"
-  | "Liquidez";
-
-type ToolOption = {
-  id: string;
-  label: string;
-  icon: string;
-  description: string;
-};
-
-type ViewMode = "auto" | "manual" | "space";
+type TopModule = "Fluxo" | "Singularidade" | "IA Atlas" | "Scanner" | "Estrutura" | "Euler" | "Liquidez";
 
 const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const timeframes = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
 
-const topModules: TopModule[] = [
-  "Fluxo",
-  "Singularidade",
-  "IA Atlas",
-  "Scanner",
-  "Estrutura",
-  "Euler",
-  "Liquidez",
-];
+const topModules: TopModule[] = ["Fluxo", "Singularidade", "IA Atlas", "Scanner", "Estrutura", "Euler", "Liquidez"];
 
 const moduleIcons: Record<TopModule, string> = {
   Fluxo: "≈",
@@ -73,7 +31,130 @@ const moduleIcons: Record<TopModule, string> = {
   Euler: "∑",
   Liquidez: "≋",
 };
+  Fluxo: "≈",
+  Singularidade: "✦",
+  "IA Atlas": "◈",
+  Scanner: "⌕",
+  Estrutura: "▣",
+  Euler: "∑",
+  Liquidez: "≋",
+};
+// ==================== FUNÇÕES AUXILIARES ====================
 
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+// ==================== FUNÇÕES AUXILIARES ====================
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function miniIconBtn(color: string): React.CSSProperties {
+  return {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
+    color,
+    cursor: "pointer",
+    fontSize: 12,
+  };
+}
+
+function ControlButton({
+  children,
+  active,
+  danger,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active?: boolean;
+  danger?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        border: danger
+          ? "1px solid rgba(255,107,129,0.35)"
+          : active
+          ? "1px solid rgba(94,231,255,0.35)"
+          : "1px solid rgba(255,255,255,0.08)",
+        background: danger
+          ? "linear-gradient(180deg, rgba(255,107,129,0.14), rgba(255,107,129,0.05))"
+          : active
+          ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
+          : "rgba(255,255,255,0.03)",
+        color: danger ? "#ffd3da" : active ? "#bff8ff" : "#d7e4ff",
+        borderRadius: 10,
+        padding: "7px 10px",
+        fontWeight: 800,
+        fontSize: 11,
+        cursor: "pointer",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ... (mais funções auxiliares que você já tinha)
+
+function miniIconBtn(color: string): React.CSSProperties {
+  return {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
+    color,
+    cursor: "pointer",
+    fontSize: 12,
+  };
+}
+
+function ControlButton({
+  children,
+  active,
+  danger,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active?: boolean;
+  danger?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        border: danger
+          ? "1px solid rgba(255,107,129,0.35)"
+          : active
+          ? "1px solid rgba(94,231,255,0.35)"
+          : "1px solid rgba(255,255,255,0.08)",
+        background: danger
+          ? "linear-gradient(180deg, rgba(255,107,129,0.14), rgba(255,107,129,0.05))"
+          : active
+          ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
+          : "rgba(255,255,255,0.03)",
+        color: danger ? "#ffd3da" : active ? "#bff8ff" : "#d7e4ff",
+        borderRadius: 10,
+        padding: "7px 10px",
+        fontWeight: 800,
+        fontSize: 11,
+        cursor: "pointer",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ... (mais funções auxiliares que você já tinha)
 const toolGroups: ToolGroup[] = [
   {
     key: "cursor",
