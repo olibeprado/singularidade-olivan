@@ -833,7 +833,7 @@ if (!pointForHandle) return null;
             onMouseDown={(e) => {
               e.stopPropagation();
               onSelectDrawing(drawing.id);
-              onStartEdit(drawing.id, h.key as DragTarget, startPoint);
+              onStartEdit(drawing.id, h.key as DragTarget, pointForHandle);
             }}
           />
           <circle
