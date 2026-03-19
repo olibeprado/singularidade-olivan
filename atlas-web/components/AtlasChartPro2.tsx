@@ -813,14 +813,18 @@ function ProfessionalDrawingOverlay({
     if (drawing.id !== selectedId || !isEditMode) return null;
 
     return getProfessionalDrawingHandles(drawing, chart, series).map((h) => {
-      const startPoint =
-        h.key === "start"
-          ? drawing.start
-          : h.key === "end"
-          ? drawing.end
-          : drawing.point;
+      const pointForHandle =
+  h.key === "point"
+    ? drawing.type === "level"
+      ? drawing.point
+      : null
+    : drawing.type !== "level"
+    ? h.key === "start"
+      ? drawing.start
+      : drawing.end
+    : null;
 
-      if (!startPoint) return null;
+if (!pointForHandle) return null;
 
       return (
         <g key={`${drawing.id}-${h.key}`}>
