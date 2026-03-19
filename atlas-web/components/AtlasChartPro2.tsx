@@ -3,12 +3,10 @@
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createChart, ColorType } from "lightweight-charts";
+import LiquidityPanel from "./atlas-v3/LiquidityPanel";
+import BottomTabsPanel from "./atlas-v3/BottomTabsPanel";
+import ScannerPanel from "./atlas-v3/ScannerPanel";
 import ToolEnhancements from "./atlas-v3/ToolEnhancements";
-import ToolsSidebar, {
-  type ToolGroup,
-  type ToolKey,
-} from "./atlas-v3/ToolsSidebar";
-import BottomContextPanel from "./atlas-v3/BottomContextPanel";
 import {
   type ProfessionalDrawing,
   type ChartPoint,
@@ -42,6 +40,17 @@ type TopModule =
   | "Euler"
   | "Liquidez";
 
+type ToolKey =
+  | "cursor"
+  | "draw"
+  | "shapes"
+  | "measure"
+  | "fib"
+  | "patterns"
+  | "longshort"
+  | "forecast"
+  | "more";
+
 type ToolOption = {
   id: string;
   label: string;
@@ -49,7 +58,22 @@ type ToolOption = {
   description: string;
 };
 
+type ToolGroup = {
+  key: ToolKey;
+  icon: string;
+  label: string;
+  items: ToolOption[];
+};
+
 type ViewMode = "auto" | "manual" | "space";
+
+type DrawingStyleConfig = {
+  color?: string;
+  lineWidth?: number;
+  dash?: "solid" | "dashed";
+  showLabels?: boolean;
+  fibLevels?: number[];
+};
 
 const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 const timeframes = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
@@ -111,12 +135,6 @@ const toolGroups: ToolGroup[] = [
         icon: "―",
         description: "Nível horizontal profissional.",
       },
-      {
-        id: "line-ray",
-        label: "Raio",
-        icon: "⟍",
-        description: "Preparado para próxima etapa.",
-      },
     ],
   },
   {
@@ -128,13 +146,13 @@ const toolGroups: ToolGroup[] = [
         id: "zone-supply",
         label: "Zona de oferta",
         icon: "▭",
-        description: "Em breve no novo motor.",
+        description: "Base pronta para expansão.",
       },
       {
         id: "zone-demand",
         label: "Zona de demanda",
         icon: "▯",
-        description: "Em breve no novo motor.",
+        description: "Base pronta para expansão.",
       },
     ],
   },
@@ -147,7 +165,7 @@ const toolGroups: ToolGroup[] = [
         id: "measure-price",
         label: "Medir preço",
         icon: "↕",
-        description: "Em breve no novo motor.",
+        description: "Base pronta para expansão.",
       },
     ],
   },
@@ -173,7 +191,7 @@ const toolGroups: ToolGroup[] = [
         id: "pattern-channel",
         label: "Canal",
         icon: "∥",
-        description: "Em breve no novo motor.",
+        description: "Base pronta para expansão.",
       },
     ],
   },
@@ -186,13 +204,13 @@ const toolGroups: ToolGroup[] = [
         id: "tool-long",
         label: "Long",
         icon: "▲",
-        description: "Em breve no novo motor.",
+        description: "Base pronta para expansão.",
       },
       {
         id: "tool-short",
         label: "Short",
         icon: "▼",
-        description: "Em breve no novo motor.",
+        description: "Base pronta para expansão.",
       },
     ],
   },
@@ -205,7 +223,7 @@ const toolGroups: ToolGroup[] = [
         id: "forecast-up",
         label: "Projeção",
         icon: "↗",
-        description: "Em breve no novo motor.",
+        description: "Base pronta para expansão.",
       },
     ],
   },
@@ -399,6 +417,241 @@ function RightRow({
   );
 }
 
+function ToolSidebar({
+  groups,
+  activeGroup,
+  activeOptionId,
+  favorites,
+  onOpenGroup,
+  onSelectOption,
+  onToggleFavorite,
+  accent,
+  compact,
+  expanded,
+}: {
+  groups: ToolGroup[];
+  activeGroup: ToolKey | null;
+  activeOptionId: string;
+  favorites: string[];
+  onOpenGroup: (key: ToolKey) => void;
+  onSelectOption: (groupKey: ToolKey, optionId: string) => void;
+  onToggleFavorite: (optionId: string) => void;
+  accent: string;
+  compact?: boolean;
+  expanded?: boolean;
+}) {
+  const activeGroupData = groups.find((g) => g.key === activeGroup) ?? groups[0];
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: expanded ? 10 : 0,
+        alignItems: "flex-start",
+        width: expanded ? 300 : 48,
+        minWidth: expanded ? 300 : 48,
+        transition: "width 0.18s ease",
+      }}
+    >
+      <div
+        style={{
+          width: 48,
+          minWidth: 48,
+          background:
+            "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
+          border: "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 16,
+          padding: "8px 4px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          alignItems: "center",
+          position: "sticky",
+          top: 98,
+        }}
+      >
+        {groups.map((group) => {
+          const active = activeGroup === group.key;
+          const hasFavorite = group.items.some((item) => favorites.includes(item.id));
+          return (
+            <button
+              key={group.key}
+              onClick={() => onOpenGroup(group.key)}
+              title={group.label}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 9,
+                border: active
+                  ? `1px solid ${accent}55`
+                  : "1px solid rgba(255,255,255,0.06)",
+                background: active
+                  ? `linear-gradient(180deg, ${accent}28, rgba(255,255,255,0.03))`
+                  : "rgba(255,255,255,0.025)",
+                color: active ? "#eef4ff" : hasFavorite ? "#dce7ff" : "#9fb3d4",
+                fontSize: 13,
+                cursor: "pointer",
+                position: "relative",
+              }}
+            >
+              {group.icon}
+              {hasFavorite && (
+                <span
+                  style={{
+                    position: "absolute",
+                    right: -2,
+                    top: -3,
+                    fontSize: 9,
+                    color: "#ffd65a",
+                  }}
+                >
+                  ★
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {expanded && !compact && (
+        <div
+          style={{
+            width: 242,
+            minWidth: 242,
+            background:
+              "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.995))",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 16,
+            padding: 12,
+            position: "sticky",
+            top: 98,
+            maxHeight: "calc(100vh - 120px)",
+            overflowY: "auto",
+          }}
+        >
+          <div
+            style={{
+              color: "#e9f1ff",
+              fontSize: 13,
+              fontWeight: 900,
+              marginBottom: 10,
+            }}
+          >
+            {activeGroupData.label}
+          </div>
+
+          <div style={{ display: "grid", gap: 8 }}>
+            {activeGroupData.items.map((item) => {
+              const active = activeOptionId === item.id;
+              const starred = favorites.includes(item.id);
+
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    border: active
+                      ? `1px solid ${accent}55`
+                      : "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 12,
+                    background: active
+                      ? `linear-gradient(180deg, ${accent}20, rgba(255,255,255,0.03))`
+                      : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
+                    padding: 10,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <button
+                      onClick={() => onSelectOption(activeGroupData.key, item.id)}
+                      style={{
+                        flex: 1,
+                        background: "transparent",
+                        border: "none",
+                        padding: 0,
+                        textAlign: "left",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 10,
+                          alignItems: "center",
+                          marginBottom: 6,
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 24,
+                            height: 24,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 8,
+                            background: "rgba(255,255,255,0.04)",
+                            color: "#e6efff",
+                            fontSize: 13,
+                          }}
+                        >
+                          {item.icon}
+                        </span>
+                        <div
+                          style={{
+                            color: "#eef4ff",
+                            fontSize: 12,
+                            fontWeight: 800,
+                          }}
+                        >
+                          {item.label}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          color: "#8ea4c8",
+                          fontSize: 11,
+                          lineHeight: 1.35,
+                        }}
+                      >
+                        {item.description}
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => onToggleFavorite(item.id)}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 9,
+                        border: starred
+                          ? "1px solid rgba(255,214,90,0.38)"
+                          : "1px solid rgba(255,255,255,0.06)",
+                        background: starred
+                          ? "linear-gradient(180deg, rgba(255,214,90,0.18), rgba(255,214,90,0.06))"
+                          : "rgba(255,255,255,0.02)",
+                        color: starred ? "#ffd65a" : "#7d93bc",
+                        cursor: "pointer",
+                        flexShrink: 0,
+                      }}
+                    >
+                      ★
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ObjectsPanel({
   drawings,
   selectedId,
@@ -541,6 +794,237 @@ function ObjectsPanel({
   );
 }
 
+function DrawingSettingsPanel({
+  drawing,
+  config,
+  onChange,
+}: {
+  drawing: ProfessionalDrawing | null;
+  config: DrawingStyleConfig | undefined;
+  onChange: (next: Partial<DrawingStyleConfig>) => void;
+}) {
+  if (!drawing) return null;
+
+  const currentColor = config?.color ?? drawing.color ?? "#7fe8ff";
+  const currentWidth = config?.lineWidth ?? 2;
+  const currentDash = config?.dash ?? "solid";
+  const showLabels = config?.showLabels ?? true;
+  const fibLevels = config?.fibLevels ?? [0, 0.236, 0.382, 0.5, 0.618, 1];
+
+  return (
+    <div
+      style={{
+        padding: 10,
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01))",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gap: 10,
+          border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 14,
+          padding: 12,
+          background:
+            "linear-gradient(180deg, rgba(13,20,37,0.98), rgba(8,12,24,0.99))",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <div style={{ color: "#eef4ff", fontSize: 13, fontWeight: 900 }}>
+              Configuração da ferramenta
+            </div>
+            <div style={{ color: "#8ea4c8", fontSize: 11 }}>
+              {drawing.name} • {drawing.type}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {["#7fe8ff", "#ffd65a", "#34d399", "#fb7185", "#a78bfa", "#ffffff"].map(
+              (color) => (
+                <button
+                  key={color}
+                  onClick={() => onChange({ color })}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 999,
+                    border:
+                      currentColor === color
+                        ? "2px solid #ffffff"
+                        : "1px solid rgba(255,255,255,0.15)",
+                    background: color,
+                    cursor: "pointer",
+                  }}
+                />
+              )
+            )}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+            gap: 10,
+          }}
+        >
+          <div>
+            <div style={{ color: "#7f93b9", fontSize: 10, marginBottom: 6 }}>
+              ESPESSURA
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {[1, 2, 3, 4].map((w) => (
+                <button
+                  key={w}
+                  onClick={() => onChange({ lineWidth: w })}
+                  style={{
+                    flex: 1,
+                    minHeight: 32,
+                    borderRadius: 10,
+                    border:
+                      currentWidth === w
+                        ? "1px solid rgba(94,231,255,0.35)"
+                        : "1px solid rgba(255,255,255,0.08)",
+                    background:
+                      currentWidth === w
+                        ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
+                        : "rgba(255,255,255,0.03)",
+                    color: "#d7e4ff",
+                    cursor: "pointer",
+                    fontWeight: 800,
+                  }}
+                >
+                  {w}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div style={{ color: "#7f93b9", fontSize: 10, marginBottom: 6 }}>
+              ESTILO
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {(["solid", "dashed"] as const).map((dash) => (
+                <button
+                  key={dash}
+                  onClick={() => onChange({ dash })}
+                  style={{
+                    flex: 1,
+                    minHeight: 32,
+                    borderRadius: 10,
+                    border:
+                      currentDash === dash
+                        ? "1px solid rgba(94,231,255,0.35)"
+                        : "1px solid rgba(255,255,255,0.08)",
+                    background:
+                      currentDash === dash
+                        ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
+                        : "rgba(255,255,255,0.03)",
+                    color: "#d7e4ff",
+                    cursor: "pointer",
+                    fontWeight: 800,
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {dash === "solid" ? "Sólida" : "Tracejada"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div style={{ color: "#7f93b9", fontSize: 10, marginBottom: 6 }}>
+              LABELS
+            </div>
+            <button
+              onClick={() => onChange({ showLabels: !showLabels })}
+              style={{
+                width: "100%",
+                minHeight: 32,
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.08)",
+                background: showLabels
+                  ? "linear-gradient(180deg, rgba(52,211,153,0.16), rgba(52,211,153,0.05))"
+                  : "rgba(255,255,255,0.03)",
+                color: "#d7e4ff",
+                cursor: "pointer",
+                fontWeight: 800,
+              }}
+            >
+              {showLabels ? "Mostrar" : "Ocultar"}
+            </button>
+          </div>
+        </div>
+
+        {drawing.type === "fib" && (
+          <div>
+            <div style={{ color: "#7f93b9", fontSize: 10, marginBottom: 8 }}>
+              NÍVEIS FIBONACCI
+            </div>
+
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {[
+                [0, 0.236, 0.382, 0.5, 0.618, 1],
+                [0, 0.25, 0.5, 0.75, 1],
+                [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1],
+              ].map((preset, idx) => {
+                const isActive =
+                  JSON.stringify(fibLevels) === JSON.stringify(preset);
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => onChange({ fibLevels: preset })}
+                    style={{
+                      border: isActive
+                        ? "1px solid rgba(255,220,110,0.42)"
+                        : "1px solid rgba(255,255,255,0.08)",
+                      background: isActive
+                        ? "linear-gradient(180deg, rgba(255,213,79,0.24), rgba(255,170,0,0.08))"
+                        : "rgba(255,255,255,0.03)",
+                      color: isActive ? "#fff4bf" : "#d7e4ff",
+                      borderRadius: 10,
+                      padding: "8px 10px",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Preset {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              style={{
+                marginTop: 8,
+                color: "#8ea4c8",
+                fontSize: 11,
+                lineHeight: 1.5,
+              }}
+            >
+              Níveis ativos: {fibLevels.join(" • ")}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ProfessionalDrawingOverlay({
   width,
   height,
@@ -549,6 +1033,7 @@ function ProfessionalDrawingOverlay({
   selectedId,
   chart,
   series,
+  styleMap,
 }: {
   width: number;
   height: number;
@@ -557,6 +1042,7 @@ function ProfessionalDrawingOverlay({
   selectedId: string | null;
   chart: any;
   series: any;
+  styleMap: Record<string, DrawingStyleConfig>;
 }) {
   const renderHandles = (drawing: ProfessionalDrawing) => {
     if (drawing.id !== selectedId) return null;
@@ -578,9 +1064,13 @@ function ProfessionalDrawingOverlay({
 
   const renderDrawing = (drawing: ProfessionalDrawing, isDraft = false) => {
     if (drawing.hidden) return null;
-
     const selected = drawing.id === selectedId;
     const opacity = isDraft ? 0.92 : 1;
+    const styleCfg = styleMap[drawing.id] ?? {};
+    const stroke = styleCfg.color ?? drawing.color ?? "#7fe8ff";
+    const strokeWidth = styleCfg.lineWidth ?? (selected ? 3 : 2);
+    const strokeDasharray = styleCfg.dash === "dashed" ? "6 4" : undefined;
+    const showLabels = styleCfg.showLabels ?? true;
 
     if (drawing.type === "line") {
       const start = chartPointToScreenPoint(drawing.start, chart, series);
@@ -594,9 +1084,9 @@ function ProfessionalDrawingOverlay({
             y1={start.y}
             x2={end.x}
             y2={end.y}
-            stroke={drawing.color}
-            strokeWidth={selected ? 2.8 : 1.8}
-            strokeDasharray={isDraft ? "5 4" : undefined}
+            stroke={stroke}
+            strokeWidth={strokeWidth}
+            strokeDasharray={isDraft ? "5 4" : strokeDasharray}
           />
           {renderHandles(drawing)}
         </g>
@@ -614,30 +1104,36 @@ function ProfessionalDrawingOverlay({
             y1={point.y}
             x2={width}
             y2={point.y}
-            stroke={drawing.color}
-            strokeWidth={selected ? 2.4 : 1.5}
-            strokeDasharray="6 5"
+            stroke={stroke}
+            strokeWidth={strokeWidth}
+            strokeDasharray={strokeDasharray ?? "6 5"}
           />
-          <rect
-            x={Math.max(width - 102, 8)}
-            y={point.y - 12}
-            width={92}
-            height={18}
-            rx={6}
-            fill="rgba(255,214,90,0.16)"
-            stroke="rgba(255,214,90,0.40)"
-          />
-          <text
-            x={Math.max(width - 56, 18)}
-            y={point.y}
-            fill="#fff4bf"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize="10"
-            fontWeight="700"
-          >
-            {formatPriceLabel(drawing.point.price)}
-          </text>
+
+          {showLabels && (
+            <>
+              <rect
+                x={Math.max(width - 102, 8)}
+                y={point.y - 12}
+                width={92}
+                height={18}
+                rx={6}
+                fill="rgba(255,214,90,0.16)"
+                stroke="rgba(255,214,90,0.40)"
+              />
+              <text
+                x={Math.max(width - 56, 18)}
+                y={point.y}
+                fill="#fff4bf"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize="10"
+                fontWeight="700"
+              >
+                {formatPriceLabel(drawing.point.price)}
+              </text>
+            </>
+          )}
+
           {renderHandles(drawing)}
         </g>
       );
@@ -650,10 +1146,11 @@ function ProfessionalDrawingOverlay({
 
       const left = Math.min(start.x, end.x);
       const right = Math.max(start.x, end.x);
+      const levels = styleCfg.fibLevels ?? drawing.levels ?? [0, 0.236, 0.382, 0.5, 0.618, 1];
 
       return (
         <g key={drawing.id} opacity={opacity}>
-          {drawing.levels.map((level) => {
+          {levels.map((level) => {
             const y = start.y + (end.y - start.y) * level;
             return (
               <g key={`${drawing.id}-${level}`}>
@@ -662,18 +1159,21 @@ function ProfessionalDrawingOverlay({
                   y1={y}
                   x2={right}
                   y2={y}
-                  stroke={drawing.color}
-                  strokeWidth={selected ? 2.1 : 1.3}
+                  stroke={stroke}
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={strokeDasharray}
                 />
-                <text
-                  x={left + 6}
-                  y={y - 4}
-                  fill="#dff6ff"
-                  fontSize="10"
-                  fontWeight="700"
-                >
-                  {level.toFixed(3)}
-                </text>
+                {showLabels && (
+                  <text
+                    x={left + 6}
+                    y={y - 4}
+                    fill="#dff6ff"
+                    fontSize="10"
+                    fontWeight="700"
+                  >
+                    {level.toFixed(3)}
+                  </text>
+                )}
               </g>
             );
           })}
@@ -744,6 +1244,7 @@ export default function AtlasChartPro2() {
   const [drawings, setDrawings] = useState<ProfessionalDrawing[]>([]);
   const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(null);
   const [draftDrawing, setDraftDrawing] = useState<ProfessionalDrawing | null>(null);
+  const [drawingStyles, setDrawingStyles] = useState<Record<string, DrawingStyleConfig>>({});
 
   const [creationFirstPoint, setCreationFirstPoint] = useState<ChartPoint | null>(null);
   const [dragMode, setDragMode] = useState<"create" | "edit" | null>(null);
@@ -774,6 +1275,13 @@ export default function AtlasChartPro2() {
     window.addEventListener("resize", updateChartHeight);
     return () => window.removeEventListener("resize", updateChartHeight);
   }, [isMedium, isSmall]);
+
+  const volumeTopMargin = useMemo(() => {
+    if (chartHeight >= 820) return 0.82;
+    if (chartHeight >= 760) return 0.8;
+    if (chartHeight >= 680) return 0.78;
+    return 0.75;
+  }, [chartHeight]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -832,7 +1340,7 @@ export default function AtlasChartPro2() {
 
     volumeSeries.priceScale().applyOptions({
       scaleMargins: {
-        top: 0.76,
+        top: volumeTopMargin,
         bottom: 0.02,
       },
     });
@@ -884,11 +1392,8 @@ export default function AtlasChartPro2() {
       chart.unsubscribeCrosshairMove(refreshOverlay);
       resizeObserver.disconnect();
       chart.remove();
-      chartRef.current = null;
-      candleSeriesRef.current = null;
-      volumeSeriesRef.current = null;
     };
-  }, [chartHeight, viewMode]);
+  }, [chartHeight, viewMode, volumeTopMargin]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -1057,7 +1562,7 @@ export default function AtlasChartPro2() {
     activeToolOption
   );
 
-  const sidebarWidth = isSmall ? 0 : showToolPanel ? 310 : 52;
+  const sidebarWidth = isSmall ? 0 : showToolPanel ? 300 : 48;
   const mainGridColumns = isSmall
     ? "1fr"
     : isMedium
@@ -1104,7 +1609,7 @@ export default function AtlasChartPro2() {
     switch (activeModule) {
       case "Fluxo":
         return [
-          { asset: "BTCUSDT", score: "91.7", trend: "Compra Forte", price: "$69,489" },
+          { asset: "BTCUSDT", score: "91.7", trend: "Pressão Compradora", price: "$69,489" },
           { asset: "ETHUSDT", score: "84.1", trend: "Fluxo Positivo", price: "$3,745" },
           { asset: "SOLUSDT", score: "79.4", trend: "Absorção", price: "$168.40" },
           { asset: "BNBUSDT", score: "72.3", trend: "Aceleração", price: "$611.22" },
@@ -1449,7 +1954,7 @@ export default function AtlasChartPro2() {
     }
     sidebarHoverTimeoutRef.current = window.setTimeout(() => {
       setShowToolPanel(true);
-    }, 500);
+    }, 2000);
   };
 
   const handleSidebarMouseLeave = () => {
@@ -1507,6 +2012,15 @@ export default function AtlasChartPro2() {
         color: "#ffd65a",
       };
       setDrawings((prev) => [...prev, drawing]);
+      setDrawingStyles((prev) => ({
+        ...prev,
+        [drawing.id]: {
+          color: "#ffd65a",
+          lineWidth: 2,
+          dash: "dashed",
+          showLabels: true,
+        },
+      }));
       setSelectedDrawingId(drawing.id);
       setActiveTool("cursor");
       setActiveToolOption("cursor-edit");
@@ -1634,6 +2148,19 @@ export default function AtlasChartPro2() {
 
       if (finalDrawing) {
         setDrawings((prev) => [...prev, finalDrawing]);
+        setDrawingStyles((prev) => ({
+          ...prev,
+          [finalDrawing.id]: {
+            color: finalDrawing.color ?? "#7fe8ff",
+            lineWidth: 2,
+            dash: "solid",
+            showLabels: true,
+            fibLevels:
+              finalDrawing.type === "fib"
+                ? [0, 0.236, 0.382, 0.5, 0.618, 1]
+                : undefined,
+          },
+        }));
         setSelectedDrawingId(finalDrawing.id);
       }
 
@@ -1647,7 +2174,13 @@ export default function AtlasChartPro2() {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Delete") return;
       if (!selectedDrawingId) return;
+
       setDrawings((prev) => prev.filter((d) => d.id !== selectedDrawingId));
+      setDrawingStyles((prev) => {
+        const next = { ...prev };
+        delete next[selectedDrawingId];
+        return next;
+      });
       setSelectedDrawingId(null);
     };
 
@@ -1712,6 +2245,7 @@ export default function AtlasChartPro2() {
 
   const clearAllDrawings = () => {
     setDrawings([]);
+    setDrawingStyles({});
     setSelectedDrawingId(null);
     clearDraftState();
   };
@@ -1735,6 +2269,11 @@ export default function AtlasChartPro2() {
   const deleteSelected = () => {
     if (!selectedDrawingId) return;
     setDrawings((prev) => prev.filter((d) => d.id !== selectedDrawingId));
+    setDrawingStyles((prev) => {
+      const next = { ...prev };
+      delete next[selectedDrawingId];
+      return next;
+    });
     setSelectedDrawingId(null);
   };
 
@@ -1745,6 +2284,17 @@ export default function AtlasChartPro2() {
       return [...prev.filter((d) => d.id !== id), item];
     });
     setSelectedDrawingId(id);
+  };
+
+  const updateSelectedDrawingStyle = (next: Partial<DrawingStyleConfig>) => {
+    if (!selectedDrawingId) return;
+    setDrawingStyles((prev) => ({
+      ...prev,
+      [selectedDrawingId]: {
+        ...(prev[selectedDrawingId] ?? {}),
+        ...next,
+      },
+    }));
   };
 
   const overlayCursor =
@@ -1759,7 +2309,10 @@ export default function AtlasChartPro2() {
       : "default";
 
   const shouldEnableOverlay =
-    isEditMode || dragMode === "edit" || dragMode === "create" || (!isCursorMode && isProfessionalTool);
+    isEditMode ||
+    dragMode === "edit" ||
+    dragMode === "create" ||
+    (!isCursorMode && isProfessionalTool);
 
   const topMetrics = [
     { title: "Preço", value: price, positive: !change.startsWith("-") },
@@ -1767,6 +2320,370 @@ export default function AtlasChartPro2() {
     { title: "Volume", value: volume, positive: true },
     { title: "Desenhos", value: `${drawings.length}`, positive: drawings.length > 0 },
   ];
+
+  const liquidityMapCards = [
+    {
+      title: "Parede principal",
+      value: liquiditySummary.wall,
+      desc: "Maior concentração institucional monitorada.",
+    },
+    {
+      title: "Cluster ativo",
+      value: liquiditySummary.cluster,
+      desc: "Região de atração imediata do preço.",
+    },
+    {
+      title: "Zona de stops",
+      value: liquiditySummary.stopZone,
+      desc: "Faixa provável para varredura curta.",
+    },
+    {
+      title: "Alvo provável",
+      value: liquiditySummary.probableTarget,
+      desc: "Projeção média do deslocamento atual.",
+    },
+  ];
+
+  const heatmapRows = liquidityHeatRows.map((row, idx) => ({
+    ...row,
+    color:
+      idx === 0
+        ? "rgba(255,107,129,0.95)"
+        : idx === 1
+        ? "rgba(255,214,90,0.95)"
+        : idx === 2
+        ? "rgba(94,231,255,0.95)"
+        : idx === 3
+        ? "rgba(94,231,255,0.75)"
+        : "rgba(52,211,153,0.75)",
+  }));
+
+  const clusterRows = useMemo(() => {
+    return liquidityHeatRows.map((row, idx) => ({
+      level: row.level,
+      strength: row.strength,
+      buy: [62, 58, 51, 44, 39][idx],
+      sell: [34, 40, 48, 55, 61][idx],
+      tag: row.tag,
+    }));
+  }, [liquidityHeatRows]);
+
+  const moduleEventRows = useMemo(() => {
+    const basePrice = lastClose ? formatPriceLabel(lastClose) : "--";
+    return [
+      {
+        title: "Pulso monitorado",
+        desc: `${activeModule} acompanhando o preço atual em ${basePrice}.`,
+      },
+      {
+        title: "Estrutura ativa",
+        desc: `Ferramenta atual: ${activeToolOptionData.label}. Leitura de contexto estabilizada.`,
+      },
+      {
+        title: "Atualização interna",
+        desc: `Volume autoajustável ativo. Painel pronto para expansão de Fibonacci e indicadores.`,
+      },
+    ];
+  }, [activeModule, activeToolOptionData.label, lastClose]);
+
+  const renderGenericBottomContent = () => {
+    if (activeBottomTab === "Eventos") {
+      return (
+        <div style={{ display: "grid", gap: 10 }}>
+          {moduleEventRows.map((item) => (
+            <div
+              key={item.title}
+              style={{
+                border: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: 14,
+                padding: 14,
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+              }}
+            >
+              <div style={{ fontWeight: 900, marginBottom: 6 }}>{item.title}</div>
+              <div style={{ color: "#9ab0d4", fontSize: 13 }}>{item.desc}</div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (
+      [
+        "Pressão",
+        "Volume",
+        "Confluência",
+        "Pulso",
+        "Score",
+        "Risco",
+        "Curvatura",
+        "Validação",
+        "Ciclo",
+        "Fluxo",
+        "Singularidade",
+        "IA Atlas",
+        "Estrutura",
+        "Euler",
+      ].includes(activeBottomTab)
+    ) {
+      return (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isSmall ? "1fr" : "repeat(3, minmax(0, 1fr))",
+            gap: 10,
+          }}
+        >
+          <StatCard title={activeBottomTab} value="Ativo" positive />
+          <StatCard title="Confirmação" value="Alta" positive />
+          <StatCard title="Leitura" value="Positiva" positive />
+        </div>
+      );
+    }
+
+    return (
+      <ScannerPanel rows={scannerRows} pulseConfig={pulseConfig} isSmall={isSmall} />
+    );
+  };
+
+  const renderLiquidityBottomContent = () => {
+    if (activeBottomTab === "Map") {
+      return (
+        <div style={{ display: "grid", gap: 12 }}>
+          <div>
+            <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 4 }}>
+              Mapa de Liquidez
+            </div>
+            <div style={{ color: "#8ea4c8", fontSize: 13 }}>
+              Liquidez dinâmica acompanhando o preço atual.
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isSmall ? "1fr" : "repeat(4, minmax(0, 1fr))",
+              gap: 10,
+            }}
+          >
+            {liquidityMapCards.map((card) => (
+              <div
+                key={card.title}
+                style={{
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 14,
+                  padding: 14,
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+                }}
+              >
+                <div style={{ color: "#7f93b9", fontSize: 10, marginBottom: 8 }}>
+                  {card.title.toUpperCase()}
+                </div>
+                <div style={{ color: "#eef4ff", fontSize: 19, fontWeight: 900, marginBottom: 8 }}>
+                  {card.value}
+                </div>
+                <div style={{ color: "#8ea4c8", fontSize: 12, lineHeight: 1.4 }}>
+                  {card.desc}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <LiquidityPanel
+            rows={liquidityHeatRows}
+            summary={liquiditySummary}
+            isSmall={isSmall}
+            activeTab={activeBottomTab}
+          />
+        </div>
+      );
+    }
+
+    if (activeBottomTab === "Heatmap") {
+      return (
+        <div style={{ display: "grid", gap: 10 }}>
+          <div>
+            <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 4 }}>
+              Heatmap de Liquidez
+            </div>
+            <div style={{ color: "#8ea4c8", fontSize: 13 }}>
+              Intensidade visual por faixa de preço.
+            </div>
+          </div>
+
+          {heatmapRows.map((row) => (
+            <div
+              key={`${row.level}-${row.tag}`}
+              style={{
+                border: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: 14,
+                overflow: "hidden",
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+              }}
+            >
+              <div
+                style={{
+                  height: 18,
+                  width: `${row.strength}%`,
+                  background: `linear-gradient(90deg, ${row.color}, rgba(255,214,90,0.95))`,
+                }}
+              />
+              <div
+                style={{
+                  padding: 12,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div>
+                  <div style={{ color: "#eef4ff", fontWeight: 900, fontSize: 13 }}>
+                    {row.level}
+                  </div>
+                  <div style={{ color: "#8ea4c8", fontSize: 11 }}>{row.tag}</div>
+                </div>
+                <div style={{ color: "#ffd65a", fontWeight: 900, fontSize: 13 }}>
+                  {row.strength}%
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (activeBottomTab === "Clusters") {
+      return (
+        <div style={{ display: "grid", gap: 10 }}>
+          <div>
+            <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 4 }}>
+              Clusters
+            </div>
+            <div style={{ color: "#8ea4c8", fontSize: 13 }}>
+              Pressão de compra e venda por faixa monitorada.
+            </div>
+          </div>
+
+          <div
+            style={{
+              border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: 14,
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.1fr 1fr 1fr 0.7fr",
+                gap: 10,
+                padding: "12px 14px",
+                color: "#7f93b9",
+                fontSize: 11,
+                fontWeight: 800,
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+              }}
+            >
+              <div>NÍVEL</div>
+              <div>COMPRA</div>
+              <div>VENDA</div>
+              <div>FORÇA</div>
+            </div>
+
+            {clusterRows.map((row) => (
+              <div
+                key={row.level}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1.1fr 1fr 1fr 0.7fr",
+                  gap: 10,
+                  padding: "12px 14px",
+                  alignItems: "center",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))",
+                }}
+              >
+                <div>
+                  <div style={{ color: "#eef4ff", fontWeight: 800, fontSize: 12 }}>
+                    {row.level}
+                  </div>
+                  <div style={{ color: "#8ea4c8", fontSize: 10 }}>{row.tag}</div>
+                </div>
+
+                <div>
+                  <div
+                    style={{
+                      height: 8,
+                      borderRadius: 999,
+                      overflow: "hidden",
+                      background: "rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${row.buy}%`,
+                        height: "100%",
+                        background: "linear-gradient(90deg, rgba(52,211,153,0.45), #34d399)",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div
+                    style={{
+                      height: 8,
+                      borderRadius: 999,
+                      overflow: "hidden",
+                      background: "rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${row.sell}%`,
+                        height: "100%",
+                        background: "linear-gradient(90deg, rgba(251,113,133,0.45), #fb7185)",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ color: "#ffd65a", fontWeight: 900, fontSize: 12 }}>
+                  {row.strength}%
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ display: "grid", gap: 10 }}>
+        {moduleEventRows.map((item) => (
+          <div
+            key={item.title}
+            style={{
+              border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: 14,
+              padding: 14,
+              background:
+                "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+            }}
+          >
+            <div style={{ fontWeight: 900, marginBottom: 6 }}>{item.title}</div>
+            <div style={{ color: "#9ab0d4", fontSize: 13 }}>{item.desc}</div>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div
@@ -1999,7 +2916,7 @@ export default function AtlasChartPro2() {
               onMouseEnter={handleSidebarMouseEnter}
               onMouseLeave={handleSidebarMouseLeave}
             >
-              <ToolsSidebar
+              <ToolSidebar
                 groups={toolGroups}
                 activeGroup={activeTool}
                 activeOptionId={activeToolOption}
@@ -2164,6 +3081,12 @@ export default function AtlasChartPro2() {
               onDeleteSelected={deleteSelected}
             />
 
+            <DrawingSettingsPanel
+              drawing={selectedDrawing}
+              config={selectedDrawingId ? drawingStyles[selectedDrawingId] : undefined}
+              onChange={updateSelectedDrawingStyle}
+            />
+
             {isSmall && (
               <div
                 style={{
@@ -2229,6 +3152,11 @@ export default function AtlasChartPro2() {
                   }
                   onDelete={(id) => {
                     setDrawings((prev) => prev.filter((d) => d.id !== id));
+                    setDrawingStyles((prev) => {
+                      const next = { ...prev };
+                      delete next[id];
+                      return next;
+                    });
                     if (selectedDrawingId === id) setSelectedDrawingId(null);
                   }}
                   onBringFront={bringFront}
@@ -2260,6 +3188,7 @@ export default function AtlasChartPro2() {
                 selectedId={selectedDrawingId}
                 chart={chartRef.current}
                 series={candleSeriesRef.current}
+                styleMap={drawingStyles}
               />
 
               <div
@@ -2420,20 +3349,30 @@ export default function AtlasChartPro2() {
           )}
         </div>
 
-        <BottomContextPanel
-          activeModule={activeModule}
-          activeBottomTab={activeBottomTab}
-          bottomTabs={bottomTabs}
-          activeToolLabel={activeToolGroup.label}
-          activeOptionLabel={activeToolOptionData.label}
-          moduleAccent={moduleAccent}
-          scannerRows={scannerRows}
-          pulseConfig={pulseConfig}
-          liquidityRows={liquidityHeatRows}
-          liquiditySummary={liquiditySummary}
-          isSmall={isSmall}
-          onChangeTab={setActiveBottomTab}
-        />
+        <div
+          style={{
+            marginTop: 6,
+            background:
+              "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 14,
+            padding: 10,
+          }}
+        >
+          <BottomTabsPanel
+            tabs={bottomTabs}
+            activeTab={activeBottomTab}
+            activeModule={activeModule}
+            activeToolLabel={activeToolGroup.label}
+            activeOptionLabel={activeToolOptionData.label}
+            moduleAccent={moduleAccent}
+            onChangeTab={setActiveBottomTab}
+          />
+
+          {activeModule === "Liquidez"
+            ? renderLiquidityBottomContent()
+            : renderGenericBottomContent()}
+        </div>
       </div>
     </div>
   );
