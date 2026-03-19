@@ -5,12 +5,52 @@ import React from "react";
 type Props = {
   tabs: string[];
   activeTab: string;
-  activeModule: string;
+  activeModule:
+    | "Fluxo"
+    | "Singularidade"
+    | "IA Atlas"
+    | "Scanner"
+    | "Estrutura"
+    | "Euler"
+    | "Liquidez";
   activeToolLabel: string;
   activeOptionLabel: string;
   moduleAccent: string;
   onChangeTab: (tab: string) => void;
 };
+
+function TabButton({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        border: active
+          ? "1px solid rgba(94,231,255,0.34)"
+          : "1px solid rgba(255,255,255,0.08)",
+        background: active
+          ? "linear-gradient(180deg, rgba(94,231,255,0.12), rgba(94,231,255,0.03))"
+          : "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015))",
+        color: active ? "#dffcff" : "#b3c5e6",
+        borderRadius: 999,
+        padding: "6px 12px",
+        fontSize: 11,
+        fontWeight: 800,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
 
 export default function BottomTabsPanel({
   tabs,
@@ -28,39 +68,45 @@ export default function BottomTabsPanel({
         justifyContent: "space-between",
         alignItems: "center",
         gap: 12,
+        marginBottom: 12,
         flexWrap: "wrap",
-        marginBottom: 14,
       }}
     >
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
         {tabs.map((tab) => (
-          <button
+          <TabButton
             key={tab}
+            label={tab}
+            active={activeTab === tab}
             onClick={() => onChangeTab(tab)}
-            style={{
-              padding: "7px 11px",
-              borderRadius: 11,
-              border:
-                activeTab === tab
-                  ? `1px solid ${moduleAccent}55`
-                  : "1px solid rgba(255,255,255,0.06)",
-              background:
-                activeTab === tab
-                  ? `linear-gradient(180deg, ${moduleAccent}24, rgba(255,255,255,0.03))`
-                  : "rgba(255,255,255,0.025)",
-              color: activeTab === tab ? "#eef4ff" : "#a8b8d8",
-              fontWeight: 800,
-              fontSize: 11,
-              cursor: "pointer",
-            }}
-          >
-            {tab}
-          </button>
+          />
         ))}
       </div>
 
-      <div style={{ color: "#88a0c9", fontSize: 12 }}>
-        {activeModule} • {activeTab} • {activeToolLabel} • {activeOptionLabel}
+      <div
+        style={{
+          fontSize: 11,
+          color: "#8fa3c7",
+          display: "flex",
+          gap: 6,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <span style={{ color: moduleAccent, fontWeight: 900 }}>{activeModule}</span>
+        <span>•</span>
+        <span>{activeTab}</span>
+        <span>•</span>
+        <span>{activeToolLabel}</span>
+        <span>•</span>
+        <span>{activeOptionLabel}</span>
       </div>
     </div>
   );
