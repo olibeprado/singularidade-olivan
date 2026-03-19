@@ -858,12 +858,17 @@ if (!pointForHandle) return null;
   };
 
   const renderLine = (drawing: ProfessionalDrawing, isDraft = false) => {
-    const start = chartPointToScreenPoint(drawing.start, chart, series);
-    const end = chartPointToScreenPoint(drawing.end, chart, series);
-    if (!start || !end) return null;
+  if (drawing.type !== "line") return null;
 
-    const selected = drawing.id === selectedId;
-    const opacity = isDraft ? 0.92 : 1;
+  const lineDrawing = drawing;
+
+  const start = chartPointToScreenPoint(lineDrawing.start, chart, series);
+  const end = chartPointToScreenPoint(lineDrawing.end, chart, series);
+
+  if (!start || !end) return null;
+
+  const selected = lineDrawing.id === selectedId;
+  const opacity = isDraft ? 0.92 : 1;
 
     return (
       <g key={drawing.id} opacity={opacity}>
