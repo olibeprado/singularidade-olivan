@@ -813,14 +813,16 @@ function ProfessionalDrawingOverlay({
     if (drawing.id !== selectedId || !isEditMode) return null;
 
     return getProfessionalDrawingHandles(drawing, chart, series).map((h) => {
-      const pointForHandle =
-  drawing.type === "level"
-    ? drawing.point
-    : h.key === "start"
-    ? drawing.start
-    : drawing.end;
+      const handlePoint =
+        drawing.type === "level"
+          ? drawing.point
+          : h.key === "start"
+          ? drawing.start
+          : h.key === "end"
+          ? drawing.end
+          : null;
 
-if (!pointForHandle) return null;
+      if (!handlePoint) return null;
 
       return (
         <g key={`${drawing.id}-${h.key}`}>
@@ -833,7 +835,7 @@ if (!pointForHandle) return null;
             onMouseDown={(e) => {
               e.stopPropagation();
               onSelectDrawing(drawing.id);
-              onStartEdit(drawing.id, h.key as DragTarget, pointForHandle);
+              onStartEdit(drawing.id, h.key as DragTarget, handlePoint);
             }}
           />
           <circle
@@ -858,20 +860,19 @@ if (!pointForHandle) return null;
   };
 
   const renderLine = (drawing: ProfessionalDrawing, isDraft = false) => {
-  if (drawing.type !== "line") return null;
+    if (drawing.type !== "line") return null;
 
-  const lineDrawing = drawing;
+    const lineDrawing = drawing;
+    const start = chartPointToScreenPoint(lineDrawing.start, chart, series);
+    const end = chartPointToScreenPoint(lineDrawing.end, chart, series);
 
-  const start = chartPointToScreenPoint(lineDrawing.start, chart, series);
-  const end = chartPointToScreenPoint(lineDrawing.end, chart, series);
+    if (!start || !end) return null;
 
-  if (!start || !end) return null;
-
-  const selected = lineDrawing.id === selectedId;
-  const opacity = isDraft ? 0.92 : 1;
+    const selected = lineDrawing.id === selectedId;
+    const opacity = isDraft ? 0.92 : 1;
 
     return (
-      <g key={drawing.id} opacity={opacity}>
+      <g key={lineDrawing.id} opacity={opacity}>
         {!isDraft && isEditMode && (
           <line
             x1={start.x}
@@ -883,8 +884,8 @@ if (!pointForHandle) return null;
             style={{ pointerEvents: "auto", cursor: "pointer" }}
             onMouseDown={(e) => {
               e.stopPropagation();
-              onSelectDrawing(drawing.id);
-              onStartEdit(drawing.id, "body" as DragTarget, drawing.start);
+              onSelectDrawing(lineDrawing.id);
+              onStartEdit(lineDrawing.id, "body" as DragTarget, lineDrawing.start);
             }}
           />
         )}
@@ -894,28 +895,29 @@ if (!pointForHandle) return null;
           y1={start.y}
           x2={end.x}
           y2={end.y}
-          stroke={drawing.color}
-          strokeWidth={selected ? "2.8" : "1.8"}
+          stroke={lineDrawing.color}
+          strokeWidth={selected ? 2.8 : 1.8}
           strokeDasharray={isDraft ? "5 4" : undefined}
           style={{ pointerEvents: "none" }}
         />
 
-        {renderHandles(drawing)}
+        {renderHandles(lineDrawing)}
       </g>
     );
   };
 
   const renderLevel = (drawing: ProfessionalDrawing, isDraft = false) => {
-    const point = drawing.point
-      ? chartPointToScreenPoint(drawing.point, chart, series)
-      : null;
-    if (!point || !drawing.point) return null;
+    if (drawing.type !== "level") return null;
 
-    const selected = drawing.id === selectedId;
+    const levelDrawing = drawing;
+    const point = chartPointToScreenPoint(levelDrawing.point, chart, series);
+    if (!point) return null;
+
+    const selected = levelDrawing.id === selectedId;
     const opacity = isDraft ? 0.92 : 1;
 
     return (
-      <g key={drawing.id} opacity={opacity}>
+      <g key={levelDrawing.id} opacity={opacity}>
         {!isDraft && isEditMode && (
           <line
             x1={0}
@@ -927,8 +929,8 @@ if (!pointForHandle) return null;
             style={{ pointerEvents: "auto", cursor: "pointer" }}
             onMouseDown={(e) => {
               e.stopPropagation();
-              onSelectDrawing(drawing.id);
-              onStartEdit(drawing.id, "point" as DragTarget, drawing.point!);
+              onSelectDrawing(levelDrawing.id);
+              onStartEdit(levelDrawing.id, "body" as DragTarget, levelDrawing.point);
             }}
           />
         )}
@@ -938,8 +940,8 @@ if (!pointForHandle) return null;
           y1={point.y}
           x2={width}
           y2={point.y}
-          stroke={drawing.color}
-          strokeWidth={selected ? "2.4" : "1.5"}
+          stroke={levelDrawing.color}
+          strokeWidth={selected ? 2.4 : 1.5}
           strokeDasharray="6 5"
           style={{ pointerEvents: "none" }}
         />
@@ -954,6 +956,7 @@ if (!pointForHandle) return null;
           stroke="rgba(255,214,90,0.40)"
           style={{ pointerEvents: "none" }}
         />
+
         <text
           x={Math.max(width - 56, 18)}
           y={point.y}
@@ -964,53 +967,58 @@ if (!pointForHandle) return null;
           fontWeight="700"
           style={{ pointerEvents: "none" }}
         >
-          {formatPriceLabel(drawing.point.price)}
+          {formatPriceLabel(levelDrawing.point.price)}
         </text>
 
-        {renderHandles(drawing)}
+        {renderHandles(levelDrawing)}
       </g>
     );
   };
 
   const renderFib = (drawing: ProfessionalDrawing, isDraft = false) => {
-    const start = chartPointToScreenPoint(drawing.start, chart, series);
-    const end = chartPointToScreenPoint(drawing.end, chart, series);
+    if (drawing.type !== "fib") return null;
+
+    const fibDrawing = drawing;
+    const start = chartPointToScreenPoint(fibDrawing.start, chart, series);
+    const end = chartPointToScreenPoint(fibDrawing.end, chart, series);
+
     if (!start || !end) return null;
 
-    const selected = drawing.id === selectedId;
+    const selected = fibDrawing.id === selectedId;
     const opacity = isDraft ? 0.92 : 1;
     const left = Math.min(start.x, end.x);
     const right = Math.max(start.x, end.x);
 
     return (
-      <g key={drawing.id} opacity={opacity}>
+      <g key={fibDrawing.id} opacity={opacity}>
         {!isDraft && isEditMode && (
           <rect
             x={left}
             y={Math.min(start.y, end.y) - 10}
-            width={Math.max(right - left, 12)}
+            width={Math.max(12, right - left)}
             height={Math.abs(end.y - start.y) + 20}
             fill="transparent"
             style={{ pointerEvents: "auto", cursor: "pointer" }}
             onMouseDown={(e) => {
               e.stopPropagation();
-              onSelectDrawing(drawing.id);
-              onStartEdit(drawing.id, "body" as DragTarget, drawing.start);
+              onSelectDrawing(fibDrawing.id);
+              onStartEdit(fibDrawing.id, "body" as DragTarget, fibDrawing.start);
             }}
           />
         )}
 
-        {(drawing.levels ?? []).map((level) => {
+        {fibDrawing.levels.map((level) => {
           const y = start.y + (end.y - start.y) * level;
+
           return (
-            <g key={`${drawing.id}-${level}`}>
+            <g key={`${fibDrawing.id}-${level}`}>
               <line
                 x1={left}
                 y1={y}
                 x2={right}
                 y2={y}
-                stroke={drawing.color}
-                strokeWidth={selected ? "2.1" : "1.3"}
+                stroke={fibDrawing.color}
+                strokeWidth={selected ? 2.1 : 1.3}
                 style={{ pointerEvents: "none" }}
               />
               <text
@@ -1027,9 +1035,17 @@ if (!pointForHandle) return null;
           );
         })}
 
-        {renderHandles(drawing)}
+        {renderHandles(fibDrawing)}
       </g>
     );
+  };
+
+  const renderDrawing = (drawing: ProfessionalDrawing, isDraft = false) => {
+    if (drawing.hidden) return null;
+    if (drawing.type === "line") return renderLine(drawing, isDraft);
+    if (drawing.type === "level") return renderLevel(drawing, isDraft);
+    if (drawing.type === "fib") return renderFib(drawing, isDraft);
+    return null;
   };
 
   return (
@@ -1044,17 +1060,8 @@ if (!pointForHandle) return null;
         zIndex: 4,
       }}
     >
-      {drawings.map((drawing) => {
-        if (drawing.hidden) return null;
-        if (drawing.type === "line") return renderLine(drawing);
-        if (drawing.type === "level") return renderLevel(drawing);
-        if (drawing.type === "fib") return renderFib(drawing);
-        return null;
-      })}
-
-      {draftDrawing?.type === "line" ? renderLine(draftDrawing, true) : null}
-      {draftDrawing?.type === "level" ? renderLevel(draftDrawing, true) : null}
-      {draftDrawing?.type === "fib" ? renderFib(draftDrawing, true) : null}
+      {drawings.map((d) => renderDrawing(d))}
+      {draftDrawing ? renderDrawing(draftDrawing, true) : null}
     </svg>
   );
 }
@@ -1186,16 +1193,9 @@ export default function AtlasChartPro2() {
       color: "#3b82f6",
     });
 
-    const getVolumeTopMargin = (h: number) => {
-      if (h >= 820) return 0.82;
-      if (h >= 740) return 0.8;
-      if (h >= 640) return 0.78;
-      return 0.75;
-    };
-
     volumeSeries.priceScale().applyOptions({
       scaleMargins: {
-        top: getVolumeTopMargin(chartHeight),
+        top: 0.76,
         bottom: 0.02,
       },
     });
@@ -1209,13 +1209,6 @@ export default function AtlasChartPro2() {
       const width = chartContainerRef.current.clientWidth;
       const height = chartContainerRef.current.clientHeight;
       chartRef.current.applyOptions({ width, height: chartHeight });
-      volumeSeriesRef.current?.priceScale().applyOptions({
-        scaleMargins: {
-          top:
-            chartHeight >= 820 ? 0.82 : chartHeight >= 740 ? 0.8 : chartHeight >= 640 ? 0.78 : 0.75,
-          bottom: 0.02,
-        },
-      });
       setChartSize({ width, height });
     };
 
@@ -1254,9 +1247,6 @@ export default function AtlasChartPro2() {
       chart.unsubscribeCrosshairMove(refreshOverlay);
       resizeObserver.disconnect();
       chart.remove();
-      chartRef.current = null;
-      candleSeriesRef.current = null;
-      volumeSeriesRef.current = null;
     };
   }, [chartHeight, viewMode]);
 
@@ -1266,13 +1256,6 @@ export default function AtlasChartPro2() {
       const width = chartContainerRef.current.clientWidth;
       const height = chartContainerRef.current.clientHeight;
       chartRef.current.applyOptions({ width, height: chartHeight });
-      volumeSeriesRef.current?.priceScale().applyOptions({
-        scaleMargins: {
-          top:
-            chartHeight >= 820 ? 0.82 : chartHeight >= 740 ? 0.8 : chartHeight >= 640 ? 0.78 : 0.75,
-          bottom: 0.02,
-        },
-      });
       setChartSize({ width, height });
     }, 40);
 
@@ -1839,17 +1822,6 @@ export default function AtlasChartPro2() {
     }
   };
 
-  const startDrawingEdit = (
-    id: string,
-    handle: DragTarget,
-    startPoint: ChartPoint
-  ) => {
-    setSelectedDrawingId(id);
-    setSelectedHandle(handle);
-    setDragMode("edit");
-    setLastPointerChartPoint(startPoint);
-  };
-
   const handleOverlayMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     const screenPoint = getScreenPointFromEvent(event);
     if (!screenPoint) return;
@@ -1951,7 +1923,7 @@ export default function AtlasChartPro2() {
         prev.map((drawing) => {
           if (drawing.id !== selectedDrawingId || drawing.locked) return drawing;
 
-          if (selectedHandle === ("body" as DragTarget)) {
+          if (selectedHandle === "body") {
             const deltaLogical = chartPoint.logical - lastPointerChartPoint.logical;
             const deltaPrice = chartPoint.price - lastPointerChartPoint.price;
             return moveProfessionalDrawing(drawing, deltaLogical, deltaPrice);
@@ -2145,6 +2117,9 @@ export default function AtlasChartPro2() {
       : isProfessionalTool
       ? "crosshair"
       : "default";
+
+  const shouldEnableOverlay =
+    dragMode === "edit" || dragMode === "create" || (!isCursorMode && isProfessionalTool);
 
   const topMetrics = [
     { title: "Preço", value: price, positive: !change.startsWith("-") },
@@ -2537,8 +2512,8 @@ export default function AtlasChartPro2() {
                       id: selectedDrawing.id,
                       name: selectedDrawing.name,
                       type: selectedDrawing.type,
-                      locked: (selectedDrawing as any).locked,
-                      hidden: (selectedDrawing as any).hidden,
+                      locked: selectedDrawing.locked,
+                      hidden: selectedDrawing.hidden,
                     }
                   : null
               }
@@ -2604,12 +2579,12 @@ export default function AtlasChartPro2() {
                   onSelect={setSelectedDrawingId}
                   onToggleHide={(id) =>
                     setDrawings((prev) =>
-                      prev.map((d) => (d.id === id ? { ...d, hidden: !(d as any).hidden } : d))
+                      prev.map((d) => (d.id === id ? { ...d, hidden: !d.hidden } : d))
                     )
                   }
                   onToggleLock={(id) =>
                     setDrawings((prev) =>
-                      prev.map((d) => (d.id === id ? { ...d, locked: !(d as any).locked } : d))
+                      prev.map((d) => (d.id === id ? { ...d, locked: !d.locked } : d))
                     )
                   }
                   onDelete={(id) => {
@@ -2647,7 +2622,12 @@ export default function AtlasChartPro2() {
                 series={candleSeriesRef.current}
                 isEditMode={isEditMode}
                 onSelectDrawing={setSelectedDrawingId}
-                onStartEdit={startDrawingEdit}
+                onStartEdit={(id, handle, point) => {
+                  setSelectedDrawingId(id);
+                  setSelectedHandle(handle);
+                  setDragMode("edit");
+                  setLastPointerChartPoint(point);
+                }}
               />
 
               <div
@@ -2666,16 +2646,8 @@ export default function AtlasChartPro2() {
                   inset: 0,
                   zIndex: 5,
                   background: "transparent",
-                  pointerEvents:
-                    dragMode === "create" || (!isCursorMode && !isEditMode && isProfessionalTool)
-                      ? "auto"
-                      : "none",
-                  cursor:
-                    dragMode === "create"
-                      ? "crosshair"
-                      : isCursorMode
-                      ? "default"
-                      : overlayCursor,
+                  pointerEvents: shouldEnableOverlay ? "auto" : "none",
+                  cursor: overlayCursor,
                 }}
               />
             </div>
