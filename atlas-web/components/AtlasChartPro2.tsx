@@ -3,10 +3,12 @@
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createChart, ColorType } from "lightweight-charts";
-import LiquidityPanel from "./atlas-v3/LiquidityPanel";
-import BottomTabsPanel from "./atlas-v3/BottomTabsPanel";
-import ScannerPanel from "./atlas-v3/ScannerPanel";
 import ToolEnhancements from "./atlas-v3/ToolEnhancements";
+import ToolsSidebar, {
+  type ToolGroup,
+  type ToolKey,
+} from "./atlas-v3/ToolsSidebar";
+import BottomContextPanel from "./atlas-v3/BottomContextPanel";
 import {
   type ProfessionalDrawing,
   type ChartPoint,
@@ -40,29 +42,11 @@ type TopModule =
   | "Euler"
   | "Liquidez";
 
-type ToolKey =
-  | "cursor"
-  | "draw"
-  | "shapes"
-  | "measure"
-  | "fib"
-  | "patterns"
-  | "longshort"
-  | "forecast"
-  | "more";
-
 type ToolOption = {
   id: string;
   label: string;
   icon: string;
   description: string;
-};
-
-type ToolGroup = {
-  key: ToolKey;
-  icon: string;
-  label: string;
-  items: ToolOption[];
 };
 
 type ViewMode = "auto" | "manual" | "space";
@@ -126,6 +110,12 @@ const toolGroups: ToolGroup[] = [
         label: "Linha horizontal",
         icon: "―",
         description: "Nível horizontal profissional.",
+      },
+      {
+        id: "line-ray",
+        label: "Raio",
+        icon: "⟍",
+        description: "Preparado para próxima etapa.",
       },
     ],
   },
@@ -269,13 +259,13 @@ function ControlButton({
         border: danger
           ? "1px solid rgba(255,107,129,0.35)"
           : active
-            ? "1px solid rgba(94,231,255,0.35)"
-            : "1px solid rgba(255,255,255,0.08)",
+          ? "1px solid rgba(94,231,255,0.35)"
+          : "1px solid rgba(255,255,255,0.08)",
         background: danger
           ? "linear-gradient(180deg, rgba(255,107,129,0.14), rgba(255,107,129,0.05))"
           : active
-            ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
-            : "rgba(255,255,255,0.03)",
+          ? "linear-gradient(180deg, rgba(94,231,255,0.16), rgba(94,231,255,0.05))"
+          : "rgba(255,255,255,0.03)",
         color: danger ? "#ffd3da" : active ? "#bff8ff" : "#d7e4ff",
         borderRadius: 10,
         padding: "7px 10px",
@@ -405,241 +395,6 @@ function RightRow({
       >
         {value}
       </span>
-    </div>
-  );
-}
-
-function ToolSidebar({
-  groups,
-  activeGroup,
-  activeOptionId,
-  favorites,
-  onOpenGroup,
-  onSelectOption,
-  onToggleFavorite,
-  accent,
-  compact,
-  expanded,
-}: {
-  groups: ToolGroup[];
-  activeGroup: ToolKey | null;
-  activeOptionId: string;
-  favorites: string[];
-  onOpenGroup: (key: ToolKey) => void;
-  onSelectOption: (groupKey: ToolKey, optionId: string) => void;
-  onToggleFavorite: (optionId: string) => void;
-  accent: string;
-  compact?: boolean;
-  expanded?: boolean;
-}) {
-  const activeGroupData = groups.find((g) => g.key === activeGroup) ?? groups[0];
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        gap: expanded ? 10 : 0,
-        alignItems: "flex-start",
-        width: expanded ? 300 : 48,
-        minWidth: expanded ? 300 : 48,
-        transition: "width 0.18s ease",
-      }}
-    >
-      <div
-        style={{
-          width: 48,
-          minWidth: 48,
-          background:
-            "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: 16,
-          padding: "8px 4px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          alignItems: "center",
-          position: "sticky",
-          top: 98,
-        }}
-      >
-        {groups.map((group) => {
-          const active = activeGroup === group.key;
-          const hasFavorite = group.items.some((item) => favorites.includes(item.id));
-          return (
-            <button
-              key={group.key}
-              onClick={() => onOpenGroup(group.key)}
-              title={group.label}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 9,
-                border: active
-                  ? `1px solid ${accent}55`
-                  : "1px solid rgba(255,255,255,0.06)",
-                background: active
-                  ? `linear-gradient(180deg, ${accent}28, rgba(255,255,255,0.03))`
-                  : "rgba(255,255,255,0.025)",
-                color: active ? "#eef4ff" : hasFavorite ? "#dce7ff" : "#9fb3d4",
-                fontSize: 13,
-                cursor: "pointer",
-                position: "relative",
-              }}
-            >
-              {group.icon}
-              {hasFavorite && (
-                <span
-                  style={{
-                    position: "absolute",
-                    right: -2,
-                    top: -3,
-                    fontSize: 9,
-                    color: "#ffd65a",
-                  }}
-                >
-                  ★
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {expanded && !compact && (
-        <div
-          style={{
-            width: 242,
-            minWidth: 242,
-            background:
-              "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.995))",
-            border: "1px solid rgba(255,255,255,0.07)",
-            borderRadius: 16,
-            padding: 12,
-            position: "sticky",
-            top: 98,
-            maxHeight: "calc(100vh - 120px)",
-            overflowY: "auto",
-          }}
-        >
-          <div
-            style={{
-              color: "#e9f1ff",
-              fontSize: 13,
-              fontWeight: 900,
-              marginBottom: 10,
-            }}
-          >
-            {activeGroupData.label}
-          </div>
-
-          <div style={{ display: "grid", gap: 8 }}>
-            {activeGroupData.items.map((item) => {
-              const active = activeOptionId === item.id;
-              const starred = favorites.includes(item.id);
-
-              return (
-                <div
-                  key={item.id}
-                  style={{
-                    border: active
-                      ? `1px solid ${accent}55`
-                      : "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 12,
-                    background: active
-                      ? `linear-gradient(180deg, ${accent}20, rgba(255,255,255,0.03))`
-                      : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
-                    padding: 10,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 10,
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <button
-                      onClick={() => onSelectOption(activeGroupData.key, item.id)}
-                      style={{
-                        flex: 1,
-                        background: "transparent",
-                        border: "none",
-                        padding: 0,
-                        textAlign: "left",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 10,
-                          alignItems: "center",
-                          marginBottom: 6,
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: 24,
-                            height: 24,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            borderRadius: 8,
-                            background: "rgba(255,255,255,0.04)",
-                            color: "#e6efff",
-                            fontSize: 13,
-                          }}
-                        >
-                          {item.icon}
-                        </span>
-                        <div
-                          style={{
-                            color: "#eef4ff",
-                            fontSize: 12,
-                            fontWeight: 800,
-                          }}
-                        >
-                          {item.label}
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          color: "#8ea4c8",
-                          fontSize: 11,
-                          lineHeight: 1.35,
-                        }}
-                      >
-                        {item.description}
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => onToggleFavorite(item.id)}
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 9,
-                        border: starred
-                          ? "1px solid rgba(255,214,90,0.38)"
-                          : "1px solid rgba(255,255,255,0.06)",
-                        background: starred
-                          ? "linear-gradient(180deg, rgba(255,214,90,0.18), rgba(255,214,90,0.06))"
-                          : "rgba(255,255,255,0.02)",
-                        color: starred ? "#ffd65a" : "#7d93bc",
-                        cursor: "pointer",
-                        flexShrink: 0,
-                      }}
-                    >
-                      ★
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -807,7 +562,7 @@ function ProfessionalDrawingOverlay({
     if (drawing.id !== selectedId) return null;
 
     return getProfessionalDrawingHandles(drawing, chart, series).map((h) => (
-      <g key={`${drawing.id}-${h.key}`} style={{ pointerEvents: "auto" }}>
+      <g key={`${drawing.id}-${h.key}`}>
         <circle
           cx={h.point.x}
           cy={h.point.y}
@@ -823,6 +578,7 @@ function ProfessionalDrawingOverlay({
 
   const renderDrawing = (drawing: ProfessionalDrawing, isDraft = false) => {
     if (drawing.hidden) return null;
+
     const selected = drawing.id === selectedId;
     const opacity = isDraft ? 0.92 : 1;
 
@@ -832,22 +588,14 @@ function ProfessionalDrawingOverlay({
       if (!start || !end) return null;
 
       return (
-        <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
-          <line
-            x1={start.x}
-            y1={start.y}
-            x2={end.x}
-            y2={end.y}
-            stroke="transparent"
-            strokeWidth={18}
-          />
+        <g key={drawing.id} opacity={opacity}>
           <line
             x1={start.x}
             y1={start.y}
             x2={end.x}
             y2={end.y}
             stroke={drawing.color}
-            strokeWidth={selected ? "2.8" : "1.8"}
+            strokeWidth={selected ? 2.8 : 1.8}
             strokeDasharray={isDraft ? "5 4" : undefined}
           />
           {renderHandles(drawing)}
@@ -860,14 +608,14 @@ function ProfessionalDrawingOverlay({
       if (!point) return null;
 
       return (
-        <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
+        <g key={drawing.id} opacity={opacity}>
           <line
             x1={0}
             y1={point.y}
             x2={width}
             y2={point.y}
             stroke={drawing.color}
-            strokeWidth={selected ? "2.4" : "1.5"}
+            strokeWidth={selected ? 2.4 : 1.5}
             strokeDasharray="6 5"
           />
           <rect
@@ -904,7 +652,7 @@ function ProfessionalDrawingOverlay({
       const right = Math.max(start.x, end.x);
 
       return (
-        <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
+        <g key={drawing.id} opacity={opacity}>
           {drawing.levels.map((level) => {
             const y = start.y + (end.y - start.y) * level;
             return (
@@ -915,7 +663,7 @@ function ProfessionalDrawingOverlay({
                   x2={right}
                   y2={y}
                   stroke={drawing.color}
-                  strokeWidth={selected ? "2.1" : "1.3"}
+                  strokeWidth={selected ? 2.1 : 1.3}
                 />
                 <text
                   x={left + 6}
@@ -1136,6 +884,9 @@ export default function AtlasChartPro2() {
       chart.unsubscribeCrosshairMove(refreshOverlay);
       resizeObserver.disconnect();
       chart.remove();
+      chartRef.current = null;
+      candleSeriesRef.current = null;
+      volumeSeriesRef.current = null;
     };
   }, [chartHeight, viewMode]);
 
@@ -1306,12 +1057,12 @@ export default function AtlasChartPro2() {
     activeToolOption
   );
 
-  const sidebarWidth = isSmall ? 0 : showToolPanel ? 300 : 48;
+  const sidebarWidth = isSmall ? 0 : showToolPanel ? 310 : 52;
   const mainGridColumns = isSmall
     ? "1fr"
     : isMedium
-      ? `${sidebarWidth}px minmax(0, 1fr)`
-      : `${sidebarWidth}px minmax(0, 1fr) 360px`;
+    ? `${sidebarWidth}px minmax(0, 1fr)`
+    : `${sidebarWidth}px minmax(0, 1fr) 360px`;
 
   const moduleTitle = useMemo(() => {
     switch (activeModule) {
@@ -1338,22 +1089,22 @@ export default function AtlasChartPro2() {
     activeModule === "Scanner"
       ? "Scanner"
       : activeModule === "Fluxo"
-        ? "Fluxo"
-        : activeModule === "IA Atlas"
-          ? "IA Atlas"
-          : activeModule === "Estrutura"
-            ? "Estrutura"
-            : activeModule === "Euler"
-              ? "Euler"
-              : activeModule === "Liquidez"
-                ? "Liquidez"
-                : "Singularidade";
+      ? "Fluxo"
+      : activeModule === "IA Atlas"
+      ? "IA Atlas"
+      : activeModule === "Estrutura"
+      ? "Estrutura"
+      : activeModule === "Euler"
+      ? "Euler"
+      : activeModule === "Liquidez"
+      ? "Liquidez"
+      : "Singularidade";
 
   const scannerRows = useMemo(() => {
     switch (activeModule) {
       case "Fluxo":
         return [
-          { asset: "BTCUSDT", score: "91.7", trend: "Pressão Compradora", price: "$69,489" },
+          { asset: "BTCUSDT", score: "91.7", trend: "Compra Forte", price: "$69,489" },
           { asset: "ETHUSDT", score: "84.1", trend: "Fluxo Positivo", price: "$3,745" },
           { asset: "SOLUSDT", score: "79.4", trend: "Absorção", price: "$168.40" },
           { asset: "BNBUSDT", score: "72.3", trend: "Aceleração", price: "$611.22" },
@@ -1592,16 +1343,16 @@ export default function AtlasChartPro2() {
     activeModule === "Fluxo"
       ? ["Fluxo", "Pressão", "Volume", "Eventos"]
       : activeModule === "Singularidade"
-        ? ["Singularidade", "Confluência", "Pulso", "Eventos"]
-        : activeModule === "IA Atlas"
-          ? ["IA Atlas", "Score", "Risco", "Eventos"]
-          : activeModule === "Estrutura"
-            ? ["Estrutura", "Euler", "Ciclo", "Eventos"]
-            : activeModule === "Euler"
-              ? ["Euler", "Curvatura", "Validação", "Eventos"]
-              : activeModule === "Liquidez"
-                ? ["Map", "Heatmap", "Clusters", "Eventos"]
-                : ["Indicadores", "Fluxo", "Scanner", "Eventos"];
+      ? ["Singularidade", "Confluência", "Pulso", "Eventos"]
+      : activeModule === "IA Atlas"
+      ? ["IA Atlas", "Score", "Risco", "Eventos"]
+      : activeModule === "Estrutura"
+      ? ["Estrutura", "Euler", "Ciclo", "Eventos"]
+      : activeModule === "Euler"
+      ? ["Euler", "Curvatura", "Validação", "Eventos"]
+      : activeModule === "Liquidez"
+      ? ["Map", "Heatmap", "Clusters", "Eventos"]
+      : ["Indicadores", "Fluxo", "Scanner", "Eventos"];
 
   useEffect(() => {
     setActiveBottomTab(bottomTabs[0]);
@@ -1652,7 +1403,7 @@ export default function AtlasChartPro2() {
   }, [liquidityHeatRows, lastClose]);
 
   const getScreenPointFromEvent = (
-    event: React.MouseEvent<HTMLDivElement>,
+    event: React.MouseEvent<HTMLDivElement>
   ): ScreenPoint | null => {
     if (!chartShellRef.current) return null;
     const rect = chartShellRef.current.getBoundingClientRect();
@@ -1687,7 +1438,7 @@ export default function AtlasChartPro2() {
 
   const toggleFavoriteTool = (optionId: string) => {
     setFavoriteTools((prev) =>
-      prev.includes(optionId) ? prev.filter((id) => id !== optionId) : [...prev, optionId],
+      prev.includes(optionId) ? prev.filter((id) => id !== optionId) : [...prev, optionId]
     );
   };
 
@@ -1698,7 +1449,7 @@ export default function AtlasChartPro2() {
     }
     sidebarHoverTimeoutRef.current = window.setTimeout(() => {
       setShowToolPanel(true);
-    }, 2000);
+    }, 500);
   };
 
   const handleSidebarMouseLeave = () => {
@@ -1718,7 +1469,7 @@ export default function AtlasChartPro2() {
     const chartPoint = screenPointToChartPoint(
       screenPoint,
       chartRef.current,
-      candleSeriesRef.current,
+      candleSeriesRef.current
     );
     if (!chartPoint) return;
 
@@ -1727,7 +1478,7 @@ export default function AtlasChartPro2() {
         screenPoint,
         drawings,
         chartRef.current,
-        candleSeriesRef.current,
+        candleSeriesRef.current
       );
 
       if (hit) {
@@ -1798,7 +1549,7 @@ export default function AtlasChartPro2() {
     const chartPoint = screenPointToChartPoint(
       screenPoint,
       chartRef.current,
-      candleSeriesRef.current,
+      candleSeriesRef.current
     );
     if (!chartPoint) return;
 
@@ -1819,7 +1570,7 @@ export default function AtlasChartPro2() {
           }
 
           return updateProfessionalDrawingHandle(drawing, selectedHandle, chartPoint);
-        }),
+        })
       );
 
       setLastPointerChartPoint(chartPoint);
@@ -1844,7 +1595,7 @@ export default function AtlasChartPro2() {
     const chartPoint = screenPointToChartPoint(
       screenPoint,
       chartRef.current,
-      candleSeriesRef.current,
+      candleSeriesRef.current
     );
     if (!chartPoint) return;
 
@@ -1970,14 +1721,14 @@ export default function AtlasChartPro2() {
   const toggleSelectedLocked = () => {
     if (!selectedDrawingId) return;
     setDrawings((prev) =>
-      prev.map((d) => (d.id === selectedDrawingId ? { ...d, locked: !d.locked } : d)),
+      prev.map((d) => (d.id === selectedDrawingId ? { ...d, locked: !d.locked } : d))
     );
   };
 
   const toggleSelectedHidden = () => {
     if (!selectedDrawingId) return;
     setDrawings((prev) =>
-      prev.map((d) => (d.id === selectedDrawingId ? { ...d, hidden: !d.hidden } : d)),
+      prev.map((d) => (d.id === selectedDrawingId ? { ...d, hidden: !d.hidden } : d))
     );
   };
 
@@ -1998,16 +1749,17 @@ export default function AtlasChartPro2() {
 
   const overlayCursor =
     dragMode === "edit"
-      ? "default"
+      ? "grabbing"
       : isEditMode
-        ? "default"
-        : isCursorMode
-          ? "default"
-          : isProfessionalTool
-            ? "crosshair"
-            : "default";
+      ? "default"
+      : isCursorMode
+      ? "default"
+      : isProfessionalTool
+      ? "crosshair"
+      : "default";
 
-  const shouldEnableOverlay = dragMode === "edit" || dragMode === "create";
+  const shouldEnableOverlay =
+    isEditMode || dragMode === "edit" || dragMode === "create" || (!isCursorMode && isProfessionalTool);
 
   const topMetrics = [
     { title: "Preço", value: price, positive: !change.startsWith("-") },
@@ -2247,7 +1999,7 @@ export default function AtlasChartPro2() {
               onMouseEnter={handleSidebarMouseEnter}
               onMouseLeave={handleSidebarMouseLeave}
             >
-              <ToolSidebar
+              <ToolsSidebar
                 groups={toolGroups}
                 activeGroup={activeTool}
                 activeOptionId={activeToolOption}
@@ -2377,9 +2129,7 @@ export default function AtlasChartPro2() {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: isSmall
-                    ? "repeat(2, minmax(0, 1fr))"
-                    : "repeat(4, minmax(0, 1fr))",
+                  gridTemplateColumns: isSmall ? "repeat(2, minmax(0, 1fr))" : "repeat(4, minmax(0, 1fr))",
                   gap: 8,
                 }}
               >
@@ -2399,12 +2149,12 @@ export default function AtlasChartPro2() {
               selectedDrawing={
                 selectedDrawing
                   ? {
-                    id: selectedDrawing.id,
-                    name: selectedDrawing.name,
-                    type: selectedDrawing.type,
-                    locked: selectedDrawing.locked,
-                    hidden: selectedDrawing.hidden,
-                  }
+                      id: selectedDrawing.id,
+                      name: selectedDrawing.name,
+                      type: selectedDrawing.type,
+                      locked: selectedDrawing.locked,
+                      hidden: selectedDrawing.hidden,
+                    }
                   : null
               }
               onToggleObjectsPanel={() => setShowObjectsPanel((prev) => !prev)}
@@ -2469,12 +2219,12 @@ export default function AtlasChartPro2() {
                   onSelect={setSelectedDrawingId}
                   onToggleHide={(id) =>
                     setDrawings((prev) =>
-                      prev.map((d) => (d.id === id ? { ...d, hidden: !d.hidden } : d)),
+                      prev.map((d) => (d.id === id ? { ...d, hidden: !d.hidden } : d))
                     )
                   }
                   onToggleLock={(id) =>
                     setDrawings((prev) =>
-                      prev.map((d) => (d.id === id ? { ...d, locked: !d.locked } : d)),
+                      prev.map((d) => (d.id === id ? { ...d, locked: !d.locked } : d))
                     )
                   }
                   onDelete={(id) => {
@@ -2521,11 +2271,6 @@ export default function AtlasChartPro2() {
                     setDragMode(null);
                     setSelectedHandle(null);
                     setLastPointerChartPoint(null);
-                  }
-                  if (dragMode === "create") {
-                    setDragMode(null);
-                    setDraftDrawing(null);
-                    setCreationFirstPoint(null);
                   }
                 }}
                 style={{
@@ -2634,8 +2379,8 @@ export default function AtlasChartPro2() {
                   value={
                     lastClose
                       ? `$${(lastClose * 0.985).toLocaleString("en-US", {
-                        maximumFractionDigits: 2,
-                      })}`
+                          maximumFractionDigits: 2,
+                        })}`
                       : "--"
                   }
                 />
@@ -2675,99 +2420,20 @@ export default function AtlasChartPro2() {
           )}
         </div>
 
-        <div
-          style={{
-            marginTop: 6,
-            background:
-              "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))",
-            border: "1px solid rgba(255,255,255,0.07)",
-            borderRadius: 14,
-            padding: 10,
-          }}
-        >
-          <BottomTabsPanel
-            tabs={bottomTabs}
-            activeTab={activeBottomTab}
-            activeModule={activeModule}
-            activeToolLabel={activeToolGroup.label}
-            activeOptionLabel={activeToolOptionData.label}
-            moduleAccent={moduleAccent}
-            onChangeTab={setActiveBottomTab}
-          />
-
-          {activeModule === "Liquidez" ? (
-            <LiquidityPanel
-              rows={liquidityHeatRows}
-              summary={liquiditySummary}
-              isSmall={isSmall}
-              activeTab={activeBottomTab}
-            />
-          ) : activeBottomTab === "Eventos" ? (
-            <div style={{ display: "grid", gap: 10 }}>
-              <div
-                style={{
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: 14,
-                  padding: 14,
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
-                }}
-              >
-                <div style={{ fontWeight: 900, marginBottom: 6 }}>
-                  Evento monitorado
-                </div>
-                <div style={{ color: "#9ab0d4", fontSize: 13 }}>
-                  Singularidade ativa com continuidade estrutural e leitura favorável.
-                </div>
-              </div>
-
-              <div
-                style={{
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: 14,
-                  padding: 14,
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
-                }}
-              >
-                <div style={{ fontWeight: 900, marginBottom: 6 }}>
-                  Alerta interno
-                </div>
-                <div style={{ color: "#9ab0d4", fontSize: 13 }}>
-                  Volume em acompanhamento e score alinhado com o módulo atual.
-                </div>
-              </div>
-            </div>
-          ) : [
-            "Pressão",
-            "Volume",
-            "Confluência",
-            "Pulso",
-            "Score",
-            "Risco",
-            "Curvatura",
-            "Validação",
-            "Ciclo",
-          ].includes(activeBottomTab) ? (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: isSmall ? "1fr" : "repeat(3, minmax(0, 1fr))",
-                gap: 10,
-              }}
-            >
-              <StatCard title={activeBottomTab} value="Ativo" positive />
-              <StatCard title="Confirmação" value="Alta" positive />
-              <StatCard title="Leitura" value="Positiva" positive />
-            </div>
-          ) : (
-            <ScannerPanel
-              rows={scannerRows}
-              pulseConfig={pulseConfig}
-              isSmall={isSmall}
-            />
-          )}
-        </div>
+        <BottomContextPanel
+          activeModule={activeModule}
+          activeBottomTab={activeBottomTab}
+          bottomTabs={bottomTabs}
+          activeToolLabel={activeToolGroup.label}
+          activeOptionLabel={activeToolOptionData.label}
+          moduleAccent={moduleAccent}
+          scannerRows={scannerRows}
+          pulseConfig={pulseConfig}
+          liquidityRows={liquidityHeatRows}
+          liquiditySummary={liquiditySummary}
+          isSmall={isSmall}
+          onChangeTab={setActiveBottomTab}
+        />
       </div>
     </div>
   );
