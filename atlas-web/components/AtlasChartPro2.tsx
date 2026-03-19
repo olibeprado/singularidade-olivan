@@ -98,13 +98,13 @@ const toolGroups: ToolGroup[] = [
         id: "cursor-default",
         label: "Navegar",
         icon: "⌖",
-        description: "Gráfico livre para pan e zoom.",
+        description: "Mover e navegar pelo gráfico.",
       },
       {
         id: "cursor-edit",
         label: "Editar desenho",
         icon: "✥",
-        description: "Seleciona, move e edita desenhos.",
+        description: "Seleciona e edita objetos.",
       },
     ],
   },
@@ -136,13 +136,13 @@ const toolGroups: ToolGroup[] = [
         id: "zone-supply",
         label: "Zona de oferta",
         icon: "▭",
-        description: "Em breve no novo motor.",
+        description: "Zona visual de oferta.",
       },
       {
         id: "zone-demand",
         label: "Zona de demanda",
         icon: "▯",
-        description: "Em breve no novo motor.",
+        description: "Zona visual de demanda.",
       },
     ],
   },
@@ -155,7 +155,7 @@ const toolGroups: ToolGroup[] = [
         id: "measure-price",
         label: "Medir preço",
         icon: "↕",
-        description: "Em breve no novo motor.",
+        description: "Ferramenta de leitura.",
       },
     ],
   },
@@ -168,7 +168,7 @@ const toolGroups: ToolGroup[] = [
         id: "fib-retracement",
         label: "Retração",
         icon: "ϕ",
-        description: "Fibonacci profissional ligado ao gráfico.",
+        description: "Fibonacci ligado ao gráfico.",
       },
     ],
   },
@@ -181,7 +181,7 @@ const toolGroups: ToolGroup[] = [
         id: "pattern-channel",
         label: "Canal",
         icon: "∥",
-        description: "Em breve no novo motor.",
+        description: "Canal visual.",
       },
     ],
   },
@@ -194,13 +194,13 @@ const toolGroups: ToolGroup[] = [
         id: "tool-long",
         label: "Long",
         icon: "▲",
-        description: "Em breve no novo motor.",
+        description: "Setup de compra.",
       },
       {
         id: "tool-short",
         label: "Short",
         icon: "▼",
-        description: "Em breve no novo motor.",
+        description: "Setup de venda.",
       },
     ],
   },
@@ -213,7 +213,7 @@ const toolGroups: ToolGroup[] = [
         id: "forecast-up",
         label: "Projeção",
         icon: "↗",
-        description: "Em breve no novo motor.",
+        description: "Leitura projetiva.",
       },
     ],
   },
@@ -386,7 +386,7 @@ function RightRow({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "9px 0",
+        padding: "8px 0",
         borderBottom: "1px solid rgba(255,255,255,0.055)",
         gap: 12,
       }}
@@ -407,7 +407,7 @@ function RightRow({
   );
 }
 
-function ToolSidebar({
+function HoverToolSidebar({
   groups,
   activeGroup,
   activeOptionId,
@@ -416,8 +416,6 @@ function ToolSidebar({
   onSelectOption,
   onToggleFavorite,
   accent,
-  expanded,
-  onToggleExpanded,
 }: {
   groups: ToolGroup[];
   activeGroup: ToolKey | null;
@@ -427,18 +425,18 @@ function ToolSidebar({
   onSelectOption: (groupKey: ToolKey, optionId: string) => void;
   onToggleFavorite: (optionId: string) => void;
   accent: string;
-  expanded: boolean;
-  onToggleExpanded: () => void;
 }) {
-  const activeGroupData = groups.find((g) => g.key === activeGroup) ?? groups[0];
+  const [hoveredGroup, setHoveredGroup] = useState<ToolKey | null>(null);
+  const visibleGroup = hoveredGroup ?? activeGroup;
+  const currentGroup = groups.find((g) => g.key === visibleGroup) ?? groups[0];
+  const favoriteOptions = groups.flatMap((g) => g.items).filter((i) => favorites.includes(i.id));
 
   return (
     <div
       style={{
         position: "relative",
-        width: expanded ? 268 : 58,
-        minWidth: expanded ? 268 : 58,
-        transition: "width 0.18s ease",
+        width: 58,
+        minWidth: 58,
       }}
     >
       <div
@@ -457,10 +455,10 @@ function ToolSidebar({
           position: "sticky",
           top: 96,
           boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.015)",
+          zIndex: 10,
         }}
       >
         <button
-          onClick={onToggleExpanded}
           style={{
             width: 40,
             height: 28,
@@ -469,10 +467,9 @@ function ToolSidebar({
             background: "rgba(255,255,255,0.03)",
             color: "#9eb2d6",
             fontWeight: 900,
-            cursor: "pointer",
+            cursor: "default",
             marginBottom: 2,
           }}
-          title="Ferramentas"
         >
           ☰
         </button>
@@ -480,10 +477,13 @@ function ToolSidebar({
         {groups.map((group) => {
           const active = activeGroup === group.key;
           const hasFavorite = group.items.some((item) => favorites.includes(item.id));
-
           return (
             <button
               key={group.key}
+              onMouseEnter={() => {
+                setHoveredGroup(group.key);
+                onOpenGroup(group.key);
+              }}
               onClick={() => onOpenGroup(group.key)}
               title={group.label}
               style={{
@@ -500,9 +500,6 @@ function ToolSidebar({
                 fontSize: 15,
                 cursor: "pointer",
                 position: "relative",
-                boxShadow: active
-                  ? `inset 0 0 0 1px ${accent}20, 0 0 18px ${accent}12`
-                  : "none",
               }}
             >
               <span
@@ -536,20 +533,31 @@ function ToolSidebar({
         })}
       </div>
 
-      {expanded && (
+      <div
+        onMouseEnter={() => {
+          if (visibleGroup) setHoveredGroup(visibleGroup);
+        }}
+        onMouseLeave={() => setHoveredGroup(null)}
+        style={{
+          position: "absolute",
+          left: 68,
+          top: 0,
+          width: 220,
+          opacity: hoveredGroup ? 1 : 0,
+          pointerEvents: hoveredGroup ? "auto" : "none",
+          transform: hoveredGroup ? "translateX(0)" : "translateX(-8px)",
+          transition: "all 0.16s ease",
+          zIndex: 30,
+        }}
+      >
         <div
           style={{
-            position: "absolute",
-            left: 68,
-            top: 0,
-            width: 194,
             background:
               "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.995))",
             border: "1px solid rgba(255,255,255,0.07)",
             borderRadius: 14,
             padding: 10,
             boxShadow: "0 14px 34px rgba(0,0,0,0.38)",
-            zIndex: 12,
           }}
         >
           <div
@@ -558,30 +566,62 @@ function ToolSidebar({
               fontSize: 13,
               fontWeight: 900,
               marginBottom: 10,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
             }}
           >
-            <span>{activeGroupData.label}</span>
-            <button
-              onClick={onToggleExpanded}
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 8,
-                border: "1px solid rgba(255,255,255,0.06)",
-                background: "rgba(255,255,255,0.025)",
-                color: "#9eb2d6",
-                cursor: "pointer",
-              }}
-            >
-              ×
-            </button>
+            {currentGroup.label}
           </div>
 
+          {favoriteOptions.length > 0 && (
+            <div style={{ marginBottom: 10 }}>
+              <div
+                style={{
+                  color: "#8ea4c8",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  marginBottom: 6,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                }}
+              >
+                Favoritos
+              </div>
+
+              <div style={{ display: "grid", gap: 6 }}>
+                {favoriteOptions.slice(0, 3).map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      const owner = groups.find((g) => g.items.some((x) => x.id === item.id));
+                      if (!owner) return;
+                      onSelectOption(owner.key, item.id);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      width: "100%",
+                      borderRadius: 10,
+                      border: "1px solid rgba(255,214,90,0.18)",
+                      background:
+                        "linear-gradient(180deg, rgba(255,214,90,0.08), rgba(255,255,255,0.02))",
+                      color: "#fff2b0",
+                      padding: "7px 9px",
+                      cursor: "pointer",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      textAlign: "left",
+                    }}
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div style={{ display: "grid", gap: 8 }}>
-            {activeGroupData.items.map((item) => {
+            {currentGroup.items.map((item) => {
               const active = activeOptionId === item.id;
               const starred = favorites.includes(item.id);
 
@@ -594,9 +634,9 @@ function ToolSidebar({
                       : "1px solid rgba(255,255,255,0.06)",
                     borderRadius: 12,
                     background: active
-                      ? `linear-gradient(180deg, ${accent}20, rgba(255,255,255,0.03))`
+                      ? `linear-gradient(180deg, ${accent}18, rgba(255,255,255,0.03))`
                       : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
-                    padding: 10,
+                    padding: 9,
                   }}
                 >
                   <div
@@ -608,7 +648,7 @@ function ToolSidebar({
                     }}
                   >
                     <button
-                      onClick={() => onSelectOption(activeGroupData.key, item.id)}
+                      onClick={() => onSelectOption(currentGroup.key, item.id)}
                       style={{
                         flex: 1,
                         background: "transparent",
@@ -623,20 +663,20 @@ function ToolSidebar({
                           display: "flex",
                           gap: 10,
                           alignItems: "center",
-                          marginBottom: 6,
+                          marginBottom: 5,
                         }}
                       >
                         <span
                           style={{
-                            width: 24,
-                            height: 24,
+                            width: 22,
+                            height: 22,
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            borderRadius: 8,
+                            borderRadius: 7,
                             background: "rgba(255,255,255,0.04)",
                             color: "#e6efff",
-                            fontSize: 13,
+                            fontSize: 12,
                           }}
                         >
                           {item.icon}
@@ -654,7 +694,7 @@ function ToolSidebar({
                       <div
                         style={{
                           color: "#8ea4c8",
-                          fontSize: 11,
+                          fontSize: 10,
                           lineHeight: 1.35,
                         }}
                       >
@@ -665,9 +705,9 @@ function ToolSidebar({
                     <button
                       onClick={() => onToggleFavorite(item.id)}
                       style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 9,
+                        width: 26,
+                        height: 26,
+                        borderRadius: 8,
                         border: starred
                           ? "1px solid rgba(255,214,90,0.38)"
                           : "1px solid rgba(255,255,255,0.06)",
@@ -687,7 +727,7 @@ function ToolSidebar({
             })}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -880,15 +920,7 @@ function ProfessionalDrawingOverlay({
       if (!start || !end) return null;
 
       return (
-        <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
-          <line
-            x1={start.x}
-            y1={start.y}
-            x2={end.x}
-            y2={end.y}
-            stroke="transparent"
-            strokeWidth={18}
-          />
+        <g key={drawing.id} opacity={opacity}>
           <line
             x1={start.x}
             y1={start.y}
@@ -908,7 +940,7 @@ function ProfessionalDrawingOverlay({
       if (!point) return null;
 
       return (
-        <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
+        <g key={drawing.id} opacity={opacity}>
           <line
             x1={0}
             y1={point.y}
@@ -952,7 +984,7 @@ function ProfessionalDrawingOverlay({
       const right = Math.max(start.x, end.x);
 
       return (
-        <g key={drawing.id} opacity={opacity} style={{ pointerEvents: "auto" }}>
+        <g key={drawing.id} opacity={opacity}>
           {drawing.levels.map((level) => {
             const y = start.y + (end.y - start.y) * level;
             return (
@@ -1075,50 +1107,212 @@ function BottomTabBar({
   );
 }
 
+function MiniChartBlock({
+  tab,
+}: {
+  tab: string;
+}) {
+  const modeConfig: Record<
+    string,
+    {
+      line1: string;
+      line2: string;
+      bars: number[];
+      stats: [string, string, string];
+      labels: [string, string, string];
+    }
+  > = {
+    Volume: {
+      line1:
+        "M20,130 C70,130 100,128 150,122 C200,116 245,104 300,94 C345,84 380,80 420,76 C470,66 520,60 580,56",
+      line2:
+        "M20,136 C70,136 110,134 160,128 C220,120 270,116 330,108 C390,98 450,92 580,72",
+      bars: [24, 30, 28, 36, 42, 38, 52, 44, 58, 62, 70, 74, 66, 76, 82, 80],
+      stats: ["BTC", "33.1", "Ativo"],
+      labels: ["Top", "Volume", "Radar"],
+    },
+    "RSI / AI": {
+      line1:
+        "M20,118 C80,102 120,94 170,98 C220,104 255,88 300,78 C360,64 430,56 580,52",
+      line2:
+        "M20,128 C80,124 140,116 190,108 C250,98 320,90 380,84 C450,76 520,70 580,66",
+      bars: [18, 22, 26, 24, 28, 34, 36, 40, 39, 44, 47, 53, 58, 62, 66, 71],
+      stats: ["62", "Alta", "Ativo"],
+      labels: ["RSI", "Força", "AI"],
+    },
+    Fluxo: {
+      line1:
+        "M20,134 C70,126 110,122 160,110 C215,96 255,82 305,76 C360,68 430,56 580,44",
+      line2:
+        "M20,138 C80,138 130,132 180,124 C250,114 320,102 390,92 C470,82 520,78 580,72",
+      bars: [14, 16, 22, 25, 28, 30, 36, 44, 48, 54, 58, 63, 68, 70, 76, 82],
+      stats: ["Forte", "Alta", "Comprador"],
+      labels: ["Fluxo", "Impulso", "Bias"],
+    },
+    Singularidade: {
+      line1:
+        "M20,132 C70,128 110,118 165,106 C215,94 255,76 310,68 C370,58 455,46 580,42",
+      line2:
+        "M20,136 C84,136 130,130 190,122 C250,114 315,102 390,94 C460,86 520,80 580,74",
+      bars: [12, 18, 22, 24, 30, 36, 40, 44, 46, 48, 56, 61, 66, 70, 74, 79],
+      stats: ["Pulso", "Alta", "Ativo"],
+      labels: ["Pulse", "Confluência", "Radar"],
+    },
+    Confluência: {
+      line1:
+        "M20,126 C74,120 120,112 170,102 C220,92 265,86 325,78 C395,66 460,56 580,46",
+      line2:
+        "M20,138 C84,136 136,130 190,120 C260,106 320,98 390,90 C470,80 520,72 580,64",
+      bars: [10, 14, 20, 26, 24, 28, 34, 40, 44, 50, 55, 58, 63, 66, 72, 75],
+      stats: ["5/6", "Sólida", "Ativa"],
+      labels: ["Sync", "Força", "Radar"],
+    },
+  };
+
+  const config = modeConfig[tab] ?? modeConfig["Volume"];
+
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: 14,
+        padding: 12,
+        background:
+          "linear-gradient(180deg, rgba(13,19,35,0.98), rgba(7,11,22,0.99))",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          flexWrap: "wrap",
+          marginBottom: 12,
+        }}
+      >
+        {["Volume", "RSI / AI", "Fluxo", "Singularidade", "Confluência"].map((item) => {
+          const active = item === tab;
+          return (
+            <div
+              key={item}
+              style={{
+                padding: "8px 11px",
+                borderRadius: 9,
+                border: active
+                  ? "1px solid rgba(94,231,255,0.28)"
+                  : "1px solid rgba(255,255,255,0.06)",
+                background: active
+                  ? "linear-gradient(180deg, rgba(45,120,255,0.24), rgba(94,231,255,0.08))"
+                  : "rgba(255,255,255,0.025)",
+                color: active ? "#dff6ff" : "#91a6cb",
+                fontSize: 12,
+                fontWeight: 800,
+              }}
+            >
+              {item}
+            </div>
+          );
+        })}
+      </div>
+
+      <div
+        style={{
+          border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 12,
+          overflow: "hidden",
+          background:
+            "linear-gradient(180deg, rgba(10,16,31,0.98), rgba(6,9,18,0.995))",
+        }}
+      >
+        <svg
+          viewBox="0 0 620 180"
+          style={{
+            width: "100%",
+            height: 180,
+            display: "block",
+          }}
+        >
+          {[...Array(7)].map((_, i) => (
+            <line
+              key={`h-${i}`}
+              x1="0"
+              x2="620"
+              y1={20 + i * 22}
+              y2={20 + i * 22}
+              stroke="rgba(255,255,255,0.05)"
+            />
+          ))}
+          {[...Array(10)].map((_, i) => (
+            <line
+              key={`v-${i}`}
+              y1="0"
+              y2="180"
+              x1={30 + i * 58}
+              x2={30 + i * 58}
+              stroke="rgba(255,255,255,0.04)"
+            />
+          ))}
+
+          {config.bars.map((v, i) => (
+            <rect
+              key={`bar-${i}`}
+              x={15 + i * 37}
+              y={160 - v}
+              width="14"
+              height={v}
+              rx="3"
+              fill="rgba(59,130,246,0.55)"
+            />
+          ))}
+
+          <path
+            d={config.line1}
+            fill="none"
+            stroke="rgba(94,231,255,0.95)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d={config.line2}
+            fill="none"
+            stroke="rgba(247,201,72,0.88)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="486" cy="46" r="6" fill="#ffd65a" />
+        </svg>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 10,
+          marginTop: 12,
+        }}
+      >
+        <StatCard title={config.labels[0]} value={config.stats[0]} positive />
+        <StatCard title={config.labels[1]} value={config.stats[1]} positive />
+        <StatCard title={config.labels[2]} value={config.stats[2]} positive />
+      </div>
+    </div>
+  );
+}
+
 function ScannerBoard({
   rows,
   isSmall,
   activeTab,
+  miniTab,
+  onChangeMiniTab,
 }: {
   rows: { asset: string; score: string; trend: string; price: string }[];
   isSmall: boolean;
   activeTab: string;
+  miniTab: string;
+  onChangeMiniTab: (tab: string) => void;
 }) {
-  const linePoints = [
-    [0, 90],
-    [50, 89],
-    [100, 86],
-    [150, 80],
-    [200, 76],
-    [250, 65],
-    [300, 58],
-    [350, 53],
-    [400, 40],
-    [450, 34],
-    [500, 30],
-    [550, 24],
-    [600, 22],
-  ];
-
-  const linePoints2 = [
-    [0, 96],
-    [50, 96],
-    [100, 94],
-    [150, 91],
-    [200, 88],
-    [250, 84],
-    [300, 76],
-    [350, 72],
-    [400, 63],
-    [450, 56],
-    [500, 49],
-    [550, 42],
-    [600, 36],
-  ];
-
-  const toPath = (points: number[][]) =>
-    `M${points.map((p) => `${p[0]},${p[1]}`).join(" L")}`;
-
   return (
     <div
       style={{
@@ -1253,7 +1447,8 @@ function ScannerBoard({
                   style={{
                     color:
                       row.trend.toLowerCase().includes("forte") ||
-                      row.trend.toLowerCase().includes("positivo")
+                      row.trend.toLowerCase().includes("positivo") ||
+                      row.trend.toLowerCase().includes("compradora")
                         ? "#39d98a"
                         : "#f7c948",
                     fontWeight: 800,
@@ -1279,28 +1474,21 @@ function ScannerBoard({
         </div>
       </div>
 
-      <div
-        style={{
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: 14,
-          padding: 14,
-          background:
-            "linear-gradient(180deg, rgba(13,19,35,0.98), rgba(7,11,22,0.99))",
-        }}
-      >
+      <div>
         <div
           style={{
             display: "flex",
             gap: 6,
             flexWrap: "wrap",
-            marginBottom: 12,
+            marginBottom: 8,
           }}
         >
-          {["Volume", "RSI / AI", "Fluxo", "Singularidade", "Confluência"].map((item, index) => {
-            const active = index === 0;
+          {["Volume", "RSI / AI", "Fluxo", "Singularidade", "Confluência"].map((item) => {
+            const active = item === miniTab;
             return (
-              <div
+              <button
                 key={item}
+                onClick={() => onChangeMiniTab(item)}
                 style={{
                   padding: "8px 11px",
                   borderRadius: 9,
@@ -1313,172 +1501,104 @@ function ScannerBoard({
                   color: active ? "#dff6ff" : "#91a6cb",
                   fontSize: 12,
                   fontWeight: 800,
+                  cursor: "pointer",
                 }}
               >
                 {item}
-              </div>
+              </button>
             );
           })}
         </div>
 
-        <div
-          style={{
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 12,
-            overflow: "hidden",
-            background:
-              "linear-gradient(180deg, rgba(10,16,31,0.98), rgba(6,9,18,0.995))",
-          }}
-        >
-          <svg
-            viewBox="0 0 620 180"
-            style={{
-              width: "100%",
-              height: 180,
-              display: "block",
-            }}
-          >
-            {[...Array(7)].map((_, i) => (
-              <line
-                key={`h-${i}`}
-                x1="0"
-                x2="620"
-                y1={20 + i * 22}
-                y2={20 + i * 22}
-                stroke="rgba(255,255,255,0.05)"
-              />
-            ))}
-            {[...Array(10)].map((_, i) => (
-              <line
-                key={`v-${i}`}
-                y1="0"
-                y2="180"
-                x1={30 + i * 58}
-                x2={30 + i * 58}
-                stroke="rgba(255,255,255,0.04)"
-              />
-            ))}
-
-            {[24, 30, 28, 36, 42, 38, 52, 44, 58, 62, 70, 74, 66, 76, 82, 80].map(
-              (v, i) => (
-                <rect
-                  key={`bar-${i}`}
-                  x={15 + i * 37}
-                  y={160 - v}
-                  width="14"
-                  height={v}
-                  rx="3"
-                  fill="rgba(59,130,246,0.55)"
-                />
-              ),
-            )}
-
-            <path
-              d={toPath(linePoints)}
-              fill="none"
-              stroke="rgba(94,231,255,0.95)"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d={toPath(linePoints2)}
-              fill="none"
-              stroke="rgba(247,201,72,0.88)"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-
-            {linePoints.map((p, i) => (
-              <circle
-                key={`dot1-${i}`}
-                cx={p[0]}
-                cy={p[1]}
-                r={i === 9 ? 6 : 3}
-                fill={i === 9 ? "#ffd65a" : "#8be9ff"}
-              />
-            ))}
-          </svg>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            gap: 10,
-            marginTop: 12,
-          }}
-        >
-          <StatCard title="Top" value="BTC" positive />
-          <StatCard title="Volume" value="33.1" positive />
-          <StatCard title="Radar" value="Ativo" positive />
-        </div>
+        <MiniChartBlock tab={miniTab} />
       </div>
     </div>
   );
 }
 
-function EventsBoard({
-  isSmall,
+function LeftDetailBoard({
+  tab,
   activeModule,
+  isSmall,
 }: {
-  isSmall: boolean;
+  tab: string;
   activeModule: TopModule;
+  isSmall: boolean;
 }) {
-  const events = [
-    {
-      title: "Evento monitorado",
-      body: `${activeModule} ativo com continuidade estrutural e leitura favorável no contexto atual.`,
-      status: "Em acompanhamento",
-    },
-    {
-      title: "Alerta interno",
-      body: "Volume, pressão e alinhamento de score continuam sincronizados.",
-      status: "Ativo",
-    },
-    {
-      title: "Radar Atlas",
-      body: "Possível aceleração em zona de interesse com boa resposta do fluxo.",
-      status: "Observação",
-    },
-  ];
-
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: isSmall ? "1fr" : "1fr 0.95fr",
-        gap: 12,
-      }}
-    >
+  if (tab === "Eventos") {
+    return (
       <div
         style={{
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: 14,
-          padding: 14,
-          background:
-            "linear-gradient(180deg, rgba(13,19,35,0.98), rgba(7,11,22,0.99))",
+          display: "grid",
+          gridTemplateColumns: isSmall ? "1fr" : "1fr 1fr",
+          gap: 12,
         }}
       >
-        <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 12 }}>
-          Eventos Atlas
-        </div>
+        <div
+          style={{
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 14,
+            padding: 14,
+            background:
+              "linear-gradient(180deg, rgba(13,19,35,0.98), rgba(7,11,22,0.99))",
+          }}
+        >
+          <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 12 }}>
+            Eventos Atlas
+          </div>
 
-        <div style={{ display: "grid", gap: 10 }}>
-          {events.map((event, index) => (
+          {[
+            ["Evento monitorado", `${activeModule} alinhado com leitura principal.`],
+            ["Alerta interno", "Volume e estrutura seguem sincronizados."],
+            ["Radar", "Possível expansão em zona relevante."],
+          ].map(([title, body], index) => (
             <div
-              key={event.title}
+              key={title}
               style={{
                 border: "1px solid rgba(255,255,255,0.06)",
                 borderRadius: 12,
                 padding: 12,
+                marginBottom: 10,
                 background:
-                  "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+                  index === 0
+                    ? "linear-gradient(180deg, rgba(94,231,255,0.08), rgba(255,255,255,0.015))"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+              }}
+            >
+              <div style={{ fontWeight: 800, marginBottom: 5 }}>{title}</div>
+              <div style={{ color: "#9ab0d4", fontSize: 13 }}>{body}</div>
+            </div>
+          ))}
+        </div>
+
+        <div
+          style={{
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 14,
+            padding: 14,
+            background:
+              "linear-gradient(180deg, rgba(13,19,35,0.98), rgba(7,11,22,0.99))",
+          }}
+        >
+          <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 12 }}>
+            Linha do tempo
+          </div>
+
+          {[
+            "Leitura inicial confirmada",
+            "Fluxo monitorado",
+            "Estrutura validada",
+            "Sinal em observação",
+            "Score mantido",
+          ].map((item, index) => (
+            <div
+              key={item}
+              style={{
                 display: "grid",
-                gridTemplateColumns: "20px 1fr auto",
+                gridTemplateColumns: "20px 1fr",
                 gap: 10,
                 alignItems: "start",
+                paddingBottom: 12,
               }}
             >
               <div
@@ -1486,132 +1606,66 @@ function EventsBoard({
                   width: 10,
                   height: 10,
                   borderRadius: 99,
-                  background:
-                    index === 0 ? "#39d98a" : index === 1 ? "#5ee7ff" : "#ffd65a",
-                  marginTop: 6,
+                  background: index < 2 ? "#39d98a" : index === 2 ? "#5ee7ff" : "#ffd65a",
+                  marginTop: 5,
                 }}
               />
-              <div>
-                <div
-                  style={{
-                    fontWeight: 800,
-                    color: "#eef4ff",
-                    marginBottom: 5,
-                  }}
-                >
-                  {event.title}
-                </div>
-                <div
-                  style={{
-                    color: "#9ab0d4",
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {event.body}
-                </div>
-              </div>
               <div
                 style={{
-                  color: "#b7c8e8",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {event.status}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div
-        style={{
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: 14,
-          padding: 14,
-          background:
-            "linear-gradient(180deg, rgba(13,19,35,0.98), rgba(7,11,22,0.99))",
-        }}
-      >
-        <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 12 }}>
-          Linha do tempo
-        </div>
-
-        <div style={{ display: "grid", gap: 14 }}>
-          {[
-            ["09:12", "Leitura inicial confirmada"],
-            ["10:04", "Pressão compradora reforçada"],
-            ["10:46", "Cluster relevante monitorado"],
-            ["11:18", "Validação estrutural ativa"],
-            ["12:02", "Evento permanece positivo"],
-          ].map(([time, text], i) => (
-            <div
-              key={`${time}-${text}`}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "58px 12px 1fr",
-                gap: 10,
-                alignItems: "start",
-              }}
-            >
-              <div
-                style={{
-                  color: "#87a0c7",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  paddingTop: 1,
-                }}
-              >
-                {time}
-              </div>
-
-              <div
-                style={{
-                  position: "relative",
-                  minHeight: 48,
-                }}
-              >
-                <span
-                  style={{
-                    position: "absolute",
-                    left: 2,
-                    top: 4,
-                    width: 8,
-                    height: 8,
-                    borderRadius: 99,
-                    background: i < 3 ? "#39d98a" : "#5ee7ff",
-                    zIndex: 2,
-                  }}
-                />
-                <span
-                  style={{
-                    position: "absolute",
-                    left: 5,
-                    top: 12,
-                    bottom: -18,
-                    width: 2,
-                    background: "rgba(255,255,255,0.08)",
-                  }}
-                />
-              </div>
-
-              <div
-                style={{
-                  color: "#e7f0ff",
+                  color: "#dce8ff",
                   fontSize: 13,
-                  lineHeight: 1.45,
                   borderBottom: "1px solid rgba(255,255,255,0.05)",
                   paddingBottom: 10,
                 }}
               >
-                {text}
+                {item}
               </div>
             </div>
           ))}
         </div>
       </div>
+    );
+  }
+
+  const pressureRows = [
+    { title: "Pressão Compradora", value: "Alta", positive: true },
+    { title: "Absorção", value: "Ativa", positive: true },
+    { title: "Desequilíbrio", value: "Moderado", positive: true },
+  ];
+
+  const volumeRows = [
+    { title: "Volume Relativo", value: "1.42x", positive: true },
+    { title: "Pico Atual", value: "Elevado", positive: true },
+    { title: "Continuidade", value: "Boa", positive: true },
+  ];
+
+  const defaultRows =
+    tab === "Pressão"
+      ? pressureRows
+      : tab === "Volume"
+        ? volumeRows
+        : [
+            { title: "Scanner", value: "Ativo", positive: true },
+            { title: "Leitura", value: "Positiva", positive: true },
+            { title: "Confirmação", value: "Alta", positive: true },
+          ];
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: isSmall ? "1fr" : "repeat(3, minmax(0, 1fr))",
+        gap: 10,
+      }}
+    >
+      {defaultRows.map((item) => (
+        <StatCard
+          key={item.title}
+          title={item.title}
+          value={item.value}
+          positive={item.positive}
+        />
+      ))}
     </div>
   );
 }
@@ -1635,7 +1689,6 @@ export default function AtlasChartPro2() {
     "fib-retracement",
   ]);
 
-  const [showToolPanel, setShowToolPanel] = useState(false);
   const [showObjectsPanel, setShowObjectsPanel] = useState(false);
 
   const [source, setSource] = useState("carregando...");
@@ -1645,6 +1698,7 @@ export default function AtlasChartPro2() {
   const [lastClose, setLastClose] = useState<number | null>(null);
   const [score, setScore] = useState(92);
   const [activeBottomTab, setActiveBottomTab] = useState<string>("Indicadores");
+  const [miniInsightTab, setMiniInsightTab] = useState("Volume");
 
   const [chartHeight, setChartHeight] = useState(720);
   const [viewportWidth, setViewportWidth] = useState(1440);
@@ -1677,7 +1731,7 @@ export default function AtlasChartPro2() {
 
   useEffect(() => {
     const updateChartHeight = () => {
-      const offset = isSmall ? 320 : isMedium ? 270 : 188;
+      const offset = isSmall ? 320 : isMedium ? 275 : 188;
       const nextHeight = Math.max(540, Math.min(window.innerHeight - offset, 860));
       setChartHeight(nextHeight);
     };
@@ -1745,7 +1799,7 @@ export default function AtlasChartPro2() {
     volumeSeries.priceScale().applyOptions({
       scaleMargins: {
         top: 0.78,
-        bottom: 0.03,
+        bottom: 0.05,
       },
     });
 
@@ -1776,7 +1830,6 @@ export default function AtlasChartPro2() {
 
     const handleManualInteraction = () => {
       refreshOverlay();
-
       if (viewMode === "manual") {
         const currentScrollPosition = timeScale.scrollPosition();
         if (
@@ -1798,24 +1851,6 @@ export default function AtlasChartPro2() {
       chart.remove();
     };
   }, [chartHeight, viewMode]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      if (!chartContainerRef.current || !chartRef.current) return;
-      const width = chartContainerRef.current.clientWidth;
-      const height = chartContainerRef.current.clientHeight;
-      chartRef.current.applyOptions({ width, height: chartHeight });
-      setChartSize({ width, height });
-    }, 40);
-
-    return () => window.clearTimeout(timer);
-  }, [showToolPanel, viewportWidth, chartHeight, showObjectsPanel]);
-
-  useEffect(() => {
-    setViewMode("auto");
-    savedScrollPositionRef.current = null;
-    hasInitialFitRef.current = false;
-  }, [symbol, timeframe]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1966,7 +2001,7 @@ export default function AtlasChartPro2() {
     activeToolOption,
   );
 
-  const sidebarWidth = isSmall ? 0 : showToolPanel ? 268 : 58;
+  const sidebarWidth = isSmall ? 0 : 58;
   const mainGridColumns = isSmall
     ? "1fr"
     : isMedium
@@ -1996,7 +2031,7 @@ export default function AtlasChartPro2() {
 
   const rightPanelTitle =
     activeModule === "Scanner"
-      ? "Scanner Insights"
+      ? "IA Atlas Insights"
       : activeModule === "Fluxo"
         ? "Fluxo Insights"
         : activeModule === "IA Atlas"
@@ -2064,85 +2099,29 @@ export default function AtlasChartPro2() {
   }, [activeModule]);
 
   const moduleBottomInfo = useMemo(() => {
-    switch (activeModule) {
-      case "Fluxo":
-        return {
-          title: "Estrutura",
-          rows: [
-            { label: "Estrutura", value: "Positivo", positive: true },
-            { label: "Euler", value: "Forte", positive: true },
-            { label: "Singularidade", value: "5 / 6", positive: true },
-            { label: "Razão de Prata", value: "Suporte Sólido", positive: true },
-            { label: "Ciclo", value: "Acelerado", positive: true },
-          ],
-        };
-      case "Singularidade":
-        return {
-          title: "Estrutura",
-          rows: [
-            { label: "Estrutura", value: "Positivo", positive: true },
-            { label: "Euler", value: "Forte", positive: true },
-            { label: "Singularidade", value: "Alta", positive: true },
-            { label: "Razão de Prata", value: "Confluente", positive: true },
-            { label: "Ciclo", value: "Acelerado", positive: true },
-          ],
-        };
-      case "IA Atlas":
-        return {
-          title: "Estrutura",
-          rows: [
-            { label: "Estrutura", value: "Positivo", positive: true },
-            { label: "Euler", value: "Forte", positive: true },
-            { label: "Singularidade", value: "Alta", positive: true },
-            { label: "Razão de Prata", value: "Suporte Sólido", positive: true },
-            { label: "Ciclo", value: "Acelerado", positive: true },
-          ],
-        };
-      case "Estrutura":
-        return {
-          title: "Estrutura",
-          rows: [
-            { label: "Estrutura", value: "Base Forte", positive: true },
-            { label: "Euler", value: "Confirmado", positive: true },
-            { label: "Singularidade", value: "4 / 6", positive: true },
-            { label: "Razão de Prata", value: "Sólida", positive: true },
-            { label: "Ciclo", value: "Sustentado", positive: true },
-          ],
-        };
-      case "Euler":
-        return {
-          title: "Estrutura",
-          rows: [
-            { label: "Estrutura", value: "Positivo", positive: true },
-            { label: "Euler", value: "Dominante", positive: true },
-            { label: "Singularidade", value: "4 / 6", positive: true },
-            { label: "Razão de Prata", value: "Boa", positive: true },
-            { label: "Ciclo", value: "Validado", positive: true },
-          ],
-        };
-      case "Liquidez":
-        return {
-          title: "Liquidez",
-          rows: [
-            { label: "Cluster", value: "Forte", positive: true },
-            { label: "Stops", value: "Acima", positive: true },
-            { label: "Heatmap", value: "Ativo", positive: true },
-            { label: "Caça", value: "Provável", positive: true },
-            { label: "Pool", value: "Dinâmico", positive: true },
-          ],
-        };
-      default:
-        return {
-          title: "Estrutura",
-          rows: [
-            { label: "Estrutura", value: "Positivo", positive: true },
-            { label: "Euler", value: "Forte", positive: true },
-            { label: "Singularidade", value: "5 / 6", positive: true },
-            { label: "Razão de Prata", value: "Suporte Sólido", positive: true },
-            { label: "Ciclo", value: "Acelerado", positive: true },
-          ],
-        };
+    if (activeModule === "Liquidez") {
+      return {
+        title: "Liquidez",
+        rows: [
+          { label: "Cluster", value: "Forte", positive: true },
+          { label: "Stops", value: "Acima", positive: true },
+          { label: "Heatmap", value: "Ativo", positive: true },
+          { label: "Caça", value: "Provável", positive: true },
+          { label: "Pool", value: "Dinâmico", positive: true },
+        ],
+      };
     }
+
+    return {
+      title: "Estrutura",
+      rows: [
+        { label: "Estrutura", value: "Positivo", positive: true },
+        { label: "Euler", value: "Forte", positive: true },
+        { label: "Singularidade", value: "5 / 6", positive: true },
+        { label: "Razão de Prata", value: "Suporte Sólido", positive: true },
+        { label: "Ciclo", value: "Acelerado", positive: true },
+      ],
+    };
   }, [activeModule]);
 
   const bottomTabs =
@@ -2231,10 +2210,9 @@ export default function AtlasChartPro2() {
     setActiveTool(key);
     const found = toolGroups.find((g) => g.key === key);
     if (found?.items[0]) {
-      setActiveToolOption(found.items[0].id);
-    }
-    if (!isSmall) {
-      setShowToolPanel(true);
+      if (!found.items.some((i) => i.id === activeToolOption)) {
+        setActiveToolOption(found.items[0].id);
+      }
     }
   };
 
@@ -2297,7 +2275,7 @@ export default function AtlasChartPro2() {
       setDrawings((prev) => [...prev, drawing]);
       setSelectedDrawingId(drawing.id);
       setActiveTool("cursor");
-      setActiveToolOption("cursor-edit");
+      setActiveToolOption("cursor-default");
       return;
     }
 
@@ -2427,7 +2405,7 @@ export default function AtlasChartPro2() {
 
       clearDraftState();
       setActiveTool("cursor");
-      setActiveToolOption("cursor-edit");
+      setActiveToolOption("cursor-default");
     }
   };
 
@@ -2537,20 +2515,14 @@ export default function AtlasChartPro2() {
 
   const overlayCursor =
     dragMode === "edit"
-      ? "default"
-      : isEditMode
-        ? "default"
-        : isCursorMode
-          ? "default"
-          : isProfessionalTool
-            ? "crosshair"
-            : "default";
+      ? "grabbing"
+      : dragMode === "create"
+        ? "crosshair"
+        : isProfessionalTool && !isCursorMode
+          ? "crosshair"
+          : "default";
 
-  const shouldEnableOverlay =
-    dragMode === "edit" ||
-    dragMode === "create" ||
-    isEditMode ||
-    (!isCursorMode && isProfessionalTool);
+  const shouldEnableOverlay = dragMode === "edit" || dragMode === "create" || !isCursorMode;
 
   const topMetrics = [
     { title: "Preço", value: price, positive: !change.startsWith("-") },
@@ -2565,6 +2537,8 @@ export default function AtlasChartPro2() {
       : score >= 85
         ? "Compra Forte"
         : "Compra Moderada";
+
+  const bottomMainIsLiquidity = activeModule === "Liquidez";
 
   return (
     <div
@@ -2793,7 +2767,7 @@ export default function AtlasChartPro2() {
         >
           {!isSmall && (
             <div style={{ width: sidebarWidth, overflow: "visible", position: "relative" }}>
-              <ToolSidebar
+              <HoverToolSidebar
                 groups={toolGroups}
                 activeGroup={activeTool}
                 activeOptionId={activeToolOption}
@@ -2802,8 +2776,6 @@ export default function AtlasChartPro2() {
                 onSelectOption={handleSelectToolOption}
                 onToggleFavorite={toggleFavoriteTool}
                 accent={moduleAccent}
-                expanded={showToolPanel}
-                onToggleExpanded={() => setShowToolPanel((prev) => !prev)}
               />
             </div>
           )}
@@ -3139,6 +3111,7 @@ export default function AtlasChartPro2() {
                       lineHeight: 1,
                       fontWeight: 900,
                       color: scoreColor,
+                      textShadow: `0 0 18px ${scoreColor}22`,
                     }}
                   >
                     {score}
@@ -3159,11 +3132,10 @@ export default function AtlasChartPro2() {
                       "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))",
                   }}
                 >
-                  <div style={{ height: 3, background: "rgba(255,255,255,0.04)" }} />
                   <div
                     style={{
                       position: "relative",
-                      padding: "11px 12px 10px",
+                      padding: "11px 12px 12px",
                     }}
                   >
                     <svg
@@ -3194,7 +3166,17 @@ export default function AtlasChartPro2() {
                         gap: 12,
                       }}
                     >
-                      <span style={{ color: "#eef4ff", fontWeight: 900 }}>
+                      <span
+                        style={{
+                          color: "#eef4ff",
+                          fontWeight: 900,
+                          background:
+                            "linear-gradient(180deg, rgba(255,214,90,0.14), rgba(255,255,255,0.02))",
+                          border: "1px solid rgba(255,214,90,0.18)",
+                          borderRadius: 10,
+                          padding: "6px 10px",
+                        }}
+                      >
                         {scoreLabel}
                       </span>
                       <span style={{ color: "#8fa3c7", fontWeight: 700, fontSize: 12 }}>
@@ -3312,20 +3294,85 @@ export default function AtlasChartPro2() {
             onChangeTab={setActiveBottomTab}
           />
 
-          {activeModule === "Liquidez" ? (
-            <LiquidityPanel
-              rows={liquidityHeatRows}
-              summary={liquiditySummary}
-              isSmall={isSmall}
-              activeTab={activeBottomTab}
-            />
-          ) : activeBottomTab === "Eventos" ? (
-            <EventsBoard isSmall={isSmall} activeModule={activeModule} />
-          ) : (
+          {bottomMainIsLiquidity ? (
+            activeBottomTab === "Eventos" ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: isSmall ? "1fr" : "1fr 1fr 1fr",
+                  gap: 12,
+                }}
+              >
+                {[
+                  {
+                    title: "Heat Event",
+                    body: "Cluster chamando preço com intensidade alta.",
+                    glow: "rgba(94,231,255,0.18)",
+                  },
+                  {
+                    title: "Stop Hunt",
+                    body: "Zona provável de varredura logo acima.",
+                    glow: "rgba(255,214,90,0.18)",
+                  },
+                  {
+                    title: "Pool Ativo",
+                    body: "Liquidez dinâmica em atenção imediata.",
+                    glow: "rgba(52,211,153,0.18)",
+                  },
+                ].map((card) => (
+                  <div
+                    key={card.title}
+                    style={{
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      borderRadius: 14,
+                      padding: 14,
+                      background: `linear-gradient(180deg, ${card.glow}, rgba(255,255,255,0.01))`,
+                      boxShadow: `0 0 30px ${card.glow}`,
+                    }}
+                  >
+                    <div style={{ fontWeight: 900, fontSize: 17, marginBottom: 8 }}>
+                      {card.title}
+                    </div>
+                    <div style={{ color: "#a9bad8", fontSize: 13, lineHeight: 1.5 }}>
+                      {card.body}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <LiquidityPanel
+                rows={liquidityHeatRows}
+                summary={liquiditySummary}
+                isSmall={isSmall}
+                activeTab={activeBottomTab}
+              />
+            )
+          ) : activeBottomTab === "Indicadores" ||
+            activeBottomTab === "Fluxo" ||
+            activeBottomTab === "Scanner" ||
+            activeBottomTab === "Singularidade" ||
+            activeBottomTab === "Confluência" ||
+            activeBottomTab === "Pulso" ||
+            activeBottomTab === "IA Atlas" ||
+            activeBottomTab === "Estrutura" ||
+            activeBottomTab === "Euler" ||
+            activeBottomTab === "Score" ||
+            activeBottomTab === "Risco" ||
+            activeBottomTab === "Curvatura" ||
+            activeBottomTab === "Validação" ||
+            activeBottomTab === "Ciclo" ? (
             <ScannerBoard
               rows={scannerRows}
               isSmall={isSmall}
               activeTab={activeBottomTab}
+              miniTab={miniInsightTab}
+              onChangeMiniTab={setMiniInsightTab}
+            />
+          ) : (
+            <LeftDetailBoard
+              tab={activeBottomTab}
+              activeModule={activeModule}
+              isSmall={isSmall}
             />
           )}
         </div>
