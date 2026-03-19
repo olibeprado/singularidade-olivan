@@ -22,40 +22,38 @@ type Props = {
 
 function ActionButton({
   children,
-  onClick,
-  danger,
   active,
+  danger,
   disabled,
+  onClick,
 }: {
   children: React.ReactNode;
-  onClick?: () => void;
-  danger?: boolean;
   active?: boolean;
+  danger?: boolean;
   disabled?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <button
-      onClick={onClick}
-      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
       style={{
-        height: 28,
-        padding: "0 12px",
-        borderRadius: 8,
         border: danger
-          ? "1px solid rgba(255,107,129,0.28)"
+          ? "1px solid rgba(255,107,129,0.34)"
           : active
-          ? "1px solid rgba(94,231,255,0.28)"
+          ? "1px solid rgba(94,231,255,0.34)"
           : "1px solid rgba(255,255,255,0.08)",
         background: danger
-          ? "linear-gradient(180deg, rgba(255,107,129,0.14), rgba(255,107,129,0.04))"
+          ? "linear-gradient(180deg, rgba(255,107,129,0.14), rgba(255,107,129,0.05))"
           : active
           ? "linear-gradient(180deg, rgba(94,231,255,0.14), rgba(94,231,255,0.04))"
-          : "rgba(255,255,255,0.025)",
-        color: disabled ? "#66748f" : danger ? "#ffd0d8" : "#dbe7ff",
+          : "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))",
+        color: danger ? "#ffd2d9" : active ? "#c7fbff" : "#d9e6ff",
+        borderRadius: 10,
+        padding: "6px 12px",
         fontSize: 11,
         fontWeight: 800,
         cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.55 : 1,
+        opacity: disabled ? 0.45 : 1,
         whiteSpace: "nowrap",
       }}
     >
@@ -78,14 +76,14 @@ export default function ToolEnhancements({
   return (
     <div
       style={{
+        padding: "8px 12px",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0.006))",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         gap: 10,
-        padding: "8px 12px",
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
-        background:
-          "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))",
         flexWrap: "wrap",
       }}
     >
@@ -97,51 +95,59 @@ export default function ToolEnhancements({
           flexWrap: "wrap",
         }}
       >
-        <ActionButton
-          onClick={onToggleObjectsPanel}
-          active={showObjectsPanel}
-        >
+        <ActionButton active={showObjectsPanel} onClick={onToggleObjectsPanel}>
           Objetos
         </ActionButton>
 
-        <ActionButton
-          onClick={onToggleLocked}
-          disabled={!hasSelection}
-        >
+        <ActionButton disabled={!hasSelection} onClick={onToggleLocked}>
           {selectedDrawing?.locked ? "Destravar" : "Travar"}
         </ActionButton>
 
-        <ActionButton
-          onClick={onToggleHidden}
-          disabled={!hasSelection}
-        >
+        <ActionButton disabled={!hasSelection} onClick={onToggleHidden}>
           {selectedDrawing?.hidden ? "Mostrar" : "Ocultar"}
         </ActionButton>
 
-        <ActionButton onClick={onClearAll}>
-          Limpar desenhos
-        </ActionButton>
+        <ActionButton onClick={onClearAll}>Limpar desenhos</ActionButton>
 
-        <ActionButton
-          onClick={onDeleteSelected}
-          disabled={!hasSelection}
-          danger
-        >
+        <ActionButton danger disabled={!hasSelection} onClick={onDeleteSelected}>
           Apagar selecionado
         </ActionButton>
       </div>
 
       <div
         style={{
-          color: hasSelection ? "#cfe4ff" : "#7e93b9",
+          color: hasSelection ? "#dce8ff" : "#7f93b9",
           fontSize: 11,
           fontWeight: 700,
-          whiteSpace: "nowrap",
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+          flexWrap: "wrap",
         }}
       >
-        {hasSelection
-          ? `${selectedDrawing?.name} • ${selectedDrawing?.type}`
-          : "Nenhum objeto selecionado"}
+        {hasSelection ? (
+          <>
+            <span
+              style={{
+                color: "#eef4ff",
+                fontWeight: 900,
+              }}
+            >
+              {selectedDrawing?.name}
+            </span>
+            <span style={{ color: "#8ea4c8" }}>
+              • {selectedDrawing?.type?.toUpperCase()}
+            </span>
+            {selectedDrawing?.locked ? (
+              <span style={{ color: "#ffd65a" }}>• travado</span>
+            ) : null}
+            {selectedDrawing?.hidden ? (
+              <span style={{ color: "#ffd65a" }}>• oculto</span>
+            ) : null}
+          </>
+        ) : (
+          <span>Nenhum objeto selecionado</span>
+        )}
       </div>
     </div>
   );
