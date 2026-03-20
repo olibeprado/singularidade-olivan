@@ -102,7 +102,15 @@ type ScannerEvent = {
 
 const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
 const NAV_TABS = ["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"];
-const TOP_SCANNER_TABS = ["Indicadores", "Fluxo", "Scanner", "Scanner+", "Eventos", "1Bs"];
+const TOP_SCANNER_TABS = [
+  "Indicadores",
+  "Fluxo",
+  "Scanner",
+  "Scanner+",
+  "Eventos",
+  "1Bs",
+];
+const LIQUIDITY_TABS = ["Map", "Heatmap", "Clusters", "Eventos"];
 
 const ui = {
   bg: "#060913",
@@ -1266,6 +1274,511 @@ function ScannerEventsBlock({ events }: { events: ScannerEvent[] }) {
   );
 }
 
+function LiquidityCard({
+  title,
+  value,
+  sub,
+  tone = "neutral",
+}: {
+  title: string;
+  value: string;
+  sub: string;
+  tone?: "positive" | "warning" | "neutral";
+}) {
+  const color =
+    tone === "positive" ? ui.green : tone === "warning" ? ui.yellow : ui.cyan;
+
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background:
+          "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+        padding: 14,
+        minHeight: 92,
+      }}
+    >
+      <div
+        style={{
+          color: "#7f93b7",
+          fontSize: 10,
+          fontWeight: 900,
+          letterSpacing: 0.7,
+          textTransform: "uppercase",
+          marginBottom: 10,
+        }}
+      >
+        {title}
+      </div>
+
+      <div
+        style={{
+          color,
+          fontSize: 20,
+          fontWeight: 900,
+          marginBottom: 8,
+        }}
+      >
+        {value}
+      </div>
+
+      <div
+        style={{
+          color: "#9bb0d4",
+          fontSize: 12,
+          lineHeight: 1.35,
+        }}
+      >
+        {sub}
+      </div>
+    </div>
+  );
+}
+
+function HeatmapBars() {
+  const rows = [
+    { label: "72.200", value: 88, color: "rgba(49,233,255,0.85)" },
+    { label: "71.800", value: 72, color: "rgba(39,245,157,0.82)" },
+    { label: "71.200", value: 58, color: "rgba(247,201,72,0.82)" },
+    { label: "70.800", value: 96, color: "rgba(255,107,134,0.82)" },
+    { label: "70.300", value: 66, color: "rgba(49,233,255,0.85)" },
+    { label: "69.900", value: 47, color: "rgba(39,245,157,0.82)" },
+  ];
+
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      {rows.map((r) => (
+        <div
+          key={r.label}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "64px 1fr 46px",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span
+            style={{
+              color: "#9ab0d4",
+              fontSize: 12,
+              fontFamily: "monospace",
+            }}
+          >
+            {r.label}
+          </span>
+
+          <div
+            style={{
+              height: 12,
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.06)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${r.value}%`,
+                height: "100%",
+                borderRadius: 999,
+                background: r.color,
+                boxShadow: "0 0 18px rgba(255,255,255,0.05)",
+              }}
+            />
+          </div>
+
+          <span
+            style={{
+              color: "#e9f3ff",
+              fontSize: 11,
+              fontWeight: 800,
+              textAlign: "right",
+            }}
+          >
+            {r.value}%
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LiquiditySection({ events }: { events: ScannerEvent[] }) {
+  const [activeLiquidityTab, setActiveLiquidityTab] = useState("Map");
+
+  return (
+    <div
+      style={{
+        borderTop: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+      }}
+    >
+      <div
+        style={{
+          height: 44,
+          padding: "0 14px",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          borderBottom: `1px solid ${ui.border}`,
+          flexWrap: "wrap",
+        }}
+      >
+        <span
+          style={{
+            color: "#f2f7ff",
+            fontSize: 13,
+            fontWeight: 900,
+            marginRight: 6,
+          }}
+        >
+          Liquidez Avançada
+        </span>
+
+        {LIQUIDITY_TABS.map((tab) => (
+          <TopButton
+            key={tab}
+            active={activeLiquidityTab === tab}
+            onClick={() => setActiveLiquidityTab(tab)}
+          >
+            {tab}
+          </TopButton>
+        ))}
+      </div>
+
+      <div
+        style={{
+          padding: 14,
+          display: "grid",
+          gap: 14,
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gap: 12,
+          }}
+        >
+          <LiquidityCard
+            title="Liquidez superior"
+            value="$72.200"
+            sub="Bloco vendedor forte acima do preço atual."
+            tone="warning"
+          />
+          <LiquidityCard
+            title="Liquidez inferior"
+            value="$69.800"
+            sub="Absorção compradora ganhando espessura."
+            tone="positive"
+          />
+          <LiquidityCard
+            title="Cluster dominante"
+            value="BTC Core"
+            sub="Maior concentração institucional nas últimas janelas."
+            tone="neutral"
+          />
+          <LiquidityCard
+            title="Pressão instantânea"
+            value="+18.6%"
+            sub="Fluxo favorecendo continuação curta."
+            tone="positive"
+          />
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.1fr 0.9fr",
+            gap: 14,
+          }}
+        >
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background:
+                "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+              padding: 14,
+              minHeight: 230,
+            }}
+          >
+            <div
+              style={{
+                color: "#edf5ff",
+                fontSize: 13,
+                fontWeight: 900,
+                marginBottom: 12,
+              }}
+            >
+              {activeLiquidityTab === "Map" && "Mapa de Liquidez"}
+              {activeLiquidityTab === "Heatmap" && "Heatmap de Intensidade"}
+              {activeLiquidityTab === "Clusters" && "Clusters Relevantes"}
+              {activeLiquidityTab === "Eventos" && "Eventos de Liquidez"}
+            </div>
+
+            {activeLiquidityTab === "Map" && (
+              <div
+                style={{
+                  height: 190,
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  background:
+                    "radial-gradient(circle at 50% 30%, rgba(45,226,255,0.18), transparent 30%), radial-gradient(circle at 72% 52%, rgba(39,245,157,0.18), transparent 26%), radial-gradient(circle at 36% 70%, rgba(247,201,72,0.16), transparent 24%), linear-gradient(180deg, rgba(5,10,20,0.95), rgba(7,11,20,0.98))",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {Array.from({ length: 8 }, (_, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      position: "absolute",
+                      left: `${8 + i * 11}%`,
+                      top: 0,
+                      bottom: 0,
+                      width: 1,
+                      background: "rgba(255,255,255,0.04)",
+                    }}
+                  />
+                ))}
+                {Array.from({ length: 6 }, (_, i) => (
+                  <div
+                    key={`h-${i}`}
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      top: `${12 + i * 14}%`,
+                      height: 1,
+                      background: "rgba(255,255,255,0.04)",
+                    }}
+                  />
+                ))}
+
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "14%",
+                    top: "28%",
+                    width: "26%",
+                    height: 18,
+                    borderRadius: 999,
+                    background: "rgba(255,107,134,0.48)",
+                    filter: "blur(1px)",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "48%",
+                    top: "50%",
+                    width: "22%",
+                    height: 18,
+                    borderRadius: 999,
+                    background: "rgba(49,233,255,0.45)",
+                    filter: "blur(1px)",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "22%",
+                    top: "72%",
+                    width: "34%",
+                    height: 18,
+                    borderRadius: 999,
+                    background: "rgba(39,245,157,0.40)",
+                    filter: "blur(1px)",
+                  }}
+                />
+
+                <div
+                  style={{
+                    position: "absolute",
+                    right: 12,
+                    top: 10,
+                    color: "#dce8ff",
+                    fontSize: 11,
+                    fontFamily: "monospace",
+                    background: "rgba(5,8,15,0.55)",
+                    padding: "4px 8px",
+                    borderRadius: 8,
+                  }}
+                >
+                  Preço atual: 70.730
+                </div>
+              </div>
+            )}
+
+            {activeLiquidityTab === "Heatmap" && <HeatmapBars />}
+
+            {activeLiquidityTab === "Clusters" && (
+              <div style={{ display: "grid", gap: 10 }}>
+                {[
+                  ["Cluster A", "Forte presença acima do preço", ui.red],
+                  ["Cluster B", "Absorção parcial no miolo", ui.yellow],
+                  ["Cluster C", "Suporte consistente abaixo", ui.green],
+                  ["Cluster D", "Pressão curta reduzida", ui.cyan],
+                ].map(([a, b, c]) => (
+                  <div
+                    key={a}
+                    style={{
+                      borderRadius: 12,
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      background:
+                        "linear-gradient(180deg, rgba(11,17,32,0.98), rgba(8,12,22,0.98))",
+                      padding: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          color: "#edf5ff",
+                          fontSize: 12,
+                          fontWeight: 900,
+                          marginBottom: 4,
+                        }}
+                      >
+                        {a}
+                      </div>
+                      <div
+                        style={{
+                          color: "#8ea2c8",
+                          fontSize: 12,
+                        }}
+                      >
+                        {b}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        color: c as string,
+                        fontSize: 12,
+                        fontWeight: 900,
+                      }}
+                    >
+                      Ativo
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeLiquidityTab === "Eventos" && (
+              <div style={{ display: "grid", gap: 8 }}>
+                {events.slice(0, 6).map((event, i) => (
+                  <div
+                    key={`${event.time}-${i}-liq`}
+                    style={{
+                      borderRadius: 12,
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      background:
+                        "linear-gradient(180deg, rgba(11,17,32,0.98), rgba(8,12,22,0.98))",
+                      padding: 12,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#8da1c8",
+                          fontSize: 11,
+                          fontWeight: 800,
+                        }}
+                      >
+                        {event.time}
+                      </span>
+                      <EventToneBadge tone={event.tone} />
+                    </div>
+                    <div
+                      style={{
+                        color: "#eef6ff",
+                        fontSize: 12,
+                        fontWeight: 800,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {event.title}
+                    </div>
+                    <div
+                      style={{
+                        color: "#7f93b7",
+                        fontSize: 11,
+                      }}
+                    >
+                      {event.tag}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background:
+                "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+              padding: 14,
+            }}
+          >
+            <div
+              style={{
+                color: "#edf5ff",
+                fontSize: 13,
+                fontWeight: 900,
+                marginBottom: 12,
+              }}
+            >
+              Leitura rápida
+            </div>
+
+            <div style={{ display: "grid", gap: 10 }}>
+              {[
+                ["Liquidez acima", "Pesada", ui.red],
+                ["Liquidez abaixo", "Saudável", ui.green],
+                ["Risco curto", "Controlado", ui.yellow],
+                ["Confluência", "8 / 9", ui.cyan],
+                ["Fluxo", "Positivo", ui.green],
+                ["Volatilidade", "Moderada", "#dce8ff"],
+              ].map(([k, v, c]) => (
+                <div
+                  key={k}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "8px 0",
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
+                  <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>
+                    {v}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ScannerPanel({
   assets,
   activeTab,
@@ -1367,7 +1880,7 @@ function ScannerPanel({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1.05fr 0.9fr 0.9fr 0.95fr",
+              gridTemplateColumns: "1fr 0.88fr 0.85fr 0.78fr 0.92fr",
               gap: 8,
               padding: "8px 12px",
               borderBottom: `1px solid ${ui.border}`,
@@ -1379,6 +1892,7 @@ function ScannerPanel({
             <span>Top Forge</span>
             <span>Score</span>
             <span>Preço</span>
+            <span>RSI / MFI</span>
             <span>Mini Chart</span>
           </div>
 
@@ -1388,7 +1902,7 @@ function ScannerPanel({
                 key={asset.symbol}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1.05fr 0.9fr 0.9fr 0.95fr",
+                  gridTemplateColumns: "1fr 0.88fr 0.85fr 0.78fr 0.92fr",
                   gap: 8,
                   padding: "10px 12px",
                   borderBottom: "1px solid rgba(255,255,255,0.045)",
@@ -1409,32 +1923,6 @@ function ScannerPanel({
                   <span style={{ color: "#edf5ff", fontSize: 12, fontWeight: 800 }}>
                     {asset.symbol}
                   </span>
-                  <div
-                    style={{
-                      marginLeft: "auto",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      minWidth: 0,
-                    }}
-                  >
-                    {asset.trend === "up" ? (
-                      <TrendingUp size={11} color={ui.green} />
-                    ) : asset.trend === "down" ? (
-                      <TrendingDown size={11} color={ui.red} />
-                    ) : (
-                      <Activity size={11} color="#a2b3d3" />
-                    )}
-                    <span
-                      style={{
-                        color: "#8fd6ff",
-                        fontSize: 12,
-                        fontFamily: "monospace",
-                      }}
-                    >
-                      {asset.rsiMfi.toFixed(3)}
-                    </span>
-                  </div>
                 </div>
 
                 <ScoreBar value={asset.volumeScore} color={asset.color} />
@@ -1459,6 +1947,32 @@ function ScannerPanel({
                   >
                     {asset.change >= 0 ? "+" : ""}
                     {asset.change.toFixed(1)}%
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    minWidth: 0,
+                  }}
+                >
+                  {asset.trend === "up" ? (
+                    <TrendingUp size={11} color={ui.green} />
+                  ) : asset.trend === "down" ? (
+                    <TrendingDown size={11} color={ui.red} />
+                  ) : (
+                    <Activity size={11} color="#a2b3d3" />
+                  )}
+                  <span
+                    style={{
+                      color: "#8fd6ff",
+                      fontSize: 12,
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {asset.rsiMfi.toFixed(3)}
                   </span>
                 </div>
 
@@ -1967,10 +2481,11 @@ export default function AtlasChartPro2() {
     <div
       style={{
         width: "100%",
-        height: "100vh",
+        minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
+        overflowX: "hidden",
+        overflowY: "auto",
         background: ui.bg,
         color: ui.text,
         fontFamily: "Inter, Arial, sans-serif",
@@ -1986,27 +2501,45 @@ export default function AtlasChartPro2() {
 
       <ModuleStrip />
 
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 0, alignItems: "stretch" }}>
         <LeftToolbar />
 
-        <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: 0 }}>
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <ChartPanel
-              candles={candles}
-              indicators={indicators}
-              selectedObject={selectedObject}
-              mode={mode}
-            />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            minWidth: 0,
+            minHeight: 0,
+          }}
+        >
+          <div
+            style={{
+              minHeight: "calc(100vh - 114px)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div style={{ minHeight: 0, height: "calc(100vh - 344px)" }}>
+              <ChartPanel
+                candles={candles}
+                indicators={indicators}
+                selectedObject={selectedObject}
+                mode={mode}
+              />
+            </div>
+
+            <div style={{ height: 230, flexShrink: 0 }}>
+              <ScannerPanel
+                assets={scannerAssets}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                events={scannerEvents}
+              />
+            </div>
           </div>
 
-          <div style={{ height: 210, flexShrink: 0 }}>
-            <ScannerPanel
-              assets={scannerAssets}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              events={scannerEvents}
-            />
-          </div>
+          <LiquiditySection events={scannerEvents} />
         </div>
 
         <div
@@ -2016,6 +2549,7 @@ export default function AtlasChartPro2() {
             borderLeft: `1px solid ${ui.border}`,
             background:
               "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+            minHeight: "calc(100vh - 114px)",
           }}
         >
           <AIInsightPanel insight={aiInsight} />
