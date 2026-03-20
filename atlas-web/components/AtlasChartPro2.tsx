@@ -1824,7 +1824,6 @@ function SecondPageSection({
     </div>
   );
 }
-
 function ChartPanel({
   candles,
   indicators,
