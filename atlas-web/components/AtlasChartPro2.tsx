@@ -1291,6 +1291,7 @@ function ScannerPanel({
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
         display: "flex",
         flexDirection: "column",
+        minHeight: 0,
       }}
     >
       <div
@@ -1334,7 +1335,7 @@ function ScannerPanel({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1.4fr 1.1fr 1.05fr",
+          gridTemplateColumns: "1.45fr 1.05fr 1fr",
           flex: 1,
           minHeight: 0,
         }}
@@ -1366,7 +1367,7 @@ function ScannerPanel({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 0.78fr 0.78fr 0.78fr",
+              gridTemplateColumns: "1.05fr 0.9fr 0.9fr 0.95fr",
               gap: 8,
               padding: "8px 12px",
               borderBottom: `1px solid ${ui.border}`,
@@ -1387,7 +1388,7 @@ function ScannerPanel({
                 key={asset.symbol}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 0.78fr 0.78fr 0.78fr",
+                  gridTemplateColumns: "1.05fr 0.9fr 0.9fr 0.95fr",
                   gap: 8,
                   padding: "10px 12px",
                   borderBottom: "1px solid rgba(255,255,255,0.045)",
@@ -1408,7 +1409,15 @@ function ScannerPanel({
                   <span style={{ color: "#edf5ff", fontSize: 12, fontWeight: 800 }}>
                     {asset.symbol}
                   </span>
-                  <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
+                  <div
+                    style={{
+                      marginLeft: "auto",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      minWidth: 0,
+                    }}
+                  >
                     {asset.trend === "up" ? (
                       <TrendingUp size={11} color={ui.green} />
                     ) : asset.trend === "down" ? (
@@ -1863,7 +1872,7 @@ function ChartPanel({
             MFI
           </span>
         </div>
-        <div ref={rsiRef} style={{ height: 72, width: "100%" }} />
+        <div ref={rsiRef} style={{ height: 84, width: "100%" }} />
       </div>
     </div>
   );
@@ -1916,6 +1925,10 @@ export default function AtlasChartPro2() {
       { time: "20:58", title: "Estrutura lateral perdeu força em SOL", tag: "Estrutura", tone: "warning" },
       { time: "20:51", title: "Razão de prata confirmou suporte sólido", tag: "Razão de Prata", tone: "positive" },
       { time: "20:45", title: "Pressão de venda reduziu no bloco institucional", tag: "Fluxo", tone: "neutral" },
+      { time: "20:36", title: "Eventos de agenda aumentam chance de volatilidade curta", tag: "Eventos", tone: "warning" },
+      { time: "20:29", title: "Scanner Atlas marcou alta probabilidade em PET", tag: "Scanner Atlas", tone: "positive" },
+      { time: "20:18", title: "Fluxo estabilizou após absorção de venda no miolo", tag: "Fluxo", tone: "neutral" },
+      { time: "20:05", title: "Confluência perdeu 1 ponto em ativo de menor liquidez", tag: "Confluência", tone: "warning" },
     ],
     []
   );
@@ -1986,7 +1999,7 @@ export default function AtlasChartPro2() {
             />
           </div>
 
-          <div style={{ height: 186, flexShrink: 0 }}>
+          <div style={{ height: 210, flexShrink: 0 }}>
             <ScannerPanel
               assets={scannerAssets}
               activeTab={activeTab}
