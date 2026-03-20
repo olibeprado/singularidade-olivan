@@ -1910,20 +1910,35 @@ function SecondPageSection({
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "1.62fr 0.92fr",
+        gridTemplateColumns: "minmax(0, 1.72fr) minmax(420px, 0.92fr)",
         gap: 10,
         padding: 10,
         background:
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+        alignItems: "start",
       }}
     >
-      <div style={{ display: "grid", gridTemplateRows: "132px 132px auto", gap: 10 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateRows: "132px 132px auto",
+          gap: 10,
+          minWidth: 0,
+        }}
+      >
         <AnalyticPreviewPanel />
         <EventsMiniPanel events={events} />
         <LiquiditySection events={events} />
       </div>
 
-      <ScannerPanelContinuous assets={assets} />
+      <div
+        style={{
+          minWidth: 0,
+          alignSelf: "stretch",
+        }}
+      >
+        <ScannerPanelContinuous assets={assets} />
+      </div>
     </div>
   );
 }
