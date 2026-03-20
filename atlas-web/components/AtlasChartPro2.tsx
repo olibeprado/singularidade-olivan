@@ -111,6 +111,7 @@ const TOP_SCANNER_TABS = [
   "1Bs",
 ];
 const LIQUIDITY_TABS = ["Map", "Heatmap", "Clusters", "Eventos"];
+const ANALYTIC_TABS = ["Volume", "RSI / MFI", "Fluxo", "Singularidade", "Confluência"];
 
 const ui = {
   bg: "#060913",
@@ -1025,7 +1026,33 @@ function ScoreBar({
   );
 }
 
-function ScannerCenterPreview() {
+function EventToneBadge({ tone }: { tone: ScannerEvent["tone"] }) {
+  const map = {
+    positive: { bg: "rgba(39,245,157,0.12)", color: ui.green, text: "Alta" },
+    warning: { bg: "rgba(247,201,72,0.12)", color: ui.yellow, text: "Atenção" },
+    neutral: { bg: "rgba(45,226,255,0.10)", color: ui.cyan, text: "Info" },
+  }[tone];
+
+  return (
+    <span
+      style={{
+        padding: "3px 8px",
+        borderRadius: 999,
+        background: map.bg,
+        color: map.color,
+        fontSize: 10,
+        fontWeight: 900,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {map.text}
+    </span>
+  );
+}
+
+function AnalyticPreviewPanel() {
+  const [activeTab, setActiveTab] = useState("Volume");
+
   const line1 = Array.from({ length: 34 }, (_, i) => {
     const x = (i / 33) * 420;
     const y = 55 + Math.sin(i / 3) * 16 + Math.cos(i / 5) * 8;
@@ -1047,30 +1074,37 @@ function ScannerCenterPreview() {
   return (
     <div
       style={{
-        height: "100%",
-        borderLeft: `1px solid ${ui.border}`,
-        borderRight: `1px solid ${ui.border}`,
+        height: 100,
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(9,14,28,0.98), rgba(7,11,20,0.98))",
         display: "flex",
         flexDirection: "column",
+        minHeight: 0,
       }}
     >
       <div
         style={{
           height: 38,
-          padding: "0 12px",
+          padding: "0 10px",
           borderBottom: `1px solid ${ui.border}`,
           display: "flex",
           alignItems: "center",
-          gap: 8,
+          gap: 6,
+          flexShrink: 0,
         }}
       >
-        <TopButton active>Volume</TopButton>
-        <TopButton>RSI / MFI</TopButton>
-        <TopButton>Fluxo</TopButton>
-        <TopButton>Singularidade</TopButton>
-        <TopButton>Confluência</TopButton>
+        {ANALYTIC_TABS.map((tab) => (
+          <TopButton
+            key={tab}
+            active={activeTab === tab}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </TopButton>
+        ))}
+
         <span
           style={{
             marginLeft: "auto",
@@ -1086,7 +1120,7 @@ function ScannerCenterPreview() {
         </span>
       </div>
 
-      <div style={{ flex: 1, padding: "10px 10px 8px" }}>
+      <div style={{ flex: 1, padding: "6px 10px 8px", minHeight: 0 }}>
         <svg width="100%" height="100%" viewBox="0 0 420 150" preserveAspectRatio="none">
           {Array.from({ length: 10 }, (_, i) => (
             <line
@@ -1134,58 +1168,18 @@ function ScannerCenterPreview() {
             <circle key={i} cx={d.x} cy={d.y} r="3.4" fill={d.c} />
           ))}
         </svg>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 8,
-            marginTop: 4,
-            fontSize: 10,
-            color: "#7d91b6",
-          }}
-        >
-          <span>00m</span>
-          <span>23:30</span>
-          <span>39:35</span>
-          <span>54:47</span>
-          <span>00:50</span>
-          <span style={{ textAlign: "right" }}>00:30</span>
-        </div>
       </div>
     </div>
   );
 }
 
-function EventToneBadge({ tone }: { tone: ScannerEvent["tone"] }) {
-  const map = {
-    positive: { bg: "rgba(39,245,157,0.12)", color: ui.green, text: "Alta" },
-    warning: { bg: "rgba(247,201,72,0.12)", color: ui.yellow, text: "Atenção" },
-    neutral: { bg: "rgba(45,226,255,0.10)", color: ui.cyan, text: "Info" },
-  }[tone];
-
-  return (
-    <span
-      style={{
-        padding: "3px 8px",
-        borderRadius: 999,
-        background: map.bg,
-        color: map.color,
-        fontSize: 10,
-        fontWeight: 900,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {map.text}
-    </span>
-  );
-}
-
-function ScannerEventsBlock({ events }: { events: ScannerEvent[] }) {
+function EventsMiniPanel({ events }: { events: ScannerEvent[] }) {
   return (
     <div
       style={{
-        height: "100%",
+        height: 100,
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(5,8,15,0.98))",
         display: "flex",
@@ -1210,26 +1204,26 @@ function ScannerEventsBlock({ events }: { events: ScannerEvent[] }) {
         <ChevronRight size={12} color="#7f93b7" />
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: 10 }}>
-        <div style={{ display: "grid", gap: 8 }}>
-          {events.map((event, i) => (
+      <div style={{ flex: 1, overflowY: "auto", padding: 8 }}>
+        <div style={{ display: "grid", gap: 6 }}>
+          {events.slice(0, 3).map((event, i) => (
             <div
               key={`${event.time}-${i}`}
               style={{
-                borderRadius: 12,
+                borderRadius: 10,
                 border: "1px solid rgba(255,255,255,0.06)",
                 background:
                   "linear-gradient(180deg, rgba(11,17,32,0.98), rgba(8,12,22,0.98))",
-                padding: "10px 10px 9px",
+                padding: "8px 9px",
               }}
             >
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 8,
                   justifyContent: "space-between",
-                  marginBottom: 7,
+                  gap: 8,
+                  marginBottom: 5,
                 }}
               >
                 <span
@@ -1237,7 +1231,6 @@ function ScannerEventsBlock({ events }: { events: ScannerEvent[] }) {
                     color: "#8ca0c6",
                     fontSize: 10,
                     fontWeight: 800,
-                    letterSpacing: 0.5,
                   }}
                 >
                   {event.time}
@@ -1248,10 +1241,10 @@ function ScannerEventsBlock({ events }: { events: ScannerEvent[] }) {
               <div
                 style={{
                   color: "#edf5ff",
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: 800,
-                  lineHeight: 1.3,
-                  marginBottom: 5,
+                  lineHeight: 1.25,
+                  marginBottom: 3,
                 }}
               >
                 {event.title}
@@ -1260,7 +1253,7 @@ function ScannerEventsBlock({ events }: { events: ScannerEvent[] }) {
               <div
                 style={{
                   color: "#7f93b7",
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: 700,
                 }}
               >
@@ -1269,6 +1262,155 @@ function ScannerEventsBlock({ events }: { events: ScannerEvent[] }) {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ScannerPanelCompact({ assets }: { assets: AssetScore[] }) {
+  const sparklines = useMemo(
+    () => assets.map((a) => generateSparkline(24, 40 + Math.random() * 40, a.trend)),
+    [assets]
+  );
+
+  return (
+    <div
+      style={{
+        height: 206,
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 0,
+      }}
+    >
+      <div
+        style={{
+          height: 40,
+          padding: "0 12px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            color: "#f1f7ff",
+            fontSize: 13,
+            fontWeight: 900,
+            letterSpacing: 0.3,
+          }}
+        >
+          MESTRE SCANNER
+        </span>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 0.84fr 0.84fr 0.8fr 0.96fr",
+          gap: 8,
+          padding: "8px 12px",
+          borderBottom: `1px solid ${ui.border}`,
+          color: "#6c7da2",
+          fontSize: 11,
+          flexShrink: 0,
+        }}
+      >
+        <span>Top Forge</span>
+        <span>Score</span>
+        <span>Preço</span>
+        <span>RSI / MFI</span>
+        <span>Mini Chart</span>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {assets.map((asset, i) => (
+          <div
+            key={asset.symbol}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 0.84fr 0.84fr 0.8fr 0.96fr",
+              gap: 8,
+              padding: "10px 12px",
+              borderBottom: "1px solid rgba(255,255,255,0.045)",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: asset.color,
+                  display: "inline-block",
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ color: "#edf5ff", fontSize: 12, fontWeight: 800 }}>
+                {asset.symbol}
+              </span>
+            </div>
+
+            <ScoreBar value={asset.volumeScore} color={asset.color} />
+
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span
+                style={{
+                  color: "#eef5ff",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                }}
+              >
+                ${asset.price.toLocaleString()}
+              </span>
+              <span
+                style={{
+                  color: asset.change >= 0 ? ui.green : ui.red,
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  fontWeight: 800,
+                }}
+              >
+                {asset.change >= 0 ? "+" : ""}
+                {asset.change.toFixed(1)}%
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                minWidth: 0,
+              }}
+            >
+              {asset.trend === "up" ? (
+                <TrendingUp size={11} color={ui.green} />
+              ) : asset.trend === "down" ? (
+                <TrendingDown size={11} color={ui.red} />
+              ) : (
+                <Activity size={11} color="#a2b3d3" />
+              )}
+              <span
+                style={{
+                  color: "#8fd6ff",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                }}
+              >
+                {asset.rsiMfi.toFixed(3)}
+              </span>
+            </div>
+
+            <MiniSparkline data={sparklines[i]} trend={asset.trend} />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -1295,8 +1437,8 @@ function LiquidityCard({
         border: "1px solid rgba(255,255,255,0.06)",
         background:
           "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
-        padding: 14,
-        minHeight: 92,
+        padding: 12,
+        minHeight: 78,
       }}
     >
       <div
@@ -1306,7 +1448,7 @@ function LiquidityCard({
           fontWeight: 900,
           letterSpacing: 0.7,
           textTransform: "uppercase",
-          marginBottom: 10,
+          marginBottom: 8,
         }}
       >
         {title}
@@ -1315,9 +1457,9 @@ function LiquidityCard({
       <div
         style={{
           color,
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: 900,
-          marginBottom: 8,
+          marginBottom: 6,
         }}
       >
         {value}
@@ -1326,8 +1468,8 @@ function LiquidityCard({
       <div
         style={{
           color: "#9bb0d4",
-          fontSize: 12,
-          lineHeight: 1.35,
+          fontSize: 11,
+          lineHeight: 1.3,
         }}
       >
         {sub}
@@ -1416,7 +1558,7 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
     >
       <div
         style={{
-          height: 44,
+          height: 42,
           padding: "0 14px",
           display: "flex",
           alignItems: "center",
@@ -1449,16 +1591,16 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
 
       <div
         style={{
-          padding: 14,
+          padding: 12,
           display: "grid",
-          gap: 14,
+          gap: 12,
         }}
       >
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: 12,
+            gap: 10,
           }}
         >
           <LiquidityCard
@@ -1476,7 +1618,7 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
           <LiquidityCard
             title="Cluster dominante"
             value="BTC Core"
-            sub="Maior concentração institucional nas últimas janelas."
+            sub="Maior concentração institucional."
             tone="neutral"
           />
           <LiquidityCard
@@ -1490,8 +1632,8 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1.1fr 0.9fr",
-            gap: 14,
+            gridTemplateColumns: "1.26fr 0.62fr",
+            gap: 12,
           }}
         >
           <div
@@ -1501,7 +1643,7 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
               background:
                 "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
               padding: 14,
-              minHeight: 230,
+              minHeight: 220,
             }}
           >
             <div
@@ -1521,7 +1663,7 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
             {activeLiquidityTab === "Map" && (
               <div
                 style={{
-                  height: 190,
+                  height: 182,
                   borderRadius: 12,
                   border: "1px solid rgba(255,255,255,0.05)",
                   background:
@@ -1779,211 +1921,40 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
   );
 }
 
-function ScannerPanel({
+function LowerAnalysisSection({
   assets,
-  activeTab,
-  onTabChange,
   events,
 }: {
   assets: AssetScore[];
-  activeTab: string;
-  onTabChange: (tab: string) => void;
   events: ScannerEvent[];
 }) {
-  const sparklines = useMemo(
-    () => assets.map((a) => generateSparkline(24, 40 + Math.random() * 40, a.trend)),
-    [assets]
-  );
-
   return (
     <div
       style={{
-        height: "100%",
+        height: 214,
         borderTop: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
-        display: "flex",
-        flexDirection: "column",
-        minHeight: 0,
+        display: "grid",
+        gridTemplateColumns: "1.45fr 0.98fr",
+        gap: 10,
+        padding: 10,
       }}
     >
       <div
         style={{
-          height: 34,
-          padding: "0 12px",
-          borderBottom: `1px solid ${ui.border}`,
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          flexShrink: 0,
+          display: "grid",
+          gridTemplateRows: "100px 100px",
+          gap: 10,
+          minWidth: 0,
         }}
       >
-        {TOP_SCANNER_TABS.map((t, i) => (
-          <button
-            key={t}
-            onClick={() => onTabChange(t)}
-            style={{
-              border: "none",
-              background:
-                i === 2
-                  ? "rgba(247,201,72,0.12)"
-                  : activeTab === t
-                  ? "rgba(255,255,255,0.08)"
-                  : "transparent",
-              color: i === 2 ? ui.yellow : activeTab === t ? "#fff" : "#7f93b7",
-              borderRadius: 7,
-              padding: "4px 8px",
-              fontSize: 11,
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            {t}
-          </button>
-        ))}
-        <div style={{ flex: 1 }} />
-        <span style={{ color: "#6c7da2", fontSize: 11 }}>⊞ ≡ ⊟</span>
+        <AnalyticPreviewPanel />
+        <EventsMiniPanel events={events} />
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.45fr 1.05fr 1fr",
-          flex: 1,
-          minHeight: 0,
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0 }}>
-          <div
-            style={{
-              height: 40,
-              padding: "0 12px",
-              borderBottom: `1px solid ${ui.border}`,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexShrink: 0,
-            }}
-          >
-            <span
-              style={{
-                color: "#f1f7ff",
-                fontSize: 13,
-                fontWeight: 900,
-                letterSpacing: 0.3,
-              }}
-            >
-              MESTRE SCANNER
-            </span>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 0.88fr 0.85fr 0.78fr 0.92fr",
-              gap: 8,
-              padding: "8px 12px",
-              borderBottom: `1px solid ${ui.border}`,
-              color: "#6c7da2",
-              fontSize: 11,
-              flexShrink: 0,
-            }}
-          >
-            <span>Top Forge</span>
-            <span>Score</span>
-            <span>Preço</span>
-            <span>RSI / MFI</span>
-            <span>Mini Chart</span>
-          </div>
-
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            {assets.map((asset, i) => (
-              <div
-                key={asset.symbol}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 0.88fr 0.85fr 0.78fr 0.92fr",
-                  gap: 8,
-                  padding: "10px 12px",
-                  borderBottom: "1px solid rgba(255,255,255,0.045)",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                  <span
-                    style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: "50%",
-                      background: asset.color,
-                      display: "inline-block",
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span style={{ color: "#edf5ff", fontSize: 12, fontWeight: 800 }}>
-                    {asset.symbol}
-                  </span>
-                </div>
-
-                <ScoreBar value={asset.volumeScore} color={asset.color} />
-
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <span
-                    style={{
-                      color: "#eef5ff",
-                      fontSize: 12,
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    ${asset.price.toLocaleString()}
-                  </span>
-                  <span
-                    style={{
-                      color: asset.change >= 0 ? ui.green : ui.red,
-                      fontSize: 12,
-                      fontFamily: "monospace",
-                      fontWeight: 800,
-                    }}
-                  >
-                    {asset.change >= 0 ? "+" : ""}
-                    {asset.change.toFixed(1)}%
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    minWidth: 0,
-                  }}
-                >
-                  {asset.trend === "up" ? (
-                    <TrendingUp size={11} color={ui.green} />
-                  ) : asset.trend === "down" ? (
-                    <TrendingDown size={11} color={ui.red} />
-                  ) : (
-                    <Activity size={11} color="#a2b3d3" />
-                  )}
-                  <span
-                    style={{
-                      color: "#8fd6ff",
-                      fontSize: 12,
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    {asset.rsiMfi.toFixed(3)}
-                  </span>
-                </div>
-
-                <MiniSparkline data={sparklines[i]} trend={asset.trend} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <ScannerCenterPreview />
-        <ScannerEventsBlock events={events} />
+      <div style={{ minWidth: 0 }}>
+        <ScannerPanelCompact assets={assets} />
       </div>
     </div>
   );
@@ -2338,7 +2309,7 @@ function ChartPanel({
             left: 0,
             right: 58,
             bottom: 0,
-            height: 74,
+            height: 86,
             pointerEvents: "none",
             opacity: 0.95,
             borderTop: "1px solid rgba(255,255,255,0.05)",
@@ -2350,7 +2321,7 @@ function ChartPanel({
           style={{
             position: "absolute",
             left: 14,
-            bottom: 58,
+            bottom: 68,
             color: "#7f93b7",
             fontSize: 10,
             fontFamily: "monospace",
@@ -2386,7 +2357,7 @@ function ChartPanel({
             MFI
           </span>
         </div>
-        <div ref={rsiRef} style={{ height: 84, width: "100%" }} />
+        <div ref={rsiRef} style={{ height: 90, width: "100%" }} />
       </div>
     </div>
   );
@@ -2394,7 +2365,6 @@ function ChartPanel({
 
 export default function AtlasChartPro2() {
   const [timeframe, setTimeframe] = useState<Timeframe>("15m");
-  const [activeTab, setActiveTab] = useState("Scanner");
   const [mode] = useState<ModeKey>("auto");
   const [objects] = useState<DrawObject[]>([{ id: "1", name: "Linha 1", type: "line" }]);
   const [selectedId] = useState<string | null>(null);
@@ -2520,7 +2490,7 @@ export default function AtlasChartPro2() {
               flexDirection: "column",
             }}
           >
-            <div style={{ minHeight: 0, height: "calc(100vh - 344px)" }}>
+            <div style={{ minHeight: 0, height: "calc(100vh - 416px)" }}>
               <ChartPanel
                 candles={candles}
                 indicators={indicators}
@@ -2529,14 +2499,10 @@ export default function AtlasChartPro2() {
               />
             </div>
 
-            <div style={{ height: 230, flexShrink: 0 }}>
-              <ScannerPanel
-                assets={scannerAssets}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                events={scannerEvents}
-              />
-            </div>
+            <LowerAnalysisSection
+              assets={scannerAssets}
+              events={scannerEvents}
+            />
           </div>
 
           <LiquiditySection events={scannerEvents} />
