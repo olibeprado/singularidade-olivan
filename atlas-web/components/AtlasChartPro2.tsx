@@ -102,16 +102,14 @@ type ScannerEvent = {
 
 const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
 const NAV_TABS = ["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"];
-const TOP_SCANNER_TABS = [
-  "Indicadores",
-  "Fluxo",
-  "Scanner",
-  "Scanner+",
-  "Eventos",
-  "1Bs",
-];
 const LIQUIDITY_TABS = ["Map", "Heatmap", "Clusters", "Eventos"];
-const ANALYTIC_TABS = ["Volume", "RSI / MFI", "Fluxo", "Singularidade", "Confluência"];
+const ANALYTIC_TABS = [
+  "Volume",
+  "RSI / MFI",
+  "Fluxo",
+  "Singularidade",
+  "Confluência",
+];
 
 const ui = {
   bg: "#060913",
@@ -1074,14 +1072,13 @@ function AnalyticPreviewPanel() {
   return (
     <div
       style={{
-        height: 100,
+        height: 126,
         borderRadius: 12,
         border: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(9,14,28,0.98), rgba(7,11,20,0.98))",
         display: "flex",
         flexDirection: "column",
-        minHeight: 0,
       }}
     >
       <div
@@ -1104,7 +1101,6 @@ function AnalyticPreviewPanel() {
             {tab}
           </TopButton>
         ))}
-
         <span
           style={{
             marginLeft: "auto",
@@ -1120,7 +1116,7 @@ function AnalyticPreviewPanel() {
         </span>
       </div>
 
-      <div style={{ flex: 1, padding: "6px 10px 8px", minHeight: 0 }}>
+      <div style={{ flex: 1, padding: "8px 10px" }}>
         <svg width="100%" height="100%" viewBox="0 0 420 150" preserveAspectRatio="none">
           {Array.from({ length: 10 }, (_, i) => (
             <line
@@ -1144,7 +1140,6 @@ function AnalyticPreviewPanel() {
               strokeWidth="1"
             />
           ))}
-
           {Array.from({ length: 26 }, (_, i) => {
             const x = 8 + i * 15.5;
             const h = 8 + ((i * 17) % 48);
@@ -1160,10 +1155,8 @@ function AnalyticPreviewPanel() {
               />
             );
           })}
-
           <polyline points={line1} fill="none" stroke={ui.cyan} strokeWidth="1.7" />
           <polyline points={line2} fill="none" stroke={ui.yellow} strokeWidth="1.4" opacity="0.85" />
-
           {dots.map((d, i) => (
             <circle key={i} cx={d.x} cy={d.y} r="3.4" fill={d.c} />
           ))}
@@ -1177,14 +1170,13 @@ function EventsMiniPanel({ events }: { events: ScannerEvent[] }) {
   return (
     <div
       style={{
-        height: 100,
+        height: 126,
         borderRadius: 12,
         border: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(5,8,15,0.98))",
         display: "flex",
         flexDirection: "column",
-        minHeight: 0,
       }}
     >
       <div
@@ -1267,23 +1259,33 @@ function EventsMiniPanel({ events }: { events: ScannerEvent[] }) {
   );
 }
 
-function ScannerPanelCompact({ assets }: { assets: AssetScore[] }) {
+function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
+  const list = useMemo(() => {
+    const expanded: AssetScore[] = [];
+    for (let i = 0; i < 3; i++) {
+      expanded.push(...assets);
+    }
+    return expanded;
+  }, [assets]);
+
   const sparklines = useMemo(
-    () => assets.map((a) => generateSparkline(24, 40 + Math.random() * 40, a.trend)),
-    [assets]
+    () =>
+      list.map((a) =>
+        generateSparkline(24, 40 + Math.random() * 40, a.trend)
+      ),
+    [list]
   );
 
   return (
     <div
       style={{
-        height: 206,
         borderRadius: 12,
         border: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
         display: "flex",
         flexDirection: "column",
-        minHeight: 0,
+        minHeight: 1000,
       }}
     >
       <div
@@ -1319,6 +1321,11 @@ function ScannerPanelCompact({ assets }: { assets: AssetScore[] }) {
           color: "#6c7da2",
           fontSize: 11,
           flexShrink: 0,
+          position: "sticky",
+          top: 0,
+          zIndex: 2,
+          background:
+            "linear-gradient(180deg, rgba(7,10,19,0.99), rgba(5,8,15,0.99))",
         }}
       >
         <span>Top Forge</span>
@@ -1328,10 +1335,10 @@ function ScannerPanelCompact({ assets }: { assets: AssetScore[] }) {
         <span>Mini Chart</span>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto" }}>
-        {assets.map((asset, i) => (
+      <div style={{ display: "grid" }}>
+        {list.map((asset, i) => (
           <div
-            key={asset.symbol}
+            key={`${asset.symbol}-${i}`}
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 0.84fr 0.84fr 0.8fr 0.96fr",
@@ -1546,7 +1553,7 @@ function HeatmapBars() {
 }
 
 function LiquiditySection({ events }: { events: ScannerEvent[] }) {
-  const [activeLiquidityTab, setActiveLiquidityTab] = useState("Map");
+  const [activeLiquidityTab, setActiveLiquidityTab] = useState("Heatmap");
 
   return (
     <div
@@ -1698,7 +1705,6 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
                     }}
                   />
                 ))}
-
                 <div
                   style={{
                     position: "absolute",
@@ -1708,7 +1714,6 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
                     height: 18,
                     borderRadius: 999,
                     background: "rgba(255,107,134,0.48)",
-                    filter: "blur(1px)",
                   }}
                 />
                 <div
@@ -1720,7 +1725,6 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
                     height: 18,
                     borderRadius: 999,
                     background: "rgba(49,233,255,0.45)",
-                    filter: "blur(1px)",
                   }}
                 />
                 <div
@@ -1732,25 +1736,8 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
                     height: 18,
                     borderRadius: 999,
                     background: "rgba(39,245,157,0.40)",
-                    filter: "blur(1px)",
                   }}
                 />
-
-                <div
-                  style={{
-                    position: "absolute",
-                    right: 12,
-                    top: 10,
-                    color: "#dce8ff",
-                    fontSize: 11,
-                    fontFamily: "monospace",
-                    background: "rgba(5,8,15,0.55)",
-                    padding: "4px 8px",
-                    borderRadius: 8,
-                  }}
-                >
-                  Preço atual: 70.730
-                </div>
               </div>
             )}
 
@@ -1798,7 +1785,6 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
                         {b}
                       </div>
                     </div>
-
                     <div
                       style={{
                         color: c as string,
@@ -1931,31 +1917,21 @@ function LowerAnalysisSection({
   return (
     <div
       style={{
-        height: 214,
+        display: "grid",
+        gridTemplateColumns: "1.58fr 0.92fr",
+        gap: 10,
+        padding: 10,
         borderTop: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
-        display: "grid",
-        gridTemplateColumns: "1.45fr 0.98fr",
-        gap: 10,
-        padding: 10,
       }}
     >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateRows: "100px 100px",
-          gap: 10,
-          minWidth: 0,
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateRows: "126px 126px", gap: 10 }}>
         <AnalyticPreviewPanel />
         <EventsMiniPanel events={events} />
       </div>
 
-      <div style={{ minWidth: 0 }}>
-        <ScannerPanelCompact assets={assets} />
-      </div>
+      <ScannerPanelContinuous assets={assets} />
     </div>
   );
 }
@@ -2480,7 +2456,6 @@ export default function AtlasChartPro2() {
             flexDirection: "column",
             flex: 1,
             minWidth: 0,
-            minHeight: 0,
           }}
         >
           <div
@@ -2490,7 +2465,7 @@ export default function AtlasChartPro2() {
               flexDirection: "column",
             }}
           >
-            <div style={{ minHeight: 0, height: "calc(100vh - 416px)" }}>
+            <div style={{ minHeight: 0, height: "calc(100vh - 292px)" }}>
               <ChartPanel
                 candles={candles}
                 indicators={indicators}
