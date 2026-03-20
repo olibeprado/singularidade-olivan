@@ -12,18 +12,23 @@ import {
   Activity,
   BarChart2,
   Bell,
+  BrainCircuit,
   ChevronDown,
   ChevronRight,
+  Droplets,
   Eye,
+  Layers3,
   Magnet,
   Maximize2,
   MousePointer2,
   PenTool,
   RotateCcw,
   Ruler,
+  ScanSearch,
   Search,
   Settings,
   Shapes,
+  Sigma,
   Square,
   Star,
   Trash2,
@@ -31,13 +36,6 @@ import {
   TrendingUp,
   Type,
   Waves,
-  Sigma,
-  BrainCircuit,
-  Layers3,
-  ScanSearch,
-  Droplets,
-  Lock,
-  Unlock,
 } from "lucide-react";
 
 type Timeframe = "1m" | "5m" | "15m" | "30m" | "1H" | "4H" | "1D";
@@ -99,6 +97,20 @@ const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
 const NAV_TABS = ["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"];
 const SCANNER_TABS = ["Volume", "RSI/MFI", "Fluxo", "Singularidade", "Confluência"];
 const TOP_SCANNER_TABS = ["Indicadores", "Fluxo", "Scanner", "Scanner+", "Eventos", "1Bs"];
+
+const ui = {
+  bg: "#060913",
+  bg2: "#090f1e",
+  panel: "#0b1222",
+  panel2: "#0d1427",
+  border: "#182235",
+  text: "#ebf3ff",
+  mut: "#7f93b7",
+  cyan: "#2de2ff",
+  green: "#27f59d",
+  yellow: "#f7c948",
+  red: "#ff6b86",
+};
 
 function clamp(v: number, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
@@ -194,21 +206,6 @@ function computeEMA(candles: CandleData[], period: number) {
   return ema;
 }
 
-const ui = {
-  bg: "#060913",
-  bg2: "#090f1e",
-  panel: "#0b1222",
-  panel2: "#0d1427",
-  border: "#182235",
-  softBorder: "rgba(255,255,255,0.06)",
-  text: "#ebf3ff",
-  mut: "#7f93b7",
-  cyan: "#2de2ff",
-  green: "#27f59d",
-  yellow: "#f7c948",
-  red: "#ff6b86",
-};
-
 function sectionTitle(text: string) {
   return (
     <span
@@ -237,19 +234,20 @@ function TopButton({
     <button
       onClick={onClick}
       style={{
-        height: 31,
-        padding: "0 11px",
-        borderRadius: 10,
+        height: 29,
+        padding: "0 10px",
+        borderRadius: 9,
         border: active
           ? "1px solid rgba(247,201,72,0.34)"
           : "1px solid rgba(255,255,255,0.06)",
         background: active
           ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
-          : "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))",
+          : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
         color: active ? ui.yellow : "#dce8ff",
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: 800,
         cursor: "pointer",
+        whiteSpace: "nowrap",
       }}
     >
       {children}
@@ -293,33 +291,31 @@ function ModuleButton({
   );
 }
 
-function StatCard({
+function MiniStatCard({
   title,
   value,
-  subtitle,
   valueColor,
 }: {
   title: string;
   value: string;
-  subtitle?: string;
   valueColor?: string;
 }) {
   return (
     <div
       style={{
-        borderRadius: 14,
+        borderRadius: 13,
         border: "1px solid rgba(255,255,255,0.06)",
         background:
           "linear-gradient(180deg, rgba(8,15,31,0.98), rgba(7,12,24,0.96))",
-        minHeight: 72,
-        padding: "12px 14px",
+        minHeight: 58,
+        padding: "10px 13px",
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
       }}
     >
       <div
         style={{
           color: "#7f93b7",
-          fontSize: 10,
+          fontSize: 9,
           fontWeight: 900,
           letterSpacing: 0.8,
           textTransform: "uppercase",
@@ -331,24 +327,13 @@ function StatCard({
       <div
         style={{
           color: valueColor || "#eef6ff",
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: 900,
-          marginBottom: subtitle ? 3 : 0,
+          lineHeight: 1.1,
         }}
       >
         {value}
       </div>
-      {subtitle ? (
-        <div
-          style={{
-            color: "#7286ac",
-            fontSize: 11,
-            fontWeight: 700,
-          }}
-        >
-          {subtitle}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -1041,6 +1026,211 @@ function ScoreBar({
   );
 }
 
+function ScannerCenterPreview() {
+  const line1 = Array.from({ length: 34 }, (_, i) => {
+    const x = (i / 33) * 420;
+    const y = 55 + Math.sin(i / 3) * 16 + Math.cos(i / 5) * 8;
+    return `${x},${y}`;
+  }).join(" ");
+
+  const line2 = Array.from({ length: 34 }, (_, i) => {
+    const x = (i / 33) * 420;
+    const y = 52 + Math.cos(i / 2.8) * 12 + Math.sin(i / 4.2) * 6;
+    return `${x},${y}`;
+  }).join(" ");
+
+  const dots = Array.from({ length: 9 }, (_, i) => ({
+    x: 30 + i * 42,
+    y: 64 + Math.sin(i * 0.8) * 18,
+    c: i % 3 === 0 ? ui.yellow : i % 2 === 0 ? ui.cyan : ui.green,
+  }));
+
+  return (
+    <div
+      style={{
+        height: "100%",
+        borderLeft: `1px solid ${ui.border}`,
+        borderRight: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(9,14,28,0.98), rgba(7,11,20,0.98))",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          height: 38,
+          padding: "0 12px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <TopButton active>Volume</TopButton>
+        <TopButton>RSI / MFI</TopButton>
+        <TopButton>Fluxo</TopButton>
+        <TopButton>Singularidade</TopButton>
+        <TopButton>Confluência</TopButton>
+        <span
+          style={{
+            marginLeft: "auto",
+            color: ui.cyan,
+            fontSize: 11,
+            fontWeight: 900,
+            padding: "4px 9px",
+            borderRadius: 8,
+            background: "rgba(45,226,255,0.1)",
+          }}
+        >
+          +IA Atlas 2350
+        </span>
+      </div>
+
+      <div style={{ flex: 1, padding: "10px 10px 8px" }}>
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 420 150"
+          preserveAspectRatio="none"
+        >
+          {Array.from({ length: 10 }, (_, i) => (
+            <line
+              key={`h-${i}`}
+              x1="0"
+              y1={i * 15}
+              x2="420"
+              y2={i * 15}
+              stroke="rgba(255,255,255,0.045)"
+              strokeWidth="1"
+            />
+          ))}
+          {Array.from({ length: 12 }, (_, i) => (
+            <line
+              key={`v-${i}`}
+              x1={i * 38}
+              y1="0"
+              x2={i * 38}
+              y2="150"
+              stroke="rgba(255,255,255,0.035)"
+              strokeWidth="1"
+            />
+          ))}
+
+          {Array.from({ length: 26 }, (_, i) => {
+            const x = 8 + i * 15.5;
+            const h = 8 + ((i * 17) % 48);
+            return (
+              <rect
+                key={i}
+                x={x}
+                y={132 - h}
+                width="8"
+                height={h}
+                rx="2"
+                fill={i % 2 === 0 ? "rgba(49,233,255,0.45)" : "rgba(247,201,72,0.35)"}
+              />
+            );
+          })}
+
+          <polyline
+            points={line1}
+            fill="none"
+            stroke={ui.cyan}
+            strokeWidth="1.7"
+          />
+          <polyline
+            points={line2}
+            fill="none"
+            stroke={ui.yellow}
+            strokeWidth="1.4"
+            opacity="0.85"
+          />
+
+          {dots.map((d, i) => (
+            <circle key={i} cx={d.x} cy={d.y} r="3.4" fill={d.c} />
+          ))}
+        </svg>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(6, 1fr)",
+            gap: 8,
+            marginTop: 4,
+            fontSize: 10,
+            color: "#7d91b6",
+          }}
+        >
+          <span>00m</span>
+          <span>23:30</span>
+          <span>39:35</span>
+          <span>54:47</span>
+          <span>00:50</span>
+          <span style={{ textAlign: "right" }}>00:30</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScannerEventsBlock() {
+  return (
+    <div
+      style={{
+        height: "100%",
+        background:
+          "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(5,8,15,0.98))",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          height: 38,
+          padding: "0 12px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <span style={{ color: "#eaf3ff", fontSize: 12, fontWeight: 900 }}>
+          Estrutura
+        </span>
+        <ChevronRight size={12} color="#7f93b7" />
+      </div>
+
+      <div style={{ padding: 12, display: "grid", gap: 8 }}>
+        {[
+          ["Estrutura", "Positivo", ui.green],
+          ["Euler", "Forte", "#9fffbc"],
+          ["Singularida", "● ● ● ● ○", ui.green],
+          ["Razão de Prata", "Suporte Sólido", ui.cyan],
+          ["Ciclo", "Acelerado", "#dce8ff"],
+        ].map(([a, b, c]) => (
+          <div
+            key={a}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              fontSize: 12,
+              paddingBottom: 6,
+              borderBottom: "1px solid rgba(255,255,255,0.05)",
+            }}
+          >
+            <span style={{ color: "#8aa0c8" }}>{a}</span>
+            <span style={{ color: c as string, fontWeight: 800, textAlign: "right" }}>
+              {b}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ScannerPanel({
   assets,
   activeTab,
@@ -1104,8 +1294,15 @@ function ScannerPanel({
         <span style={{ color: "#6c7da2", fontSize: 11 }}>⊞ ≡ ⊟</span>
       </div>
 
-      <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
-        <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.55fr 1.15fr 0.95fr",
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
           <div
             style={{
               height: 40,
@@ -1126,40 +1323,6 @@ function ScannerPanel({
               }}
             >
               MESTRE SCANNER
-            </span>
-
-            <div style={{ flex: 1 }} />
-
-            {SCANNER_TABS.map((t) => (
-              <button
-                key={t}
-                onClick={() => onTabChange(t)}
-                style={{
-                  border: "none",
-                  background: activeTab === t ? "rgba(255,255,255,0.08)" : "transparent",
-                  color: activeTab === t ? "#fff" : "#7f93b7",
-                  borderRadius: 7,
-                  padding: "4px 7px",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                {t}
-              </button>
-            ))}
-
-            <span
-              style={{
-                color: ui.cyan,
-                fontSize: 11,
-                fontWeight: 900,
-                padding: "4px 9px",
-                borderRadius: 8,
-                background: "rgba(45,226,255,0.1)",
-              }}
-            >
-              IA Atlas 2350
             </span>
           </div>
 
@@ -1260,64 +1423,8 @@ function ScannerPanel({
           </div>
         </div>
 
-        <div
-          style={{
-            width: 250,
-            borderLeft: `1px solid ${ui.border}`,
-            background:
-              "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(5,8,15,0.98))",
-            flexShrink: 0,
-          }}
-        >
-          <div
-            style={{
-              height: 40,
-              padding: "0 12px",
-              borderBottom: `1px solid ${ui.border}`,
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ color: "#92a6cc", fontSize: 12 }}>IA Atlas 2350</span>
-          </div>
-
-          <div style={{ padding: 12 }}>
-            <svg width="100%" height="80" viewBox="0 0 200 80">
-              <line x1="0" y1="40" x2="200" y2="40" stroke="#1e2a42" strokeWidth="1" />
-              <polyline
-                points={Array.from({ length: 30 }, (_, i) => {
-                  const x = (i / 29) * 200;
-                  const y = 40 + Math.sin(i / 3) * 20 + (Math.random() - 0.5) * 10;
-                  return `${x},${y}`;
-                }).join(" ")}
-                fill="none"
-                stroke={ui.cyan}
-                strokeWidth="1.5"
-              />
-            </svg>
-
-            <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
-              {[
-                ["Estrutura", "▲ Positivo", ui.green],
-                ["Euler", "Forte", "#9fffbc"],
-                ["Razão de Prata", "Suporte Sólido", ui.green],
-                ["Ciclo", "Acelerado", ui.cyan],
-              ].map(([a, b, c]) => (
-                <div
-                  key={a}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: 12,
-                  }}
-                >
-                  <span style={{ color: "#7186ad" }}>{a}</span>
-                  <span style={{ color: c as string, fontWeight: 800 }}>{b}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <ScannerCenterPreview />
+        <ScannerEventsBlock />
       </div>
     </div>
   );
@@ -1335,14 +1442,14 @@ function ChartPanel({
   mode: ModeKey;
 }) {
   const mainRef = useRef<HTMLDivElement>(null);
-  const volRef = useRef<HTMLDivElement>(null);
+  const volOverlayRef = useRef<HTMLDivElement>(null);
   const rsiRef = useRef<HTMLDivElement>(null);
 
   const [livePrice, setLivePrice] = useState<number>(candles[candles.length - 1]?.close ?? 0);
   const [priceChange, setPriceChange] = useState<number>(0);
 
   useEffect(() => {
-    if (!mainRef.current || !volRef.current || !rsiRef.current) return;
+    if (!mainRef.current || !volOverlayRef.current || !rsiRef.current) return;
 
     const baseChartOpts = {
       layout: {
@@ -1422,18 +1529,30 @@ function ChartPanel({
     setLivePrice(last.close);
     setPriceChange(((last.close - prev.close) / prev.close) * 100);
 
-    const vc: IChartApi = createChart(volRef.current, {
+    const vc: IChartApi = createChart(volOverlayRef.current, {
       ...baseChartOpts,
-      width: volRef.current.clientWidth,
-      height: volRef.current.clientHeight,
+      width: volOverlayRef.current.clientWidth,
+      height: volOverlayRef.current.clientHeight,
+      rightPriceScale: {
+        visible: false,
+        borderColor: "rgba(255,255,255,0)",
+      },
+      timeScale: {
+        visible: false,
+        borderColor: "rgba(255,255,255,0)",
+      },
+      grid: {
+        vertLines: { color: "rgba(255,255,255,0.0)", style: 1 as const },
+        horzLines: { color: "rgba(255,255,255,0.0)", style: 1 as const },
+      },
     });
 
-    const volSeries = vc.addHistogramSeries({ priceScaleId: "right" });
+    const volSeries = vc.addHistogramSeries({ priceScaleId: "" });
     volSeries.setData(
       candles.map((c) => ({
         time: c.time as Time,
         value: c.volume,
-        color: c.close >= c.open ? "rgba(55,244,173,0.45)" : "rgba(255,108,141,0.45)",
+        color: c.close >= c.open ? "rgba(55,244,173,0.42)" : "rgba(255,108,141,0.42)",
       }))
     );
     vc.timeScale().fitContent();
@@ -1487,10 +1606,10 @@ function ChartPanel({
           height: mainRef.current.clientHeight,
         });
       }
-      if (volRef.current) {
+      if (volOverlayRef.current) {
         vc.applyOptions({
-          width: volRef.current.clientWidth,
-          height: volRef.current.clientHeight,
+          width: volOverlayRef.current.clientWidth,
+          height: volOverlayRef.current.clientHeight,
         });
       }
       if (rsiRef.current) {
@@ -1525,7 +1644,7 @@ function ChartPanel({
     >
       <div
         style={{
-          padding: "10px 12px",
+          padding: "8px 10px",
           borderBottom: `1px solid ${ui.border}`,
           background:
             "linear-gradient(180deg, rgba(12,19,36,0.94), rgba(8,13,25,0.94))",
@@ -1534,8 +1653,8 @@ function ChartPanel({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1.6fr repeat(4, 1fr) auto",
-            gap: 10,
+            gridTemplateColumns: "1.4fr repeat(4, 0.7fr) auto",
+            gap: 8,
             alignItems: "center",
           }}
         >
@@ -1543,21 +1662,21 @@ function ChartPanel({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 10,
+              gap: 9,
               minWidth: 0,
             }}
           >
             <div
               style={{
-                width: 26,
-                height: 26,
-                borderRadius: 8,
+                width: 24,
+                height: 24,
+                borderRadius: 7,
                 background: "rgba(247,201,72,0.16)",
                 color: ui.yellow,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: 900,
                 flexShrink: 0,
               }}
@@ -1569,9 +1688,9 @@ function ChartPanel({
               <div
                 style={{
                   color: "#eef6ff",
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: 900,
-                  lineHeight: 1.15,
+                  lineHeight: 1.1,
                 }}
               >
                 BTCUSDT
@@ -1579,7 +1698,7 @@ function ChartPanel({
               <div
                 style={{
                   color: "#7d91b6",
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: 700,
                   whiteSpace: "nowrap",
                   overflow: "hidden",
@@ -1591,28 +1710,31 @@ function ChartPanel({
             </div>
           </div>
 
-          <StatCard
+          <MiniStatCard
             title="Preço"
-            value={livePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            value={livePrice.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
             valueColor="#4ef0cb"
           />
-          <StatCard
+          <MiniStatCard
             title="Variação"
             value={`${isPositive ? "+" : ""}${priceChange.toFixed(2)}%`}
             valueColor={isPositive ? ui.green : ui.red}
           />
-          <StatCard
+          <MiniStatCard
             title="Volume"
             value={formatCompact(candles[candles.length - 1]?.volume ?? 0)}
             valueColor="#51e6ff"
           />
-          <StatCard
+          <MiniStatCard
             title="Desenhos"
             value={selectedObject ? "1" : "0"}
             valueColor={selectedObject ? ui.yellow : ui.red}
           />
 
-          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <TopButton active={mode === "auto"}>Auto</TopButton>
             <TopButton active={mode === "manual"}>Manual</TopButton>
             <TopButton active={mode === "space"}>Seguir + Espaço</TopButton>
@@ -1626,8 +1748,8 @@ function ChartPanel({
 
       <div
         style={{
-          height: 34,
-          padding: "0 12px",
+          height: 32,
+          padding: "0 10px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -1647,7 +1769,7 @@ function ChartPanel({
         <div
           style={{
             color: selectedObject ? "#dce8ff" : "#7f93b7",
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: 800,
           }}
         >
@@ -1655,52 +1777,70 @@ function ChartPanel({
         </div>
       </div>
 
-      <div ref={mainRef} style={{ flex: 1, minHeight: 0, width: "100%" }} />
-
-      <div style={{ flexShrink: 0 }}>
+      <div
+        style={{
+          position: "relative",
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
+        <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
+        <div
+          ref={volOverlayRef}
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 58,
+            bottom: 0,
+            height: 74,
+            pointerEvents: "none",
+            opacity: 0.95,
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+            background:
+              "linear-gradient(180deg, rgba(8,13,25,0.05), rgba(8,13,25,0.4))",
+          }}
+        />
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            padding: "6px 16px",
-            borderTop: `1px solid ${ui.border}`,
-            background: "#0a0f1d",
+            position: "absolute",
+            left: 14,
+            bottom: 58,
+            color: "#7f93b7",
+            fontSize: 10,
+            fontFamily: "monospace",
+            pointerEvents: "none",
+            background: "rgba(5,8,15,0.55)",
+            padding: "2px 6px",
+            borderRadius: 6,
           }}
         >
-          <span style={{ color: "#7f93b7", fontSize: 11, fontFamily: "monospace" }}>
-            Volume
-          </span>
-          <span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(55,244,173,0.45)", display: "inline-block" }} />
-          <span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(255,108,141,0.45)", display: "inline-block" }} />
+          Volume
         </div>
-        <div ref={volRef} style={{ height: 82, width: "100%" }} />
       </div>
 
-      <div style={{ flexShrink: 0 }}>
+      <div style={{ flexShrink: 0, borderTop: `1px solid ${ui.border}` }}>
         <div
           style={{
             display: "flex",
             alignItems: "center",
             gap: 12,
-            padding: "6px 16px",
-            borderTop: `1px solid ${ui.border}`,
+            padding: "5px 14px",
             background: "#0a0f1d",
           }}
         >
-          <span style={{ color: "#7f93b7", fontSize: 11, fontFamily: "monospace" }}>
+          <span style={{ color: "#7f93b7", fontSize: 10, fontFamily: "monospace" }}>
             RSI / MFI
           </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 11 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}>
             <span style={{ width: 12, height: 2, background: "#9b7cff", display: "inline-block" }} />
             RSI
           </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 11 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}>
             <span style={{ width: 12, height: 2, background: "#d2b000", display: "inline-block" }} />
             MFI
           </span>
         </div>
-        <div ref={rsiRef} style={{ height: 82, width: "100%" }} />
+        <div ref={rsiRef} style={{ height: 72, width: "100%" }} />
       </div>
     </div>
   );
@@ -1710,7 +1850,7 @@ export default function AtlasChartPro2() {
   const [timeframe, setTimeframe] = useState<Timeframe>("15m");
   const [activeTab, setActiveTab] = useState("Scanner");
   const [mode] = useState<ModeKey>("auto");
-  const [objects, setObjects] = useState<DrawObject[]>([
+  const [objects] = useState<DrawObject[]>([
     { id: "1", name: "Linha 1", type: "line" },
   ]);
   const [selectedId] = useState<string | null>(null);
@@ -1725,12 +1865,12 @@ export default function AtlasChartPro2() {
 
   const scannerAssets = useMemo<AssetScore[]>(
     () => [
-      { symbol: "BTC", volumeScore: 82.41, rsiMfi: 64.82, price: 74682, change: 2.8, trend: "up", color: "#27f59d" },
-      { symbol: "ETH", volumeScore: 73.35, rsiMfi: 58.10, price: 3840, change: 1.2, trend: "up", color: "#31c8ff" },
-      { symbol: "SOL", volumeScore: 61.18, rsiMfi: 43.70, price: 182, change: -1.6, trend: "down", color: "#ffb14a" },
-      { symbol: "BNB", volumeScore: 69.08, rsiMfi: 52.20, price: 612, change: 0.9, trend: "neutral", color: "#f7c948" },
-      { symbol: "XRP", volumeScore: 55.63, rsiMfi: 39.90, price: 0.72, change: -2.1, trend: "down", color: "#a783ff" },
-      { symbol: "DOGE", volumeScore: 66.14, rsiMfi: 57.60, price: 0.18, change: 1.7, trend: "up", color: "#22c55e" },
+      { symbol: "PET", volumeScore: 63.625, rsiMfi: 46.464, price: 65360, change: 0.8, trend: "up", color: "#27f59d" },
+      { symbol: "CORE", volumeScore: 89.650, rsiMfi: 41.925, price: 65907, change: 0.6, trend: "up", color: "#31c8ff" },
+      { symbol: "INJ", volumeScore: 10.055, rsiMfi: 82.086, price: 65990, change: 1.1, trend: "up", color: "#4f8dff" },
+      { symbol: "RENDER", volumeScore: 16.055, rsiMfi: 53.029, price: 65320, change: -0.4, trend: "down", color: "#f7c948" },
+      { symbol: "BTC", volumeScore: 82.410, rsiMfi: 64.820, price: 74682, change: 2.8, trend: "up", color: "#27f59d" },
+      { symbol: "ETH", volumeScore: 73.350, rsiMfi: 58.100, price: 3840, change: 1.2, trend: "up", color: "#31c8ff" },
     ],
     []
   );
@@ -1801,7 +1941,7 @@ export default function AtlasChartPro2() {
             />
           </div>
 
-          <div style={{ height: 220, flexShrink: 0 }}>
+          <div style={{ height: 168, flexShrink: 0 }}>
             <ScannerPanel
               assets={scannerAssets}
               activeTab={activeTab}
