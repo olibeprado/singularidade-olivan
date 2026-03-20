@@ -1281,6 +1281,8 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
         display: "flex",
         flexDirection: "column",
         minHeight: 860,
+        height: "100%",
+        width: "100%",
       }}
     >
       <div
@@ -1327,7 +1329,7 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
         <span>Mini Chart</span>
       </div>
 
-      <div style={{ display: "grid" }}>
+      <div style={{ display: "grid", minWidth: 0 }}>
         {list.map((asset, i) => (
           <div
             key={`${asset.symbol}-${i}`}
