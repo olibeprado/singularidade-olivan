@@ -1281,8 +1281,6 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
         display: "flex",
         flexDirection: "column",
         minHeight: 860,
-        height: "100%",
-        width: "100%",
       }}
     >
       <div
@@ -1318,8 +1316,6 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
           color: "#6c7da2",
           fontSize: 11,
           flexShrink: 0,
-          background:
-            "linear-gradient(180deg, rgba(7,10,19,0.99), rgba(5,8,15,0.99))",
         }}
       >
         <span>Top Forge</span>
@@ -1329,7 +1325,7 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
         <span>Mini Chart</span>
       </div>
 
-      <div style={{ display: "grid", minWidth: 0 }}>
+      <div style={{ display: "grid" }}>
         {list.map((asset, i) => (
           <div
             key={`${asset.symbol}-${i}`}
@@ -1552,9 +1548,11 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
   return (
     <div
       style={{
-        borderTop: `1px solid ${ui.border}`,
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+        overflow: "hidden",
       }}
     >
       <div
@@ -1590,13 +1588,7 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
         ))}
       </div>
 
-      <div
-        style={{
-          padding: 12,
-          display: "grid",
-          gap: 12,
-        }}
-      >
+      <div style={{ padding: 12, display: "grid", gap: 12 }}>
         <div
           style={{
             display: "grid",
@@ -1661,139 +1653,9 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
               {activeLiquidityTab === "Eventos" && "Eventos de Liquidez"}
             </div>
 
-            {activeLiquidityTab === "Map" && (
-              <div
-                style={{
-                  height: 182,
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.05)",
-                  background:
-                    "radial-gradient(circle at 50% 30%, rgba(45,226,255,0.18), transparent 30%), radial-gradient(circle at 72% 52%, rgba(39,245,157,0.18), transparent 26%), radial-gradient(circle at 36% 70%, rgba(247,201,72,0.16), transparent 24%), linear-gradient(180deg, rgba(5,10,20,0.95), rgba(7,11,20,0.98))",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                {Array.from({ length: 8 }, (_, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      position: "absolute",
-                      left: `${8 + i * 11}%`,
-                      top: 0,
-                      bottom: 0,
-                      width: 1,
-                      background: "rgba(255,255,255,0.04)",
-                    }}
-                  />
-                ))}
-                {Array.from({ length: 6 }, (_, i) => (
-                  <div
-                    key={`h-${i}`}
-                    style={{
-                      position: "absolute",
-                      left: 0,
-                      right: 0,
-                      top: `${12 + i * 14}%`,
-                      height: 1,
-                      background: "rgba(255,255,255,0.04)",
-                    }}
-                  />
-                ))}
-                <div
-                  style={{
-                    position: "absolute",
-                    left: "14%",
-                    top: "28%",
-                    width: "26%",
-                    height: 18,
-                    borderRadius: 999,
-                    background: "rgba(255,107,134,0.48)",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    left: "48%",
-                    top: "50%",
-                    width: "22%",
-                    height: 18,
-                    borderRadius: 999,
-                    background: "rgba(49,233,255,0.45)",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    left: "22%",
-                    top: "72%",
-                    width: "34%",
-                    height: 18,
-                    borderRadius: 999,
-                    background: "rgba(39,245,157,0.40)",
-                  }}
-                />
-              </div>
-            )}
-
-            {activeLiquidityTab === "Heatmap" && <HeatmapBars />}
-
-            {activeLiquidityTab === "Clusters" && (
-              <div style={{ display: "grid", gap: 10 }}>
-                {[
-                  ["Cluster A", "Forte presença acima do preço", ui.red],
-                  ["Cluster B", "Absorção parcial no miolo", ui.yellow],
-                  ["Cluster C", "Suporte consistente abaixo", ui.green],
-                  ["Cluster D", "Pressão curta reduzida", ui.cyan],
-                ].map(([a, b, c]) => (
-                  <div
-                    key={a}
-                    style={{
-                      borderRadius: 12,
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      background:
-                        "linear-gradient(180deg, rgba(11,17,32,0.98), rgba(8,12,22,0.98))",
-                      padding: 12,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 12,
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          color: "#edf5ff",
-                          fontSize: 12,
-                          fontWeight: 900,
-                          marginBottom: 4,
-                        }}
-                      >
-                        {a}
-                      </div>
-                      <div
-                        style={{
-                          color: "#8ea2c8",
-                          fontSize: 12,
-                        }}
-                      >
-                        {b}
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        color: c as string,
-                        fontSize: 12,
-                        fontWeight: 900,
-                      }}
-                    >
-                      Ativo
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {activeLiquidityTab === "Eventos" && (
+            {activeLiquidityTab === "Heatmap" ? (
+              <HeatmapBars />
+            ) : activeLiquidityTab === "Eventos" ? (
               <div style={{ display: "grid", gap: 8 }}>
                 {events.slice(0, 6).map((event, i) => (
                   <div
@@ -1846,6 +1708,16 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
                   </div>
                 ))}
               </div>
+            ) : (
+              <div
+                style={{
+                  height: 182,
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  background:
+                    "radial-gradient(circle at 50% 30%, rgba(45,226,255,0.18), transparent 30%), radial-gradient(circle at 72% 52%, rgba(39,245,157,0.18), transparent 26%), radial-gradient(circle at 36% 70%, rgba(247,201,72,0.16), transparent 24%), linear-gradient(180deg, rgba(5,10,20,0.95), rgba(7,11,20,0.98))",
+                }}
+              />
             )}
           </div>
 
@@ -1948,12 +1820,6 @@ function SecondPageSection({
         }}
       >
         <LiquiditySection events={events} />
-      </div>
-    </div>
-  );
-}
-      >
-        <ScannerPanelContinuous assets={assets} />
       </div>
     </div>
   );
@@ -2303,7 +2169,6 @@ function ChartPanel({
 
       <div style={{ position: "relative", flex: 1, minHeight: 0, width: "100%" }}>
         <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
-
         <div
           ref={volOverlayRef}
           style={{
@@ -2319,7 +2184,6 @@ function ChartPanel({
               "linear-gradient(180deg, rgba(8,13,25,0.05), rgba(8,13,25,0.4))",
           }}
         />
-
         <div
           style={{
             position: "absolute",
@@ -2371,13 +2235,7 @@ function ChartPanel({
           </span>
         </div>
 
-        <div
-          style={{
-            width: "100%",
-            minWidth: 0,
-            overflow: "hidden",
-          }}
-        >
+        <div style={{ width: "100%", minWidth: 0, overflow: "hidden" }}>
           <div ref={rsiRef} style={{ height: 92, width: "100%" }} />
         </div>
       </div>
