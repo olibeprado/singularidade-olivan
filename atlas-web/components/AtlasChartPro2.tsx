@@ -2057,8 +2057,8 @@ function ChartPanel({
         borderColor: "rgba(255,255,255,0)",
       },
       grid: {
-        vertLines: { color: "rgba(255,255,255,0.0)", style: 1 as const },
-        horzLines: { color: "rgba(255,255,255,0.0)", style: 1 as const },
+        vertLines: { color: "rgba(255,255,255,0)", style: 1 as const },
+        horzLines: { color: "rgba(255,255,255,0)", style: 1 as const },
       },
     });
 
@@ -2153,6 +2153,8 @@ function ChartPanel({
         display: "flex",
         flexDirection: "column",
         height: "100%",
+        width: "100%",
+        minWidth: 0,
         background:
           "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(6,10,18,0.98))",
       }}
@@ -2285,14 +2287,15 @@ function ChartPanel({
         </div>
       </div>
 
-      <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+      <div style={{ position: "relative", flex: 1, minHeight: 0, width: "100%" }}>
         <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
+
         <div
           ref={volOverlayRef}
           style={{
             position: "absolute",
             left: 0,
-            right: 58,
+            right: 0,
             bottom: 0,
             height: 88,
             pointerEvents: "none",
@@ -2302,6 +2305,7 @@ function ChartPanel({
               "linear-gradient(180deg, rgba(8,13,25,0.05), rgba(8,13,25,0.4))",
           }}
         />
+
         <div
           style={{
             position: "absolute",
@@ -2320,14 +2324,24 @@ function ChartPanel({
         </div>
       </div>
 
-      <div style={{ flexShrink: 0, borderTop: `1px solid ${ui.border}` }}>
+      <div
+        style={{
+          width: "100%",
+          minWidth: 0,
+          flexShrink: 0,
+          borderTop: `1px solid ${ui.border}`,
+          borderBottom: `1px solid ${ui.border}`,
+          background: "#0a0f1d",
+        }}
+      >
         <div
           style={{
             display: "flex",
             alignItems: "center",
             gap: 12,
             padding: "5px 14px",
-            background: "#0a0f1d",
+            width: "100%",
+            minWidth: 0,
           }}
         >
           <span style={{ color: "#7f93b7", fontSize: 10, fontFamily: "monospace" }}>
@@ -2342,7 +2356,16 @@ function ChartPanel({
             MFI
           </span>
         </div>
-        <div ref={rsiRef} style={{ height: 92, width: "100%" }} />
+
+        <div
+          style={{
+            width: "100%",
+            minWidth: 0,
+            overflow: "hidden",
+          }}
+        >
+          <div ref={rsiRef} style={{ height: 92, width: "100%" }} />
+        </div>
       </div>
     </div>
   );
