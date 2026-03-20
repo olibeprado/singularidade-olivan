@@ -110,6 +110,14 @@ const ANALYTIC_TABS = [
   "Singularidade",
   "Confluência",
 ];
+const LEFT_PANEL_TABS = [
+  "Volume",
+  "RSI / MFI",
+  "Fluxo",
+  "Singularidade",
+  "Confluência",
+  "Eventos",
+];
 
 const ui = {
   bg: "#060913",
@@ -1048,51 +1056,652 @@ function EventToneBadge({ tone }: { tone: ScannerEvent["tone"] }) {
   );
 }
 
-function AnalyticPreviewPanel() {
-  const [activeTab, setActiveTab] = useState("Volume");
+function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
+  const rows = events.slice(0, 6).map((event, index) => {
+    const amountBase = [23.1, 234.7, 67.8, 45.6, 125.4, 89.2][index] ?? 42.8;
+    const priceBase = [65395, 65385, 65380, 65400, 65450, 65420][index] ?? 65410;
+    const exchangeBase = [
+      "Binance",
+      "OKX",
+      "Bybit",
+      "Kraken",
+      "Binance",
+      "Coinbase Pro",
+    ][index] ?? "Exchange";
+    const severityWidth = [34, 84, 66, 35, 84, 60][index] ?? 50;
+    const severityLabel =
+      event.tone === "positive"
+        ? index % 2 === 0
+          ? "Alto"
+          : "Baixo"
+        : event.tone === "warning"
+        ? "Médio"
+        : "Baixo";
+    const rightColor =
+      severityLabel === "Alto"
+        ? ui.red
+        : severityLabel === "Médio"
+        ? ui.yellow
+        : ui.green;
 
+    const leftDot =
+      event.tone === "positive" ? ui.green : event.tone === "warning" ? ui.yellow : "#ff0f7b";
+
+    const rowBg =
+      event.tone === "positive"
+        ? "linear-gradient(180deg, rgba(0,34,16,0.82), rgba(0,23,11,0.82))"
+        : event.tone === "warning"
+        ? "linear-gradient(180deg, rgba(34,28,0,0.82), rgba(23,18,0,0.82))"
+        : "linear-gradient(180deg, rgba(34,0,12,0.82), rgba(24,0,8,0.82))";
+
+    const rowBorder =
+      event.tone === "positive"
+        ? "rgba(39,245,157,0.30)"
+        : event.tone === "warning"
+        ? "rgba(247,201,72,0.30)"
+        : "rgba(255,20,110,0.28)";
+
+    return {
+      ...event,
+      amountBase,
+      priceBase,
+      exchangeBase,
+      severityWidth,
+      severityLabel,
+      rightColor,
+      leftDot,
+      rowBg,
+      rowBorder,
+    };
+  });
+
+  return (
+    <div
+      style={{
+        minHeight: 312,
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(6,10,18,0.98), rgba(4,7,14,0.98))",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          height: 42,
+          padding: "0 12px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background:
+            "linear-gradient(180deg, rgba(7,14,25,0.98), rgba(6,10,18,0.98))",
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "#00e117",
+              display: "inline-block",
+            }}
+          />
+          <span style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>
+            Eventos em Tempo Real
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              padding: "4px 8px",
+              borderRadius: 6,
+              background: "rgba(0,225,23,0.08)",
+              color: "#00e117",
+              fontSize: 10,
+              fontWeight: 900,
+            }}
+          >
+            Live
+          </span>
+          <span style={{ color: "#7f93b7", fontSize: 11, fontWeight: 700 }}>
+            {rows.length} eventos
+          </span>
+        </div>
+      </div>
+
+      <div style={{ padding: 8, display: "grid", gap: 8 }}>
+        {rows.map((event, i) => (
+          <div
+            key={`${event.time}-${i}-big`}
+            style={{
+              position: "relative",
+              borderRadius: 10,
+              border: `1px solid ${event.rowBorder}`,
+              background: event.rowBg,
+              padding: "12px 12px 12px 28px",
+              overflow: "hidden",
+              minHeight: 62,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: 10,
+                top: 20,
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: event.leftDot,
+                boxShadow: `0 0 10px ${event.leftDot}55`,
+              }}
+            />
+
+            <div
+              style={{
+                position: "absolute",
+                left: 14,
+                right: 14,
+                bottom: 10,
+                height: 3,
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.05)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${event.severityWidth}%`,
+                  height: "100%",
+                  borderRadius: 999,
+                  background:
+                    event.tone === "positive"
+                      ? "linear-gradient(90deg, #14ff4f, #ff304e)"
+                      : event.tone === "warning"
+                      ? "linear-gradient(90deg, #ff3b5c, #f7c948)"
+                      : "linear-gradient(90deg, #14ff4f, #ff304e)",
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.3fr 0.8fr 0.52fr",
+                gap: 12,
+                alignItems: "center",
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    color: "#f0f7ff",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    lineHeight: 1.2,
+                    marginBottom: 3,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {event.title}
+                </div>
+                <div
+                  style={{
+                    color: "#7f93b7",
+                    fontSize: 11,
+                  }}
+                >
+                  {event.exchangeBase}
+                </div>
+              </div>
+
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    color: "#eef5ff",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {event.amountBase.toFixed(1)} BTC
+                </div>
+                <div
+                  style={{
+                    color: "#7f93b7",
+                    fontSize: 11,
+                    fontFamily: "monospace",
+                  }}
+                >
+                  ${event.priceBase.toLocaleString()}
+                </div>
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    color: "#dce8ff",
+                    fontSize: 12,
+                    fontFamily: "monospace",
+                    marginBottom: 4,
+                  }}
+                >
+                  {event.time}:23
+                </div>
+                <div
+                  style={{
+                    color: event.rightColor,
+                    fontSize: 12,
+                    fontWeight: 900,
+                  }}
+                >
+                  {event.severityLabel}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LeftPanelMetricCard({
+  title,
+  value,
+  sub,
+  color,
+}: {
+  title: string;
+  value: string;
+  sub: string;
+  color: string;
+}) {
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background:
+          "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+        padding: 12,
+        minHeight: 78,
+      }}
+    >
+      <div
+        style={{
+          color: "#7f93b7",
+          fontSize: 10,
+          fontWeight: 900,
+          letterSpacing: 0.7,
+          textTransform: "uppercase",
+          marginBottom: 8,
+        }}
+      >
+        {title}
+      </div>
+
+      <div
+        style={{
+          color,
+          fontSize: 16,
+          fontWeight: 900,
+          marginBottom: 6,
+        }}
+      >
+        {value}
+      </div>
+
+      <div
+        style={{
+          color: "#9bb0d4",
+          fontSize: 11,
+          lineHeight: 1.3,
+        }}
+      >
+        {sub}
+      </div>
+    </div>
+  );
+}
+
+function LeftPanelMiniGraph({ activeTab }: { activeTab: string }) {
   const line1 = Array.from({ length: 34 }, (_, i) => {
     const x = (i / 33) * 420;
-    const y = 55 + Math.sin(i / 3) * 16 + Math.cos(i / 5) * 8;
+    const y =
+      activeTab === "RSI / MFI"
+        ? 68 + Math.sin(i / 2.6) * 12
+        : activeTab === "Fluxo"
+        ? 58 + Math.cos(i / 3) * 16
+        : activeTab === "Singularidade"
+        ? 48 + Math.sin(i / 3.2) * 10 + Math.cos(i / 4.5) * 10
+        : activeTab === "Confluência"
+        ? 52 + Math.sin(i / 2.2) * 9
+        : 56 + Math.sin(i / 3) * 16 + Math.cos(i / 5) * 8;
     return `${x},${y}`;
   }).join(" ");
 
   const line2 = Array.from({ length: 34 }, (_, i) => {
     const x = (i / 33) * 420;
-    const y = 52 + Math.cos(i / 2.8) * 12 + Math.sin(i / 4.2) * 6;
+    const y =
+      activeTab === "RSI / MFI"
+        ? 44 + Math.cos(i / 2.9) * 13
+        : activeTab === "Fluxo"
+        ? 60 + Math.sin(i / 2.7) * 11
+        : activeTab === "Singularidade"
+        ? 65 + Math.cos(i / 3.4) * 8
+        : activeTab === "Confluência"
+        ? 42 + Math.cos(i / 3.1) * 8
+        : 52 + Math.cos(i / 2.8) * 12 + Math.sin(i / 4.2) * 6;
     return `${x},${y}`;
   }).join(" ");
-
-  const dots = Array.from({ length: 9 }, (_, i) => ({
-    x: 30 + i * 42,
-    y: 64 + Math.sin(i * 0.8) * 18,
-    c: i % 3 === 0 ? ui.yellow : i % 2 === 0 ? ui.cyan : ui.green,
-  }));
 
   return (
     <div
       style={{
-        height: 132,
         borderRadius: 12,
         border: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(9,14,28,0.98), rgba(7,11,20,0.98))",
-        display: "flex",
-        flexDirection: "column",
+        padding: "10px 10px 8px",
+        minHeight: 166,
       }}
     >
       <div
         style={{
-          height: 38,
-          padding: "0 10px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 8,
+        }}
+      >
+        <span style={{ color: "#edf5ff", fontSize: 12, fontWeight: 900 }}>
+          {activeTab}
+        </span>
+        <span
+          style={{
+            color: ui.cyan,
+            fontSize: 10,
+            fontWeight: 900,
+            padding: "4px 8px",
+            borderRadius: 8,
+            background: "rgba(45,226,255,0.1)",
+          }}
+        >
+          Atlas Sync
+        </span>
+      </div>
+
+      <svg width="100%" height="118" viewBox="0 0 420 118" preserveAspectRatio="none">
+        {Array.from({ length: 7 }, (_, i) => (
+          <line
+            key={`h-${i}`}
+            x1="0"
+            y1={i * 18}
+            x2="420"
+            y2={i * 18}
+            stroke="rgba(255,255,255,0.045)"
+            strokeWidth="1"
+          />
+        ))}
+        {Array.from({ length: 11 }, (_, i) => (
+          <line
+            key={`v-${i}`}
+            x1={i * 42}
+            y1="0"
+            x2={i * 42}
+            y2="118"
+            stroke="rgba(255,255,255,0.035)"
+            strokeWidth="1"
+          />
+        ))}
+
+        {Array.from({ length: 20 }, (_, i) => {
+          const x = 10 + i * 19;
+          const h = 12 + ((i * 13) % 38);
+          return (
+            <rect
+              key={i}
+              x={x}
+              y={108 - h}
+              width="10"
+              height={h}
+              rx="2"
+              fill={i % 2 === 0 ? "rgba(49,233,255,0.32)" : "rgba(247,201,72,0.26)"}
+            />
+          );
+        })}
+
+        <polyline points={line1} fill="none" stroke={ui.cyan} strokeWidth="1.8" />
+        <polyline points={line2} fill="none" stroke={ui.yellow} strokeWidth="1.5" opacity="0.9" />
+      </svg>
+    </div>
+  );
+}
+
+function LeftPanelQuickList({ activeTab }: { activeTab: string }) {
+  const rows =
+    activeTab === "RSI / MFI"
+      ? [
+          ["RSI", "64.8", ui.green],
+          ["MFI", "58.1", ui.cyan],
+          ["Pressão", "Moderada", ui.yellow],
+          ["Divergência", "Limpa", ui.green],
+        ]
+      : activeTab === "Fluxo"
+      ? [
+          ["Fluxo spot", "Positivo", ui.green],
+          ["Absorção", "Ativa", ui.cyan],
+          ["Agressão", "Controlada", ui.yellow],
+          ["Dominância", "Compradora", ui.green],
+        ]
+      : activeTab === "Singularidade"
+      ? [
+          ["Sinal", "Forte", ui.green],
+          ["Ciclo", "Acelerado", ui.cyan],
+          ["Probabilidade", "84%", ui.green],
+          ["Ruído", "Baixo", ui.yellow],
+        ]
+      : activeTab === "Confluência"
+      ? [
+          ["Score", "8 / 9", ui.green],
+          ["Estrutura", "Alinhada", ui.cyan],
+          ["Liquidez", "Apoia", ui.green],
+          ["Risco", "Moderado", ui.yellow],
+        ]
+      : [
+          ["Volume spot", "1.24M", ui.cyan],
+          ["Volume deriv.", "2.88M", ui.green],
+          ["Impulso", "Saudável", ui.yellow],
+          ["Bloco", "Ativo", ui.green],
+        ];
+
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(5,8,15,0.98))",
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          color: "#edf5ff",
+          fontSize: 12,
+          fontWeight: 900,
+          marginBottom: 8,
+        }}
+      >
+        Leitura rápida
+      </div>
+
+      <div style={{ display: "grid", gap: 6 }}>
+        {rows.map(([k, v, c]) => (
+          <div
+            key={k}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              padding: "8px 0",
+              borderBottom: "1px solid rgba(255,255,255,0.05)",
+            }}
+          >
+            <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
+            <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>
+              {v}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LeftDynamicPanel({ events }: { events: ScannerEvent[] }) {
+  const [activeTab, setActiveTab] = useState("Volume");
+
+  const metricCards =
+    activeTab === "RSI / MFI"
+      ? [
+          {
+            title: "RSI dominante",
+            value: "64.8",
+            sub: "Momento comprador sem exaustão plena.",
+            color: ui.green,
+          },
+          {
+            title: "MFI atual",
+            value: "58.1",
+            sub: "Entrada de fluxo ainda consistente.",
+            color: ui.cyan,
+          },
+          {
+            title: "Zona",
+            value: "Saudável",
+            sub: "Sem excesso técnico imediato.",
+            color: ui.yellow,
+          },
+        ]
+      : activeTab === "Fluxo"
+      ? [
+          {
+            title: "Fluxo principal",
+            value: "Compra",
+            sub: "Agressão compradora sustentando o miolo.",
+            color: ui.green,
+          },
+          {
+            title: "Absorção",
+            value: "Ativa",
+            sub: "Venda sendo absorvida com pouca perda.",
+            color: ui.cyan,
+          },
+          {
+            title: "Desequilíbrio",
+            value: "+18.6%",
+            sub: "Fluxo favorecendo continuação curta.",
+            color: ui.yellow,
+          },
+        ]
+      : activeTab === "Singularidade"
+      ? [
+          {
+            title: "Motor Atlas",
+            value: "84",
+            sub: "Leitura forte na combinação estrutural.",
+            color: ui.green,
+          },
+          {
+            title: "Fase",
+            value: "Acelerada",
+            sub: "Modelo adaptativo em alta sintonia.",
+            color: ui.cyan,
+          },
+          {
+            title: "Ruído",
+            value: "Baixo",
+            sub: "Boa limpeza de sinal no curto prazo.",
+            color: ui.yellow,
+          },
+        ]
+      : activeTab === "Confluência"
+      ? [
+          {
+            title: "Confluência",
+            value: "8 / 9",
+            sub: "Múltiplos fatores apontando o mesmo lado.",
+            color: ui.green,
+          },
+          {
+            title: "Estrutura",
+            value: "Alinhada",
+            sub: "Contexto favorável em várias camadas.",
+            color: ui.cyan,
+          },
+          {
+            title: "Risco",
+            value: "Moderado",
+            sub: "Entrada ainda com invalidação aceitável.",
+            color: ui.yellow,
+          },
+        ]
+      : [
+          {
+            title: "Volume spot",
+            value: "1.24M",
+            sub: "Atividade corrente acima da média curta.",
+            color: ui.cyan,
+          },
+          {
+            title: "Volume derivado",
+            value: "2.88M",
+            sub: "Participação forte na perna atual.",
+            color: ui.green,
+          },
+          {
+            title: "Pressão",
+            value: "Saudável",
+            sub: "Sem sinal de exaustão imediata.",
+            color: ui.yellow,
+          },
+        ];
+
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 312,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          minHeight: 42,
+          padding: "6px 10px",
           borderBottom: `1px solid ${ui.border}`,
           display: "flex",
           alignItems: "center",
           gap: 6,
-          flexShrink: 0,
+          flexWrap: "wrap",
+          background:
+            "linear-gradient(180deg, rgba(8,12,23,0.98), rgba(7,11,20,0.98))",
         }}
       >
-        {ANALYTIC_TABS.map((tab) => (
+        {LEFT_PANEL_TABS.map((tab) => (
           <TopButton
             key={tab}
             active={activeTab === tab}
@@ -1101,159 +1710,57 @@ function AnalyticPreviewPanel() {
             {tab}
           </TopButton>
         ))}
+
         <span
           style={{
             marginLeft: "auto",
             color: ui.cyan,
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: 900,
-            padding: "4px 9px",
+            padding: "4px 8px",
             borderRadius: 8,
             background: "rgba(45,226,255,0.1)",
           }}
         >
-          +IA Atlas 2350
+          Caixa Analítica
         </span>
       </div>
 
-      <div style={{ flex: 1, padding: "8px 10px" }}>
-        <svg width="100%" height="100%" viewBox="0 0 420 150" preserveAspectRatio="none">
-          {Array.from({ length: 10 }, (_, i) => (
-            <line
-              key={`h-${i}`}
-              x1="0"
-              y1={i * 15}
-              x2="420"
-              y2={i * 15}
-              stroke="rgba(255,255,255,0.045)"
-              strokeWidth="1"
-            />
-          ))}
-          {Array.from({ length: 12 }, (_, i) => (
-            <line
-              key={`v-${i}`}
-              x1={i * 38}
-              y1="0"
-              x2={i * 38}
-              y2="150"
-              stroke="rgba(255,255,255,0.035)"
-              strokeWidth="1"
-            />
-          ))}
-          {Array.from({ length: 26 }, (_, i) => {
-            const x = 8 + i * 15.5;
-            const h = 8 + ((i * 17) % 48);
-            return (
-              <rect
-                key={i}
-                x={x}
-                y={132 - h}
-                width="8"
-                height={h}
-                rx="2"
-                fill={i % 2 === 0 ? "rgba(49,233,255,0.45)" : "rgba(247,201,72,0.35)"}
-              />
-            );
-          })}
-          <polyline points={line1} fill="none" stroke={ui.cyan} strokeWidth="1.7" />
-          <polyline points={line2} fill="none" stroke={ui.yellow} strokeWidth="1.4" opacity="0.85" />
-          {dots.map((d, i) => (
-            <circle key={i} cx={d.x} cy={d.y} r="3.4" fill={d.c} />
-          ))}
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-function EventsMiniPanel({ events }: { events: ScannerEvent[] }) {
-  return (
-    <div
-      style={{
-        height: 132,
-        borderRadius: 12,
-        border: `1px solid ${ui.border}`,
-        background:
-          "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(5,8,15,0.98))",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <div
-        style={{
-          height: 38,
-          padding: "0 12px",
-          borderBottom: `1px solid ${ui.border}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ color: "#eaf3ff", fontSize: 12, fontWeight: 900 }}>
-          Eventos
-        </span>
-        <ChevronRight size={12} color="#7f93b7" />
-      </div>
-
-      <div style={{ flex: 1, overflowY: "auto", padding: 8 }}>
-        <div style={{ display: "grid", gap: 6 }}>
-          {events.slice(0, 3).map((event, i) => (
+      <div style={{ padding: 10, display: "grid", gap: 10, flex: 1 }}>
+        {activeTab === "Eventos" ? (
+          <EventRealtimePanel events={events} />
+        ) : (
+          <>
             <div
-              key={`${event.time}-${i}`}
               style={{
-                borderRadius: 10,
-                border: "1px solid rgba(255,255,255,0.06)",
-                background:
-                  "linear-gradient(180deg, rgba(11,17,32,0.98), rgba(8,12,22,0.98))",
-                padding: "8px 9px",
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: 10,
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 8,
-                  marginBottom: 5,
-                }}
-              >
-                <span
-                  style={{
-                    color: "#8ca0c6",
-                    fontSize: 10,
-                    fontWeight: 800,
-                  }}
-                >
-                  {event.time}
-                </span>
-                <EventToneBadge tone={event.tone} />
-              </div>
-
-              <div
-                style={{
-                  color: "#edf5ff",
-                  fontSize: 11,
-                  fontWeight: 800,
-                  lineHeight: 1.25,
-                  marginBottom: 3,
-                }}
-              >
-                {event.title}
-              </div>
-
-              <div
-                style={{
-                  color: "#7f93b7",
-                  fontSize: 10,
-                  fontWeight: 700,
-                }}
-              >
-                {event.tag}
-              </div>
+              {metricCards.map((card) => (
+                <LeftPanelMetricCard
+                  key={card.title}
+                  title={card.title}
+                  value={card.value}
+                  sub={card.sub}
+                  color={card.color}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.24fr 0.76fr",
+                gap: 10,
+              }}
+            >
+              <LeftPanelMiniGraph activeTab={activeTab} />
+              <LeftPanelQuickList activeTab={activeTab} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -1557,8 +2064,8 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
     >
       <div
         style={{
-          height: 42,
-          padding: "0 14px",
+          minHeight: 42,
+          padding: "6px 14px",
           display: "flex",
           alignItems: "center",
           gap: 8,
@@ -1784,8 +2291,8 @@ function SecondPageSection({
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "1.02fr 0.72fr 0.86fr",
-        gridTemplateRows: "132px auto",
+        gridTemplateColumns: "1.66fr 0.86fr",
+        gridTemplateRows: "auto auto",
         gap: 10,
         padding: 10,
         background:
@@ -1794,17 +2301,13 @@ function SecondPageSection({
       }}
     >
       <div style={{ minWidth: 0 }}>
-        <AnalyticPreviewPanel />
-      </div>
-
-      <div style={{ minWidth: 0 }}>
-        <EventsMiniPanel events={events} />
+        <LeftDynamicPanel events={events} />
       </div>
 
       <div
         style={{
           minWidth: 0,
-          gridColumn: 3,
+          gridColumn: 2,
           gridRow: "1 / span 2",
           alignSelf: "stretch",
         }}
@@ -1815,7 +2318,7 @@ function SecondPageSection({
       <div
         style={{
           minWidth: 0,
-          gridColumn: "1 / span 2",
+          gridColumn: 1,
           gridRow: 2,
         }}
       >
@@ -1824,6 +2327,7 @@ function SecondPageSection({
     </div>
   );
 }
+
 function ChartPanel({
   candles,
   indicators,
@@ -2276,12 +2780,12 @@ export default function AtlasChartPro2() {
 
   const scannerEvents = useMemo<ScannerEvent[]>(
     () => [
-      { time: "21:43", title: "Scanner detectou expansão de fluxo em BTCUSDT", tag: "Fluxo • Scanner", tone: "positive" },
-      { time: "21:41", title: "Confluência subiu para 8/9 com suporte de liquidez", tag: "Confluência", tone: "positive" },
-      { time: "21:36", title: "RSI/MFI entrou em zona de atenção para INJ", tag: "RSI / MFI", tone: "warning" },
-      { time: "21:31", title: "Estrutura de Euler permaneceu forte no cluster principal", tag: "Euler", tone: "neutral" },
-      { time: "21:28", title: "Singularidade acelerou em ativos de alta beta", tag: "Singularidade", tone: "positive" },
-      { time: "21:22", title: "Risco assimétrico melhorou após absorção de venda", tag: "Risco Assimétrico", tone: "positive" },
+      { time: "21:43", title: "Venda Retail", tag: "Fluxo • Scanner", tone: "neutral" },
+      { time: "21:41", title: "Compra Baleia", tag: "Confluência", tone: "positive" },
+      { time: "21:36", title: "Liquidação Long", tag: "RSI / MFI", tone: "warning" },
+      { time: "21:31", title: "Compra Algorítmica", tag: "Euler", tone: "positive" },
+      { time: "21:28", title: "Compra Grande", tag: "Singularidade", tone: "positive" },
+      { time: "21:22", title: "Venda Institucional", tag: "Risco Assimétrico", tone: "neutral" },
       { time: "21:15", title: "Evento macro próximo pode gerar volatilidade adicional", tag: "Eventos", tone: "warning" },
       { time: "21:10", title: "Liquidez abaixo do preço começou a engrossar", tag: "Liquidez", tone: "neutral" },
       { time: "21:04", title: "Scanner+ marcou retomada no ciclo curto", tag: "Scanner+", tone: "positive" },
