@@ -984,22 +984,23 @@ function MiniSparkline({
 function ScoreBar({
   value,
   max = 100,
-  color,
 }: {
   value: number;
   max?: number;
-  color: string;
 }) {
   const pct = Math.min(100, (value / max) * 100);
+  const visual = getScoreVisual(value);
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
       <div
         style={{
-          width: 64,
+          width: 62,
           height: 6,
           background: "rgba(255,255,255,0.08)",
           borderRadius: 999,
           overflow: "hidden",
+          flexShrink: 0,
         }}
       >
         <div
@@ -1007,20 +1008,20 @@ function ScoreBar({
             width: `${pct}%`,
             height: "100%",
             borderRadius: 999,
-            background: color,
+            background: visual.color,
           }}
         />
       </div>
+
       <span
         style={{
-          width: 48,
-          textAlign: "right",
-          fontSize: 12,
-          fontFamily: "monospace",
-          color: "#dbe8ff",
+          fontSize: 10,
+          fontWeight: 900,
+          color: visual.color,
+          whiteSpace: "nowrap",
         }}
       >
-        {value.toFixed(3)}
+        {visual.label}
       </span>
     </div>
   );
