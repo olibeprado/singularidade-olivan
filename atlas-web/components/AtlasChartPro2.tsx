@@ -1281,6 +1281,26 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
     </div>
   );
 }
+function getScoreVisual(score: number) {
+  if (score >= 80) {
+    return {
+      color: ui.green,
+      label: "Compra",
+    };
+  }
+
+  if (score >= 50) {
+    return {
+      color: ui.yellow,
+      label: "Neutro",
+    };
+  }
+
+  return {
+    color: ui.red,
+    label: "Baixa",
+  };
+}
 function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
   const [searchTerm, setSearchTerm] = useState("");
 
