@@ -1025,7 +1025,29 @@ function ScoreBar({
     </div>
   );
 }
+function EventToneBadge({ tone }: { tone: ScannerEvent["tone"] }) {
+  const map = {
+    positive: { bg: "rgba(39,245,157,0.12)", color: ui.green, text: "Alta" },
+    warning: { bg: "rgba(247,201,72,0.12)", color: ui.yellow, text: "Atenção" },
+    neutral: { bg: "rgba(45,226,255,0.10)", color: ui.cyan, text: "Info" },
+  }[tone];
 
+  return (
+    <span
+      style={{
+        padding: "3px 8px",
+        borderRadius: 999,
+        background: map.bg,
+        color: map.color,
+        fontSize: 10,
+        fontWeight: 900,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {map.text}
+    </span>
+  );
+}
 function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
   const [searchTerm, setSearchTerm] = useState("");
 
