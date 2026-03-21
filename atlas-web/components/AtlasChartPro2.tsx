@@ -103,13 +103,6 @@ type ScannerEvent = {
 const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
 const NAV_TABS = ["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"];
 const LIQUIDITY_TABS = ["Map", "Heatmap", "Clusters", "Eventos"];
-const ANALYTIC_TABS = [
-  "Volume",
-  "RSI / MFI",
-  "Fluxo",
-  "Singularidade",
-  "Confluência",
-];
 const LEFT_PANEL_TABS = [
   "Volume",
   "RSI / MFI",
@@ -1057,26 +1050,21 @@ function EventToneBadge({ tone }: { tone: ScannerEvent["tone"] }) {
 }
 
 function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
-  const rows = events.slice(0, 6).map((event, index) => {
-    const amountBase = [23.1, 234.7, 67.8, 45.6, 125.4, 89.2][index] ?? 42.8;
-    const priceBase = [65395, 65385, 65380, 65400, 65450, 65420][index] ?? 65410;
+  const rows = events.slice(0, 7).map((event, index) => {
+    const amountBase = [67.0, 23.1, 234.7, 0, 67.8, 45.6, 125.4][index] ?? 42.8;
+    const priceBase = [65508, 65395, 65385, 65420, 65380, 65400, 65450][index] ?? 65410;
     const exchangeBase = [
+      "OKX",
       "Binance",
       "OKX",
+      "Coinbase Pro",
       "Bybit",
       "Kraken",
       "Binance",
-      "Coinbase Pro",
     ][index] ?? "Exchange";
-    const severityWidth = [34, 84, 66, 35, 84, 60][index] ?? 50;
+    const severityWidth = [58, 28, 72, 52, 88, 33, 78][index] ?? 50;
     const severityLabel =
-      event.tone === "positive"
-        ? index % 2 === 0
-          ? "Alto"
-          : "Baixo"
-        : event.tone === "warning"
-        ? "Médio"
-        : "Baixo";
+      index % 3 === 0 ? "Baixo" : index % 3 === 1 ? "Alto" : "Médio";
     const rightColor =
       severityLabel === "Alto"
         ? ui.red
@@ -1085,21 +1073,7 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
         : ui.green;
 
     const leftDot =
-      event.tone === "positive" ? ui.green : event.tone === "warning" ? ui.yellow : "#ff0f7b";
-
-    const rowBg =
-      event.tone === "positive"
-        ? "linear-gradient(180deg, rgba(0,34,16,0.82), rgba(0,23,11,0.82))"
-        : event.tone === "warning"
-        ? "linear-gradient(180deg, rgba(34,28,0,0.82), rgba(23,18,0,0.82))"
-        : "linear-gradient(180deg, rgba(34,0,12,0.82), rgba(24,0,8,0.82))";
-
-    const rowBorder =
-      event.tone === "positive"
-        ? "rgba(39,245,157,0.30)"
-        : event.tone === "warning"
-        ? "rgba(247,201,72,0.30)"
-        : "rgba(255,20,110,0.28)";
+      event.tone === "positive" ? ui.green : event.tone === "warning" ? ui.yellow : "#ff5050";
 
     return {
       ...event,
@@ -1110,15 +1084,13 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
       severityLabel,
       rightColor,
       leftDot,
-      rowBg,
-      rowBorder,
     };
   });
 
   return (
     <div
       style={{
-        minHeight: 312,
+        height: "100%",
         borderRadius: 12,
         border: `1px solid ${ui.border}`,
         background:
@@ -1175,15 +1147,16 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
         </div>
       </div>
 
-      <div style={{ padding: 8, display: "grid", gap: 8 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: 8, display: "grid", gap: 8 }}>
         {rows.map((event, i) => (
           <div
             key={`${event.time}-${i}-big`}
             style={{
               position: "relative",
               borderRadius: 10,
-              border: `1px solid ${event.rowBorder}`,
-              background: event.rowBg,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background:
+                "linear-gradient(180deg, rgba(9,14,24,0.98), rgba(7,11,20,0.98))",
               padding: "12px 12px 12px 28px",
               overflow: "hidden",
               minHeight: 62,
@@ -1193,7 +1166,7 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
               style={{
                 position: "absolute",
                 left: 10,
-                top: 20,
+                top: 18,
                 width: 10,
                 height: 10,
                 borderRadius: "50%",
@@ -1204,35 +1177,8 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
 
             <div
               style={{
-                position: "absolute",
-                left: 14,
-                right: 14,
-                bottom: 10,
-                height: 3,
-                borderRadius: 999,
-                background: "rgba(255,255,255,0.05)",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: `${event.severityWidth}%`,
-                  height: "100%",
-                  borderRadius: 999,
-                  background:
-                    event.tone === "positive"
-                      ? "linear-gradient(90deg, #14ff4f, #ff304e)"
-                      : event.tone === "warning"
-                      ? "linear-gradient(90deg, #ff3b5c, #f7c948)"
-                      : "linear-gradient(90deg, #14ff4f, #ff304e)",
-                }}
-              />
-            </div>
-
-            <div
-              style={{
                 display: "grid",
-                gridTemplateColumns: "1.3fr 0.8fr 0.52fr",
+                gridTemplateColumns: "1.2fr 0.8fr 0.54fr",
                 gap: 12,
                 alignItems: "center",
               }}
@@ -1271,7 +1217,7 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
                     fontFamily: "monospace",
                   }}
                 >
-                  {event.amountBase.toFixed(1)} BTC
+                  {event.amountBase ? `${event.amountBase.toFixed(1)} BTC` : "—"}
                 </div>
                 <div
                   style={{
@@ -1293,7 +1239,7 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
                     marginBottom: 4,
                   }}
                 >
-                  {event.time}:23
+                  {event.time}
                 </div>
                 <div
                   style={{
@@ -1305,6 +1251,30 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
                   {event.severityLabel}
                 </div>
               </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: 10,
+                height: 3,
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.05)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${event.severityWidth}%`,
+                  height: "100%",
+                  borderRadius: 999,
+                  background:
+                    event.severityLabel === "Alto"
+                      ? "linear-gradient(90deg, #29ff72, #ff3c57)"
+                      : event.severityLabel === "Médio"
+                      ? "linear-gradient(90deg, #ffb300, #ff4b57)"
+                      : "linear-gradient(90deg, #29ff72, #24d6ff)",
+                }}
+              />
             </div>
           </div>
         ))}
@@ -1567,7 +1537,7 @@ function LeftPanelQuickList({ activeTab }: { activeTab: string }) {
 }
 
 function LeftDynamicPanel({ events }: { events: ScannerEvent[] }) {
-  const [activeTab, setActiveTab] = useState("Volume");
+  const [activeTab, setActiveTab] = useState("Eventos");
 
   const metricCards =
     activeTab === "RSI / MFI"
@@ -1678,13 +1648,13 @@ function LeftDynamicPanel({ events }: { events: ScannerEvent[] }) {
   return (
     <div
       style={{
+        height: "100%",
         borderRadius: 12,
         border: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
         display: "flex",
         flexDirection: "column",
-        minHeight: 312,
         overflow: "hidden",
       }}
     >
@@ -1726,7 +1696,7 @@ function LeftDynamicPanel({ events }: { events: ScannerEvent[] }) {
         </span>
       </div>
 
-      <div style={{ padding: 10, display: "grid", gap: 10, flex: 1 }}>
+      <div style={{ padding: 10, display: "grid", gap: 10, flex: 1, minHeight: 0 }}>
         {activeTab === "Eventos" ? (
           <EventRealtimePanel events={events} />
         ) : (
@@ -1769,7 +1739,7 @@ function LeftDynamicPanel({ events }: { events: ScannerEvent[] }) {
 function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
   const list = useMemo(() => {
     const expanded: AssetScore[] = [];
-    for (let i = 0; i < 4; i++) expanded.push(...assets);
+    for (let i = 0; i < 3; i++) expanded.push(...assets);
     return expanded;
   }, [assets]);
 
@@ -1781,13 +1751,14 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
   return (
     <div
       style={{
+        height: "100%",
         borderRadius: 12,
         border: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
         display: "flex",
         flexDirection: "column",
-        minHeight: 860,
+        overflow: "hidden",
       }}
     >
       <div
@@ -1832,7 +1803,7 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
         <span>Mini Chart</span>
       </div>
 
-      <div style={{ display: "grid" }}>
+      <div style={{ flex: 1, overflowY: "auto", display: "grid" }}>
         {list.map((asset, i) => (
           <div
             key={`${asset.symbol}-${i}`}
@@ -2055,11 +2026,14 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
   return (
     <div
       style={{
+        height: "100%",
         borderRadius: 12,
         border: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
         overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <div
@@ -2071,6 +2045,7 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
           gap: 8,
           borderBottom: `1px solid ${ui.border}`,
           flexWrap: "wrap",
+          flexShrink: 0,
         }}
       >
         <span
@@ -2095,7 +2070,7 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
         ))}
       </div>
 
-      <div style={{ padding: 12, display: "grid", gap: 12 }}>
+      <div style={{ padding: 12, display: "grid", gap: 12, flex: 1, minHeight: 0 }}>
         <div
           style={{
             display: "grid",
@@ -2134,6 +2109,8 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
             display: "grid",
             gridTemplateColumns: "1.26fr 0.62fr",
             gap: 12,
+            flex: 1,
+            minHeight: 0,
           }}
         >
           <div
@@ -2144,6 +2121,7 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
                 "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
               padding: 14,
               minHeight: 220,
+              overflowY: "auto",
             }}
           >
             <div
@@ -2235,6 +2213,7 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
               background:
                 "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
               padding: 14,
+              overflowY: "auto",
             }}
           >
             <div
@@ -2281,47 +2260,28 @@ function LiquiditySection({ events }: { events: ScannerEvent[] }) {
 }
 
 function SecondPageSection({
-  assets,
   events,
 }: {
-  assets: AssetScore[];
   events: ScannerEvent[];
 }) {
   return (
     <div
       style={{
+        height: "100%",
         display: "grid",
-        gridTemplateColumns: "1.66fr 0.86fr",
-        gridTemplateRows: "auto auto",
+        gridTemplateRows: "0.92fr 1.08fr",
         gap: 10,
         padding: 10,
         background:
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
-        alignItems: "start",
+        alignItems: "stretch",
       }}
     >
-      <div style={{ minWidth: 0 }}>
+      <div style={{ minWidth: 0, minHeight: 0 }}>
         <LeftDynamicPanel events={events} />
       </div>
 
-      <div
-        style={{
-          minWidth: 0,
-          gridColumn: 2,
-          gridRow: "1 / span 2",
-          alignSelf: "stretch",
-        }}
-      >
-        <ScannerPanelContinuous assets={assets} />
-      </div>
-
-      <div
-        style={{
-          minWidth: 0,
-          gridColumn: 1,
-          gridRow: 2,
-        }}
-      >
+      <div style={{ minWidth: 0, minHeight: 0 }}>
         <LiquiditySection events={events} />
       </div>
     </div>
@@ -2405,7 +2365,7 @@ function ChartPanel({
     ma20.setData(computeSMA(candles, 20).map((d) => ({ time: d.time as Time, value: d.value })));
 
     const ma50 = mc.addLineSeries({
-      color: "#bd742a",
+      color: "#8b5cf6",
       lineWidth: 1,
       priceLineVisible: false,
       lastValueVisible: false,
@@ -2413,12 +2373,12 @@ function ChartPanel({
     ma50.setData(computeSMA(candles, 50).map((d) => ({ time: d.time as Time, value: d.value })));
 
     const ema9 = mc.addLineSeries({
-      color: "#50dfff",
+      color: "#22d3ee",
       lineWidth: 1,
       priceLineVisible: false,
       lastValueVisible: false,
     });
-    ema9.setData(computeEMA(candles, 9).map((d) => ({ time: d.time as Time, value: d.value })));
+    ema9.setData(computeEMA(candles, 100).map((d) => ({ time: d.time as Time, value: d.value })));
 
     mc.timeScale().fitContent();
 
@@ -2462,7 +2422,7 @@ function ChartPanel({
     });
 
     const rsiSeries = rc.addLineSeries({
-      color: "#9b7cff",
+      color: "#8b5cf6",
       lineWidth: 2,
       priceLineVisible: false,
       lastValueVisible: false,
@@ -2679,7 +2639,7 @@ function ChartPanel({
             left: 0,
             right: 0,
             bottom: 0,
-            height: 88,
+            height: 148,
             pointerEvents: "none",
             opacity: 0.95,
             borderTop: "1px solid rgba(255,255,255,0.05)",
@@ -2691,7 +2651,7 @@ function ChartPanel({
           style={{
             position: "absolute",
             left: 14,
-            bottom: 70,
+            bottom: 126,
             color: "#7f93b7",
             fontSize: 10,
             fontFamily: "monospace",
@@ -2729,7 +2689,7 @@ function ChartPanel({
             RSI / MFI
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}>
-            <span style={{ width: 12, height: 2, background: "#9b7cff", display: "inline-block" }} />
+            <span style={{ width: 12, height: 2, background: "#8b5cf6", display: "inline-block" }} />
             RSI
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}>
@@ -2739,7 +2699,7 @@ function ChartPanel({
         </div>
 
         <div style={{ width: "100%", minWidth: 0, overflow: "hidden" }}>
-          <div ref={rsiRef} style={{ height: 92, width: "100%" }} />
+          <div ref={rsiRef} style={{ height: 170, width: "100%" }} />
         </div>
       </div>
     </div>
@@ -2780,22 +2740,14 @@ export default function AtlasChartPro2() {
 
   const scannerEvents = useMemo<ScannerEvent[]>(
     () => [
-      { time: "21:43", title: "Venda Retail", tag: "Fluxo • Scanner", tone: "neutral" },
-      { time: "21:41", title: "Compra Baleia", tag: "Confluência", tone: "positive" },
-      { time: "21:36", title: "Liquidação Long", tag: "RSI / MFI", tone: "warning" },
-      { time: "21:31", title: "Compra Algorítmica", tag: "Euler", tone: "positive" },
-      { time: "21:28", title: "Compra Grande", tag: "Singularidade", tone: "positive" },
-      { time: "21:22", title: "Venda Institucional", tag: "Risco Assimétrico", tone: "neutral" },
-      { time: "21:15", title: "Evento macro próximo pode gerar volatilidade adicional", tag: "Eventos", tone: "warning" },
-      { time: "21:10", title: "Liquidez abaixo do preço começou a engrossar", tag: "Liquidez", tone: "neutral" },
-      { time: "21:04", title: "Scanner+ marcou retomada no ciclo curto", tag: "Scanner+", tone: "positive" },
-      { time: "20:58", title: "Estrutura lateral perdeu força em SOL", tag: "Estrutura", tone: "warning" },
-      { time: "20:51", title: "Razão de prata confirmou suporte sólido", tag: "Razão de Prata", tone: "positive" },
-      { time: "20:45", title: "Pressão de venda reduziu no bloco institucional", tag: "Fluxo", tone: "neutral" },
-      { time: "20:36", title: "Eventos de agenda aumentam chance de volatilidade curta", tag: "Eventos", tone: "warning" },
-      { time: "20:29", title: "Scanner Atlas marcou alta probabilidade em PET", tag: "Scanner Atlas", tone: "positive" },
-      { time: "20:18", title: "Fluxo estabilizou após absorção de venda no miolo", tag: "Fluxo", tone: "neutral" },
-      { time: "20:05", title: "Confluência perdeu 1 ponto em ativo de menor liquidez", tag: "Confluência", tone: "warning" },
+      { time: "23:31:25", title: "Compra Baleia", tag: "Fluxo • Scanner", tone: "positive" },
+      { time: "14:30:23", title: "Venda Retail", tag: "Confluência", tone: "neutral" },
+      { time: "14:29:47", title: "Compra Baleia", tag: "RSI / MFI", tone: "positive" },
+      { time: "14:29:47", title: "Venda Institucional", tag: "Risco Assimétrico", tone: "warning" },
+      { time: "14:31:08", title: "Liquidação Long", tag: "Eventos", tone: "warning" },
+      { time: "14:30:55", title: "Compra Algorítmica", tag: "Scanner+", tone: "positive" },
+      { time: "14:32:15", title: "Compra Grande", tag: "Singularidade", tone: "positive" },
+      { time: "14:31:42", title: "Venda Institucional", tag: "Confluência", tone: "neutral" },
     ],
     []
   );
@@ -2817,7 +2769,7 @@ export default function AtlasChartPro2() {
       structure: [
         { label: "Fluxo", value: "Positivo", type: "positive" },
         { label: "Momentum", value: "Forte", type: "strong" },
-        { label: "Liquidez", value: "Acima", type: "positive" },
+        { label: "Liquidez", value: "Ativo", type: "positive" },
         { label: "Confluência", type: "dots", dots: 8 },
       ],
       structure2: [
@@ -2830,15 +2782,16 @@ export default function AtlasChartPro2() {
     [lastCandle.close]
   );
 
+  const pageHeight = "calc(100vh - 114px)";
+
   return (
     <div
       style={{
         width: "100%",
-        minHeight: "100vh",
+        height: "100vh",
         display: "flex",
         flexDirection: "column",
-        overflowX: "hidden",
-        overflowY: "auto",
+        overflow: "hidden",
         background: ui.bg,
         color: ui.text,
         fontFamily: "Inter, Arial, sans-serif",
@@ -2854,25 +2807,41 @@ export default function AtlasChartPro2() {
 
       <ModuleStrip />
 
-      <div style={{ display: "flex", minHeight: 0, alignItems: "stretch" }}>
+      <div
+        style={{
+          display: "flex",
+          minHeight: 0,
+          height: pageHeight,
+          alignItems: "stretch",
+        }}
+      >
         <LeftToolbar />
 
         <div
           style={{
-            display: "flex",
-            flexDirection: "column",
             flex: 1,
             minWidth: 0,
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            background: ui.bg,
           }}
         >
           <div
             style={{
-              minHeight: "calc(100vh - 114px)",
-              display: "flex",
-              flexDirection: "column",
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) 258px",
+              gridTemplateRows: `${pageHeight} ${pageHeight}`,
+              minHeight: `calc((${pageHeight}) * 2)`,
             }}
           >
-            <div style={{ height: "calc(100vh - 114px)" }}>
+            <div
+              style={{
+                minWidth: 0,
+                minHeight: 0,
+                borderBottom: `1px solid ${ui.border}`,
+              }}
+            >
               <ChartPanel
                 candles={candles}
                 indicators={indicators}
@@ -2880,25 +2849,42 @@ export default function AtlasChartPro2() {
                 mode={mode}
               />
             </div>
+
+            <div
+              style={{
+                minWidth: 0,
+                minHeight: 0,
+                borderLeft: `1px solid ${ui.border}`,
+                borderBottom: `1px solid ${ui.border}`,
+                background:
+                  "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+              }}
+            >
+              <AIInsightPanel insight={aiInsight} />
+            </div>
+
+            <div
+              style={{
+                minWidth: 0,
+                minHeight: 0,
+              }}
+            >
+              <SecondPageSection events={scannerEvents} />
+            </div>
+
+            <div
+              style={{
+                minWidth: 0,
+                minHeight: 0,
+                borderLeft: `1px solid ${ui.border}`,
+                background:
+                  "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+                padding: 10,
+              }}
+            >
+              <ScannerPanelContinuous assets={scannerAssets} />
+            </div>
           </div>
-
-          <SecondPageSection
-            assets={scannerAssets}
-            events={scannerEvents}
-          />
-        </div>
-
-        <div
-          style={{
-            width: 258,
-            flexShrink: 0,
-            borderLeft: `1px solid ${ui.border}`,
-            background:
-              "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
-            minHeight: "calc(100vh - 114px)",
-          }}
-        >
-          <AIInsightPanel insight={aiInsight} />
         </div>
       </div>
     </div>
