@@ -83,6 +83,11 @@ type AssetScore = {
   change: number;
   trend: "up" | "down" | "neutral";
   color: string;
+  aiScore: number;
+  signal: string;
+  riskLevel: string;
+  riskType: string;
+  invalidation: number;
 };
 
 type DrawObject = {
@@ -135,6 +140,132 @@ function formatCompact(n: number) {
   return n.toFixed(2);
 }
 
+function symbolBasePrice(symbol: string) {
+  const map: Record<string, number> = {
+    BTC: 74682,
+    BTCUSDT: 74682,
+    ETH: 3840,
+    SOL: 182,
+    BNB: 612,
+    XRP: 0.72,
+    DOGE: 0.18,
+    ARB: 1.21,
+    SEI: 0.58,
+    INJ: 65.99,
+    RENDER: 6.32,
+    CORE: 1.9,
+    PET: 0.65,
+  };
+
+  return map[symbol] ?? 100;
+}
+
+function symbolToInsight(asset: AssetScore): AIInsight {
+  return {
+    symbol: asset.symbol,
+    price: asset.price,
+    score: asset.aiScore,
+    signal: asset.signal,
+    riskLevel: asset.riskLevel,
+    riskType: asset.riskType,
+    invalidation: asset.invalidation,
+    structure: [
+      {
+        label: "Fluxo",
+        value:
+          asset.trend === "up"
+            ? "Positivo"
+            : asset.trend === "down"
+            ? "Pressão"
+            : "Neutro",
+        type:
+          asset.trend === "up"
+            ? "positive"
+            : asset.trend === "down"
+            ? "negative"
+            : "neutral",
+      },
+      {
+        label: "Momentum",
+        value:
+          asset.aiScore >= 80
+            ? "Forte"
+            : asset.aiScore >= 60
+            ? "Moderado"
+            : "Fraco",
+        type:
+          asset.aiScore >= 80
+            ? "strong"
+            : asset.aiScore >= 60
+            ? "neutral"
+            : "negative",
+      },
+      {
+        label: "Liquidez",
+        value:
+          asset.volumeScore >= 70
+            ? "Ativo"
+            : asset.volumeScore >= 50
+            ? "Médio"
+            : "Baixo",
+        type:
+          asset.volumeScore >= 70
+            ? "positive"
+            : asset.volumeScore >= 50
+            ? "neutral"
+            : "negative",
+      },
+      {
+        label: "Confluência",
+        type: "dots",
+        dots: Math.max(2, Math.min(9, Math.round(asset.aiScore / 11))),
+      },
+    ],
+    structure2: [
+      {
+        label: "Euler",
+        value:
+          asset.trend === "up"
+            ? "Alinhado"
+            : asset.trend === "down"
+            ? "Pressão"
+            : "Estável",
+        type:
+          asset.trend === "up"
+            ? "positive"
+            : asset.trend === "down"
+            ? "negative"
+            : "neutral",
+      },
+      {
+        label: "Razão de Prata",
+        value:
+          asset.rsiMfi >= 60
+            ? "Forte"
+            : asset.rsiMfi >= 45
+            ? "Estável"
+            : "Fraca",
+        type:
+          asset.rsiMfi >= 60
+            ? "positive"
+            : asset.rsiMfi >= 45
+            ? "neutral"
+            : "negative",
+      },
+      {
+        label: "Risco Assimétrico",
+        value: asset.change >= 0 ? "Bom" : "Sensível",
+        type: asset.change >= 0 ? "positive" : "negative",
+      },
+      {
+        label: "Invalidação",
+        value: asset.change >= 0 ? "Controlada" : "Próxima",
+        type: asset.change >= 0 ? "neutral" : "negative",
+      },
+    ],
+  };
+}
+
 function generateCandles(count = 240, startPrice = 74500): CandleData[] {
   const now = Math.floor(Date.now() / 1000);
   const candles: CandleData[] = [];
@@ -142,12 +273,12 @@ function generateCandles(count = 240, startPrice = 74500): CandleData[] {
 
   for (let i = count; i > 0; i--) {
     const time = now - i * 300;
-    const wave = Math.sin(i / 11) * 35 + Math.cos(i / 17) * 18;
-    const drift = (Math.random() - 0.49) * 130 + wave;
+    const wave = Math.sin(i / 11) * (startPrice * 0.0045) + Math.cos(i / 17) * (startPrice * 0.0022);
+    const drift = (Math.random() - 0.49) * (startPrice * 0.0065) + wave;
     const open = prevClose;
-    const close = Math.max(1000, open + drift);
-    const high = Math.max(open, close) + Math.random() * 75;
-    const low = Math.min(open, close) - Math.random() * 75;
+    const close = Math.max(0.0001, open + drift);
+    const high = Math.max(open, close) + Math.random() * (startPrice * 0.0035);
+    const low = Math.min(open, close) - Math.random() * (startPrice * 0.0035);
     const volume = 120 + Math.random() * 1400;
 
     candles.push({ time, open, high, low, close, volume });
@@ -460,7 +591,7 @@ function AIInsightPanel({ insight }: { insight: AIInsight }) {
               letterSpacing: 0.4,
             }}
           >
-            BTCUSDT
+            {insight.symbol}
           </span>
 
           <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
@@ -592,11 +723,11 @@ function AIInsightPanel({ insight }: { insight: AIInsight }) {
         </div>
 
         {[
-          ["Estrutura", "Positivo", ui.green],
-          ["Euler", "Forte", "#9fffbc"],
-          ["Singularidade", "5 / 6", ui.green],
-          ["Razão de Prata", "Suporte Sólido", ui.green],
-          ["Ciclo", "Acelerado", ui.cyan],
+          ["Estrutura", insight.structure[0]?.value || "Neutro", ui.green],
+          ["Momentum", insight.structure[1]?.value || "Moderado", "#9fffbc"],
+          ["Confluência", `${Math.max(2, Math.min(9, Math.round(insight.score / 11)))} / 9`, ui.green],
+          ["Razão de Prata", insight.structure2[1]?.value || "Estável", ui.green],
+          ["Ciclo", insight.score >= 75 ? "Acelerado" : "Normal", ui.cyan],
         ].map(([a, b, c]) => (
           <div
             key={a}
@@ -820,7 +951,10 @@ function TopBar({
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: 8 }}>
-        <span style={{ color: ui.green, fontSize: 12, fontWeight: 900 }}>+1.88%</span>
+        <span style={{ color: ui.green, fontSize: 12, fontWeight: 900 }}>
+          {isPositive ? "+" : ""}
+          {change.toFixed(2)}%
+        </span>
         <Search size={15} color="#90a4c8" />
         <Bell size={15} color="#90a4c8" />
         <Settings size={15} color="#90a4c8" />
@@ -981,6 +1115,27 @@ function MiniSparkline({
   );
 }
 
+function getScoreVisual(score: number) {
+  if (score >= 80) {
+    return {
+      color: ui.green,
+      label: "Compra",
+    };
+  }
+
+  if (score >= 50) {
+    return {
+      color: ui.yellow,
+      label: "Neutro",
+    };
+  }
+
+  return {
+    color: ui.red,
+    label: "Baixa",
+  };
+}
+
 function ScoreBar({
   value,
   max = 100,
@@ -1026,6 +1181,7 @@ function ScoreBar({
     </div>
   );
 }
+
 function EventToneBadge({ tone }: { tone: ScannerEvent["tone"] }) {
   const map = {
     positive: { bg: "rgba(39,245,157,0.12)", color: ui.green, text: "Alta" },
@@ -1049,6 +1205,7 @@ function EventToneBadge({ tone }: { tone: ScannerEvent["tone"] }) {
     </span>
   );
 }
+
 function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
   const rows = events.slice(0, 7).map((event, index) => {
     const amountBase = [67.0, 23.1, 234.7, 0, 67.8, 45.6, 125.4][index] ?? 42.8;
@@ -1282,27 +1439,16 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
     </div>
   );
 }
-function getScoreVisual(score: number) {
-  if (score >= 80) {
-    return {
-      color: ui.green,
-      label: "Compra",
-    };
-  }
 
-  if (score >= 50) {
-    return {
-      color: ui.yellow,
-      label: "Neutro",
-    };
-  }
-
-  return {
-    color: ui.red,
-    label: "Baixa",
-  };
-}
-function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
+function ScannerPanelContinuous({
+  assets,
+  selectedSymbol,
+  onSelectSymbol,
+}: {
+  assets: AssetScore[];
+  selectedSymbol: string;
+  onSelectSymbol: (symbol: string) => void;
+}) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const list = useMemo(() => {
@@ -1415,6 +1561,7 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
         {filtered.map((asset, i) => (
           <div
             key={`${asset.symbol}-${i}`}
+            onClick={() => onSelectSymbol(asset.symbol)}
             style={{
               display: "grid",
               gridTemplateColumns: "1.1fr 0.92fr 0.98fr 0.92fr 1fr",
@@ -1422,6 +1569,15 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
               padding: "11px 12px",
               borderBottom: "1px solid rgba(255,255,255,0.045)",
               alignItems: "center",
+              cursor: "pointer",
+              background:
+                asset.symbol === selectedSymbol
+                  ? "linear-gradient(90deg, rgba(247,201,72,0.10), rgba(45,226,255,0.06))"
+                  : "transparent",
+              boxShadow:
+                asset.symbol === selectedSymbol
+                  ? "inset 0 0 0 1px rgba(247,201,72,0.18)"
+                  : "none",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
@@ -2380,11 +2536,15 @@ function ChartPanel({
   indicators,
   selectedObject,
   mode,
+  symbol,
+  timeframe,
 }: {
   candles: CandleData[];
   indicators: IndicatorData[];
   selectedObject: DrawObject | null;
   mode: ModeKey;
+  symbol: string;
+  timeframe: Timeframe;
 }) {
   const mainRef = useRef<HTMLDivElement>(null);
   const volOverlayRef = useRef<HTMLDivElement>(null);
@@ -2633,7 +2793,7 @@ function ChartPanel({
                   lineHeight: 1.1,
                 }}
               >
-                BTCUSDT
+                {symbol}
               </div>
               <div
                 style={{
@@ -2645,7 +2805,7 @@ function ChartPanel({
                   textOverflow: "ellipsis",
                 }}
               >
-                Scanner Atlas • Pasta: Cursor • Item: Navegar • TF: 15m
+                Scanner Atlas • Pasta: Cursor • Item: Navegar • TF: {timeframe}
               </div>
             </div>
           </div>
@@ -2798,29 +2958,178 @@ export default function AtlasChartPro2() {
   const [mode] = useState<ModeKey>("auto");
   const [objects] = useState<DrawObject[]>([{ id: "1", name: "Linha 1", type: "line" }]);
   const [selectedId] = useState<string | null>(null);
-
-  const candles = useMemo(() => generateCandles(240, 70200), []);
-  const indicators = useMemo(() => generateIndicators(candles), [candles]);
-
-  const selectedObject = useMemo(
-    () => objects.find((o) => o.id === selectedId) ?? null,
-    [objects, selectedId]
-  );
+  const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC");
 
   const scannerAssets = useMemo<AssetScore[]>(
     () => [
-      { symbol: "PET", volumeScore: 63.625, rsiMfi: 46.464, price: 65360, change: 0.8, trend: "up", color: "#27f59d" },
-      { symbol: "CORE", volumeScore: 89.650, rsiMfi: 41.925, price: 65907, change: 0.6, trend: "up", color: "#31c8ff" },
-      { symbol: "INJ", volumeScore: 10.055, rsiMfi: 82.086, price: 65990, change: 1.1, trend: "up", color: "#4f8dff" },
-      { symbol: "RENDER", volumeScore: 16.055, rsiMfi: 53.029, price: 65320, change: -0.4, trend: "down", color: "#f7c948" },
-      { symbol: "BTC", volumeScore: 82.410, rsiMfi: 64.820, price: 74682, change: 2.8, trend: "up", color: "#27f59d" },
-      { symbol: "ETH", volumeScore: 73.350, rsiMfi: 58.100, price: 3840, change: 1.2, trend: "up", color: "#31c8ff" },
-      { symbol: "SOL", volumeScore: 61.180, rsiMfi: 43.700, price: 182, change: -1.6, trend: "down", color: "#ffb14a" },
-      { symbol: "BNB", volumeScore: 69.080, rsiMfi: 52.200, price: 612, change: 0.9, trend: "neutral", color: "#f7c948" },
-      { symbol: "XRP", volumeScore: 55.630, rsiMfi: 39.900, price: 0.72, change: -2.1, trend: "down", color: "#a783ff" },
-      { symbol: "DOGE", volumeScore: 66.140, rsiMfi: 57.600, price: 0.18, change: 1.7, trend: "up", color: "#22c55e" },
-      { symbol: "ARB", volumeScore: 44.620, rsiMfi: 48.300, price: 1.21, change: 0.5, trend: "neutral", color: "#52b6ff" },
-      { symbol: "SEI", volumeScore: 71.440, rsiMfi: 61.820, price: 0.58, change: 3.1, trend: "up", color: "#31e9ff" },
+      {
+        symbol: "PET",
+        volumeScore: 63.625,
+        rsiMfi: 46.464,
+        price: 0.65,
+        change: 0.8,
+        trend: "up",
+        color: "#27f59d",
+        aiScore: 58,
+        signal: "NEUTRO",
+        riskLevel: "Moderado",
+        riskType: "Liquidez",
+        invalidation: 0.58,
+      },
+      {
+        symbol: "CORE",
+        volumeScore: 89.65,
+        rsiMfi: 41.925,
+        price: 1.9,
+        change: 0.6,
+        trend: "up",
+        color: "#31c8ff",
+        aiScore: 74,
+        signal: "COMPRA",
+        riskLevel: "Moderado",
+        riskType: "Volatilidade",
+        invalidation: 1.62,
+      },
+      {
+        symbol: "INJ",
+        volumeScore: 10.055,
+        rsiMfi: 82.086,
+        price: 65.99,
+        change: 1.1,
+        trend: "up",
+        color: "#4f8dff",
+        aiScore: 67,
+        signal: "COMPRA",
+        riskLevel: "Elevado",
+        riskType: "Extensão",
+        invalidation: 61.3,
+      },
+      {
+        symbol: "RENDER",
+        volumeScore: 16.055,
+        rsiMfi: 53.029,
+        price: 6.32,
+        change: -0.4,
+        trend: "down",
+        color: "#f7c948",
+        aiScore: 39,
+        signal: "BAIXA",
+        riskLevel: "Moderado",
+        riskType: "Pressão",
+        invalidation: 6.68,
+      },
+      {
+        symbol: "BTC",
+        volumeScore: 82.41,
+        rsiMfi: 64.82,
+        price: 74682,
+        change: 2.8,
+        trend: "up",
+        color: "#27f59d",
+        aiScore: 84,
+        signal: "COMPRA",
+        riskLevel: "Moderado",
+        riskType: "Volatilidade",
+        invalidation: 69180.6,
+      },
+      {
+        symbol: "ETH",
+        volumeScore: 73.35,
+        rsiMfi: 58.1,
+        price: 3840,
+        change: 1.2,
+        trend: "up",
+        color: "#31c8ff",
+        aiScore: 79,
+        signal: "COMPRA",
+        riskLevel: "Moderado",
+        riskType: "Pullback",
+        invalidation: 3560,
+      },
+      {
+        symbol: "SOL",
+        volumeScore: 61.18,
+        rsiMfi: 43.7,
+        price: 182,
+        change: -1.6,
+        trend: "down",
+        color: "#ffb14a",
+        aiScore: 44,
+        signal: "NEUTRO",
+        riskLevel: "Elevado",
+        riskType: "Volatilidade",
+        invalidation: 171,
+      },
+      {
+        symbol: "BNB",
+        volumeScore: 69.08,
+        rsiMfi: 52.2,
+        price: 612,
+        change: 0.9,
+        trend: "neutral",
+        color: "#f7c948",
+        aiScore: 61,
+        signal: "NEUTRO",
+        riskLevel: "Moderado",
+        riskType: "Consolidação",
+        invalidation: 584,
+      },
+      {
+        symbol: "XRP",
+        volumeScore: 55.63,
+        rsiMfi: 39.9,
+        price: 0.72,
+        change: -2.1,
+        trend: "down",
+        color: "#a783ff",
+        aiScore: 36,
+        signal: "BAIXA",
+        riskLevel: "Moderado",
+        riskType: "Pressão",
+        invalidation: 0.76,
+      },
+      {
+        symbol: "DOGE",
+        volumeScore: 66.14,
+        rsiMfi: 57.6,
+        price: 0.18,
+        change: 1.7,
+        trend: "up",
+        color: "#22c55e",
+        aiScore: 71,
+        signal: "COMPRA",
+        riskLevel: "Moderado",
+        riskType: "Volatilidade",
+        invalidation: 0.165,
+      },
+      {
+        symbol: "ARB",
+        volumeScore: 44.62,
+        rsiMfi: 48.3,
+        price: 1.21,
+        change: 0.5,
+        trend: "neutral",
+        color: "#52b6ff",
+        aiScore: 54,
+        signal: "NEUTRO",
+        riskLevel: "Moderado",
+        riskType: "Faixa",
+        invalidation: 1.12,
+      },
+      {
+        symbol: "SEI",
+        volumeScore: 71.44,
+        rsiMfi: 61.82,
+        price: 0.58,
+        change: 3.1,
+        trend: "up",
+        color: "#31e9ff",
+        aiScore: 77,
+        signal: "COMPRA",
+        riskLevel: "Moderado",
+        riskType: "Aceleração",
+        invalidation: 0.53,
+      },
     ],
     []
   );
@@ -2839,34 +3148,31 @@ export default function AtlasChartPro2() {
     []
   );
 
+  const activeAsset = useMemo(
+    () => scannerAssets.find((a) => a.symbol === selectedSymbol) ?? scannerAssets[0],
+    [scannerAssets, selectedSymbol]
+  );
+
+  const candles = useMemo(
+    () => generateCandles(240, symbolBasePrice(activeAsset.symbol)),
+    [activeAsset.symbol]
+  );
+
+  const indicators = useMemo(() => generateIndicators(candles), [candles]);
+
+  const selectedObject = useMemo(
+    () => objects.find((o) => o.id === selectedId) ?? null,
+    [objects, selectedId]
+  );
+
   const lastCandle = candles[candles.length - 1];
   const firstCandle = candles[0];
   const priceChange =
     ((lastCandle.close - firstCandle.close) / firstCandle.close) * 100;
 
   const aiInsight = useMemo<AIInsight>(
-    () => ({
-      symbol: "BTCUSDT",
-      price: lastCandle.close,
-      score: 84,
-      signal: "COMPRA",
-      riskLevel: "Moderado",
-      riskType: "Volatilidade",
-      invalidation: 69180.6,
-      structure: [
-        { label: "Fluxo", value: "Positivo", type: "positive" },
-        { label: "Momentum", value: "Forte", type: "strong" },
-        { label: "Liquidez", value: "Ativo", type: "positive" },
-        { label: "Confluência", type: "dots", dots: 8 },
-      ],
-      structure2: [
-        { label: "Euler", value: "Alinhado", type: "positive" },
-        { label: "Razão de Prata", value: "Estável", type: "neutral" },
-        { label: "Risco Assimétrico", value: "Bom", type: "positive" },
-        { label: "Invalidação", value: "Próxima", type: "negative" },
-      ],
-    }),
-    [lastCandle.close]
+    () => symbolToInsight(activeAsset),
+    [activeAsset]
   );
 
   const pageHeight = "calc(100vh - 114px)";
@@ -2887,9 +3193,9 @@ export default function AtlasChartPro2() {
       }}
     >
       <TopBar
-        symbol="BTCUSDT"
-        price={lastCandle.close}
-        change={priceChange}
+        symbol={activeAsset.symbol}
+        price={activeAsset.price}
+        change={activeAsset.change}
         timeframe={timeframe}
         onTimeframeChange={setTimeframe}
       />
@@ -2939,6 +3245,8 @@ export default function AtlasChartPro2() {
                   indicators={indicators}
                   selectedObject={selectedObject}
                   mode={mode}
+                  symbol={activeAsset.symbol}
+                  timeframe={timeframe}
                 />
               </div>
 
@@ -2977,7 +3285,11 @@ export default function AtlasChartPro2() {
                   padding: 10,
                 }}
               >
-                <ScannerPanelContinuous assets={scannerAssets} />
+                <ScannerPanelContinuous
+                  assets={scannerAssets}
+                  selectedSymbol={selectedSymbol}
+                  onSelectSymbol={setSelectedSymbol}
+                />
               </div>
             </div>
           </div>
