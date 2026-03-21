@@ -1048,6 +1048,239 @@ function EventToneBadge({ tone }: { tone: ScannerEvent["tone"] }) {
     </span>
   );
 }
+function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
+  const rows = events.slice(0, 7).map((event, index) => {
+    const amountBase = [67.0, 23.1, 234.7, 0, 67.8, 45.6, 125.4][index] ?? 42.8;
+    const priceBase = [65508, 65395, 65385, 65420, 65380, 65400, 65450][index] ?? 65410;
+    const exchangeBase = [
+      "OKX",
+      "Binance",
+      "OKX",
+      "Coinbase Pro",
+      "Bybit",
+      "Kraken",
+      "Binance",
+    ][index] ?? "Exchange";
+    const severityWidth = [58, 28, 72, 52, 88, 33, 78][index] ?? 50;
+    const severityLabel =
+      index % 3 === 0 ? "Baixo" : index % 3 === 1 ? "Alto" : "Médio";
+    const rightColor =
+      severityLabel === "Alto"
+        ? ui.red
+        : severityLabel === "Médio"
+        ? ui.yellow
+        : ui.green;
+
+    const leftDot =
+      event.tone === "positive" ? ui.green : event.tone === "warning" ? ui.yellow : "#ff5050";
+
+    return {
+      ...event,
+      amountBase,
+      priceBase,
+      exchangeBase,
+      severityWidth,
+      severityLabel,
+      rightColor,
+      leftDot,
+    };
+  });
+
+  return (
+    <div
+      style={{
+        height: "100%",
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(6,10,18,0.98), rgba(4,7,14,0.98))",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          height: 42,
+          padding: "0 12px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background:
+            "linear-gradient(180deg, rgba(7,14,25,0.98), rgba(6,10,18,0.98))",
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "#00e117",
+              display: "inline-block",
+            }}
+          />
+          <span style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>
+            Eventos em Tempo Real
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              padding: "4px 8px",
+              borderRadius: 6,
+              background: "rgba(0,225,23,0.08)",
+              color: "#00e117",
+              fontSize: 10,
+              fontWeight: 900,
+            }}
+          >
+            Live
+          </span>
+          <span style={{ color: "#7f93b7", fontSize: 11, fontWeight: 700 }}>
+            {rows.length} eventos
+          </span>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: 8, display: "grid", gap: 8 }}>
+        {rows.map((event, i) => (
+          <div
+            key={`${event.time}-${i}-big`}
+            style={{
+              position: "relative",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background:
+                "linear-gradient(180deg, rgba(9,14,24,0.98), rgba(7,11,20,0.98))",
+              padding: "12px 12px 12px 28px",
+              overflow: "hidden",
+              minHeight: 62,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: 10,
+                top: 18,
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: event.leftDot,
+                boxShadow: `0 0 10px ${event.leftDot}55`,
+              }}
+            />
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.2fr 0.8fr 0.54fr",
+                gap: 12,
+                alignItems: "center",
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    color: "#f0f7ff",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    lineHeight: 1.2,
+                    marginBottom: 3,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {event.title}
+                </div>
+                <div
+                  style={{
+                    color: "#7f93b7",
+                    fontSize: 11,
+                  }}
+                >
+                  {event.exchangeBase}
+                </div>
+              </div>
+
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    color: "#eef5ff",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {event.amountBase ? `${event.amountBase.toFixed(1)} BTC` : "—"}
+                </div>
+                <div
+                  style={{
+                    color: "#7f93b7",
+                    fontSize: 11,
+                    fontFamily: "monospace",
+                  }}
+                >
+                  ${event.priceBase.toLocaleString()}
+                </div>
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    color: "#dce8ff",
+                    fontSize: 12,
+                    fontFamily: "monospace",
+                    marginBottom: 4,
+                  }}
+                >
+                  {event.time}
+                </div>
+                <div
+                  style={{
+                    color: event.rightColor,
+                    fontSize: 12,
+                    fontWeight: 900,
+                  }}
+                >
+                  {event.severityLabel}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: 10,
+                height: 3,
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.05)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${event.severityWidth}%`,
+                  height: "100%",
+                  borderRadius: 999,
+                  background:
+                    event.severityLabel === "Alto"
+                      ? "linear-gradient(90deg, #29ff72, #ff3c57)"
+                      : event.severityLabel === "Médio"
+                      ? "linear-gradient(90deg, #ffb300, #ff4b57)"
+                      : "linear-gradient(90deg, #29ff72, #24d6ff)",
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
   const [searchTerm, setSearchTerm] = useState("");
 
