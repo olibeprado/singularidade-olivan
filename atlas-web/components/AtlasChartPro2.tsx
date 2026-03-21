@@ -40,6 +40,14 @@ import {
 
 type Timeframe = "1m" | "5m" | "15m" | "30m" | "1H" | "4H" | "1D";
 type ModeKey = "auto" | "manual" | "space";
+type TopModuleKey =
+  | "Fluxo"
+  | "Singularidade"
+  | "IA Atlas"
+  | "Scanner"
+  | "Estrutura"
+  | "Euler"
+  | "Liquidez";
 
 type CandleData = {
   time: number;
@@ -117,6 +125,15 @@ const LEFT_PANEL_TABS = [
   "Liquidez Avançada",
 ];
 const LIQUIDITY_TABS = ["Map", "Heatmap", "Clusters", "Eventos"];
+const TOP_MODULES: TopModuleKey[] = [
+  "Fluxo",
+  "Singularidade",
+  "IA Atlas",
+  "Scanner",
+  "Estrutura",
+  "Euler",
+  "Liquidez",
+];
 
 const ui = {
   bg: "#060913",
@@ -273,7 +290,9 @@ function generateCandles(count = 240, startPrice = 74500): CandleData[] {
 
   for (let i = count; i > 0; i--) {
     const time = now - i * 300;
-    const wave = Math.sin(i / 11) * (startPrice * 0.0045) + Math.cos(i / 17) * (startPrice * 0.0022);
+    const wave =
+      Math.sin(i / 11) * (startPrice * 0.0045) +
+      Math.cos(i / 17) * (startPrice * 0.0022);
     const drift = (Math.random() - 0.49) * (startPrice * 0.0065) + wave;
     const open = prevClose;
     const close = Math.max(0.0001, open + drift);
@@ -379,13 +398,16 @@ function ModuleButton({
   icon,
   text,
   active,
+  onClick,
 }: {
   icon: React.ReactNode;
   text: string;
   active?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <button
+      onClick={onClick}
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -521,9 +543,20 @@ function StructureRow({ item }: { item: StructureItem }) {
   );
 }
 
-function AIInsightPanel({ insight }: { insight: AIInsight }) {
+function AIInsightPanel({
+  insight,
+  topModule,
+}: {
+  insight: AIInsight;
+  topModule: TopModuleKey;
+}) {
   const scoreColor =
     insight.score >= 80 ? ui.green : insight.score >= 60 ? ui.yellow : ui.red;
+
+  const moduleLabel =
+    topModule === "Scanner"
+      ? "IA Atlas Insights"
+      : `${topModule} Insights`;
 
   return (
     <div
@@ -551,7 +584,7 @@ function AIInsightPanel({ insight }: { insight: AIInsight }) {
             letterSpacing: 0.45,
           }}
         >
-          IA Atlas Insights
+          {moduleLabel}
         </span>
         <ChevronDown size={14} color="#6c7da2" />
       </div>
@@ -719,7 +752,7 @@ function AIInsightPanel({ insight }: { insight: AIInsight }) {
             marginBottom: 10,
           }}
         >
-          Scanner Atlas
+          {topModule}
         </div>
 
         {[
@@ -963,7 +996,23 @@ function TopBar({
   );
 }
 
-function ModuleStrip() {
+function ModuleStrip({
+  activeModule,
+  onChange,
+}: {
+  activeModule: TopModuleKey;
+  onChange: (m: TopModuleKey) => void;
+}) {
+  const icons: Record<TopModuleKey, React.ReactNode> = {
+    Fluxo: <Waves size={13} />,
+    Singularidade: <BrainCircuit size={13} />,
+    "IA Atlas": <Activity size={13} />,
+    Scanner: <ScanSearch size={13} />,
+    Estrutura: <Layers3 size={13} />,
+    Euler: <Sigma size={13} />,
+    Liquidez: <Droplets size={13} />,
+  };
+
   return (
     <div
       style={{
@@ -978,13 +1027,15 @@ function ModuleStrip() {
         flexShrink: 0,
       }}
     >
-      <ModuleButton icon={<Waves size={13} />} text="Fluxo" />
-      <ModuleButton icon={<BrainCircuit size={13} />} text="Singularidade" />
-      <ModuleButton icon={<Activity size={13} />} text="IA Atlas" />
-      <ModuleButton icon={<ScanSearch size={13} />} text="Scanner" active />
-      <ModuleButton icon={<Layers3 size={13} />} text="Estrutura" />
-      <ModuleButton icon={<Sigma size={13} />} text="Euler" />
-      <ModuleButton icon={<Droplets size={13} />} text="Liquidez" />
+      {TOP_MODULES.map((module) => (
+        <ModuleButton
+          key={module}
+          icon={icons[module]}
+          text={module}
+          active={activeModule === module}
+          onClick={() => onChange(module)}
+        />
+      ))}
     </div>
   );
 }
@@ -1116,24 +1167,9 @@ function MiniSparkline({
 }
 
 function getScoreVisual(score: number) {
-  if (score >= 80) {
-    return {
-      color: ui.green,
-      label: "Compra",
-    };
-  }
-
-  if (score >= 50) {
-    return {
-      color: ui.yellow,
-      label: "Neutro",
-    };
-  }
-
-  return {
-    color: ui.red,
-    label: "Baixa",
-  };
+  if (score >= 80) return { color: ui.green, label: "Compra" };
+  if (score >= 50) return { color: ui.yellow, label: "Neutro" };
+  return { color: ui.red, label: "Baixa" };
 }
 
 function ScoreBar({
@@ -2512,11 +2548,228 @@ function LeftDynamicPanel({ events }: { events: ScannerEvent[] }) {
   );
 }
 
-function SecondPageSection({
-  events,
+function ModuleSummaryCards({
+  activeModule,
+  insight,
 }: {
-  events: ScannerEvent[];
+  activeModule: TopModuleKey;
+  insight: AIInsight;
 }) {
+  const cardsByModule: Record<
+    TopModuleKey,
+    { title: string; value: string; sub: string; color: string }[]
+  > = {
+    Fluxo: [
+      {
+        title: "Fluxo agressor",
+        value: "Comprador",
+        sub: "Agressão mantendo pressão positiva.",
+        color: ui.green,
+      },
+      {
+        title: "Absorção",
+        value: "Ativa",
+        sub: "Vendas sendo consumidas com firmeza.",
+        color: ui.cyan,
+      },
+      {
+        title: "Desequilíbrio",
+        value: "+18.6%",
+        sub: "Continuação favorecida no curto prazo.",
+        color: ui.yellow,
+      },
+    ],
+    Singularidade: [
+      {
+        title: "Pulso",
+        value: "Elevado",
+        sub: "Motor matemático em alta sintonia.",
+        color: ui.green,
+      },
+      {
+        title: "Ruído",
+        value: "Baixo",
+        sub: "Leitura mais limpa do movimento.",
+        color: ui.cyan,
+      },
+      {
+        title: "Fase",
+        value: "Expansão",
+        sub: "Contexto de aceleração controlada.",
+        color: ui.yellow,
+      },
+    ],
+    "IA Atlas": [
+      {
+        title: "Score Atlas",
+        value: `${insight.score}`,
+        sub: "Pontuação consolidada do ativo.",
+        color: ui.green,
+      },
+      {
+        title: "Leitura",
+        value: insight.signal,
+        sub: "Combinação de estrutura e risco.",
+        color: ui.cyan,
+      },
+      {
+        title: "Risco",
+        value: insight.riskLevel,
+        sub: "Cenário atual do ativo selecionado.",
+        color: ui.yellow,
+      },
+    ],
+    Scanner: [
+      {
+        title: "Scanner Mestre",
+        value: "Ativo",
+        sub: "Busca contínua dos melhores sinais.",
+        color: ui.green,
+      },
+      {
+        title: "Top Score",
+        value: `${insight.score}`,
+        sub: "Maior nota atual na leitura local.",
+        color: ui.cyan,
+      },
+      {
+        title: "Status",
+        value: insight.signal,
+        sub: "Direção dominante do momento.",
+        color: ui.yellow,
+      },
+    ],
+    Estrutura: [
+      {
+        title: "Estrutura",
+        value: "Alinhada",
+        sub: "Tendência e contexto favorecem continuação.",
+        color: ui.green,
+      },
+      {
+        title: "Base",
+        value: "Firme",
+        sub: "Região central sustentando o preço.",
+        color: ui.cyan,
+      },
+      {
+        title: "Invalidação",
+        value: "Controlada",
+        sub: "Risco técnico ainda aceitável.",
+        color: ui.yellow,
+      },
+    ],
+    Euler: [
+      {
+        title: "Euler Core",
+        value: "Sincronizado",
+        sub: "Proporção e estrutura conversando bem.",
+        color: ui.green,
+      },
+      {
+        title: "Geometria",
+        value: "Limpa",
+        sub: "Movimento com boa leitura estrutural.",
+        color: ui.cyan,
+      },
+      {
+        title: "Pressão",
+        value: "Moderada",
+        sub: "Sem distorção excessiva no momento.",
+        color: ui.yellow,
+      },
+    ],
+    Liquidez: [
+      {
+        title: "Liquidez acima",
+        value: "Pesada",
+        sub: "Blocos relevantes acima do preço.",
+        color: ui.red,
+      },
+      {
+        title: "Liquidez abaixo",
+        value: "Saudável",
+        sub: "Boa base de defesa compradora.",
+        color: ui.green,
+      },
+      {
+        title: "Spread",
+        value: "0.02%",
+        sub: "Mercado com leitura limpa agora.",
+        color: ui.cyan,
+      },
+    ],
+  };
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+        gap: 10,
+      }}
+    >
+      {cardsByModule[activeModule].map((card) => (
+        <LeftPanelMetricCard
+          key={card.title}
+          title={card.title}
+          value={card.value}
+          sub={card.sub}
+          color={card.color}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ModuleCenterPanel({
+  activeModule,
+  events,
+  assets,
+  selectedSymbol,
+  onSelectSymbol,
+  insight,
+}: {
+  activeModule: TopModuleKey;
+  events: ScannerEvent[];
+  assets: AssetScore[];
+  selectedSymbol: string;
+  onSelectSymbol: (symbol: string) => void;
+  insight: AIInsight;
+}) {
+  if (activeModule === "Scanner") {
+    return (
+      <div style={{ height: "100%", padding: 10 }}>
+        <ScannerPanelContinuous
+          assets={assets}
+          selectedSymbol={selectedSymbol}
+          onSelectSymbol={onSelectSymbol}
+        />
+      </div>
+    );
+  }
+
+  if (activeModule === "Fluxo") {
+    return (
+      <div style={{ height: "100%", padding: 10 }}>
+        <div style={{ display: "grid", gap: 10, height: "100%" }}>
+          <ModuleSummaryCards activeModule={activeModule} insight={insight} />
+          <div style={{ minHeight: 0, flex: 1 }}>
+            <EventRealtimePanel events={events} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeModule === "Liquidez") {
+    return (
+      <div style={{ height: "100%", padding: 10 }}>
+        <LiquidityExpandedPanel events={events} />
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -2526,7 +2779,116 @@ function SecondPageSection({
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
       }}
     >
-      <LeftDynamicPanel events={events} />
+      <div
+        style={{
+          height: "100%",
+          borderRadius: 12,
+          border: `1px solid ${ui.border}`,
+          background:
+            "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+          overflow: "hidden",
+          display: "grid",
+          gridTemplateRows: "auto auto 1fr",
+          gap: 10,
+          padding: 10,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "6px 4px 0",
+          }}
+        >
+          <span style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900 }}>
+            {activeModule}
+          </span>
+          <span
+            style={{
+              color: ui.cyan,
+              fontSize: 10,
+              fontWeight: 900,
+              padding: "4px 8px",
+              borderRadius: 8,
+              background: "rgba(45,226,255,0.1)",
+            }}
+          >
+            Módulo Ativo
+          </span>
+        </div>
+
+        <ModuleSummaryCards activeModule={activeModule} insight={insight} />
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.2fr 0.8fr",
+            gap: 10,
+            minHeight: 0,
+          }}
+        >
+          <LeftPanelMiniGraph activeTab={activeModule} />
+          <div
+            style={{
+              borderRadius: 12,
+              border: `1px solid ${ui.border}`,
+              background:
+                "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(5,8,15,0.98))",
+              padding: 12,
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                color: "#edf5ff",
+                fontSize: 12,
+                fontWeight: 900,
+                marginBottom: 8,
+              }}
+            >
+              Leitura do módulo
+            </div>
+
+            <div style={{ display: "grid", gap: 6 }}>
+              {[
+                ["Ativo", insight.symbol, "#dce8ff"],
+                ["Score", `${insight.score}`, ui.green],
+                ["Sinal", insight.signal, ui.yellow],
+                ["Risco", insight.riskLevel, ui.red],
+                ["Liquidez", insight.structure[2]?.value || "Médio", ui.cyan],
+                ["Euler", insight.structure2[0]?.value || "Estável", ui.green],
+              ].map(([k, v, c]) => (
+                <div
+                  key={k}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "8px 0",
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
+                  <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>
+                    {v}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div
+              style={{
+                marginTop: 12,
+                height: 148,
+                borderRadius: 12,
+                border: "1px solid rgba(255,255,255,0.05)",
+                background:
+                  "radial-gradient(circle at 50% 30%, rgba(45,226,255,0.18), transparent 30%), radial-gradient(circle at 72% 52%, rgba(39,245,157,0.18), transparent 26%), radial-gradient(circle at 36% 70%, rgba(247,201,72,0.16), transparent 24%), linear-gradient(180deg, rgba(5,10,20,0.95), rgba(7,11,20,0.98))",
+              }}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2953,9 +3315,125 @@ function ChartPanel({
   );
 }
 
+function MainWorkspace({
+  activeModule,
+  candles,
+  indicators,
+  selectedObject,
+  mode,
+  symbol,
+  timeframe,
+  events,
+  assets,
+  selectedSymbol,
+  onSelectSymbol,
+  insight,
+}: {
+  activeModule: TopModuleKey;
+  candles: CandleData[];
+  indicators: IndicatorData[];
+  selectedObject: DrawObject | null;
+  mode: ModeKey;
+  symbol: string;
+  timeframe: Timeframe;
+  events: ScannerEvent[];
+  assets: AssetScore[];
+  selectedSymbol: string;
+  onSelectSymbol: (symbol: string) => void;
+  insight: AIInsight;
+}) {
+  if (activeModule === "Scanner") {
+    return (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) 320px",
+          minWidth: 0,
+          minHeight: 0,
+          borderBottom: `1px solid ${ui.border}`,
+        }}
+      >
+        <div style={{ minWidth: 0, minHeight: 0 }}>
+          <ChartPanel
+            candles={candles}
+            indicators={indicators}
+            selectedObject={selectedObject}
+            mode={mode}
+            symbol={symbol}
+            timeframe={timeframe}
+          />
+        </div>
+
+        <div
+          style={{
+            minWidth: 0,
+            minHeight: 0,
+            borderLeft: `1px solid ${ui.border}`,
+            background:
+              "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+          }}
+        >
+          <AIInsightPanel insight={insight} topModule={activeModule} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) 320px",
+        minWidth: 0,
+        minHeight: 0,
+        borderBottom: `1px solid ${ui.border}`,
+      }}
+    >
+      <div style={{ minWidth: 0, minHeight: 0 }}>
+        <ModuleCenterPanel
+          activeModule={activeModule}
+          events={events}
+          assets={assets}
+          selectedSymbol={selectedSymbol}
+          onSelectSymbol={onSelectSymbol}
+          insight={insight}
+        />
+      </div>
+
+      <div
+        style={{
+          minWidth: 0,
+          minHeight: 0,
+          borderLeft: `1px solid ${ui.border}`,
+          background:
+            "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+        }}
+      >
+        <AIInsightPanel insight={insight} topModule={activeModule} />
+      </div>
+    </div>
+  );
+}
+
+function SecondPageSection({ events }: { events: ScannerEvent[] }) {
+  return (
+    <div
+      style={{
+        height: "100%",
+        padding: 10,
+        background:
+          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+      }}
+    >
+      <LeftDynamicPanel events={events} />
+    </div>
+  );
+}
+
 export default function AtlasChartPro2() {
   const [timeframe, setTimeframe] = useState<Timeframe>("15m");
   const [mode] = useState<ModeKey>("auto");
+  const [activeModule, setActiveModule] = useState<TopModuleKey>("Scanner");
   const [objects] = useState<DrawObject[]>([{ id: "1", name: "Linha 1", type: "line" }]);
   const [selectedId] = useState<string | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC");
@@ -3165,18 +3643,12 @@ export default function AtlasChartPro2() {
     [objects, selectedId]
   );
 
-  const lastCandle = candles[candles.length - 1];
-  const firstCandle = candles[0];
-  const priceChange =
-    ((lastCandle.close - firstCandle.close) / firstCandle.close) * 100;
-
   const aiInsight = useMemo<AIInsight>(
     () => symbolToInsight(activeAsset),
     [activeAsset]
   );
 
   const pageHeight = "calc(100vh - 114px)";
-  const topRightWidth = 320;
   const bottomRightWidth = 380;
 
   return (
@@ -3200,7 +3672,7 @@ export default function AtlasChartPro2() {
         onTimeframeChange={setTimeframe}
       />
 
-      <ModuleStrip />
+      <ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
 
       <div
         style={{
@@ -3230,38 +3702,20 @@ export default function AtlasChartPro2() {
               minHeight: `calc((${pageHeight}) * 2)`,
             }}
           >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: `minmax(0, 1fr) ${topRightWidth}px`,
-                minWidth: 0,
-                minHeight: 0,
-                borderBottom: `1px solid ${ui.border}`,
-              }}
-            >
-              <div style={{ minWidth: 0, minHeight: 0 }}>
-                <ChartPanel
-                  candles={candles}
-                  indicators={indicators}
-                  selectedObject={selectedObject}
-                  mode={mode}
-                  symbol={activeAsset.symbol}
-                  timeframe={timeframe}
-                />
-              </div>
-
-              <div
-                style={{
-                  minWidth: 0,
-                  minHeight: 0,
-                  borderLeft: `1px solid ${ui.border}`,
-                  background:
-                    "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
-                }}
-              >
-                <AIInsightPanel insight={aiInsight} />
-              </div>
-            </div>
+            <MainWorkspace
+              activeModule={activeModule}
+              candles={candles}
+              indicators={indicators}
+              selectedObject={selectedObject}
+              mode={mode}
+              symbol={activeAsset.symbol}
+              timeframe={timeframe}
+              events={scannerEvents}
+              assets={scannerAssets}
+              selectedSymbol={selectedSymbol}
+              onSelectSymbol={setSelectedSymbol}
+              insight={aiInsight}
+            />
 
             <div
               style={{
