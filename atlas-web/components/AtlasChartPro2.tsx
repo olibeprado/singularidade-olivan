@@ -1404,7 +1404,7 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
           }}
         >
           <span>Top Forge</span>
-          <span>Score</span>
+          <span>Sinal</span>
           <span>Preço</span>
           <span>RSI / MFI</span>
           <span>Mini Chart</span>
