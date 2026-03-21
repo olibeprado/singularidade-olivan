@@ -102,7 +102,6 @@ type ScannerEvent = {
 
 const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
 const NAV_TABS = ["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"];
-const LIQUIDITY_TABS = ["Map", "Heatmap", "Clusters", "Eventos"];
 const LEFT_PANEL_TABS = [
   "Volume",
   "RSI / MFI",
@@ -110,7 +109,9 @@ const LEFT_PANEL_TABS = [
   "Singularidade",
   "Confluência",
   "Eventos",
+  "Liquidez Avançada",
 ];
+const LIQUIDITY_TABS = ["Map", "Heatmap", "Clusters", "Eventos"];
 
 const ui = {
   bg: "#060913",
@@ -1283,6 +1284,374 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
   );
 }
 
+function LiquidityCard({
+  title,
+  value,
+  sub,
+  tone = "neutral",
+}: {
+  title: string;
+  value: string;
+  sub: string;
+  tone?: "positive" | "warning" | "neutral";
+}) {
+  const color =
+    tone === "positive" ? ui.green : tone === "warning" ? ui.yellow : ui.cyan;
+
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background:
+          "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+        padding: 12,
+        minHeight: 78,
+      }}
+    >
+      <div
+        style={{
+          color: "#7f93b7",
+          fontSize: 10,
+          fontWeight: 900,
+          letterSpacing: 0.7,
+          textTransform: "uppercase",
+          marginBottom: 8,
+        }}
+      >
+        {title}
+      </div>
+
+      <div
+        style={{
+          color,
+          fontSize: 16,
+          fontWeight: 900,
+          marginBottom: 6,
+        }}
+      >
+        {value}
+      </div>
+
+      <div
+        style={{
+          color: "#9bb0d4",
+          fontSize: 11,
+          lineHeight: 1.3,
+        }}
+      >
+        {sub}
+      </div>
+    </div>
+  );
+}
+
+function HeatmapBars() {
+  const rows = [
+    { label: "72.200", value: 88, color: "rgba(49,233,255,0.85)" },
+    { label: "71.800", value: 72, color: "rgba(39,245,157,0.82)" },
+    { label: "71.200", value: 58, color: "rgba(247,201,72,0.82)" },
+    { label: "70.800", value: 96, color: "rgba(255,107,134,0.82)" },
+    { label: "70.300", value: 66, color: "rgba(49,233,255,0.85)" },
+    { label: "69.900", value: 47, color: "rgba(39,245,157,0.82)" },
+  ];
+
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      {rows.map((r) => (
+        <div
+          key={r.label}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "64px 1fr 46px",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span
+            style={{
+              color: "#9ab0d4",
+              fontSize: 12,
+              fontFamily: "monospace",
+            }}
+          >
+            {r.label}
+          </span>
+
+          <div
+            style={{
+              height: 12,
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.06)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${r.value}%`,
+                height: "100%",
+                borderRadius: 999,
+                background: r.color,
+                boxShadow: "0 0 18px rgba(255,255,255,0.05)",
+              }}
+            />
+          </div>
+
+          <span
+            style={{
+              color: "#e9f3ff",
+              fontSize: 11,
+              fontWeight: 800,
+              textAlign: "right",
+            }}
+          >
+            {r.value}%
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LiquidityExpandedPanel({ events }: { events: ScannerEvent[] }) {
+  const [activeLiquidityTab, setActiveLiquidityTab] = useState("Heatmap");
+
+  return (
+    <div
+      style={{
+        height: "100%",
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          minHeight: 42,
+          padding: "6px 14px",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          borderBottom: `1px solid ${ui.border}`,
+          flexWrap: "wrap",
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            color: "#f2f7ff",
+            fontSize: 13,
+            fontWeight: 900,
+            marginRight: 6,
+          }}
+        >
+          Liquidez Avançada
+        </span>
+
+        {LIQUIDITY_TABS.map((tab) => (
+          <TopButton
+            key={tab}
+            active={activeLiquidityTab === tab}
+            onClick={() => setActiveLiquidityTab(tab)}
+          >
+            {tab}
+          </TopButton>
+        ))}
+      </div>
+
+      <div style={{ padding: 12, display: "grid", gap: 12, flex: 1, minHeight: 0 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gap: 10,
+          }}
+        >
+          <LiquidityCard
+            title="Liquidez superior"
+            value="$72.200"
+            sub="Bloco vendedor forte acima do preço atual."
+            tone="warning"
+          />
+          <LiquidityCard
+            title="Liquidez inferior"
+            value="$69.800"
+            sub="Absorção compradora ganhando espessura."
+            tone="positive"
+          />
+          <LiquidityCard
+            title="Cluster dominante"
+            value="BTC Core"
+            sub="Maior concentração institucional."
+            tone="neutral"
+          />
+          <LiquidityCard
+            title="Pressão instantânea"
+            value="+18.6%"
+            sub="Fluxo favorecendo continuação curta."
+            tone="positive"
+          />
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.26fr 0.62fr",
+            gap: 12,
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background:
+                "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+              padding: 14,
+              minHeight: 220,
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                color: "#edf5ff",
+                fontSize: 13,
+                fontWeight: 900,
+                marginBottom: 12,
+              }}
+            >
+              {activeLiquidityTab === "Map" && "Mapa de Liquidez"}
+              {activeLiquidityTab === "Heatmap" && "Heatmap de Intensidade"}
+              {activeLiquidityTab === "Clusters" && "Clusters Relevantes"}
+              {activeLiquidityTab === "Eventos" && "Eventos de Liquidez"}
+            </div>
+
+            {activeLiquidityTab === "Heatmap" ? (
+              <HeatmapBars />
+            ) : activeLiquidityTab === "Eventos" ? (
+              <div style={{ display: "grid", gap: 8 }}>
+                {events.slice(0, 6).map((event, i) => (
+                  <div
+                    key={`${event.time}-${i}-liq`}
+                    style={{
+                      borderRadius: 12,
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      background:
+                        "linear-gradient(180deg, rgba(11,17,32,0.98), rgba(8,12,22,0.98))",
+                      padding: 12,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#8da1c8",
+                          fontSize: 11,
+                          fontWeight: 800,
+                        }}
+                      >
+                        {event.time}
+                      </span>
+                      <EventToneBadge tone={event.tone} />
+                    </div>
+                    <div
+                      style={{
+                        color: "#eef6ff",
+                        fontSize: 12,
+                        fontWeight: 800,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {event.title}
+                    </div>
+                    <div
+                      style={{
+                        color: "#7f93b7",
+                        fontSize: 11,
+                      }}
+                    >
+                      {event.tag}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  height: 182,
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  background:
+                    "radial-gradient(circle at 50% 30%, rgba(45,226,255,0.18), transparent 30%), radial-gradient(circle at 72% 52%, rgba(39,245,157,0.18), transparent 26%), radial-gradient(circle at 36% 70%, rgba(247,201,72,0.16), transparent 24%), linear-gradient(180deg, rgba(5,10,20,0.95), rgba(7,11,20,0.98))",
+                }}
+              />
+            )}
+          </div>
+
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background:
+                "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+              padding: 14,
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                color: "#edf5ff",
+                fontSize: 13,
+                fontWeight: 900,
+                marginBottom: 12,
+              }}
+            >
+              Leitura rápida
+            </div>
+
+            <div style={{ display: "grid", gap: 10 }}>
+              {[
+                ["Liquidez acima", "Pesada", ui.red],
+                ["Liquidez abaixo", "Saudável", ui.green],
+                ["Risco curto", "Controlado", ui.yellow],
+                ["Confluência", "8 / 9", ui.cyan],
+                ["Fluxo", "Positivo", ui.green],
+                ["Volatilidade", "Moderada", "#dce8ff"],
+              ].map(([k, v, c]) => (
+                <div
+                  key={k}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "8px 0",
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
+                  <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>
+                    {v}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LeftPanelMetricCard({
   title,
   value,
@@ -1645,6 +2014,9 @@ function LeftDynamicPanel({ events }: { events: ScannerEvent[] }) {
           },
         ];
 
+  const isExpandedTab =
+    activeTab === "Eventos" || activeTab === "Liquidez Avançada";
+
   return (
     <div
       style={{
@@ -1696,9 +2068,19 @@ function LeftDynamicPanel({ events }: { events: ScannerEvent[] }) {
         </span>
       </div>
 
-      <div style={{ padding: 10, display: "grid", gap: 10, flex: 1, minHeight: 0 }}>
+      <div
+        style={{
+          padding: 10,
+          display: "grid",
+          gap: 10,
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
         {activeTab === "Eventos" ? (
           <EventRealtimePanel events={events} />
+        ) : activeTab === "Liquidez Avançada" ? (
+          <LiquidityExpandedPanel events={events} />
         ) : (
           <>
             <div
@@ -1891,374 +2273,6 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
   );
 }
 
-function LiquidityCard({
-  title,
-  value,
-  sub,
-  tone = "neutral",
-}: {
-  title: string;
-  value: string;
-  sub: string;
-  tone?: "positive" | "warning" | "neutral";
-}) {
-  const color =
-    tone === "positive" ? ui.green : tone === "warning" ? ui.yellow : ui.cyan;
-
-  return (
-    <div
-      style={{
-        borderRadius: 14,
-        border: "1px solid rgba(255,255,255,0.06)",
-        background:
-          "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
-        padding: 12,
-        minHeight: 78,
-      }}
-    >
-      <div
-        style={{
-          color: "#7f93b7",
-          fontSize: 10,
-          fontWeight: 900,
-          letterSpacing: 0.7,
-          textTransform: "uppercase",
-          marginBottom: 8,
-        }}
-      >
-        {title}
-      </div>
-
-      <div
-        style={{
-          color,
-          fontSize: 16,
-          fontWeight: 900,
-          marginBottom: 6,
-        }}
-      >
-        {value}
-      </div>
-
-      <div
-        style={{
-          color: "#9bb0d4",
-          fontSize: 11,
-          lineHeight: 1.3,
-        }}
-      >
-        {sub}
-      </div>
-    </div>
-  );
-}
-
-function HeatmapBars() {
-  const rows = [
-    { label: "72.200", value: 88, color: "rgba(49,233,255,0.85)" },
-    { label: "71.800", value: 72, color: "rgba(39,245,157,0.82)" },
-    { label: "71.200", value: 58, color: "rgba(247,201,72,0.82)" },
-    { label: "70.800", value: 96, color: "rgba(255,107,134,0.82)" },
-    { label: "70.300", value: 66, color: "rgba(49,233,255,0.85)" },
-    { label: "69.900", value: 47, color: "rgba(39,245,157,0.82)" },
-  ];
-
-  return (
-    <div style={{ display: "grid", gap: 10 }}>
-      {rows.map((r) => (
-        <div
-          key={r.label}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "64px 1fr 46px",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <span
-            style={{
-              color: "#9ab0d4",
-              fontSize: 12,
-              fontFamily: "monospace",
-            }}
-          >
-            {r.label}
-          </span>
-
-          <div
-            style={{
-              height: 12,
-              borderRadius: 999,
-              background: "rgba(255,255,255,0.06)",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                width: `${r.value}%`,
-                height: "100%",
-                borderRadius: 999,
-                background: r.color,
-                boxShadow: "0 0 18px rgba(255,255,255,0.05)",
-              }}
-            />
-          </div>
-
-          <span
-            style={{
-              color: "#e9f3ff",
-              fontSize: 11,
-              fontWeight: 800,
-              textAlign: "right",
-            }}
-          >
-            {r.value}%
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function LiquiditySection({ events }: { events: ScannerEvent[] }) {
-  const [activeLiquidityTab, setActiveLiquidityTab] = useState("Heatmap");
-
-  return (
-    <div
-      style={{
-        height: "100%",
-        borderRadius: 12,
-        border: `1px solid ${ui.border}`,
-        background:
-          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <div
-        style={{
-          minHeight: 42,
-          padding: "6px 14px",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          borderBottom: `1px solid ${ui.border}`,
-          flexWrap: "wrap",
-          flexShrink: 0,
-        }}
-      >
-        <span
-          style={{
-            color: "#f2f7ff",
-            fontSize: 13,
-            fontWeight: 900,
-            marginRight: 6,
-          }}
-        >
-          Liquidez Avançada
-        </span>
-
-        {LIQUIDITY_TABS.map((tab) => (
-          <TopButton
-            key={tab}
-            active={activeLiquidityTab === tab}
-            onClick={() => setActiveLiquidityTab(tab)}
-          >
-            {tab}
-          </TopButton>
-        ))}
-      </div>
-
-      <div style={{ padding: 12, display: "grid", gap: 12, flex: 1, minHeight: 0 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: 10,
-          }}
-        >
-          <LiquidityCard
-            title="Liquidez superior"
-            value="$72.200"
-            sub="Bloco vendedor forte acima do preço atual."
-            tone="warning"
-          />
-          <LiquidityCard
-            title="Liquidez inferior"
-            value="$69.800"
-            sub="Absorção compradora ganhando espessura."
-            tone="positive"
-          />
-          <LiquidityCard
-            title="Cluster dominante"
-            value="BTC Core"
-            sub="Maior concentração institucional."
-            tone="neutral"
-          />
-          <LiquidityCard
-            title="Pressão instantânea"
-            value="+18.6%"
-            sub="Fluxo favorecendo continuação curta."
-            tone="positive"
-          />
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.26fr 0.62fr",
-            gap: 12,
-            flex: 1,
-            minHeight: 0,
-          }}
-        >
-          <div
-            style={{
-              borderRadius: 14,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background:
-                "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
-              padding: 14,
-              minHeight: 220,
-              overflowY: "auto",
-            }}
-          >
-            <div
-              style={{
-                color: "#edf5ff",
-                fontSize: 13,
-                fontWeight: 900,
-                marginBottom: 12,
-              }}
-            >
-              {activeLiquidityTab === "Map" && "Mapa de Liquidez"}
-              {activeLiquidityTab === "Heatmap" && "Heatmap de Intensidade"}
-              {activeLiquidityTab === "Clusters" && "Clusters Relevantes"}
-              {activeLiquidityTab === "Eventos" && "Eventos de Liquidez"}
-            </div>
-
-            {activeLiquidityTab === "Heatmap" ? (
-              <HeatmapBars />
-            ) : activeLiquidityTab === "Eventos" ? (
-              <div style={{ display: "grid", gap: 8 }}>
-                {events.slice(0, 6).map((event, i) => (
-                  <div
-                    key={`${event.time}-${i}-liq`}
-                    style={{
-                      borderRadius: 12,
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      background:
-                        "linear-gradient(180deg, rgba(11,17,32,0.98), rgba(8,12,22,0.98))",
-                      padding: 12,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 6,
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: "#8da1c8",
-                          fontSize: 11,
-                          fontWeight: 800,
-                        }}
-                      >
-                        {event.time}
-                      </span>
-                      <EventToneBadge tone={event.tone} />
-                    </div>
-                    <div
-                      style={{
-                        color: "#eef6ff",
-                        fontSize: 12,
-                        fontWeight: 800,
-                        marginBottom: 4,
-                      }}
-                    >
-                      {event.title}
-                    </div>
-                    <div
-                      style={{
-                        color: "#7f93b7",
-                        fontSize: 11,
-                      }}
-                    >
-                      {event.tag}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div
-                style={{
-                  height: 182,
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.05)",
-                  background:
-                    "radial-gradient(circle at 50% 30%, rgba(45,226,255,0.18), transparent 30%), radial-gradient(circle at 72% 52%, rgba(39,245,157,0.18), transparent 26%), radial-gradient(circle at 36% 70%, rgba(247,201,72,0.16), transparent 24%), linear-gradient(180deg, rgba(5,10,20,0.95), rgba(7,11,20,0.98))",
-                }}
-              />
-            )}
-          </div>
-
-          <div
-            style={{
-              borderRadius: 14,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background:
-                "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
-              padding: 14,
-              overflowY: "auto",
-            }}
-          >
-            <div
-              style={{
-                color: "#edf5ff",
-                fontSize: 13,
-                fontWeight: 900,
-                marginBottom: 12,
-              }}
-            >
-              Leitura rápida
-            </div>
-
-            <div style={{ display: "grid", gap: 10 }}>
-              {[
-                ["Liquidez acima", "Pesada", ui.red],
-                ["Liquidez abaixo", "Saudável", ui.green],
-                ["Risco curto", "Controlado", ui.yellow],
-                ["Confluência", "8 / 9", ui.cyan],
-                ["Fluxo", "Positivo", ui.green],
-                ["Volatilidade", "Moderada", "#dce8ff"],
-              ].map(([k, v, c]) => (
-                <div
-                  key={k}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    padding: "8px 0",
-                    borderBottom: "1px solid rgba(255,255,255,0.05)",
-                  }}
-                >
-                  <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
-                  <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>
-                    {v}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SecondPageSection({
   events,
 }: {
@@ -2268,22 +2282,12 @@ function SecondPageSection({
     <div
       style={{
         height: "100%",
-        display: "grid",
-        gridTemplateRows: "0.92fr 1.08fr",
-        gap: 10,
         padding: 10,
         background:
           "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
-        alignItems: "stretch",
       }}
     >
-      <div style={{ minWidth: 0, minHeight: 0 }}>
-        <LeftDynamicPanel events={events} />
-      </div>
-
-      <div style={{ minWidth: 0, minHeight: 0 }}>
-        <LiquiditySection events={events} />
-      </div>
+      <LeftDynamicPanel events={events} />
     </div>
   );
 }
@@ -2372,13 +2376,13 @@ function ChartPanel({
     });
     ma50.setData(computeSMA(candles, 50).map((d) => ({ time: d.time as Time, value: d.value })));
 
-    const ema9 = mc.addLineSeries({
+    const ema100 = mc.addLineSeries({
       color: "#22d3ee",
       lineWidth: 1,
       priceLineVisible: false,
       lastValueVisible: false,
     });
-    ema9.setData(computeEMA(candles, 100).map((d) => ({ time: d.time as Time, value: d.value })));
+    ema100.setData(computeEMA(candles, 100).map((d) => ({ time: d.time as Time, value: d.value })));
 
     mc.timeScale().fitContent();
 
@@ -2639,7 +2643,7 @@ function ChartPanel({
             left: 0,
             right: 0,
             bottom: 0,
-            height: 148,
+            height: 140,
             pointerEvents: "none",
             opacity: 0.95,
             borderTop: "1px solid rgba(255,255,255,0.05)",
@@ -2651,7 +2655,7 @@ function ChartPanel({
           style={{
             position: "absolute",
             left: 14,
-            bottom: 126,
+            bottom: 118,
             color: "#7f93b7",
             fontSize: 10,
             fontFamily: "monospace",
@@ -2699,7 +2703,7 @@ function ChartPanel({
         </div>
 
         <div style={{ width: "100%", minWidth: 0, overflow: "hidden" }}>
-          <div ref={rsiRef} style={{ height: 170, width: "100%" }} />
+          <div ref={rsiRef} style={{ height: 112, width: "100%" }} />
         </div>
       </div>
     </div>
@@ -2783,6 +2787,7 @@ export default function AtlasChartPro2() {
   );
 
   const pageHeight = "calc(100vh - 114px)";
+  const rightColWidth = 320;
 
   return (
     <div
@@ -2830,7 +2835,7 @@ export default function AtlasChartPro2() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) 258px",
+              gridTemplateColumns: `minmax(0, 1fr) ${rightColWidth}px`,
               gridTemplateRows: `${pageHeight} ${pageHeight}`,
               minHeight: `calc((${pageHeight}) * 2)`,
             }}
