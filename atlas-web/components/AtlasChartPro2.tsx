@@ -995,7 +995,7 @@ function ScoreBar({
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
       <div
         style={{
-          width: 60,
+          width: 64,
           height: 6,
           background: "rgba(255,255,255,0.08)",
           borderRadius: 999,
@@ -1013,7 +1013,7 @@ function ScoreBar({
       </div>
       <span
         style={{
-          width: 44,
+          width: 48,
           textAlign: "right",
           fontSize: 12,
           fontFamily: "monospace",
@@ -1026,67 +1026,25 @@ function ScoreBar({
   );
 }
 
-function EventToneBadge({ tone }: { tone: ScannerEvent["tone"] }) {
-  const map = {
-    positive: { bg: "rgba(39,245,157,0.12)", color: ui.green, text: "Alta" },
-    warning: { bg: "rgba(247,201,72,0.12)", color: ui.yellow, text: "Atenção" },
-    neutral: { bg: "rgba(45,226,255,0.10)", color: ui.cyan, text: "Info" },
-  }[tone];
+function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
+  const [searchTerm, setSearchTerm] = useState("");
 
-  return (
-    <span
-      style={{
-        padding: "3px 8px",
-        borderRadius: 999,
-        background: map.bg,
-        color: map.color,
-        fontSize: 10,
-        fontWeight: 900,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {map.text}
-    </span>
+  const list = useMemo(() => {
+    const expanded: AssetScore[] = [];
+    for (let i = 0; i < 3; i++) expanded.push(...assets);
+    return expanded;
+  }, [assets]);
+
+  const filtered = useMemo(() => {
+    if (!searchTerm.trim()) return list;
+    const q = searchTerm.toLowerCase();
+    return list.filter((asset) => asset.symbol.toLowerCase().includes(q));
+  }, [list, searchTerm]);
+
+  const sparklines = useMemo(
+    () => filtered.map((a) => generateSparkline(24, 40 + Math.random() * 40, a.trend)),
+    [filtered]
   );
-}
-
-function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
-  const rows = events.slice(0, 7).map((event, index) => {
-    const amountBase = [67.0, 23.1, 234.7, 0, 67.8, 45.6, 125.4][index] ?? 42.8;
-    const priceBase = [65508, 65395, 65385, 65420, 65380, 65400, 65450][index] ?? 65410;
-    const exchangeBase = [
-      "OKX",
-      "Binance",
-      "OKX",
-      "Coinbase Pro",
-      "Bybit",
-      "Kraken",
-      "Binance",
-    ][index] ?? "Exchange";
-    const severityWidth = [58, 28, 72, 52, 88, 33, 78][index] ?? 50;
-    const severityLabel =
-      index % 3 === 0 ? "Baixo" : index % 3 === 1 ? "Alto" : "Médio";
-    const rightColor =
-      severityLabel === "Alto"
-        ? ui.red
-        : severityLabel === "Médio"
-        ? ui.yellow
-        : ui.green;
-
-    const leftDot =
-      event.tone === "positive" ? ui.green : event.tone === "warning" ? ui.yellow : "#ff5050";
-
-    return {
-      ...event,
-      amountBase,
-      priceBase,
-      exchangeBase,
-      severityWidth,
-      severityLabel,
-      rightColor,
-      leftDot,
-    };
-  });
 
   return (
     <div
@@ -1095,7 +1053,7 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
         borderRadius: 12,
         border: `1px solid ${ui.border}`,
         background:
-          "linear-gradient(180deg, rgba(6,10,18,0.98), rgba(4,7,14,0.98))",
+          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -1103,182 +1061,189 @@ function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
     >
       <div
         style={{
-          height: 42,
-          padding: "0 12px",
+          padding: "10px 12px 8px",
           borderBottom: `1px solid ${ui.border}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          background:
-            "linear-gradient(180deg, rgba(7,14,25,0.98), rgba(6,10,18,0.98))",
+          display: "grid",
+          gap: 8,
           flexShrink: 0,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 178px",
+            gap: 10,
+            alignItems: "center",
+          }}
+        >
           <span
             style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "#00e117",
-              display: "inline-block",
-            }}
-          />
-          <span style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>
-            Eventos em Tempo Real
-          </span>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span
-            style={{
-              padding: "4px 8px",
-              borderRadius: 6,
-              background: "rgba(0,225,23,0.08)",
-              color: "#00e117",
-              fontSize: 10,
+              color: "#f1f7ff",
+              fontSize: 13,
               fontWeight: 900,
+              letterSpacing: 0.3,
             }}
           >
-            Live
+            MESTRE SCANNER
           </span>
-          <span style={{ color: "#7f93b7", fontSize: 11, fontWeight: 700 }}>
-            {rows.length} eventos
-          </span>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              height: 32,
+              padding: "0 10px",
+              borderRadius: 9,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.03)",
+            }}
+          >
+            <Search size={13} color="#8ca0c6" />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar moeda..."
+              style={{
+                flex: 1,
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#e9f3ff",
+                fontSize: 11,
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.1fr 0.92fr 0.98fr 0.92fr 1fr",
+            gap: 10,
+            color: "#6c7da2",
+            fontSize: 11,
+            paddingTop: 2,
+          }}
+        >
+          <span>Top Forge</span>
+          <span>Score</span>
+          <span>Preço</span>
+          <span>RSI / MFI</span>
+          <span>Mini Chart</span>
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: 8, display: "grid", gap: 8 }}>
-        {rows.map((event, i) => (
+      <div style={{ flex: 1, overflowY: "auto", display: "grid" }}>
+        {filtered.map((asset, i) => (
           <div
-            key={`${event.time}-${i}-big`}
+            key={`${asset.symbol}-${i}`}
             style={{
-              position: "relative",
-              borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background:
-                "linear-gradient(180deg, rgba(9,14,24,0.98), rgba(7,11,20,0.98))",
-              padding: "12px 12px 12px 28px",
-              overflow: "hidden",
-              minHeight: 62,
+              display: "grid",
+              gridTemplateColumns: "1.1fr 0.92fr 0.98fr 0.92fr 1fr",
+              gap: 10,
+              padding: "11px 12px",
+              borderBottom: "1px solid rgba(255,255,255,0.045)",
+              alignItems: "center",
             }}
           >
-            <div
-              style={{
-                position: "absolute",
-                left: 10,
-                top: 18,
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                background: event.leftDot,
-                boxShadow: `0 0 10px ${event.leftDot}55`,
-              }}
-            />
+            <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: asset.color,
+                  display: "inline-block",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  color: "#edf5ff",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {asset.symbol}
+              </span>
+            </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1.2fr 0.8fr 0.54fr",
-                gap: 12,
-                alignItems: "center",
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    color: "#f0f7ff",
-                    fontSize: 12,
-                    fontWeight: 900,
-                    lineHeight: 1.2,
-                    marginBottom: 3,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {event.title}
-                </div>
-                <div
-                  style={{
-                    color: "#7f93b7",
-                    fontSize: 11,
-                  }}
-                >
-                  {event.exchangeBase}
-                </div>
-              </div>
+            <ScoreBar value={asset.volumeScore} color={asset.color} />
 
-              <div style={{ textAlign: "center" }}>
-                <div
-                  style={{
-                    color: "#eef5ff",
-                    fontSize: 12,
-                    fontWeight: 900,
-                    fontFamily: "monospace",
-                  }}
-                >
-                  {event.amountBase ? `${event.amountBase.toFixed(1)} BTC` : "—"}
-                </div>
-                <div
-                  style={{
-                    color: "#7f93b7",
-                    fontSize: 11,
-                    fontFamily: "monospace",
-                  }}
-                >
-                  ${event.priceBase.toLocaleString()}
-                </div>
-              </div>
-
-              <div style={{ textAlign: "right" }}>
-                <div
-                  style={{
-                    color: "#dce8ff",
-                    fontSize: 12,
-                    fontFamily: "monospace",
-                    marginBottom: 4,
-                  }}
-                >
-                  {event.time}
-                </div>
-                <div
-                  style={{
-                    color: event.rightColor,
-                    fontSize: 12,
-                    fontWeight: 900,
-                  }}
-                >
-                  {event.severityLabel}
-                </div>
-              </div>
+            <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+              <span
+                style={{
+                  color: "#eef5ff",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                ${asset.price.toLocaleString()}
+              </span>
+              <span
+                style={{
+                  color: asset.change >= 0 ? ui.green : ui.red,
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  fontWeight: 800,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {asset.change >= 0 ? "+" : ""}
+                {asset.change.toFixed(1)}%
+              </span>
             </div>
 
             <div
               style={{
-                marginTop: 10,
-                height: 3,
-                borderRadius: 999,
-                background: "rgba(255,255,255,0.05)",
-                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                minWidth: 0,
               }}
             >
-              <div
+              {asset.trend === "up" ? (
+                <TrendingUp size={11} color={ui.green} />
+              ) : asset.trend === "down" ? (
+                <TrendingDown size={11} color={ui.red} />
+              ) : (
+                <Activity size={11} color="#a2b3d3" />
+              )}
+              <span
                 style={{
-                  width: `${event.severityWidth}%`,
-                  height: "100%",
-                  borderRadius: 999,
-                  background:
-                    event.severityLabel === "Alto"
-                      ? "linear-gradient(90deg, #29ff72, #ff3c57)"
-                      : event.severityLabel === "Médio"
-                      ? "linear-gradient(90deg, #ffb300, #ff4b57)"
-                      : "linear-gradient(90deg, #29ff72, #24d6ff)",
+                  color: "#8fd6ff",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  whiteSpace: "nowrap",
                 }}
-              />
+              >
+                {asset.rsiMfi.toFixed(3)}
+              </span>
+            </div>
+
+            <div style={{ minWidth: 0, overflow: "hidden" }}>
+              <MiniSparkline data={sparklines[i]} trend={asset.trend} />
             </div>
           </div>
         ))}
+
+        {filtered.length === 0 && (
+          <div
+            style={{
+              padding: 18,
+              color: "#7f93b7",
+              fontSize: 12,
+            }}
+          >
+            Nenhuma moeda encontrada.
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2014,9 +1979,6 @@ function LeftDynamicPanel({ events }: { events: ScannerEvent[] }) {
           },
         ];
 
-  const isExpandedTab =
-    activeTab === "Eventos" || activeTab === "Liquidez Avançada";
-
   return (
     <div
       style={{
@@ -2113,161 +2075,6 @@ function LeftDynamicPanel({ events }: { events: ScannerEvent[] }) {
             </div>
           </>
         )}
-      </div>
-    </div>
-  );
-}
-
-function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
-  const list = useMemo(() => {
-    const expanded: AssetScore[] = [];
-    for (let i = 0; i < 3; i++) expanded.push(...assets);
-    return expanded;
-  }, [assets]);
-
-  const sparklines = useMemo(
-    () => list.map((a) => generateSparkline(24, 40 + Math.random() * 40, a.trend)),
-    [list]
-  );
-
-  return (
-    <div
-      style={{
-        height: "100%",
-        borderRadius: 12,
-        border: `1px solid ${ui.border}`,
-        background:
-          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          height: 40,
-          padding: "0 12px",
-          borderBottom: `1px solid ${ui.border}`,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          flexShrink: 0,
-        }}
-      >
-        <span
-          style={{
-            color: "#f1f7ff",
-            fontSize: 13,
-            fontWeight: 900,
-            letterSpacing: 0.3,
-          }}
-        >
-          MESTRE SCANNER
-        </span>
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 0.84fr 0.84fr 0.8fr 0.96fr",
-          gap: 8,
-          padding: "8px 12px",
-          borderBottom: `1px solid ${ui.border}`,
-          color: "#6c7da2",
-          fontSize: 11,
-          flexShrink: 0,
-        }}
-      >
-        <span>Top Forge</span>
-        <span>Score</span>
-        <span>Preço</span>
-        <span>RSI / MFI</span>
-        <span>Mini Chart</span>
-      </div>
-
-      <div style={{ flex: 1, overflowY: "auto", display: "grid" }}>
-        {list.map((asset, i) => (
-          <div
-            key={`${asset.symbol}-${i}`}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 0.84fr 0.84fr 0.8fr 0.96fr",
-              gap: 8,
-              padding: "10px 12px",
-              borderBottom: "1px solid rgba(255,255,255,0.045)",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: asset.color,
-                  display: "inline-block",
-                  flexShrink: 0,
-                }}
-              />
-              <span style={{ color: "#edf5ff", fontSize: 12, fontWeight: 800 }}>
-                {asset.symbol}
-              </span>
-            </div>
-
-            <ScoreBar value={asset.volumeScore} color={asset.color} />
-
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span
-                style={{
-                  color: "#eef5ff",
-                  fontSize: 12,
-                  fontFamily: "monospace",
-                }}
-              >
-                ${asset.price.toLocaleString()}
-              </span>
-              <span
-                style={{
-                  color: asset.change >= 0 ? ui.green : ui.red,
-                  fontSize: 12,
-                  fontFamily: "monospace",
-                  fontWeight: 800,
-                }}
-              >
-                {asset.change >= 0 ? "+" : ""}
-                {asset.change.toFixed(1)}%
-              </span>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                minWidth: 0,
-              }}
-            >
-              {asset.trend === "up" ? (
-                <TrendingUp size={11} color={ui.green} />
-              ) : asset.trend === "down" ? (
-                <TrendingDown size={11} color={ui.red} />
-              ) : (
-                <Activity size={11} color="#a2b3d3" />
-              )}
-              <span
-                style={{
-                  color: "#8fd6ff",
-                  fontSize: 12,
-                  fontFamily: "monospace",
-                }}
-              >
-                {asset.rsiMfi.toFixed(3)}
-              </span>
-            </div>
-
-            <MiniSparkline data={sparklines[i]} trend={asset.trend} />
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -2787,7 +2594,8 @@ export default function AtlasChartPro2() {
   );
 
   const pageHeight = "calc(100vh - 114px)";
-  const rightColWidth = 320;
+  const topRightWidth = 320;
+  const bottomRightWidth = 380;
 
   return (
     <div
@@ -2835,59 +2643,66 @@ export default function AtlasChartPro2() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: `minmax(0, 1fr) ${rightColWidth}px`,
+              gridTemplateColumns: "minmax(0, 1fr)",
               gridTemplateRows: `${pageHeight} ${pageHeight}`,
               minHeight: `calc((${pageHeight}) * 2)`,
             }}
           >
             <div
               style={{
+                display: "grid",
+                gridTemplateColumns: `minmax(0, 1fr) ${topRightWidth}px`,
                 minWidth: 0,
                 minHeight: 0,
                 borderBottom: `1px solid ${ui.border}`,
               }}
             >
-              <ChartPanel
-                candles={candles}
-                indicators={indicators}
-                selectedObject={selectedObject}
-                mode={mode}
-              />
+              <div style={{ minWidth: 0, minHeight: 0 }}>
+                <ChartPanel
+                  candles={candles}
+                  indicators={indicators}
+                  selectedObject={selectedObject}
+                  mode={mode}
+                />
+              </div>
+
+              <div
+                style={{
+                  minWidth: 0,
+                  minHeight: 0,
+                  borderLeft: `1px solid ${ui.border}`,
+                  background:
+                    "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+                }}
+              >
+                <AIInsightPanel insight={aiInsight} />
+              </div>
             </div>
 
             <div
               style={{
+                display: "grid",
+                gridTemplateColumns: `minmax(0, 1fr) ${bottomRightWidth}px`,
                 minWidth: 0,
                 minHeight: 0,
-                borderLeft: `1px solid ${ui.border}`,
-                borderBottom: `1px solid ${ui.border}`,
-                background:
-                  "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
               }}
             >
-              <AIInsightPanel insight={aiInsight} />
-            </div>
+              <div style={{ minWidth: 0, minHeight: 0 }}>
+                <SecondPageSection events={scannerEvents} />
+              </div>
 
-            <div
-              style={{
-                minWidth: 0,
-                minHeight: 0,
-              }}
-            >
-              <SecondPageSection events={scannerEvents} />
-            </div>
-
-            <div
-              style={{
-                minWidth: 0,
-                minHeight: 0,
-                borderLeft: `1px solid ${ui.border}`,
-                background:
-                  "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
-                padding: 10,
-              }}
-            >
-              <ScannerPanelContinuous assets={scannerAssets} />
+              <div
+                style={{
+                  minWidth: 0,
+                  minHeight: 0,
+                  borderLeft: `1px solid ${ui.border}`,
+                  background:
+                    "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+                  padding: 10,
+                }}
+              >
+                <ScannerPanelContinuous assets={scannerAssets} />
+              </div>
             </div>
           </div>
         </div>
