@@ -1449,7 +1449,7 @@ function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
               </span>
             </div>
 
-            <ScoreBar value={asset.volumeScore} color={asset.color} />
+            <ScoreBar value={asset.volumeScore} />
 
             <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
               <span
