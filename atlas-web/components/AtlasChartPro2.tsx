@@ -2557,7 +2557,7 @@ function ModuleSummaryCards({
 }) {
   const cardsByModule: Record<
     TopModuleKey,
-    { title: string; value: string; sub: string; color: string }[]
+    { title: string; value: string; sub: string; color: string; glow?: string }[]
   > = {
     Fluxo: [
       {
@@ -2663,20 +2663,23 @@ function ModuleSummaryCards({
       {
         title: "Euler Core",
         value: "Sincronizado",
-        sub: "Proporção e estrutura conversando bem.",
-        color: ui.green,
+        sub: "Módulo matemático em leitura estável.",
+        color: ui.cyan,
+        glow: "0 0 18px rgba(45,226,255,0.18)",
       },
       {
         title: "Geometria",
         value: "Limpa",
-        sub: "Movimento com boa leitura estrutural.",
-        color: ui.cyan,
+        sub: "Proporção e forma alinhadas no ativo.",
+        color: ui.yellow,
+        glow: "0 0 18px rgba(247,201,72,0.16)",
       },
       {
         title: "Pressão",
         value: "Moderada",
         sub: "Sem distorção excessiva no momento.",
-        color: ui.yellow,
+        color: ui.green,
+        glow: "0 0 18px rgba(39,245,157,0.14)",
       },
     ],
     Liquidez: [
@@ -2701,6 +2704,8 @@ function ModuleSummaryCards({
     ],
   };
 
+  const isEuler = activeModule === "Euler";
+
   return (
     <div
       style={{
@@ -2710,13 +2715,77 @@ function ModuleSummaryCards({
       }}
     >
       {cardsByModule[activeModule].map((card) => (
-        <LeftPanelMetricCard
+        <div
           key={card.title}
-          title={card.title}
-          value={card.value}
-          sub={card.sub}
-          color={card.color}
-        />
+          style={{
+            borderRadius: 14,
+            border: isEuler
+              ? "1px solid rgba(45,226,255,0.16)"
+              : "1px solid rgba(255,255,255,0.06)",
+            background: isEuler
+              ? "linear-gradient(180deg, rgba(5,13,25,0.98), rgba(3,8,18,0.98))"
+              : "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+            padding: 12,
+            minHeight: 84,
+            boxShadow: isEuler ? card.glow || "none" : "none",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          {isEuler && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                pointerEvents: "none",
+                background:
+                  "linear-gradient(90deg, transparent, rgba(45,226,255,0.05), transparent)",
+                opacity: 0.55,
+              }}
+            />
+          )}
+
+          <div
+            style={{
+              color: "#7f93b7",
+              fontSize: 10,
+              fontWeight: 900,
+              letterSpacing: 0.7,
+              textTransform: "uppercase",
+              marginBottom: 8,
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            {card.title}
+          </div>
+
+          <div
+            style={{
+              color: card.color,
+              fontSize: isEuler ? 18 : 16,
+              fontWeight: 900,
+              marginBottom: 6,
+              position: "relative",
+              zIndex: 1,
+              textShadow: isEuler ? `0 0 12px ${card.color}44` : "none",
+            }}
+          >
+            {card.value}
+          </div>
+
+          <div
+            style={{
+              color: "#9bb0d4",
+              fontSize: 11,
+              lineHeight: 1.3,
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            {card.sub}
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -2766,6 +2835,379 @@ function ModuleCenterPanel({
     return (
       <div style={{ height: "100%", padding: 10 }}>
         <LiquidityExpandedPanel events={events} />
+      </div>
+    );
+  }
+
+  if (activeModule === "Euler") {
+    const bars = [52, 74, 61, 88, 46, 67, 58, 82, 49, 71, 63, 91, 56, 69];
+    const line1 = Array.from({ length: 40 }, (_, i) => {
+      const x = (i / 39) * 860;
+      const y = 168 + Math.sin(i / 3.2) * 24 + Math.cos(i / 5.5) * 14;
+      return `${x},${y}`;
+    }).join(" ");
+
+    const line2 = Array.from({ length: 40 }, (_, i) => {
+      const x = (i / 39) * 860;
+      const y = 192 + Math.cos(i / 3.8) * 28 + Math.sin(i / 6.2) * 10;
+      return `${x},${y}`;
+    }).join(" ");
+
+    return (
+      <div
+        style={{
+          height: "100%",
+          padding: 10,
+          background:
+            "linear-gradient(180deg, rgba(5,8,16,0.98), rgba(2,6,14,0.98))",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            borderRadius: 14,
+            border: "1px solid rgba(45,226,255,0.12)",
+            background:
+              "linear-gradient(180deg, rgba(4,10,20,0.98), rgba(2,6,12,0.98))",
+            overflow: "hidden",
+            display: "grid",
+            gridTemplateRows: "auto auto 1fr auto",
+            gap: 10,
+            padding: 10,
+            boxShadow: "0 0 30px rgba(45,226,255,0.08)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "4px 4px 0",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  color: "#eef6ff",
+                  fontSize: 15,
+                  fontWeight: 900,
+                  letterSpacing: 0.6,
+                }}
+              >
+                Euler Quantum Interface
+              </div>
+              <div
+                style={{
+                  color: "#6f88af",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: 0.5,
+                  textTransform: "uppercase",
+                }}
+              >
+                Scientific module • atlas sync active
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <TopButton active>Σ Fórmula</TopButton>
+              <TopButton>Sync</TopButton>
+              <span
+                style={{
+                  color: ui.cyan,
+                  fontSize: 10,
+                  fontWeight: 900,
+                  padding: "4px 8px",
+                  borderRadius: 999,
+                  background: "rgba(45,226,255,0.10)",
+                  border: "1px solid rgba(45,226,255,0.18)",
+                  boxShadow: "0 0 12px rgba(45,226,255,0.12)",
+                }}
+              >
+                Módulo Ativo
+              </span>
+            </div>
+          </div>
+
+          <ModuleSummaryCards activeModule={activeModule} insight={insight} />
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.28fr 0.72fr",
+              gap: 10,
+              minHeight: 0,
+            }}
+          >
+            <div
+              style={{
+                borderRadius: 14,
+                border: "1px solid rgba(45,226,255,0.12)",
+                background:
+                  "radial-gradient(circle at 50% 0%, rgba(45,226,255,0.08), transparent 35%), linear-gradient(180deg, rgba(6,12,24,0.98), rgba(3,7,14,0.98))",
+                overflow: "hidden",
+                position: "relative",
+                minHeight: 0,
+              }}
+            >
+              <div
+                style={{
+                  padding: "12px 14px 8px",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      color: "#eff7ff",
+                      fontSize: 13,
+                      fontWeight: 900,
+                    }}
+                  >
+                    Euler Data Stream
+                  </div>
+                  <div
+                    style={{
+                      color: "#6f88af",
+                      fontSize: 10,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {insight.symbol} • previsão estrutural
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    color: ui.yellow,
+                    fontSize: 12,
+                    fontWeight: 900,
+                    textShadow: "0 0 10px rgba(247,201,72,0.35)",
+                  }}
+                >
+                  Score {insight.score}
+                </div>
+              </div>
+
+              <div style={{ padding: 12, height: "calc(100% - 58px)" }}>
+                <svg
+                  width="100%"
+                  height="100%"
+                  viewBox="0 0 860 330"
+                  preserveAspectRatio="none"
+                >
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <line
+                      key={`h-${i}`}
+                      x1="0"
+                      y1={i * 45}
+                      x2="860"
+                      y2={i * 45}
+                      stroke="rgba(255,255,255,0.045)"
+                      strokeWidth="1"
+                    />
+                  ))}
+
+                  {Array.from({ length: 15 }, (_, i) => (
+                    <line
+                      key={`v-${i}`}
+                      x1={i * 61.4}
+                      y1="0"
+                      x2={i * 61.4}
+                      y2="330"
+                      stroke="rgba(255,255,255,0.03)"
+                      strokeWidth="1"
+                    />
+                  ))}
+
+                  {bars.map((h, i) => {
+                    const x = 26 + i * 56;
+                    return (
+                      <rect
+                        key={i}
+                        x={x}
+                        y={300 - h}
+                        width="22"
+                        height={h}
+                        rx="4"
+                        fill={i % 2 === 0 ? "rgba(45,226,255,0.38)" : "rgba(247,201,72,0.28)"}
+                      />
+                    );
+                  })}
+
+                  <polyline
+                    points={line1}
+                    fill="none"
+                    stroke={ui.cyan}
+                    strokeWidth="2.2"
+                    style={{ filter: "drop-shadow(0 0 8px rgba(45,226,255,0.45))" }}
+                  />
+                  <polyline
+                    points={line2}
+                    fill="none"
+                    stroke={ui.yellow}
+                    strokeWidth="1.8"
+                    opacity="0.92"
+                    style={{ filter: "drop-shadow(0 0 8px rgba(247,201,72,0.30))" }}
+                  />
+
+                  <circle cx="822" cy="168" r="4.5" fill={ui.cyan} />
+                  <circle cx="822" cy="205" r="4.5" fill={ui.yellow} />
+                </svg>
+              </div>
+            </div>
+
+            <div
+              style={{
+                borderRadius: 14,
+                border: "1px solid rgba(45,226,255,0.12)",
+                background:
+                  "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(3,7,14,0.98))",
+                padding: 12,
+                overflowY: "auto",
+                boxShadow: "0 0 22px rgba(45,226,255,0.06)",
+              }}
+            >
+              <div
+                style={{
+                  color: "#edf6ff",
+                  fontSize: 13,
+                  fontWeight: 900,
+                  marginBottom: 10,
+                }}
+              >
+                Leitura do Módulo
+              </div>
+
+              <div style={{ display: "grid", gap: 6 }}>
+                {[
+                  ["Ativo", insight.symbol, "#dce8ff"],
+                  ["Score", `${insight.score}`, ui.green],
+                  ["Sinal", insight.signal, ui.yellow],
+                  ["Risco", insight.riskLevel, ui.red],
+                  ["Liquidez", insight.structure[2]?.value || "Médio", ui.cyan],
+                  ["Euler", insight.structure2[0]?.value || "Estável", ui.green],
+                ].map(([k, v, c]) => (
+                  <div
+                    key={k}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: "8px 0",
+                      borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
+                    <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>
+                      {v}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div
+                style={{
+                  marginTop: 14,
+                  borderRadius: "50%",
+                  width: 120,
+                  height: 120,
+                  marginInline: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background:
+                    "radial-gradient(circle at 50% 50%, rgba(45,226,255,0.22), rgba(45,226,255,0.05) 55%, transparent 72%)",
+                  border: "1px solid rgba(45,226,255,0.16)",
+                  boxShadow: "0 0 28px rgba(45,226,255,0.14)",
+                }}
+              >
+                <div style={{ textAlign: "center" }}>
+                  <div
+                    style={{
+                      color: ui.cyan,
+                      fontSize: 28,
+                      fontWeight: 900,
+                      lineHeight: 1,
+                      textShadow: "0 0 12px rgba(45,226,255,0.45)",
+                    }}
+                  >
+                    {insight.score}
+                  </div>
+                  <div
+                    style={{
+                      color: "#7f93b7",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: 0.8,
+                      textTransform: "uppercase",
+                      marginTop: 4,
+                    }}
+                  >
+                    Sincronia
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gap: 10,
+            }}
+          >
+            {[
+              ["Preço Atual", `$${insight.price.toLocaleString()}`, ui.cyan],
+              ["Previsão Euler", `$${(insight.price * 1.018).toLocaleString()}`, ui.yellow],
+              ["Vol. Médio", "1.24M", ui.green],
+              ["Máxima", `$${(insight.price * 1.032).toLocaleString()}`, "#dce8ff"],
+            ].map(([k, v, c]) => (
+              <div
+                key={k}
+                style={{
+                  borderRadius: 12,
+                  border: "1px solid rgba(45,226,255,0.10)",
+                  background:
+                    "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(3,7,14,0.98))",
+                  padding: 12,
+                }}
+              >
+                <div
+                  style={{
+                    color: "#6f88af",
+                    fontSize: 10,
+                    fontWeight: 900,
+                    letterSpacing: 0.7,
+                    textTransform: "uppercase",
+                    marginBottom: 8,
+                  }}
+                >
+                  {k}
+                </div>
+                <div
+                  style={{
+                    color: c as string,
+                    fontSize: 16,
+                    fontWeight: 900,
+                    textShadow:
+                      c === ui.cyan
+                        ? "0 0 10px rgba(45,226,255,0.25)"
+                        : c === ui.yellow
+                        ? "0 0 10px rgba(247,201,72,0.22)"
+                        : "none",
+                  }}
+                >
+                  {v}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -2892,7 +3334,6 @@ function ModuleCenterPanel({
     </div>
   );
 }
-
 function ChartPanel({
   candles,
   indicators,
