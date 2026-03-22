@@ -56,6 +56,7 @@ type TopModuleKey =
   | "Singularidade"
   | "IA Atlas"
   | "Scanner"
+  | "Mestre Scanner"
   | "Estrutura"
   | "Euler"
   | "Liquidez";
@@ -130,6 +131,7 @@ const TOP_MODULES: TopModuleKey[] = [
   "Singularidade",
   "IA Atlas",
   "Scanner",
+  "Mestre Scanner",
   "Estrutura",
   "Euler",
   "Liquidez",
@@ -580,6 +582,7 @@ function ModuleStrip({
     Singularidade: <BrainCircuit size={13} />,
     "IA Atlas": <Activity size={13} />,
     Scanner: <ScanSearch size={13} />,
+    "Mestre Scanner": <Star size={13} />,
     Estrutura: <Layers3 size={13} />,
     Euler: <Sigma size={13} />,
     Liquidez: <Droplets size={13} />,
@@ -661,6 +664,7 @@ function LeftToolbar() {
 
   return (
     <div
+      data-atlas-scroll="cyan"
       style={{
         width: 74,
         borderRight: `1px solid ${ui.border}`,
@@ -1225,7 +1229,7 @@ function ScannerPanelContinuous({
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto" }}>
+      <div data-atlas-scroll="cyan" style={{ flex: 1, overflowY: "auto" }}>
         {filtered.map((asset, i) => (
           <div
             key={asset.symbol}
@@ -1298,6 +1302,433 @@ function ScannerPanelContinuous({
     </div>
   );
 }
+
+
+function MasterScannerPanel({
+  assets,
+  selectedSymbol,
+  onSelectSymbol,
+}: {
+  assets: AssetScore[];
+  selectedSymbol: string;
+  onSelectSymbol: (symbol: string) => void;
+}) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [favoriteSymbols, setFavoriteSymbols] = useState<string[]>(["BTC", "ETH"]);
+  const [sortKey, setSortKey] = useState<"price" | "change" | "dominance">("dominance");
+  const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
+
+  const dominanceMap = useMemo<Record<string, number>>(
+    () => ({
+      BTC: 52.43,
+      ETH: 17.82,
+      SOL: 4.96,
+      BNB: 3.74,
+      XRP: 2.96,
+      DOGE: 1.98,
+      AVAX: 1.31,
+      ADA: 1.14,
+      DOT: 0.74,
+      ARB: 0.29,
+    }),
+    []
+  );
+
+  const toggleSort = (key: "price" | "change" | "dominance") => {
+    if (sortKey === key) {
+      setSortDir((prev) => (prev === "desc" ? "asc" : "desc"));
+      return;
+    }
+    setSortKey(key);
+    setSortDir("desc");
+  };
+
+  const toggleFavorite = (symbol: string) => {
+    setFavoriteSymbols((prev) =>
+      prev.includes(symbol) ? prev.filter((item) => item !== symbol) : [...prev, symbol]
+    );
+  };
+
+  const orderedRows = useMemo(() => {
+    const decorated = assets.map((asset) => ({
+      ...asset,
+      dominance: dominanceMap[asset.symbol] ?? Number((0.12 + asset.volumeScore / 1000).toFixed(2)),
+      favorite: favoriteSymbols.includes(asset.symbol),
+    }));
+
+    const btc = decorated.find((item) => item.symbol === "BTC");
+    let others = decorated.filter((item) => item.symbol !== "BTC");
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      others = others.filter((item) => item.symbol.toLowerCase().includes(q));
+    }
+
+    if (showFavoritesOnly) {
+      others = others.filter((item) => item.favorite);
+    }
+
+    others = [...others].sort((a, b) => {
+      const dir = sortDir === "desc" ? -1 : 1;
+      const av = sortKey === "price" ? a.price : sortKey === "change" ? a.change : a.dominance;
+      const bv = sortKey === "price" ? b.price : sortKey === "change" ? b.change : b.dominance;
+      if (av < bv) return 1 * dir;
+      if (av > bv) return -1 * dir;
+      return a.symbol.localeCompare(b.symbol);
+    });
+
+    return btc ? [btc, ...others] : others;
+  }, [assets, dominanceMap, favoriteSymbols, searchTerm, showFavoritesOnly, sortDir, sortKey]);
+
+  const marketPositive =
+    assets.filter((item) => item.change >= 0).length / Math.max(1, assets.length) >= 0.6;
+
+  return (
+    <div
+      style={{
+        height: "100%",
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background: "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          padding: "10px 14px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "grid",
+          gap: 10,
+          flexShrink: 0,
+          background:
+            "radial-gradient(circle at top, rgba(0,216,255,0.08), transparent 38%), linear-gradient(180deg, rgba(10,16,28,0.98), rgba(7,10,19,0.98))",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 220px auto auto",
+            gap: 10,
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <div style={{ color: "#f2f7ff", fontSize: 18, fontWeight: 900, letterSpacing: 0.5 }}>
+              MESTRE SCANNER
+            </div>
+            <div style={{ color: "#7f93b7", fontSize: 11 }}>
+              Dominância BTC em evidência, BTC fixo e ordenação por preço ou variação.
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              height: 36,
+              padding: "0 12px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.03)",
+            }}
+          >
+            <Search size={14} color="#8ca0c6" />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar ativo..."
+              style={{
+                flex: 1,
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#e9f3ff",
+                fontSize: 12,
+              }}
+            />
+          </div>
+
+          <button
+            onClick={() => setShowFavoritesOnly(false)}
+            style={{
+              height: 34,
+              padding: "0 12px",
+              borderRadius: 10,
+              border: !showFavoritesOnly
+                ? "1px solid rgba(45,226,255,0.25)"
+                : "1px solid rgba(255,255,255,0.06)",
+              background: !showFavoritesOnly
+                ? "linear-gradient(180deg, rgba(45,226,255,0.14), rgba(45,226,255,0.04))"
+                : "rgba(255,255,255,0.03)",
+              color: !showFavoritesOnly ? ui.cyan : "#dce8ff",
+              fontSize: 11,
+              fontWeight: 900,
+              cursor: "pointer",
+            }}
+          >
+            Mercado
+          </button>
+
+          <button
+            onClick={() => setShowFavoritesOnly(true)}
+            style={{
+              height: 34,
+              padding: "0 12px",
+              borderRadius: 10,
+              border: showFavoritesOnly
+                ? "1px solid rgba(247,201,72,0.3)"
+                : "1px solid rgba(255,255,255,0.06)",
+              background: showFavoritesOnly
+                ? "linear-gradient(180deg, rgba(247,201,72,0.15), rgba(247,201,72,0.04))"
+                : "rgba(255,255,255,0.03)",
+              color: showFavoritesOnly ? ui.yellow : "#dce8ff",
+              fontSize: 11,
+              fontWeight: 900,
+              cursor: "pointer",
+            }}
+          >
+            Favoritos
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gap: 10,
+          }}
+        >
+          <SmallStatCard
+            title="Dominância BTC"
+            value="52.43%"
+            sub="BTC liderando o fluxo macro."
+            color={ui.yellow}
+            accent="rgba(247,201,72,0.12)"
+          />
+          <SmallStatCard
+            title="BTC Fixo"
+            value="$74.682"
+            sub="Sempre visível no topo do scanner."
+            color={ui.cyan}
+            accent="rgba(45,226,255,0.1)"
+          />
+          <SmallStatCard
+            title="Favoritos"
+            value={`${favoriteSymbols.length}`}
+            sub="Lista rápida com seus ativos-chave."
+            color={ui.green}
+            accent="rgba(39,245,157,0.1)"
+          />
+          <SmallStatCard
+            title="Mercado"
+            value={marketPositive ? "Bull Bias" : "Cautela"}
+            sub={marketPositive ? "Mais ativos subindo do que caindo." : "Mercado misto e seletivo."}
+            color={marketPositive ? ui.green : ui.red}
+            accent={marketPositive ? "rgba(39,245,157,0.1)" : "rgba(255,107,134,0.08)"}
+          />
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.2fr 0.9fr 0.95fr 0.9fr 0.8fr 1fr",
+            gap: 10,
+            color: "#6c7da2",
+            fontSize: 11,
+            alignItems: "center",
+          }}
+        >
+          <span>Ativo</span>
+          <span>Top Forge</span>
+          <button
+            onClick={() => toggleSort("price")}
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              color: sortKey === "price" ? ui.cyan : "#6c7da2",
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            Preço {sortKey === "price" ? (sortDir === "desc" ? "↓" : "↑") : ""}
+          </button>
+          <button
+            onClick={() => toggleSort("change")}
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              color: sortKey === "change" ? ui.cyan : "#6c7da2",
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            % 24h {sortKey === "change" ? (sortDir === "desc" ? "↓" : "↑") : ""}
+          </button>
+          <button
+            onClick={() => toggleSort("dominance")}
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              color: sortKey === "dominance" ? ui.cyan : "#6c7da2",
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            Dom. BTC {sortKey === "dominance" ? (sortDir === "desc" ? "↓" : "↑") : ""}
+          </button>
+          <span>Mini Chart</span>
+        </div>
+      </div>
+
+      <div
+        data-atlas-scroll="cyan"
+        style={{ flex: 1, overflowY: "auto", padding: "0 0 4px" }}
+      >
+        {orderedRows.map((asset, index) => {
+          const spark = generateSparkline(22, 42 + index * 2, asset.trend);
+          const isBtc = asset.symbol === "BTC";
+          const isFav = favoriteSymbols.includes(asset.symbol);
+          const scoreVisual = getScoreVisual(asset.aiScore);
+          const dominance = dominanceMap[asset.symbol] ?? 0;
+
+          return (
+            <div
+              key={asset.symbol}
+              onClick={() => onSelectSymbol(asset.symbol)}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.2fr 0.9fr 0.95fr 0.9fr 0.8fr 1fr",
+                gap: 10,
+                padding: "12px 14px",
+                borderBottom: "1px solid rgba(255,255,255,0.045)",
+                alignItems: "center",
+                cursor: "pointer",
+                background: isBtc
+                  ? "linear-gradient(90deg, rgba(247,201,72,0.14), rgba(45,226,255,0.08))"
+                  : asset.symbol === selectedSymbol
+                  ? "linear-gradient(90deg, rgba(45,226,255,0.08), rgba(255,255,255,0.01))"
+                  : "transparent",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(asset.symbol);
+                  }}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 8,
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: isFav ? "rgba(247,201,72,0.12)" : "rgba(255,255,255,0.03)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    color: isFav ? ui.yellow : "#7f93b7",
+                  }}
+                >
+                  <Star size={13} fill={isFav ? ui.yellow : "transparent"} />
+                </button>
+
+                <div style={{ display: "grid", gap: 2 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: asset.color,
+                        display: "inline-block",
+                        boxShadow: `0 0 12px ${asset.color}`,
+                      }}
+                    />
+                    <span style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>
+                      {asset.symbol}
+                    </span>
+                    {isBtc && (
+                      <span
+                        style={{
+                          padding: "3px 7px",
+                          borderRadius: 999,
+                          background: "rgba(247,201,72,0.14)",
+                          color: ui.yellow,
+                          fontSize: 9,
+                          fontWeight: 900,
+                        }}
+                      >
+                        FIXO
+                      </span>
+                    )}
+                  </div>
+                  <span style={{ color: "#6c7da2", fontSize: 10 }}>
+                    {isBtc ? "Referência principal do scanner." : "Ordenação dinâmica por mercado."}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <div style={{ color: scoreVisual.color, fontSize: 12, fontWeight: 900 }}>
+                  {asset.signal}
+                </div>
+                <ScoreBar value={asset.aiScore} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ color: "#eef5ff", fontSize: 12, fontFamily: "monospace" }}>
+                  ${asset.price.toLocaleString()}
+                </span>
+                <span style={{ color: "#7f93b7", fontSize: 10 }}>
+                  {asset.riskType}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  color: asset.change >= 0 ? ui.green : ui.red,
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  fontWeight: 900,
+                }}
+              >
+                {asset.change >= 0 ? "+" : ""}
+                {asset.change.toFixed(2)}%
+              </div>
+
+              <div
+                style={{
+                  color: isBtc ? ui.yellow : "#dce8ff",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  fontWeight: 900,
+                }}
+              >
+                {dominance.toFixed(2)}%
+              </div>
+
+              <MiniSparkline data={spark} trend={asset.trend} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 
 function SmallStatCard({
   title,
@@ -1639,6 +2070,7 @@ function LiquidityPanel() {
           }}
         >
           <div
+            data-atlas-scroll="cyan"
             style={{
               borderRadius: 14,
               border: "1px solid rgba(255,255,255,0.06)",
@@ -1646,6 +2078,8 @@ function LiquidityPanel() {
                 "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
               padding: 14,
               overflowY: "auto",
+              scrollbarWidth: "thin",
+              scrollbarColor: "rgba(45,226,255,0.55) rgba(255,255,255,0.04)",
             }}
           >
             <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
@@ -3257,6 +3691,8 @@ function WorkspaceByModule({
   timeframe,
   events,
   insight,
+  scannerAssets,
+  onSelectSymbol,
 }: {
   activeModule: TopModuleKey;
   candles: CandleData[];
@@ -3267,9 +3703,14 @@ function WorkspaceByModule({
   timeframe: Timeframe;
   events: ScannerEvent[];
   insight: AIInsight;
+  scannerAssets: AssetScore[];
+  onSelectSymbol: (symbol: string) => void;
 }) {
   if (activeModule === "Scanner") {
     return <ChartPanel candles={candles} indicators={indicators} selectedObject={selectedObject} mode={mode} symbol={symbol} timeframe={timeframe} />;
+  }
+  if (activeModule === "Mestre Scanner") {
+    return <div style={{ height: "100%", padding: 10 }}><MasterScannerPanel assets={scannerAssets} selectedSymbol={symbol} onSelectSymbol={onSelectSymbol} /></div>;
   }
   if (activeModule === "Fluxo") return <FluxoModule events={events} />;
   if (activeModule === "Liquidez") return <div style={{ height: "100%", padding: 10 }}><LiquidityPanel /></div>;
@@ -3344,6 +3785,27 @@ export default function AtlasChartPro2() {
         fontFamily: "Inter, Arial, sans-serif",
       }}
     >
+
+      <style>{`
+        [data-atlas-scroll="cyan"] {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(45,226,255,0.55) rgba(255,255,255,0.04);
+        }
+        [data-atlas-scroll="cyan"]::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        [data-atlas-scroll="cyan"]::-webkit-scrollbar-track {
+          background: rgba(255,255,255,0.03);
+          border-radius: 999px;
+        }
+        [data-atlas-scroll="cyan"]::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, rgba(45,226,255,0.72), rgba(0,216,255,0.38));
+          border-radius: 999px;
+          border: 1px solid rgba(45,226,255,0.18);
+        }
+      `}</style>
+
       <TopBar
         symbol={activeAsset.symbol}
         price={activeAsset.price}
@@ -3377,6 +3839,8 @@ export default function AtlasChartPro2() {
                 timeframe={timeframe}
                 events={scannerEvents}
                 insight={insight}
+                scannerAssets={scannerAssets}
+                onSelectSymbol={setSelectedSymbol}
               />
             </div>
 
@@ -3388,12 +3852,15 @@ export default function AtlasChartPro2() {
                 background:
                   "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
                 display: "grid",
-                gridTemplateRows: activeModule === "Scanner" ? "1fr" : "1fr auto",
+                gridTemplateRows:
+                  activeModule === "Scanner" || activeModule === "Mestre Scanner"
+                    ? "1fr"
+                    : "1fr auto",
               }}
             >
               <AIInsightPanel insight={insight} topModule={activeModule} />
 
-              {activeModule !== "Scanner" && (
+              {activeModule !== "Scanner" && activeModule !== "Mestre Scanner" && (
                 <div
                   style={{
                     borderTop: `1px solid ${ui.border}`,
