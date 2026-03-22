@@ -18,40 +18,28 @@ import {
   Droplets,
   Eye,
   Layers3,
-  MoveUpRight,
+  Magnet,
+  Maximize2,
   MousePointer2,
+  PenTool,
   RotateCcw,
   Ruler,
   ScanSearch,
   Search,
   Settings,
+  Shapes,
   Sigma,
   Square,
+  Star,
+  Trash2,
   TrendingDown,
   TrendingUp,
+  Type,
   Waves,
-  Plus,
-  ArrowRight,
-  ArrowDown,
-  ArrowUp,
-  GitBranch,
-  Grid2X2,
-  Circle,
-  Spline,
-  Network,
-  SlidersHorizontal,
 } from "lucide-react";
 
 type Timeframe = "1m" | "5m" | "15m" | "30m" | "1H" | "4H" | "1D";
 type ModeKey = "auto" | "manual" | "space";
-type TopModuleKey =
-  | "Fluxo"
-  | "Singularidade"
-  | "IA Atlas"
-  | "Scanner"
-  | "Estrutura"
-  | "Euler"
-  | "Liquidez";
 
 type CandleData = {
   time: number;
@@ -83,7 +71,6 @@ type AIInsight = {
   riskLevel: string;
   riskType: string;
   invalidation: number;
-  trendBias: "bullish" | "bearish" | "neutral";
   structure: StructureItem[];
   structure2: StructureItem[];
 };
@@ -96,17 +83,14 @@ type AssetScore = {
   change: number;
   trend: "up" | "down" | "neutral";
   color: string;
-  aiScore: number;
-  signal: string;
-  riskLevel: string;
-  riskType: string;
-  invalidation: number;
 };
 
 type DrawObject = {
   id: string;
   name: string;
   type: string;
+  locked?: boolean;
+  hidden?: boolean;
 };
 
 type ScannerEvent = {
@@ -118,20 +102,20 @@ type ScannerEvent = {
 
 const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
 const NAV_TABS = ["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"];
-const TOP_MODULES: TopModuleKey[] = [
+const LEFT_PANEL_TABS = [
+  "Volume",
+  "RSI / MFI",
   "Fluxo",
   "Singularidade",
-  "IA Atlas",
-  "Scanner",
-  "Estrutura",
-  "Euler",
-  "Liquidez",
+  "Confluência",
+  "Eventos",
+  "Liquidez Avançada",
 ];
 const LIQUIDITY_TABS = ["Map", "Heatmap", "Clusters", "Eventos"];
 
 const ui = {
   bg: "#060913",
-  border: "#172133",
+  border: "#182235",
   text: "#ebf3ff",
   mut: "#7f93b7",
   cyan: "#2de2ff",
@@ -151,21 +135,6 @@ function formatCompact(n: number) {
   return n.toFixed(2);
 }
 
-function symbolBasePrice(symbol: string) {
-  const map: Record<string, number> = {
-    BTC: 74682,
-    ETH: 3932,
-    SOL: 174.8,
-    BNB: 610.75,
-    XRP: 2.147,
-    DOGE: 0.387,
-    AVAX: 38.87,
-    DOT: 8.98,
-    ADA: 0.847,
-  };
-  return map[symbol] ?? 100;
-}
-
 function generateCandles(count = 240, startPrice = 74500): CandleData[] {
   const now = Math.floor(Date.now() / 1000);
   const candles: CandleData[] = [];
@@ -173,15 +142,14 @@ function generateCandles(count = 240, startPrice = 74500): CandleData[] {
 
   for (let i = count; i > 0; i--) {
     const time = now - i * 300;
-    const wave =
-      Math.sin(i / 11) * (startPrice * 0.0045) +
-      Math.cos(i / 17) * (startPrice * 0.0022);
-    const drift = (Math.random() - 0.49) * (startPrice * 0.0065) + wave;
+    const wave = Math.sin(i / 11) * 35 + Math.cos(i / 17) * 18;
+    const drift = (Math.random() - 0.49) * 130 + wave;
     const open = prevClose;
-    const close = Math.max(0.0001, open + drift);
-    const high = Math.max(open, close) + Math.random() * (startPrice * 0.0035);
-    const low = Math.min(open, close) - Math.random() * (startPrice * 0.0035);
+    const close = Math.max(1000, open + drift);
+    const high = Math.max(open, close) + Math.random() * 75;
+    const low = Math.min(open, close) - Math.random() * 75;
     const volume = 120 + Math.random() * 1400;
+
     candles.push({ time, open, high, low, close, volume });
     prevClose = close;
   }
@@ -191,10 +159,31 @@ function generateCandles(count = 240, startPrice = 74500): CandleData[] {
 
 function generateIndicators(candles: CandleData[]): IndicatorData[] {
   return candles.map((c, i) => {
-    const rsi = clamp(48 + Math.sin(i / 8) * 14 + (Math.random() - 0.5) * 6, 5, 95);
-    const mfi = clamp(52 + Math.cos(i / 10) * 16 + (Math.random() - 0.5) * 6, 5, 95);
-    return { time: c.time, rsi, mfi };
+    const base = 48 + Math.sin(i / 8) * 14 + (Math.random() - 0.5) * 6;
+    const base2 = 52 + Math.cos(i / 10) * 16 + (Math.random() - 0.5) * 6;
+    return {
+      time: c.time,
+      rsi: clamp(base, 5, 95),
+      mfi: clamp(base2, 5, 95),
+    };
   });
+}
+
+function generateSparkline(
+  count: number,
+  start: number,
+  trend: "up" | "down" | "neutral"
+) {
+  const arr: number[] = [];
+  let value = start;
+
+  for (let i = 0; i < count; i++) {
+    const drift = trend === "up" ? 1.3 : trend === "down" ? -1.2 : 0.12;
+    value += drift + (Math.random() - 0.5) * 3;
+    arr.push(value);
+  }
+
+  return arr;
 }
 
 function computeSMA(candles: CandleData[], period: number) {
@@ -210,93 +199,62 @@ function computeEMA(candles: CandleData[], period: number) {
   const k = 2 / (period + 1);
   const ema: { time: number; value: number }[] = [];
   let prev = candles[0]?.close ?? 0;
+
   for (let i = 0; i < candles.length; i++) {
     const close = candles[i].close;
     const value = i === 0 ? close : close * k + prev * (1 - k);
     ema.push({ time: candles[i].time, value });
     prev = value;
   }
+
   return ema;
 }
 
-function generateSparkline(count: number, start: number, trend: "up" | "down" | "neutral") {
-  const arr: number[] = [];
-  let value = start;
-  for (let i = 0; i < count; i++) {
-    const drift = trend === "up" ? 1.3 : trend === "down" ? -1.2 : 0.12;
-    value += drift + (Math.random() - 0.5) * 3;
-    arr.push(value);
-  }
-  return arr;
-}
-
-function getScoreVisual(score: number) {
-  if (score >= 80) return { color: ui.green, label: "Compra" };
-  if (score >= 50) return { color: ui.yellow, label: "Neutro" };
-  return { color: ui.red, label: "Baixa" };
-}
-
-function symbolToInsight(asset: AssetScore): AIInsight {
-  return {
-    symbol: asset.symbol,
-    price: asset.price,
-    score: asset.aiScore,
-    signal: asset.signal,
-    riskLevel: asset.riskLevel,
-    riskType: asset.riskType,
-    invalidation: asset.invalidation,
-    trendBias: asset.trend === "up" ? "bullish" : asset.trend === "down" ? "bearish" : "neutral",
-    structure: [
-      {
-        label: "Fluxo",
-        value: asset.trend === "up" ? "Positivo" : asset.trend === "down" ? "Pressão" : "Neutro",
-        type: asset.trend === "up" ? "positive" : asset.trend === "down" ? "negative" : "neutral",
-      },
-      {
-        label: "Momentum",
-        value: asset.aiScore >= 80 ? "Forte" : asset.aiScore >= 60 ? "Moderado" : "Fraco",
-        type: asset.aiScore >= 80 ? "strong" : asset.aiScore >= 60 ? "neutral" : "negative",
-      },
-      {
-        label: "Liquidez",
-        value: asset.volumeScore >= 70 ? "Ativo" : asset.volumeScore >= 50 ? "Médio" : "Baixo",
-        type: asset.volumeScore >= 70 ? "positive" : asset.volumeScore >= 50 ? "neutral" : "negative",
-      },
-      {
-        label: "Confluência",
-        type: "dots",
-        dots: Math.max(2, Math.min(9, Math.round(asset.aiScore / 11))),
-      },
-    ],
-    structure2: [
-      {
-        label: "Euler",
-        value: asset.trend === "up" ? "Alinhado" : asset.trend === "down" ? "Pressão" : "Estável",
-        type: asset.trend === "up" ? "positive" : asset.trend === "down" ? "negative" : "neutral",
-      },
-      {
-        label: "Razão de Prata",
-        value: asset.rsiMfi >= 60 ? "Forte" : asset.rsiMfi >= 45 ? "Estável" : "Fraca",
-        type: asset.rsiMfi >= 60 ? "positive" : asset.rsiMfi >= 45 ? "neutral" : "negative",
-      },
-      {
-        label: "Risco Assimétrico",
-        value: asset.change >= 0 ? "Bom" : "Sensível",
-        type: asset.change >= 0 ? "positive" : "negative",
-      },
-      {
-        label: "Invalidação",
-        value: asset.change >= 0 ? "Controlada" : "Próxima",
-        type: asset.change >= 0 ? "neutral" : "negative",
-      },
-    ],
-  };
-}
-
-function ModuleButton({ icon, text, active, onClick }: { icon: React.ReactNode; text: string; active?: boolean; onClick?: () => void; }) {
+function TopButton({
+  children,
+  active,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active?: boolean;
+  onClick?: () => void;
+}) {
   return (
     <button
       onClick={onClick}
+      style={{
+        height: 29,
+        padding: "0 10px",
+        borderRadius: 9,
+        border: active
+          ? "1px solid rgba(247,201,72,0.34)"
+          : "1px solid rgba(255,255,255,0.06)",
+        background: active
+          ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
+          : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
+        color: active ? ui.yellow : "#dce8ff",
+        fontSize: 11,
+        fontWeight: 800,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ModuleButton({
+  icon,
+  text,
+  active,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  active?: boolean;
+}) {
+  return (
+    <button
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -304,7 +262,9 @@ function ModuleButton({ icon, text, active, onClick }: { icon: React.ReactNode; 
         height: 34,
         padding: "0 14px",
         borderRadius: 12,
-        border: active ? "1px solid rgba(247,201,72,0.34)" : "1px solid rgba(255,255,255,0.06)",
+        border: active
+          ? "1px solid rgba(247,201,72,0.34)"
+          : "1px solid rgba(255,255,255,0.06)",
         background: active
           ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
           : "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))",
@@ -320,27 +280,366 @@ function ModuleButton({ icon, text, active, onClick }: { icon: React.ReactNode; 
   );
 }
 
-function TopButton({ children, active, onClick }: { children: React.ReactNode; active?: boolean; onClick?: () => void; }) {
+function MiniStatCard({
+  title,
+  value,
+  valueColor,
+}: {
+  title: string;
+  value: string;
+  valueColor?: string;
+}) {
   return (
-    <button
-      onClick={onClick}
+    <div
       style={{
-        height: 29,
-        padding: "0 10px",
-        borderRadius: 9,
-        border: active ? "1px solid rgba(247,201,72,0.34)" : "1px solid rgba(255,255,255,0.06)",
-        background: active
-          ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
-          : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
-        color: active ? ui.yellow : "#dce8ff",
-        fontSize: 11,
-        fontWeight: 800,
-        cursor: "pointer",
-        whiteSpace: "nowrap",
+        borderRadius: 13,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background:
+          "linear-gradient(180deg, rgba(8,15,31,0.98), rgba(7,12,24,0.96))",
+        minHeight: 58,
+        padding: "10px 13px",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
       }}
     >
-      {children}
-    </button>
+      <div
+        style={{
+          color: "#7f93b7",
+          fontSize: 9,
+          fontWeight: 900,
+          letterSpacing: 0.8,
+          textTransform: "uppercase",
+          marginBottom: 6,
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          color: valueColor || "#eef6ff",
+          fontSize: 12,
+          fontWeight: 900,
+          lineHeight: 1.1,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function ScoreDots({ count, total = 9 }: { count: number; total?: number }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+      {Array.from({ length: total }).map((_, i) => (
+        <span
+          key={i}
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            display: "inline-block",
+            background:
+              i < count
+                ? "linear-gradient(180deg, #31e9ff, #18b7ff)"
+                : "rgba(255,255,255,0.14)",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function StructureRow({ item }: { item: StructureItem }) {
+  const getColor = (type: StructureItem["type"]) => {
+    switch (type) {
+      case "positive":
+        return ui.green;
+      case "strong":
+        return "#9fffbc";
+      case "negative":
+        return ui.red;
+      case "neutral":
+        return "#aab7d1";
+      default:
+        return "#dbe7ff";
+    }
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "7px 0",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <ChevronRight size={10} color="#66789d" />
+        <span style={{ fontSize: 12, color: "#8ea2c8" }}>{item.label}</span>
+      </div>
+      {item.type === "dots" && item.dots !== undefined ? (
+        <ScoreDots count={item.dots} />
+      ) : (
+        <span style={{ fontSize: 12, color: getColor(item.type), fontWeight: 700 }}>
+          {item.value}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function AIInsightPanel({ insight }: { insight: AIInsight }) {
+  const scoreColor =
+    insight.score >= 80 ? ui.green : insight.score >= 60 ? ui.yellow : ui.red;
+
+  return (
+    <div
+      style={{
+        height: "100%",
+        background:
+          "linear-gradient(180deg, rgba(6,10,20,0.98), rgba(4,7,15,0.98))",
+        overflowY: "auto",
+      }}
+    >
+      <div
+        style={{
+          padding: "12px 16px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <span
+          style={{
+            color: "#e8f1ff",
+            fontSize: 12,
+            fontWeight: 800,
+            letterSpacing: 0.45,
+          }}
+        >
+          IA Atlas Insights
+        </span>
+        <ChevronDown size={14} color="#6c7da2" />
+      </div>
+
+      <div style={{ padding: 16, borderBottom: `1px solid ${ui.border}` }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 8,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ color: ui.yellow, fontSize: 12 }}>₿</span>
+            <span style={{ color: "#d8e6ff", fontSize: 12, fontFamily: "monospace" }}>
+              {insight.symbol}
+            </span>
+          </div>
+          <span style={{ color: "#96a8cb", fontSize: 12, fontFamily: "monospace" }}>
+            {insight.price.toLocaleString()}
+          </span>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+          }}
+        >
+          <span
+            style={{
+              color: "#f3f8ff",
+              fontSize: 19,
+              fontWeight: 900,
+              letterSpacing: 0.4,
+            }}
+          >
+            BTCUSDT
+          </span>
+
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
+            <span
+              style={{
+                color: scoreColor,
+                fontSize: 20,
+                fontWeight: 900,
+              }}
+            >
+              {insight.score}
+            </span>
+            <TrendingUp size={14} color={scoreColor} />
+          </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: 10,
+            display: "grid",
+            gridTemplateColumns: "1fr auto",
+            gap: 8,
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              height: 6,
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.08)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${insight.score}%`,
+                height: "100%",
+                borderRadius: 999,
+                background:
+                  "linear-gradient(90deg, rgba(49,233,255,0.95), rgba(36,245,155,0.95))",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              padding: "5px 10px",
+              borderRadius: 7,
+              background: `${scoreColor}22`,
+              color: scoreColor,
+              fontSize: 11,
+              fontWeight: 900,
+            }}
+          >
+            {insight.signal}
+          </div>
+        </div>
+
+        <div style={{ marginTop: 14 }}>
+          {[
+            ["Risco", insight.riskLevel, ui.yellow],
+            ["Tipo", insight.riskType, ui.red],
+            ["Invalidação", `$${insight.invalidation.toLocaleString()}`, "#eef5ff"],
+            ["Fonte", "binance", "#d9e8ff"],
+          ].map(([k, v, c]) => (
+            <div
+              key={k}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "6px 0",
+                borderBottom: "1px solid rgba(255,255,255,0.04)",
+              }}
+            >
+              <span style={{ color: "#7f93b7", fontSize: 12 }}>{k}</span>
+              <span style={{ color: c as string, fontSize: 12, fontWeight: 800 }}>
+                {v}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: "12px 16px 4px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 8,
+          }}
+        >
+          <span
+            style={{
+              color: "#e8f1ff",
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: 0.45,
+            }}
+          >
+            Estrutura
+          </span>
+          <ChevronRight size={12} color="#6c7da2" />
+        </div>
+        {insight.structure.map((item, i) => (
+          <StructureRow key={i} item={item} />
+        ))}
+      </div>
+
+      <div
+        style={{
+          margin: 12,
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.06)",
+          background:
+            "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+          padding: 12,
+        }}
+      >
+        <div
+          style={{
+            color: "#ecf4ff",
+            fontSize: 12,
+            fontWeight: 900,
+            marginBottom: 10,
+          }}
+        >
+          Scanner Atlas
+        </div>
+
+        {[
+          ["Estrutura", "Positivo", ui.green],
+          ["Euler", "Forte", "#9fffbc"],
+          ["Singularidade", "5 / 6", ui.green],
+          ["Razão de Prata", "Suporte Sólido", ui.green],
+          ["Ciclo", "Acelerado", ui.cyan],
+        ].map(([a, b, c]) => (
+          <div
+            key={a}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              padding: "6px 0",
+              borderBottom: "1px solid rgba(255,255,255,0.04)",
+              fontSize: 12,
+            }}
+          >
+            <span style={{ color: "#8397bd" }}>{a}</span>
+            <span style={{ color: c as string, fontWeight: 800 }}>{b}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ padding: "0 16px 16px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 8,
+          }}
+        >
+          <span
+            style={{
+              color: "#e8f1ff",
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: 0.45,
+            }}
+          >
+            Confluência
+          </span>
+          <ChevronRight size={12} color="#6c7da2" />
+        </div>
+        {insight.structure2.map((item, i) => (
+          <StructureRow key={i} item={item} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -369,7 +668,8 @@ function TopBar({
         alignItems: "center",
         gap: 10,
         borderBottom: `1px solid ${ui.border}`,
-        background: "radial-gradient(circle at top, rgba(14,28,60,0.86), rgba(6,10,20,0.98) 55%)",
+        background:
+          "radial-gradient(circle at top, rgba(14,28,60,0.86), rgba(6,10,20,0.98) 55%)",
         flexShrink: 0,
       }}
     >
@@ -379,7 +679,8 @@ function TopBar({
             width: 38,
             height: 38,
             borderRadius: 11,
-            background: "linear-gradient(135deg, rgba(42,231,255,0.22), rgba(119,77,255,0.28))",
+            background:
+              "linear-gradient(135deg, rgba(42,231,255,0.22), rgba(119,77,255,0.28))",
             border: "1px solid rgba(255,255,255,0.08)",
             display: "flex",
             alignItems: "center",
@@ -389,13 +690,21 @@ function TopBar({
         >
           <Activity size={17} color="#e8f7ff" />
         </div>
+
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-          <span style={{ color: "#f6fbff", fontSize: 17, fontWeight: 900, letterSpacing: 0.3 }}>
+          <span
+            style={{
+              color: "#f6fbff",
+              fontSize: 17,
+              fontWeight: 900,
+              letterSpacing: 0.3,
+            }}
+          >
             SINGULARIDADE
           </span>
           <span
             style={{
-              color: ui.cyan,
+              color: "#2de2ff",
               fontSize: 10,
               fontWeight: 900,
               background: "rgba(45,226,255,0.1)",
@@ -419,7 +728,8 @@ function TopBar({
           padding: "0 12px",
           borderRadius: 10,
           border: "1px solid rgba(255,255,255,0.07)",
-          background: "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))",
           color: "#eef6ff",
           fontSize: 13,
           fontWeight: 800,
@@ -432,7 +742,14 @@ function TopBar({
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ color: "#f6fbff", fontSize: 13, fontFamily: "monospace", fontWeight: 900 }}>
+        <span
+          style={{
+            color: "#f6fbff",
+            fontSize: 13,
+            fontFamily: "monospace",
+            fontWeight: 900,
+          }}
+        >
           ${price.toLocaleString()}
         </span>
         <span
@@ -458,7 +775,14 @@ function TopBar({
         ))}
       </div>
 
-      <div style={{ width: 1, height: 30, background: "rgba(255,255,255,0.08)" }} />
+      <div
+        style={{
+          width: 1,
+          height: 30,
+          background: "rgba(255,255,255,0.08)",
+          marginLeft: 4,
+        }}
+      />
 
       <button
         onClick={() => setReplayMode(!replayMode)}
@@ -469,7 +793,9 @@ function TopBar({
           height: 32,
           padding: "0 10px",
           borderRadius: 10,
-          border: replayMode ? "1px solid rgba(247,201,72,0.34)" : "1px solid transparent",
+          border: replayMode
+            ? "1px solid rgba(247,201,72,0.34)"
+            : "1px solid transparent",
           background: replayMode
             ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
             : "transparent",
@@ -494,10 +820,7 @@ function TopBar({
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: 8 }}>
-        <span style={{ color: ui.green, fontSize: 12, fontWeight: 900 }}>
-          {isPositive ? "+" : ""}
-          {change.toFixed(2)}%
-        </span>
+        <span style={{ color: ui.green, fontSize: 12, fontWeight: 900 }}>+1.88%</span>
         <Search size={15} color="#90a4c8" />
         <Bell size={15} color="#90a4c8" />
         <Settings size={15} color="#90a4c8" />
@@ -506,17 +829,7 @@ function TopBar({
   );
 }
 
-function ModuleStrip({ activeModule, onChange }: { activeModule: TopModuleKey; onChange: (m: TopModuleKey) => void; }) {
-  const icons: Record<TopModuleKey, React.ReactNode> = {
-    Fluxo: <Waves size={13} />,
-    Singularidade: <BrainCircuit size={13} />,
-    "IA Atlas": <Activity size={13} />,
-    Scanner: <ScanSearch size={13} />,
-    Estrutura: <Layers3 size={13} />,
-    Euler: <Sigma size={13} />,
-    Liquidez: <Droplets size={13} />,
-  };
-
+function ModuleStrip() {
   return (
     <div
       style={{
@@ -526,137 +839,91 @@ function ModuleStrip({ activeModule, onChange }: { activeModule: TopModuleKey; o
         alignItems: "center",
         gap: 10,
         borderBottom: `1px solid ${ui.border}`,
-        background: "linear-gradient(180deg, rgba(8,12,23,0.98), rgba(7,11,20,0.98))",
+        background:
+          "linear-gradient(180deg, rgba(8,12,23,0.98), rgba(7,11,20,0.98))",
         flexShrink: 0,
       }}
     >
-      {TOP_MODULES.map((module) => (
-        <ModuleButton
-          key={module}
-          icon={icons[module]}
-          text={module}
-          active={activeModule === module}
-          onClick={() => onChange(module)}
-        />
-      ))}
+      <ModuleButton icon={<Waves size={13} />} text="Fluxo" />
+      <ModuleButton icon={<BrainCircuit size={13} />} text="Singularidade" />
+      <ModuleButton icon={<Activity size={13} />} text="IA Atlas" />
+      <ModuleButton icon={<ScanSearch size={13} />} text="Scanner" active />
+      <ModuleButton icon={<Layers3 size={13} />} text="Estrutura" />
+      <ModuleButton icon={<Sigma size={13} />} text="Euler" />
+      <ModuleButton icon={<Droplets size={13} />} text="Liquidez" />
     </div>
   );
 }
 
 function LeftToolbar() {
-  const groups = [
-    {
-      title: "CURSOR",
-      items: [
-        { icon: <MousePointer2 size={15} />, active: true },
-        { icon: <Circle size={15} /> },
-        { icon: <Eye size={15} /> },
-      ],
-    },
-    {
-      title: "LINHAS DE TENDÊNCIA",
-      items: [
-        { icon: <TrendingUp size={15} /> },
-        { icon: <MoveUpRight size={15} /> },
-        { icon: <ArrowUp size={15} /> },
-        { icon: <ArrowRight size={15} /> },
-        { icon: <ArrowDown size={15} /> },
-        { icon: <Plus size={15} /> },
-      ],
-    },
-    {
-      title: "CANAIS",
-      items: [
-        { icon: <GitBranch size={15} /> },
-        { icon: <BarChart2 size={15} /> },
-        { icon: <SlidersHorizontal size={15} /> },
-        { icon: <Grid2X2 size={15} /> },
-      ],
-    },
-    {
-      title: "GAFOS & GANN",
-      items: [
-        { icon: <Spline size={15} /> },
-        { icon: <Network size={15} /> },
-        { icon: <Square size={15} /> },
-      ],
-    },
-    {
-      title: "FIBONACCI",
-      items: [
-        { icon: <Ruler size={15} /> },
-        { icon: <ArrowRight size={15} /> },
-      ],
-    },
+  const tools = [
+    { icon: <MousePointer2 size={16} />, active: true, title: "Cursor" },
+    { icon: <TrendingUp size={16} />, title: "Linha" },
+    { icon: <BarChart2 size={16} />, title: "Fibonacci" },
+    { icon: <Shapes size={16} />, title: "Formas" },
+    { icon: <PenTool size={16} />, title: "Pincel" },
+    { icon: <Type size={16} />, title: "Texto" },
+    { icon: <Square size={16} />, title: "Padrões" },
+    { icon: <Activity size={16} />, title: "Medição" },
+    { icon: <Star size={16} />, title: "Favoritos" },
+    { icon: <Ruler size={16} />, title: "Régua" },
+    { icon: <Maximize2 size={16} />, title: "Zoom" },
+    { icon: <Magnet size={16} />, title: "Magnetismo" },
+    { icon: <Eye size={16} />, title: "Ocultar" },
+    { icon: <Trash2 size={16} />, title: "Remover" },
   ];
 
   return (
     <div
       style={{
-        width: 74,
+        width: 56,
         borderRight: `1px solid ${ui.border}`,
-        background: "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(6,9,17,0.98))",
+        background:
+          "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(6,9,17,0.98))",
         display: "flex",
         flexDirection: "column",
-        padding: "10px 8px",
-        gap: 12,
-        overflowY: "auto",
+        alignItems: "center",
+        padding: "12px 0",
+        gap: 8,
         flexShrink: 0,
       }}
     >
-      {groups.map((group, gi) => (
-        <div key={gi} style={{ display: "grid", gap: 8 }}>
-          <div
-            style={{
-              color: "#536887",
-              fontSize: 8,
-              fontWeight: 900,
-              letterSpacing: 0.9,
-              textTransform: "uppercase",
-              textAlign: "center",
-            }}
-          >
-            {group.title}
-          </div>
-
-          {group.items.map((tool, ti) => (
-            <button
-              key={ti}
-              style={{
-                width: 40,
-                height: 40,
-                margin: "0 auto",
-                borderRadius: 12,
-                border: tool.active
-                  ? "1px solid rgba(45,226,255,0.28)"
-                  : "1px solid rgba(255,255,255,0.04)",
-                background: tool.active
-                  ? "radial-gradient(circle at 50% 50%, rgba(45,226,255,0.18), rgba(45,226,255,0.04))"
-                  : "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008))",
-                color: tool.active ? ui.cyan : "#90a4c8",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-              }}
-            >
-              {tool.icon}
-            </button>
-          ))}
-        </div>
+      {tools.map((tool, i) => (
+        <button
+          key={i}
+          title={tool.title}
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 10,
+            border: tool.active
+              ? "1px solid rgba(45,226,255,0.22)"
+              : "1px solid rgba(255,255,255,0.04)",
+            background: tool.active
+              ? "linear-gradient(180deg, rgba(45,226,255,0.12), rgba(45,226,255,0.04))"
+              : "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))",
+            color: tool.active ? ui.cyan : "#95a8cb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            boxShadow: tool.active ? "0 0 18px rgba(45,226,255,0.12)" : "none",
+          }}
+        >
+          {tool.icon}
+        </button>
       ))}
 
       <div style={{ flex: 1 }} />
 
       <button
         style={{
-          width: 40,
-          height: 40,
-          margin: "0 auto",
-          borderRadius: 12,
+          width: 34,
+          height: 34,
+          borderRadius: 10,
           border: "1px solid rgba(255,255,255,0.05)",
           background: "rgba(255,255,255,0.02)",
-          color: "#90a4c8",
+          color: "#95a8cb",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -669,12 +936,19 @@ function LeftToolbar() {
   );
 }
 
-function MiniSparkline({ data, trend }: { data: number[]; trend: "up" | "down" | "neutral" }) {
+function MiniSparkline({
+  data,
+  trend,
+}: {
+  data: number[];
+  trend: "up" | "down" | "neutral";
+}) {
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
   const w = 86;
   const h = 34;
+
   const points = data
     .map((v, i) => {
       const x = (i / (data.length - 1)) * w;
@@ -682,10 +956,12 @@ function MiniSparkline({ data, trend }: { data: number[]; trend: "up" | "down" |
       return `${x},${y}`;
     })
     .join(" ");
-  const color = trend === "up" ? ui.green : trend === "down" ? ui.red : "#8ea2c8";
+
+  const color =
+    trend === "up" ? ui.green : trend === "down" ? ui.red : "#8ea2c8";
 
   return (
-    <svg width={w} height={h}>
+    <svg width={w} height={h} style={{ overflow: "visible" }}>
       <polyline
         points={points}
         fill="none"
@@ -693,12 +969,25 @@ function MiniSparkline({ data, trend }: { data: number[]; trend: "up" | "down" |
         strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
+        opacity="0.95"
+      />
+      <circle
+        cx={w}
+        cy={h - ((data[data.length - 1] - min) / range) * h}
+        r="2.5"
+        fill={color}
       />
     </svg>
   );
 }
 
-function ScoreBar({ value, max = 100 }: { value: number; max?: number }) {
+function ScoreBar({
+  value,
+  max = 100,
+}: {
+  value: number;
+  max?: number;
+}) {
   const pct = Math.min(100, (value / max) * 100);
   const visual = getScoreVisual(value);
 
@@ -711,6 +1000,7 @@ function ScoreBar({ value, max = 100 }: { value: number; max?: number }) {
           background: "rgba(255,255,255,0.08)",
           borderRadius: 999,
           overflow: "hidden",
+          flexShrink: 0,
         }}
       >
         <div
@@ -722,27 +1012,310 @@ function ScoreBar({ value, max = 100 }: { value: number; max?: number }) {
           }}
         />
       </div>
-      <span style={{ fontSize: 10, fontWeight: 900, color: visual.color }}>{visual.label}</span>
+
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 900,
+          color: visual.color,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {visual.label}
+      </span>
     </div>
   );
 }
+function EventToneBadge({ tone }: { tone: ScannerEvent["tone"] }) {
+  const map = {
+    positive: { bg: "rgba(39,245,157,0.12)", color: ui.green, text: "Alta" },
+    warning: { bg: "rgba(247,201,72,0.12)", color: ui.yellow, text: "Atenção" },
+    neutral: { bg: "rgba(45,226,255,0.10)", color: ui.cyan, text: "Info" },
+  }[tone];
 
-function ScannerPanelContinuous({
-  assets,
-  selectedSymbol,
-  onSelectSymbol,
-}: {
-  assets: AssetScore[];
-  selectedSymbol: string;
-  onSelectSymbol: (symbol: string) => void;
-}) {
+  return (
+    <span
+      style={{
+        padding: "3px 8px",
+        borderRadius: 999,
+        background: map.bg,
+        color: map.color,
+        fontSize: 10,
+        fontWeight: 900,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {map.text}
+    </span>
+  );
+}
+function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
+  const rows = events.slice(0, 7).map((event, index) => {
+    const amountBase = [67.0, 23.1, 234.7, 0, 67.8, 45.6, 125.4][index] ?? 42.8;
+    const priceBase = [65508, 65395, 65385, 65420, 65380, 65400, 65450][index] ?? 65410;
+    const exchangeBase = [
+      "OKX",
+      "Binance",
+      "OKX",
+      "Coinbase Pro",
+      "Bybit",
+      "Kraken",
+      "Binance",
+    ][index] ?? "Exchange";
+    const severityWidth = [58, 28, 72, 52, 88, 33, 78][index] ?? 50;
+    const severityLabel =
+      index % 3 === 0 ? "Baixo" : index % 3 === 1 ? "Alto" : "Médio";
+    const rightColor =
+      severityLabel === "Alto"
+        ? ui.red
+        : severityLabel === "Médio"
+        ? ui.yellow
+        : ui.green;
+
+    const leftDot =
+      event.tone === "positive" ? ui.green : event.tone === "warning" ? ui.yellow : "#ff5050";
+
+    return {
+      ...event,
+      amountBase,
+      priceBase,
+      exchangeBase,
+      severityWidth,
+      severityLabel,
+      rightColor,
+      leftDot,
+    };
+  });
+
+  return (
+    <div
+      style={{
+        height: "100%",
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(6,10,18,0.98), rgba(4,7,14,0.98))",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          height: 42,
+          padding: "0 12px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background:
+            "linear-gradient(180deg, rgba(7,14,25,0.98), rgba(6,10,18,0.98))",
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "#00e117",
+              display: "inline-block",
+            }}
+          />
+          <span style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>
+            Eventos em Tempo Real
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              padding: "4px 8px",
+              borderRadius: 6,
+              background: "rgba(0,225,23,0.08)",
+              color: "#00e117",
+              fontSize: 10,
+              fontWeight: 900,
+            }}
+          >
+            Live
+          </span>
+          <span style={{ color: "#7f93b7", fontSize: 11, fontWeight: 700 }}>
+            {rows.length} eventos
+          </span>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: 8, display: "grid", gap: 8 }}>
+        {rows.map((event, i) => (
+          <div
+            key={`${event.time}-${i}-big`}
+            style={{
+              position: "relative",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background:
+                "linear-gradient(180deg, rgba(9,14,24,0.98), rgba(7,11,20,0.98))",
+              padding: "12px 12px 12px 28px",
+              overflow: "hidden",
+              minHeight: 62,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: 10,
+                top: 18,
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: event.leftDot,
+                boxShadow: `0 0 10px ${event.leftDot}55`,
+              }}
+            />
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.2fr 0.8fr 0.54fr",
+                gap: 12,
+                alignItems: "center",
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    color: "#f0f7ff",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    lineHeight: 1.2,
+                    marginBottom: 3,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {event.title}
+                </div>
+                <div
+                  style={{
+                    color: "#7f93b7",
+                    fontSize: 11,
+                  }}
+                >
+                  {event.exchangeBase}
+                </div>
+              </div>
+
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    color: "#eef5ff",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {event.amountBase ? `${event.amountBase.toFixed(1)} BTC` : "—"}
+                </div>
+                <div
+                  style={{
+                    color: "#7f93b7",
+                    fontSize: 11,
+                    fontFamily: "monospace",
+                  }}
+                >
+                  ${event.priceBase.toLocaleString()}
+                </div>
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    color: "#dce8ff",
+                    fontSize: 12,
+                    fontFamily: "monospace",
+                    marginBottom: 4,
+                  }}
+                >
+                  {event.time}
+                </div>
+                <div
+                  style={{
+                    color: event.rightColor,
+                    fontSize: 12,
+                    fontWeight: 900,
+                  }}
+                >
+                  {event.severityLabel}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: 10,
+                height: 3,
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.05)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${event.severityWidth}%`,
+                  height: "100%",
+                  borderRadius: 999,
+                  background:
+                    event.severityLabel === "Alto"
+                      ? "linear-gradient(90deg, #29ff72, #ff3c57)"
+                      : event.severityLabel === "Médio"
+                      ? "linear-gradient(90deg, #ffb300, #ff4b57)"
+                      : "linear-gradient(90deg, #29ff72, #24d6ff)",
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function getScoreVisual(score: number) {
+  if (score >= 80) {
+    return {
+      color: ui.green,
+      label: "Compra",
+    };
+  }
+
+  if (score >= 50) {
+    return {
+      color: ui.yellow,
+      label: "Neutro",
+    };
+  }
+
+  return {
+    color: ui.red,
+    label: "Baixa",
+  };
+}
+function ScannerPanelContinuous({ assets }: { assets: AssetScore[] }) {
   const [searchTerm, setSearchTerm] = useState("");
 
+  const list = useMemo(() => {
+    const expanded: AssetScore[] = [];
+    for (let i = 0; i < 3; i++) expanded.push(...assets);
+    return expanded;
+  }, [assets]);
+
   const filtered = useMemo(() => {
-    if (!searchTerm.trim()) return assets;
+    if (!searchTerm.trim()) return list;
     const q = searchTerm.toLowerCase();
-    return assets.filter((a) => a.symbol.toLowerCase().includes(q));
-  }, [assets, searchTerm]);
+    return list.filter((asset) => asset.symbol.toLowerCase().includes(q));
+  }, [list, searchTerm]);
 
   const sparklines = useMemo(
     () => filtered.map((a) => generateSparkline(24, 40 + Math.random() * 40, a.trend)),
@@ -779,7 +1352,14 @@ function ScannerPanelContinuous({
             alignItems: "center",
           }}
         >
-          <span style={{ color: "#f1f7ff", fontSize: 13, fontWeight: 900 }}>
+          <span
+            style={{
+              color: "#f1f7ff",
+              fontSize: 13,
+              fontWeight: 900,
+              letterSpacing: 0.3,
+            }}
+          >
             MESTRE SCANNER
           </span>
 
@@ -807,6 +1387,7 @@ function ScannerPanelContinuous({
                 outline: "none",
                 color: "#e9f3ff",
                 fontSize: 11,
+                fontFamily: "inherit",
               }}
             />
           </div>
@@ -819,6 +1400,7 @@ function ScannerPanelContinuous({
             gap: 10,
             color: "#6c7da2",
             fontSize: 11,
+            paddingTop: 2,
           }}
         >
           <span>Top Forge</span>
@@ -829,11 +1411,10 @@ function ScannerPanelContinuous({
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto" }}>
+      <div style={{ flex: 1, overflowY: "auto", display: "grid" }}>
         {filtered.map((asset, i) => (
           <div
-            key={asset.symbol}
-            onClick={() => onSelectSymbol(asset.symbol)}
+            key={`${asset.symbol}-${i}`}
             style={{
               display: "grid",
               gridTemplateColumns: "1.1fr 0.92fr 0.98fr 0.92fr 1fr",
@@ -841,14 +1422,9 @@ function ScannerPanelContinuous({
               padding: "11px 12px",
               borderBottom: "1px solid rgba(255,255,255,0.045)",
               alignItems: "center",
-              cursor: "pointer",
-              background:
-                asset.symbol === selectedSymbol
-                  ? "linear-gradient(90deg, rgba(247,201,72,0.10), rgba(45,226,255,0.06))"
-                  : "transparent",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
               <span
                 style={{
                   width: 7,
@@ -856,17 +1432,34 @@ function ScannerPanelContinuous({
                   borderRadius: "50%",
                   background: asset.color,
                   display: "inline-block",
+                  flexShrink: 0,
                 }}
               />
-              <span style={{ color: "#edf5ff", fontSize: 12, fontWeight: 800 }}>
+              <span
+                style={{
+                  color: "#edf5ff",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
                 {asset.symbol}
               </span>
             </div>
 
             <ScoreBar value={asset.volumeScore} />
 
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={{ color: "#eef5ff", fontSize: 12, fontFamily: "monospace" }}>
+            <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+              <span
+                style={{
+                  color: "#eef5ff",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 ${asset.price.toLocaleString()}
               </span>
               <span
@@ -875,6 +1468,7 @@ function ScannerPanelContinuous({
                   fontSize: 12,
                   fontFamily: "monospace",
                   fontWeight: 800,
+                  whiteSpace: "nowrap",
                 }}
               >
                 {asset.change >= 0 ? "+" : ""}
@@ -882,7 +1476,14 @@ function ScannerPanelContinuous({
               </span>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                minWidth: 0,
+              }}
+            >
               {asset.trend === "up" ? (
                 <TrendingUp size={11} color={ui.green} />
               ) : asset.trend === "down" ? (
@@ -890,44 +1491,68 @@ function ScannerPanelContinuous({
               ) : (
                 <Activity size={11} color="#a2b3d3" />
               )}
-              <span style={{ color: "#8fd6ff", fontSize: 12, fontFamily: "monospace" }}>
-                {asset.rsiMfi.toFixed(1)}
+              <span
+                style={{
+                  color: "#8fd6ff",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {asset.rsiMfi.toFixed(3)}
               </span>
             </div>
 
-            <MiniSparkline data={sparklines[i]} trend={asset.trend} />
+            <div style={{ minWidth: 0, overflow: "hidden" }}>
+              <MiniSparkline data={sparklines[i]} trend={asset.trend} />
+            </div>
           </div>
         ))}
+
+        {filtered.length === 0 && (
+          <div
+            style={{
+              padding: 18,
+              color: "#7f93b7",
+              fontSize: 12,
+            }}
+          >
+            Nenhuma moeda encontrada.
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function SmallStatCard({
+function LiquidityCard({
   title,
   value,
   sub,
-  color,
+  tone = "neutral",
 }: {
   title: string;
   value: string;
-  sub?: string;
-  color: string;
+  sub: string;
+  tone?: "positive" | "warning" | "neutral";
 }) {
+  const color =
+    tone === "positive" ? ui.green : tone === "warning" ? ui.yellow : ui.cyan;
+
   return (
     <div
       style={{
         borderRadius: 14,
-        border: "1px solid rgba(45,226,255,0.12)",
+        border: "1px solid rgba(255,255,255,0.06)",
         background:
-          "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+          "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
         padding: 12,
-        minHeight: 84,
+        minHeight: 78,
       }}
     >
       <div
         style={{
-          color: "#6f88af",
+          color: "#7f93b7",
           fontSize: 10,
           fontWeight: 900,
           letterSpacing: 0.7,
@@ -937,17 +1562,27 @@ function SmallStatCard({
       >
         {title}
       </div>
+
       <div
         style={{
           color,
-          fontSize: 18,
+          fontSize: 16,
           fontWeight: 900,
           marginBottom: 6,
         }}
       >
         {value}
       </div>
-      {sub && <div style={{ color: "#9bb0d4", fontSize: 11 }}>{sub}</div>}
+
+      <div
+        style={{
+          color: "#9bb0d4",
+          fontSize: 11,
+          lineHeight: 1.3,
+        }}
+      >
+        {sub}
+      </div>
     </div>
   );
 }
@@ -974,7 +1609,13 @@ function HeatmapBars() {
             gap: 10,
           }}
         >
-          <span style={{ color: "#9ab0d4", fontSize: 12, fontFamily: "monospace" }}>
+          <span
+            style={{
+              color: "#9ab0d4",
+              fontSize: 12,
+              fontFamily: "monospace",
+            }}
+          >
             {r.label}
           </span>
 
@@ -992,11 +1633,19 @@ function HeatmapBars() {
                 height: "100%",
                 borderRadius: 999,
                 background: r.color,
+                boxShadow: "0 0 18px rgba(255,255,255,0.05)",
               }}
             />
           </div>
 
-          <span style={{ color: "#e9f3ff", fontSize: 11, fontWeight: 800, textAlign: "right" }}>
+          <span
+            style={{
+              color: "#e9f3ff",
+              fontSize: 11,
+              fontWeight: 800,
+              textAlign: "right",
+            }}
+          >
             {r.value}%
           </span>
         </div>
@@ -1005,8 +1654,8 @@ function HeatmapBars() {
   );
 }
 
-function LiquidityPanel() {
-  const [tab, setTab] = useState("Map");
+function LiquidityExpandedPanel({ events }: { events: ScannerEvent[] }) {
+  const [activeLiquidityTab, setActiveLiquidityTab] = useState("Heatmap");
 
   return (
     <div
@@ -1033,17 +1682,29 @@ function LiquidityPanel() {
           flexShrink: 0,
         }}
       >
-        <span style={{ color: "#f2f7ff", fontSize: 13, fontWeight: 900, marginRight: 6 }}>
+        <span
+          style={{
+            color: "#f2f7ff",
+            fontSize: 13,
+            fontWeight: 900,
+            marginRight: 6,
+          }}
+        >
           Liquidez Avançada
         </span>
-        {LIQUIDITY_TABS.map((t) => (
-          <TopButton key={t} active={tab === t} onClick={() => setTab(t)}>
-            {t}
+
+        {LIQUIDITY_TABS.map((tab) => (
+          <TopButton
+            key={tab}
+            active={activeLiquidityTab === tab}
+            onClick={() => setActiveLiquidityTab(tab)}
+          >
+            {tab}
           </TopButton>
         ))}
       </div>
 
-      <div style={{ padding: 12, display: "grid", gap: 12, flex: 1 }}>
+      <div style={{ padding: 12, display: "grid", gap: 12, flex: 1, minHeight: 0 }}>
         <div
           style={{
             display: "grid",
@@ -1051,10 +1712,30 @@ function LiquidityPanel() {
             gap: 10,
           }}
         >
-          <SmallStatCard title="Liquidez Superior" value="$72.200" sub="Bloco vendedor forte acima do preço atual." color={ui.yellow} />
-          <SmallStatCard title="Liquidez Inferior" value="$69.800" sub="Absorção compradora ganhando espessura." color={ui.green} />
-          <SmallStatCard title="Cluster Dominante" value="BTC Core" sub="Maior concentração institucional." color={ui.cyan} />
-          <SmallStatCard title="Pressão Instantânea" value="+18.6%" sub="Fluxo favorecendo continuação curta." color={ui.green} />
+          <LiquidityCard
+            title="Liquidez superior"
+            value="$72.200"
+            sub="Bloco vendedor forte acima do preço atual."
+            tone="warning"
+          />
+          <LiquidityCard
+            title="Liquidez inferior"
+            value="$69.800"
+            sub="Absorção compradora ganhando espessura."
+            tone="positive"
+          />
+          <LiquidityCard
+            title="Cluster dominante"
+            value="BTC Core"
+            sub="Maior concentração institucional."
+            tone="neutral"
+          />
+          <LiquidityCard
+            title="Pressão instantânea"
+            value="+18.6%"
+            sub="Fluxo favorecendo continuação curta."
+            tone="positive"
+          />
         </div>
 
         <div
@@ -1073,19 +1754,83 @@ function LiquidityPanel() {
               background:
                 "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
               padding: 14,
+              minHeight: 220,
               overflowY: "auto",
             }}
           >
-            <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
-              {tab === "Heatmap" ? "Heatmap de Intensidade" : tab}
+            <div
+              style={{
+                color: "#edf5ff",
+                fontSize: 13,
+                fontWeight: 900,
+                marginBottom: 12,
+              }}
+            >
+              {activeLiquidityTab === "Map" && "Mapa de Liquidez"}
+              {activeLiquidityTab === "Heatmap" && "Heatmap de Intensidade"}
+              {activeLiquidityTab === "Clusters" && "Clusters Relevantes"}
+              {activeLiquidityTab === "Eventos" && "Eventos de Liquidez"}
             </div>
 
-            {tab === "Heatmap" ? (
+            {activeLiquidityTab === "Heatmap" ? (
               <HeatmapBars />
+            ) : activeLiquidityTab === "Eventos" ? (
+              <div style={{ display: "grid", gap: 8 }}>
+                {events.slice(0, 6).map((event, i) => (
+                  <div
+                    key={`${event.time}-${i}-liq`}
+                    style={{
+                      borderRadius: 12,
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      background:
+                        "linear-gradient(180deg, rgba(11,17,32,0.98), rgba(8,12,22,0.98))",
+                      padding: 12,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#8da1c8",
+                          fontSize: 11,
+                          fontWeight: 800,
+                        }}
+                      >
+                        {event.time}
+                      </span>
+                      <EventToneBadge tone={event.tone} />
+                    </div>
+                    <div
+                      style={{
+                        color: "#eef6ff",
+                        fontSize: 12,
+                        fontWeight: 800,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {event.title}
+                    </div>
+                    <div
+                      style={{
+                        color: "#7f93b7",
+                        fontSize: 11,
+                      }}
+                    >
+                      {event.tag}
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div
                 style={{
-                  height: 180,
+                  height: 182,
                   borderRadius: 12,
                   border: "1px solid rgba(255,255,255,0.05)",
                   background:
@@ -1102,11 +1847,20 @@ function LiquidityPanel() {
               background:
                 "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
               padding: 14,
+              overflowY: "auto",
             }}
           >
-            <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
+            <div
+              style={{
+                color: "#edf5ff",
+                fontSize: 13,
+                fontWeight: 900,
+                marginBottom: 12,
+              }}
+            >
               Leitura rápida
             </div>
+
             <div style={{ display: "grid", gap: 10 }}>
               {[
                 ["Liquidez acima", "Pesada", ui.red],
@@ -1126,7 +1880,9 @@ function LiquidityPanel() {
                   }}
                 >
                   <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
-                  <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>{v}</span>
+                  <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>
+                    {v}
+                  </span>
                 </div>
               ))}
             </div>
@@ -1137,20 +1893,498 @@ function LiquidityPanel() {
   );
 }
 
+function LeftPanelMetricCard({
+  title,
+  value,
+  sub,
+  color,
+}: {
+  title: string;
+  value: string;
+  sub: string;
+  color: string;
+}) {
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background:
+          "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+        padding: 12,
+        minHeight: 78,
+      }}
+    >
+      <div
+        style={{
+          color: "#7f93b7",
+          fontSize: 10,
+          fontWeight: 900,
+          letterSpacing: 0.7,
+          textTransform: "uppercase",
+          marginBottom: 8,
+        }}
+      >
+        {title}
+      </div>
+
+      <div
+        style={{
+          color,
+          fontSize: 16,
+          fontWeight: 900,
+          marginBottom: 6,
+        }}
+      >
+        {value}
+      </div>
+
+      <div
+        style={{
+          color: "#9bb0d4",
+          fontSize: 11,
+          lineHeight: 1.3,
+        }}
+      >
+        {sub}
+      </div>
+    </div>
+  );
+}
+
+function LeftPanelMiniGraph({ activeTab }: { activeTab: string }) {
+  const line1 = Array.from({ length: 34 }, (_, i) => {
+    const x = (i / 33) * 420;
+    const y =
+      activeTab === "RSI / MFI"
+        ? 68 + Math.sin(i / 2.6) * 12
+        : activeTab === "Fluxo"
+        ? 58 + Math.cos(i / 3) * 16
+        : activeTab === "Singularidade"
+        ? 48 + Math.sin(i / 3.2) * 10 + Math.cos(i / 4.5) * 10
+        : activeTab === "Confluência"
+        ? 52 + Math.sin(i / 2.2) * 9
+        : 56 + Math.sin(i / 3) * 16 + Math.cos(i / 5) * 8;
+    return `${x},${y}`;
+  }).join(" ");
+
+  const line2 = Array.from({ length: 34 }, (_, i) => {
+    const x = (i / 33) * 420;
+    const y =
+      activeTab === "RSI / MFI"
+        ? 44 + Math.cos(i / 2.9) * 13
+        : activeTab === "Fluxo"
+        ? 60 + Math.sin(i / 2.7) * 11
+        : activeTab === "Singularidade"
+        ? 65 + Math.cos(i / 3.4) * 8
+        : activeTab === "Confluência"
+        ? 42 + Math.cos(i / 3.1) * 8
+        : 52 + Math.cos(i / 2.8) * 12 + Math.sin(i / 4.2) * 6;
+    return `${x},${y}`;
+  }).join(" ");
+
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(9,14,28,0.98), rgba(7,11,20,0.98))",
+        padding: "10px 10px 8px",
+        minHeight: 166,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 8,
+        }}
+      >
+        <span style={{ color: "#edf5ff", fontSize: 12, fontWeight: 900 }}>
+          {activeTab}
+        </span>
+        <span
+          style={{
+            color: ui.cyan,
+            fontSize: 10,
+            fontWeight: 900,
+            padding: "4px 8px",
+            borderRadius: 8,
+            background: "rgba(45,226,255,0.1)",
+          }}
+        >
+          Atlas Sync
+        </span>
+      </div>
+
+      <svg width="100%" height="118" viewBox="0 0 420 118" preserveAspectRatio="none">
+        {Array.from({ length: 7 }, (_, i) => (
+          <line
+            key={`h-${i}`}
+            x1="0"
+            y1={i * 18}
+            x2="420"
+            y2={i * 18}
+            stroke="rgba(255,255,255,0.045)"
+            strokeWidth="1"
+          />
+        ))}
+        {Array.from({ length: 11 }, (_, i) => (
+          <line
+            key={`v-${i}`}
+            x1={i * 42}
+            y1="0"
+            x2={i * 42}
+            y2="118"
+            stroke="rgba(255,255,255,0.035)"
+            strokeWidth="1"
+          />
+        ))}
+
+        {Array.from({ length: 20 }, (_, i) => {
+          const x = 10 + i * 19;
+          const h = 12 + ((i * 13) % 38);
+          return (
+            <rect
+              key={i}
+              x={x}
+              y={108 - h}
+              width="10"
+              height={h}
+              rx="2"
+              fill={i % 2 === 0 ? "rgba(49,233,255,0.32)" : "rgba(247,201,72,0.26)"}
+            />
+          );
+        })}
+
+        <polyline points={line1} fill="none" stroke={ui.cyan} strokeWidth="1.8" />
+        <polyline points={line2} fill="none" stroke={ui.yellow} strokeWidth="1.5" opacity="0.9" />
+      </svg>
+    </div>
+  );
+}
+
+function LeftPanelQuickList({ activeTab }: { activeTab: string }) {
+  const rows =
+    activeTab === "RSI / MFI"
+      ? [
+          ["RSI", "64.8", ui.green],
+          ["MFI", "58.1", ui.cyan],
+          ["Pressão", "Moderada", ui.yellow],
+          ["Divergência", "Limpa", ui.green],
+        ]
+      : activeTab === "Fluxo"
+      ? [
+          ["Fluxo spot", "Positivo", ui.green],
+          ["Absorção", "Ativa", ui.cyan],
+          ["Agressão", "Controlada", ui.yellow],
+          ["Dominância", "Compradora", ui.green],
+        ]
+      : activeTab === "Singularidade"
+      ? [
+          ["Sinal", "Forte", ui.green],
+          ["Ciclo", "Acelerado", ui.cyan],
+          ["Probabilidade", "84%", ui.green],
+          ["Ruído", "Baixo", ui.yellow],
+        ]
+      : activeTab === "Confluência"
+      ? [
+          ["Score", "8 / 9", ui.green],
+          ["Estrutura", "Alinhada", ui.cyan],
+          ["Liquidez", "Apoia", ui.green],
+          ["Risco", "Moderado", ui.yellow],
+        ]
+      : [
+          ["Volume spot", "1.24M", ui.cyan],
+          ["Volume deriv.", "2.88M", ui.green],
+          ["Impulso", "Saudável", ui.yellow],
+          ["Bloco", "Ativo", ui.green],
+        ];
+
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(5,8,15,0.98))",
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          color: "#edf5ff",
+          fontSize: 12,
+          fontWeight: 900,
+          marginBottom: 8,
+        }}
+      >
+        Leitura rápida
+      </div>
+
+      <div style={{ display: "grid", gap: 6 }}>
+        {rows.map(([k, v, c]) => (
+          <div
+            key={k}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              padding: "8px 0",
+              borderBottom: "1px solid rgba(255,255,255,0.05)",
+            }}
+          >
+            <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
+            <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>
+              {v}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LeftDynamicPanel({ events }: { events: ScannerEvent[] }) {
+  const [activeTab, setActiveTab] = useState("Eventos");
+
+  const metricCards =
+    activeTab === "RSI / MFI"
+      ? [
+          {
+            title: "RSI dominante",
+            value: "64.8",
+            sub: "Momento comprador sem exaustão plena.",
+            color: ui.green,
+          },
+          {
+            title: "MFI atual",
+            value: "58.1",
+            sub: "Entrada de fluxo ainda consistente.",
+            color: ui.cyan,
+          },
+          {
+            title: "Zona",
+            value: "Saudável",
+            sub: "Sem excesso técnico imediato.",
+            color: ui.yellow,
+          },
+        ]
+      : activeTab === "Fluxo"
+      ? [
+          {
+            title: "Fluxo principal",
+            value: "Compra",
+            sub: "Agressão compradora sustentando o miolo.",
+            color: ui.green,
+          },
+          {
+            title: "Absorção",
+            value: "Ativa",
+            sub: "Venda sendo absorvida com pouca perda.",
+            color: ui.cyan,
+          },
+          {
+            title: "Desequilíbrio",
+            value: "+18.6%",
+            sub: "Fluxo favorecendo continuação curta.",
+            color: ui.yellow,
+          },
+        ]
+      : activeTab === "Singularidade"
+      ? [
+          {
+            title: "Motor Atlas",
+            value: "84",
+            sub: "Leitura forte na combinação estrutural.",
+            color: ui.green,
+          },
+          {
+            title: "Fase",
+            value: "Acelerada",
+            sub: "Modelo adaptativo em alta sintonia.",
+            color: ui.cyan,
+          },
+          {
+            title: "Ruído",
+            value: "Baixo",
+            sub: "Boa limpeza de sinal no curto prazo.",
+            color: ui.yellow,
+          },
+        ]
+      : activeTab === "Confluência"
+      ? [
+          {
+            title: "Confluência",
+            value: "8 / 9",
+            sub: "Múltiplos fatores apontando o mesmo lado.",
+            color: ui.green,
+          },
+          {
+            title: "Estrutura",
+            value: "Alinhada",
+            sub: "Contexto favorável em várias camadas.",
+            color: ui.cyan,
+          },
+          {
+            title: "Risco",
+            value: "Moderado",
+            sub: "Entrada ainda com invalidação aceitável.",
+            color: ui.yellow,
+          },
+        ]
+      : [
+          {
+            title: "Volume spot",
+            value: "1.24M",
+            sub: "Atividade corrente acima da média curta.",
+            color: ui.cyan,
+          },
+          {
+            title: "Volume derivado",
+            value: "2.88M",
+            sub: "Participação forte na perna atual.",
+            color: ui.green,
+          },
+          {
+            title: "Pressão",
+            value: "Saudável",
+            sub: "Sem sinal de exaustão imediata.",
+            color: ui.yellow,
+          },
+        ];
+
+  return (
+    <div
+      style={{
+        height: "100%",
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          minHeight: 42,
+          padding: "6px 10px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          flexWrap: "wrap",
+          background:
+            "linear-gradient(180deg, rgba(8,12,23,0.98), rgba(7,11,20,0.98))",
+        }}
+      >
+        {LEFT_PANEL_TABS.map((tab) => (
+          <TopButton
+            key={tab}
+            active={activeTab === tab}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </TopButton>
+        ))}
+
+        <span
+          style={{
+            marginLeft: "auto",
+            color: ui.cyan,
+            fontSize: 10,
+            fontWeight: 900,
+            padding: "4px 8px",
+            borderRadius: 8,
+            background: "rgba(45,226,255,0.1)",
+          }}
+        >
+          Caixa Analítica
+        </span>
+      </div>
+
+      <div
+        style={{
+          padding: 10,
+          display: "grid",
+          gap: 10,
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
+        {activeTab === "Eventos" ? (
+          <EventRealtimePanel events={events} />
+        ) : activeTab === "Liquidez Avançada" ? (
+          <LiquidityExpandedPanel events={events} />
+        ) : (
+          <>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: 10,
+              }}
+            >
+              {metricCards.map((card) => (
+                <LeftPanelMetricCard
+                  key={card.title}
+                  title={card.title}
+                  value={card.value}
+                  sub={card.sub}
+                  color={card.color}
+                />
+              ))}
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.24fr 0.76fr",
+                gap: 10,
+              }}
+            >
+              <LeftPanelMiniGraph activeTab={activeTab} />
+              <LeftPanelQuickList activeTab={activeTab} />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SecondPageSection({
+  events,
+}: {
+  events: ScannerEvent[];
+}) {
+  return (
+    <div
+      style={{
+        height: "100%",
+        padding: 10,
+        background:
+          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+      }}
+    >
+      <LeftDynamicPanel events={events} />
+    </div>
+  );
+}
+
 function ChartPanel({
   candles,
   indicators,
   selectedObject,
   mode,
-  symbol,
-  timeframe,
 }: {
   candles: CandleData[];
   indicators: IndicatorData[];
   selectedObject: DrawObject | null;
   mode: ModeKey;
-  symbol: string;
-  timeframe: Timeframe;
 }) {
   const mainRef = useRef<HTMLDivElement>(null);
   const volOverlayRef = useRef<HTMLDivElement>(null);
@@ -1244,8 +2478,14 @@ function ChartPanel({
       ...baseChartOpts,
       width: volOverlayRef.current.clientWidth,
       height: volOverlayRef.current.clientHeight,
-      rightPriceScale: { visible: false, borderColor: "rgba(255,255,255,0)" },
-      timeScale: { visible: false, borderColor: "rgba(255,255,255,0)" },
+      rightPriceScale: {
+        visible: false,
+        borderColor: "rgba(255,255,255,0)",
+      },
+      timeScale: {
+        visible: false,
+        borderColor: "rgba(255,255,255,0)",
+      },
       grid: {
         vertLines: { color: "rgba(255,255,255,0)", style: 1 as const },
         horzLines: { color: "rgba(255,255,255,0)", style: 1 as const },
@@ -1281,8 +2521,20 @@ function ChartPanel({
       lastValueVisible: false,
     });
 
-    rsiSeries.setData(indicators.map((d) => ({ time: d.time as Time, value: clamp(d.rsi, 0, 100) })));
-    mfiSeries.setData(indicators.map((d) => ({ time: d.time as Time, value: clamp(d.mfi, 0, 100) })));
+    rsiSeries.setData(
+      indicators.map((d) => ({
+        time: d.time as Time,
+        value: clamp(d.rsi, 0, 100),
+      }))
+    );
+
+    mfiSeries.setData(
+      indicators.map((d) => ({
+        time: d.time as Time,
+        value: clamp(d.mfi, 0, 100),
+      }))
+    );
+
     rc.timeScale().fitContent();
 
     mc.timeScale().subscribeVisibleLogicalRangeChange((range) => {
@@ -1293,12 +2545,28 @@ function ChartPanel({
     });
 
     const resize = () => {
-      if (mainRef.current) mc.applyOptions({ width: mainRef.current.clientWidth, height: mainRef.current.clientHeight });
-      if (volOverlayRef.current) vc.applyOptions({ width: volOverlayRef.current.clientWidth, height: volOverlayRef.current.clientHeight });
-      if (rsiRef.current) rc.applyOptions({ width: rsiRef.current.clientWidth, height: rsiRef.current.clientHeight });
+      if (mainRef.current) {
+        mc.applyOptions({
+          width: mainRef.current.clientWidth,
+          height: mainRef.current.clientHeight,
+        });
+      }
+      if (volOverlayRef.current) {
+        vc.applyOptions({
+          width: volOverlayRef.current.clientWidth,
+          height: volOverlayRef.current.clientHeight,
+        });
+      }
+      if (rsiRef.current) {
+        rc.applyOptions({
+          width: rsiRef.current.clientWidth,
+          height: rsiRef.current.clientHeight,
+        });
+      }
     };
 
     window.addEventListener("resize", resize);
+
     return () => {
       window.removeEventListener("resize", resize);
       mc.remove();
@@ -1337,7 +2605,7 @@ function ChartPanel({
             alignItems: "center",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
             <div
               style={{
                 width: 24,
@@ -1350,57 +2618,61 @@ function ChartPanel({
                 justifyContent: "center",
                 fontSize: 10,
                 fontWeight: 900,
+                flexShrink: 0,
               }}
             >
               SC
             </div>
 
-            <div>
-              <div style={{ color: "#eef6ff", fontSize: 14, fontWeight: 900 }}>{symbol}</div>
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  color: "#eef6ff",
+                  fontSize: 14,
+                  fontWeight: 900,
+                  lineHeight: 1.1,
+                }}
+              >
+                BTCUSDT
+              </div>
               <div
                 style={{
                   color: "#7d91b6",
                   fontSize: 10,
                   fontWeight: 700,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
-                Scanner Atlas • Pasta: Cursor • Item: Navegar • TF: {timeframe}
+                Scanner Atlas • Pasta: Cursor • Item: Navegar • TF: 15m
               </div>
             </div>
           </div>
 
-          {[
-            ["Preço", livePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), "#4ef0cb"],
-            ["Variação", `${isPositive ? "+" : ""}${priceChange.toFixed(2)}%`, isPositive ? ui.green : ui.red],
-            ["Volume", formatCompact(candles[candles.length - 1]?.volume ?? 0), ui.cyan],
-            ["Desenhos", selectedObject ? "1" : "0", selectedObject ? ui.yellow : ui.red],
-          ].map(([title, value, color]) => (
-            <div
-              key={title}
-              style={{
-                borderRadius: 13,
-                border: "1px solid rgba(255,255,255,0.06)",
-                background:
-                  "linear-gradient(180deg, rgba(8,15,31,0.98), rgba(7,12,24,0.96))",
-                minHeight: 58,
-                padding: "10px 13px",
-              }}
-            >
-              <div
-                style={{
-                  color: "#7f93b7",
-                  fontSize: 9,
-                  fontWeight: 900,
-                  letterSpacing: 0.8,
-                  textTransform: "uppercase",
-                  marginBottom: 6,
-                }}
-              >
-                {title}
-              </div>
-              <div style={{ color: color as string, fontSize: 12, fontWeight: 900 }}>{value}</div>
-            </div>
-          ))}
+          <MiniStatCard
+            title="Preço"
+            value={livePrice.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+            valueColor="#4ef0cb"
+          />
+          <MiniStatCard
+            title="Variação"
+            value={`${isPositive ? "+" : ""}${priceChange.toFixed(2)}%`}
+            valueColor={isPositive ? ui.green : ui.red}
+          />
+          <MiniStatCard
+            title="Volume"
+            value={formatCompact(candles[candles.length - 1]?.volume ?? 0)}
+            valueColor="#51e6ff"
+          />
+          <MiniStatCard
+            title="Desenhos"
+            value={selectedObject ? "1" : "0"}
+            valueColor={selectedObject ? ui.yellow : ui.red}
+          />
 
           <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <TopButton active={mode === "auto"}>Auto</TopButton>
@@ -1433,12 +2705,19 @@ function ChartPanel({
           <TopButton>Limpar desenhos</TopButton>
           <TopButton>Apagar selecionado</TopButton>
         </div>
-        <div style={{ color: "#7f93b7", fontSize: 10, fontWeight: 800 }}>
+
+        <div
+          style={{
+            color: selectedObject ? "#dce8ff" : "#7f93b7",
+            fontSize: 10,
+            fontWeight: 800,
+          }}
+        >
           {selectedObject ? `${selectedObject.name} • ${selectedObject.type}` : "Nenhum objeto selecionado"}
         </div>
       </div>
 
-      <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+      <div style={{ position: "relative", flex: 1, minHeight: 0, width: "100%" }}>
         <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
         <div
           ref={volOverlayRef}
@@ -1451,21 +2730,51 @@ function ChartPanel({
             pointerEvents: "none",
             opacity: 0.95,
             borderTop: "1px solid rgba(255,255,255,0.05)",
+            background:
+              "linear-gradient(180deg, rgba(8,13,25,0.05), rgba(8,13,25,0.4))",
           }}
         />
+        <div
+          style={{
+            position: "absolute",
+            left: 14,
+            bottom: 118,
+            color: "#7f93b7",
+            fontSize: 10,
+            fontFamily: "monospace",
+            pointerEvents: "none",
+            background: "rgba(5,8,15,0.55)",
+            padding: "2px 6px",
+            borderRadius: 6,
+          }}
+        >
+          Volume
+        </div>
       </div>
 
       <div
         style={{
           width: "100%",
+          minWidth: 0,
           flexShrink: 0,
           borderTop: `1px solid ${ui.border}`,
           borderBottom: `1px solid ${ui.border}`,
           background: "#0a0f1d",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "5px 14px" }}>
-          <span style={{ color: "#7f93b7", fontSize: 10, fontFamily: "monospace" }}>RSI / MFI</span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "5px 14px",
+            width: "100%",
+            minWidth: 0,
+          }}
+        >
+          <span style={{ color: "#7f93b7", fontSize: 10, fontFamily: "monospace" }}>
+            RSI / MFI
+          </span>
           <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}>
             <span style={{ width: 12, height: 2, background: "#8b5cf6", display: "inline-block" }} />
             RSI
@@ -1475,86 +2784,94 @@ function ChartPanel({
             MFI
           </span>
         </div>
-        <div ref={rsiRef} style={{ height: 112, width: "100%" }} />
+
+        <div style={{ width: "100%", minWidth: 0, overflow: "hidden" }}>
+          <div ref={rsiRef} style={{ height: 112, width: "100%" }} />
+        </div>
       </div>
     </div>
   );
 }
 
-function FluxoModule() {
-  return <div style={{ padding: 20, color: ui.text }}>Fluxo pronto</div>;
-}
-function EulerModule() {
-  return <div style={{ padding: 20, color: ui.text }}>Euler pronto</div>;
-}
-function SingularidadeModule() {
-  return <div style={{ padding: 20, color: ui.text }}>Singularidade pronta</div>;
-}
-function IAAtlasModule() {
-  return <div style={{ padding: 20, color: ui.text }}>IA Atlas pronta</div>;
-}
-function EstruturaModule() {
-  return <div style={{ padding: 20, color: ui.text }}>Estrutura pronta</div>;
-}
-
-function WorkspaceByModule({
-  activeModule,
-  candles,
-  indicators,
-  selectedObject,
-  mode,
-  symbol,
-  timeframe,
-}: {
-  activeModule: TopModuleKey;
-  candles: CandleData[];
-  indicators: IndicatorData[];
-  selectedObject: DrawObject | null;
-  mode: ModeKey;
-  symbol: string;
-  timeframe: Timeframe;
-}) {
-  if (activeModule === "Scanner") {
-    return <ChartPanel candles={candles} indicators={indicators} selectedObject={selectedObject} mode={mode} symbol={symbol} timeframe={timeframe} />;
-  }
-  if (activeModule === "Fluxo") return <FluxoModule />;
-  if (activeModule === "Liquidez") return <div style={{ height: "100%", padding: 10 }}><LiquidityPanel /></div>;
-  if (activeModule === "Euler") return <EulerModule />;
-  if (activeModule === "Singularidade") return <SingularidadeModule />;
-  if (activeModule === "IA Atlas") return <IAAtlasModule />;
-  if (activeModule === "Estrutura") return <EstruturaModule />;
-  return null;
-}
-
 export default function AtlasChartPro2() {
   const [timeframe, setTimeframe] = useState<Timeframe>("15m");
   const [mode] = useState<ModeKey>("auto");
-  const [activeModule, setActiveModule] = useState<TopModuleKey>("Scanner");
   const [objects] = useState<DrawObject[]>([{ id: "1", name: "Linha 1", type: "line" }]);
   const [selectedId] = useState<string | null>(null);
-  const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC");
+
+  const candles = useMemo(() => generateCandles(240, 70200), []);
+  const indicators = useMemo(() => generateIndicators(candles), [candles]);
+
+  const selectedObject = useMemo(
+    () => objects.find((o) => o.id === selectedId) ?? null,
+    [objects, selectedId]
+  );
 
   const scannerAssets = useMemo<AssetScore[]>(
     () => [
-      { symbol: "BTC", volumeScore: 82.41, rsiMfi: 64.82, price: 74682, change: 2.8, trend: "up", color: "#27f59d", aiScore: 84, signal: "COMPRA", riskLevel: "Moderado", riskType: "Volatilidade", invalidation: 69180.6 },
-      { symbol: "ETH", volumeScore: 73.35, rsiMfi: 58.1, price: 3932, change: 2.58, trend: "up", color: "#31c8ff", aiScore: 79, signal: "COMPRA", riskLevel: "Moderado", riskType: "Pullback", invalidation: 3560 },
-      { symbol: "SOL", volumeScore: 61.18, rsiMfi: 43.7, price: 174.8, change: 3.06, trend: "up", color: "#ffb14a", aiScore: 76, signal: "COMPRA", riskLevel: "Moderado", riskType: "Aceleração", invalidation: 166 },
-      { symbol: "BNB", volumeScore: 69.08, rsiMfi: 52.2, price: 610.75, change: 0.43, trend: "neutral", color: "#f7c948", aiScore: 61, signal: "NEUTRO", riskLevel: "Moderado", riskType: "Consolidação", invalidation: 584 },
-      { symbol: "XRP", volumeScore: 55.63, rsiMfi: 39.9, price: 2.147, change: -1.1, trend: "down", color: "#a783ff", aiScore: 36, signal: "BAIXA", riskLevel: "Moderado", riskType: "Pressão", invalidation: 2.32 },
-      { symbol: "DOGE", volumeScore: 66.14, rsiMfi: 57.6, price: 0.387, change: -0.81, trend: "down", color: "#22c55e", aiScore: 52, signal: "NEUTRO", riskLevel: "Moderado", riskType: "Volatilidade", invalidation: 0.35 },
+      { symbol: "PET", volumeScore: 63.625, rsiMfi: 46.464, price: 65360, change: 0.8, trend: "up", color: "#27f59d" },
+      { symbol: "CORE", volumeScore: 89.650, rsiMfi: 41.925, price: 65907, change: 0.6, trend: "up", color: "#31c8ff" },
+      { symbol: "INJ", volumeScore: 10.055, rsiMfi: 82.086, price: 65990, change: 1.1, trend: "up", color: "#4f8dff" },
+      { symbol: "RENDER", volumeScore: 16.055, rsiMfi: 53.029, price: 65320, change: -0.4, trend: "down", color: "#f7c948" },
+      { symbol: "BTC", volumeScore: 82.410, rsiMfi: 64.820, price: 74682, change: 2.8, trend: "up", color: "#27f59d" },
+      { symbol: "ETH", volumeScore: 73.350, rsiMfi: 58.100, price: 3840, change: 1.2, trend: "up", color: "#31c8ff" },
+      { symbol: "SOL", volumeScore: 61.180, rsiMfi: 43.700, price: 182, change: -1.6, trend: "down", color: "#ffb14a" },
+      { symbol: "BNB", volumeScore: 69.080, rsiMfi: 52.200, price: 612, change: 0.9, trend: "neutral", color: "#f7c948" },
+      { symbol: "XRP", volumeScore: 55.630, rsiMfi: 39.900, price: 0.72, change: -2.1, trend: "down", color: "#a783ff" },
+      { symbol: "DOGE", volumeScore: 66.140, rsiMfi: 57.600, price: 0.18, change: 1.7, trend: "up", color: "#22c55e" },
+      { symbol: "ARB", volumeScore: 44.620, rsiMfi: 48.300, price: 1.21, change: 0.5, trend: "neutral", color: "#52b6ff" },
+      { symbol: "SEI", volumeScore: 71.440, rsiMfi: 61.820, price: 0.58, change: 3.1, trend: "up", color: "#31e9ff" },
     ],
     []
   );
 
-  const activeAsset = useMemo(
-    () => scannerAssets.find((a) => a.symbol === selectedSymbol) ?? scannerAssets[0],
-    [scannerAssets, selectedSymbol]
+  const scannerEvents = useMemo<ScannerEvent[]>(
+    () => [
+      { time: "23:31:25", title: "Compra Baleia", tag: "Fluxo • Scanner", tone: "positive" },
+      { time: "14:30:23", title: "Venda Retail", tag: "Confluência", tone: "neutral" },
+      { time: "14:29:47", title: "Compra Baleia", tag: "RSI / MFI", tone: "positive" },
+      { time: "14:29:47", title: "Venda Institucional", tag: "Risco Assimétrico", tone: "warning" },
+      { time: "14:31:08", title: "Liquidação Long", tag: "Eventos", tone: "warning" },
+      { time: "14:30:55", title: "Compra Algorítmica", tag: "Scanner+", tone: "positive" },
+      { time: "14:32:15", title: "Compra Grande", tag: "Singularidade", tone: "positive" },
+      { time: "14:31:42", title: "Venda Institucional", tag: "Confluência", tone: "neutral" },
+    ],
+    []
   );
 
-  const candles = useMemo(() => generateCandles(240, symbolBasePrice(activeAsset.symbol)), [activeAsset.symbol]);
-  const indicators = useMemo(() => generateIndicators(candles), [candles]);
-  const selectedObject = useMemo(() => objects.find((o) => o.id === selectedId) ?? null, [objects, selectedId]);
-  const insight = useMemo(() => symbolToInsight(activeAsset), [activeAsset]);
+  const lastCandle = candles[candles.length - 1];
+  const firstCandle = candles[0];
+  const priceChange =
+    ((lastCandle.close - firstCandle.close) / firstCandle.close) * 100;
+
+  const aiInsight = useMemo<AIInsight>(
+    () => ({
+      symbol: "BTCUSDT",
+      price: lastCandle.close,
+      score: 84,
+      signal: "COMPRA",
+      riskLevel: "Moderado",
+      riskType: "Volatilidade",
+      invalidation: 69180.6,
+      structure: [
+        { label: "Fluxo", value: "Positivo", type: "positive" },
+        { label: "Momentum", value: "Forte", type: "strong" },
+        { label: "Liquidez", value: "Ativo", type: "positive" },
+        { label: "Confluência", type: "dots", dots: 8 },
+      ],
+      structure2: [
+        { label: "Euler", value: "Alinhado", type: "positive" },
+        { label: "Razão de Prata", value: "Estável", type: "neutral" },
+        { label: "Risco Assimétrico", value: "Bom", type: "positive" },
+        { label: "Invalidação", value: "Próxima", type: "negative" },
+      ],
+    }),
+    [lastCandle.close]
+  );
+
+  const pageHeight = "calc(100vh - 114px)";
+  const topRightWidth = 320;
+  const bottomRightWidth = 380;
 
   return (
     <div
@@ -1570,62 +2887,98 @@ export default function AtlasChartPro2() {
       }}
     >
       <TopBar
-        symbol={activeAsset.symbol}
-        price={activeAsset.price}
-        change={activeAsset.change}
+        symbol="BTCUSDT"
+        price={lastCandle.close}
+        change={priceChange}
         timeframe={timeframe}
         onTimeframeChange={setTimeframe}
       />
-      <ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
 
-      <div style={{ display: "flex", minHeight: 0, flex: 1 }}>
+      <ModuleStrip />
+
+      <div
+        style={{
+          display: "flex",
+          minHeight: 0,
+          height: pageHeight,
+          alignItems: "stretch",
+        }}
+      >
         <LeftToolbar />
-        <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            background: ui.bg,
+          }}
+        >
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) 320px",
-              height: "100%",
-              minHeight: 0,
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gridTemplateRows: `${pageHeight} ${pageHeight}`,
+              minHeight: `calc((${pageHeight}) * 2)`,
             }}
           >
-            <div style={{ minWidth: 0, minHeight: 0 }}>
-              <WorkspaceByModule
-                activeModule={activeModule}
-                candles={candles}
-                indicators={indicators}
-                selectedObject={selectedObject}
-                mode={mode}
-                symbol={activeAsset.symbol}
-                timeframe={timeframe}
-              />
-            </div>
             <div
               style={{
+                display: "grid",
+                gridTemplateColumns: `minmax(0, 1fr) ${topRightWidth}px`,
                 minWidth: 0,
                 minHeight: 0,
-                borderLeft: `1px solid ${ui.border}`,
-                background: "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
-                display: "grid",
-                gridTemplateRows: activeModule === "Scanner" ? "1fr" : "1fr auto",
+                borderBottom: `1px solid ${ui.border}`,
               }}
             >
-              <AIInsightPanel insight={insight} topModule={activeModule} />
-              {activeModule !== "Scanner" && (
-                <div
-                  style={{
-                    borderTop: `1px solid ${ui.border}`,
-                    padding: 10,
-                    background: "rgba(255,255,255,0.015)",
-                  }}
-                >
-                  <ScannerPanelContinuous
-                    assets={scannerAssets}
-                    selectedSymbol={selectedSymbol}
-                    onSelectSymbol={setSelectedSymbol}
-                  />
-                </div>
-              )}
+              <div style={{ minWidth: 0, minHeight: 0 }}>
+                <ChartPanel
+                  candles={candles}
+                  indicators={indicators}
+                  selectedObject={selectedObject}
+                  mode={mode}
+                />
+              </div>
+
+              <div
+                style={{
+                  minWidth: 0,
+                  minHeight: 0,
+                  borderLeft: `1px solid ${ui.border}`,
+                  background:
+                    "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+                }}
+              >
+                <AIInsightPanel insight={aiInsight} />
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: `minmax(0, 1fr) ${bottomRightWidth}px`,
+                minWidth: 0,
+                minHeight: 0,
+              }}
+            >
+              <div style={{ minWidth: 0, minHeight: 0 }}>
+                <SecondPageSection events={scannerEvents} />
+              </div>
+
+              <div
+                style={{
+                  minWidth: 0,
+                  minHeight: 0,
+                  borderLeft: `1px solid ${ui.border}`,
+                  background:
+                    "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+                  padding: 10,
+                }}
+              >
+                <ScannerPanelContinuous assets={scannerAssets} />
+              </div>
             </div>
           </div>
         </div>
