@@ -136,7 +136,7 @@ const TOP_MODULES: TopModuleKey[] = [
   "Euler",
   "Liquidez",
 ];
-const LIQUIDITY_TABS = ["Map", "Heatmap", "Clusters", "Eventos"];
+const LIQUIDITY_TABS = ["Liquidez", "Map", "Clusters", "Eventos", "Fluxo Institucional", "Notícias IA Atlas"];
 
 const ui = {
   bg: "#060913",
@@ -2009,7 +2009,7 @@ function HeatmapBars() {
 }
 
 function LiquidityPanel() {
-  const [tab, setTab] = useState("Heatmap");
+  const [tab, setTab] = useState("Liquidez");
 
   return (
     <div
@@ -2083,10 +2083,10 @@ function LiquidityPanel() {
             }}
           >
             <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
-              {tab === "Heatmap" ? "Heatmap de Intensidade" : tab}
+              {tab === "Liquidez" ? "Liquidez Avançada" : tab}
             </div>
 
-            {tab === "Heatmap" ? (
+            {tab === "Liquidez" ? (
               <HeatmapBars />
             ) : (
               <div
