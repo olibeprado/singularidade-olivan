@@ -2579,28 +2579,29 @@ function ModuleSummaryCards({
         color: ui.yellow,
       },
     ],
-    Singularidade: [
-      {
-        title: "Pulso",
-        value: insight.score >= 78 ? "Elevado" : insight.score >= 58 ? "Moderado" : "Baixo",
-        sub: "Motor matemático em leitura viva.",
-        color: "#10e7ff",
-        glow: "0 0 18px rgba(16,231,255,0.14)",
-      },
-      {
-        title: "Ruído",
-        value: insight.score >= 72 ? "Baixo" : insight.score >= 50 ? "Moderado" : "Elevado",
-        sub: "Leitura mais limpa do movimento.",
-        color: "#00d6ff",
-        glow: "0 0 18px rgba(0,214,255,0.10)",
-      },
-      {
-        title: "Fase",
-        value: insight.change >= 0 ? "Expansão" : "Neutro",
-        sub: "Contexto de aceleração controlada.",
-        color: "#ff4fa3",
-        glow: "0 0 18px rgba(255,79,163,0.12)",
-      },
+   Singularidade: [
+  {
+    title: "Pulso",
+    value: insight.score >= 78 ? "Elevado" : insight.score >= 58 ? "Moderado" : "Baixo",
+    sub: "Motor matemático em leitura viva.",
+    color: "#10e7ff",
+    glow: "0 0 18px rgba(16,231,255,0.14)",
+  },
+  {
+    title: "Ruído",
+    value: insight.score >= 72 ? "Baixo" : insight.score >= 50 ? "Moderado" : "Elevado",
+    sub: "Leitura mais limpa do movimento.",
+    color: "#00d6ff",
+    glow: "0 0 18px rgba(0,214,255,0.10)",
+  },
+  {
+    title: "Fase",
+    value: insight.score >= 75 ? "Expansão" : insight.score >= 55 ? "Transição" : "Neutro",
+    sub: "Contexto de aceleração controlada.",
+    color: "#ff4fa3",
+    glow: "0 0 18px rgba(255,79,163,0.12)",
+  },
+],
     ],
     "IA Atlas": [
       {
