@@ -2582,21 +2582,24 @@ function ModuleSummaryCards({
     Singularidade: [
       {
         title: "Pulso",
-        value: "Elevado",
-        sub: "Motor matemático em alta sintonia.",
-        color: ui.green,
+        value: insight.score >= 78 ? "Elevado" : insight.score >= 58 ? "Moderado" : "Baixo",
+        sub: "Motor matemático em leitura viva.",
+        color: "#10e7ff",
+        glow: "0 0 18px rgba(16,231,255,0.14)",
       },
       {
         title: "Ruído",
-        value: "Baixo",
+        value: insight.score >= 72 ? "Baixo" : insight.score >= 50 ? "Moderado" : "Elevado",
         sub: "Leitura mais limpa do movimento.",
-        color: ui.cyan,
+        color: "#00d6ff",
+        glow: "0 0 18px rgba(0,214,255,0.10)",
       },
       {
         title: "Fase",
-        value: "Expansão",
+        value: insight.change >= 0 ? "Expansão" : "Neutro",
         sub: "Contexto de aceleração controlada.",
-        color: ui.yellow,
+        color: "#ff4fa3",
+        glow: "0 0 18px rgba(255,79,163,0.12)",
       },
     ],
     "IA Atlas": [
@@ -2705,6 +2708,7 @@ function ModuleSummaryCards({
   };
 
   const isEuler = activeModule === "Euler";
+  const isSing = activeModule === "Singularidade";
 
   return (
     <div
@@ -2719,27 +2723,30 @@ function ModuleSummaryCards({
           key={card.title}
           style={{
             borderRadius: 14,
-            border: isEuler
-              ? "1px solid rgba(45,226,255,0.16)"
-              : "1px solid rgba(255,255,255,0.06)",
-            background: isEuler
-              ? "linear-gradient(180deg, rgba(5,13,25,0.98), rgba(3,8,18,0.98))"
-              : "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+            border:
+              isEuler || isSing
+                ? "1px solid rgba(45,226,255,0.14)"
+                : "1px solid rgba(255,255,255,0.06)",
+            background:
+              isEuler || isSing
+                ? "linear-gradient(180deg, rgba(4,10,20,0.98), rgba(2,6,12,0.98))"
+                : "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
             padding: 12,
             minHeight: 84,
-            boxShadow: isEuler ? card.glow || "none" : "none",
+            boxShadow: card.glow || "none",
             position: "relative",
             overflow: "hidden",
           }}
         >
-          {isEuler && (
+          {(isEuler || isSing) && (
             <div
               style={{
                 position: "absolute",
                 inset: 0,
                 pointerEvents: "none",
-                background:
-                  "linear-gradient(90deg, transparent, rgba(45,226,255,0.05), transparent)",
+                background: isSing
+                  ? "linear-gradient(90deg, transparent, rgba(0,214,255,0.04), transparent)"
+                  : "linear-gradient(90deg, transparent, rgba(45,226,255,0.05), transparent)",
                 opacity: 0.55,
               }}
             />
@@ -2763,12 +2770,12 @@ function ModuleSummaryCards({
           <div
             style={{
               color: card.color,
-              fontSize: isEuler ? 18 : 16,
+              fontSize: isEuler || isSing ? 18 : 16,
               fontWeight: 900,
               marginBottom: 6,
               position: "relative",
               zIndex: 1,
-              textShadow: isEuler ? `0 0 12px ${card.color}44` : "none",
+              textShadow: (isEuler || isSing) ? `0 0 12px ${card.color}44` : "none",
             }}
           >
             {card.value}
@@ -2790,7 +2797,6 @@ function ModuleSummaryCards({
     </div>
   );
 }
-
 function ModuleCenterPanel({
   activeModule,
   events,
@@ -3204,6 +3210,604 @@ function ModuleCenterPanel({
                 >
                   {v}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeModule === "Singularidade") {
+    const bars = [44, 58, 51, 29, 35, 48, 31, 60, 26, 55, 47, 38, 25, 24, 37, 32, 41, 22];
+    const line1 = Array.from({ length: 36 }, (_, i) => {
+      const x = (i / 35) * 860;
+      const y = 130 + Math.sin(i / 4.8) * 20 + Math.cos(i / 7.2) * 10;
+      return `${x},${y}`;
+    }).join(" ");
+
+    const line2 = Array.from({ length: 36 }, (_, i) => {
+      const x = (i / 35) * 860;
+      const y = 190 + Math.cos(i / 5.4) * 16 + Math.sin(i / 8.4) * 8;
+      return `${x},${y}`;
+    }).join(" ");
+
+    const liveList = [
+      ["BTC", "$66,374.82", "+2.76%"],
+      ["ETH", "$3,931.95", "+2.58%"],
+      ["SOL", "$174.80", "+3.06%"],
+      ["ADA", "$0.6186", "+5.05%"],
+      ["DOT", "$8.4004", "+0.35%"],
+    ];
+
+    return (
+      <div
+        style={{
+          height: "100%",
+          padding: 10,
+          background:
+            "linear-gradient(180deg, rgba(4,7,14,0.98), rgba(2,5,10,0.98))",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            borderRadius: 14,
+            border: "1px solid rgba(0,214,255,0.12)",
+            background:
+              "linear-gradient(180deg, rgba(4,8,18,0.98), rgba(2,5,10,0.98))",
+            overflow: "hidden",
+            display: "grid",
+            gridTemplateRows: "auto auto 1fr auto",
+            gap: 10,
+            padding: 10,
+            boxShadow: "0 0 28px rgba(0,214,255,0.05)",
+            position: "relative",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              background:
+                "linear-gradient(rgba(0,214,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,214,255,0.02) 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+              opacity: 0.35,
+            }}
+          />
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "2px 4px 0",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  color: "#eaf6ff",
+                  fontSize: 15,
+                  fontWeight: 900,
+                  letterSpacing: 0.8,
+                }}
+              >
+                Singularidade Terminal
+              </div>
+              <div
+                style={{
+                  color: "#6883aa",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: 0.5,
+                  textTransform: "uppercase",
+                }}
+              >
+                Quantum state monitor
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <span
+                style={{
+                  color: "#00ff9d",
+                  fontSize: 10,
+                  fontWeight: 900,
+                  letterSpacing: 0.7,
+                  textTransform: "uppercase",
+                }}
+              >
+                • Ao vivo
+              </span>
+              <span
+                style={{
+                  color: ui.cyan,
+                  fontSize: 10,
+                  fontWeight: 900,
+                  padding: "4px 8px",
+                  borderRadius: 999,
+                  background: "rgba(0,214,255,0.08)",
+                  border: "1px solid rgba(0,214,255,0.16)",
+                }}
+              >
+                Módulo Ativo
+              </span>
+            </div>
+          </div>
+
+          <ModuleSummaryCards activeModule={activeModule} insight={insight} />
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              display: "grid",
+              gridTemplateColumns: "1.24fr 0.76fr",
+              gap: 10,
+              minHeight: 0,
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateRows: "1fr auto",
+                gap: 10,
+                minHeight: 0,
+              }}
+            >
+              <div
+                style={{
+                  borderRadius: 14,
+                  border: "1px solid rgba(0,214,255,0.12)",
+                  background:
+                    "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                  overflow: "hidden",
+                  minHeight: 0,
+                }}
+              >
+                <div
+                  style={{
+                    padding: "12px 14px 8px",
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "#eef7ff", fontSize: 13, fontWeight: 900 }}>
+                      Singularidade
+                    </span>
+                    <span
+                      style={{
+                        color: "#ff4fa3",
+                        fontSize: 10,
+                        fontWeight: 900,
+                        padding: "3px 8px",
+                        borderRadius: 999,
+                        background: "rgba(255,79,163,0.10)",
+                        border: "1px solid rgba(255,79,163,0.16)",
+                      }}
+                    >
+                      {insight.price.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <span
+                    style={{
+                      color: ui.cyan,
+                      fontSize: 10,
+                      fontWeight: 900,
+                      padding: "4px 10px",
+                      borderRadius: 999,
+                      background: "rgba(0,214,255,0.08)",
+                      border: "1px solid rgba(0,214,255,0.16)",
+                    }}
+                  >
+                    Atlas Sync
+                  </span>
+                </div>
+
+                <div style={{ padding: 12, height: "calc(100% - 52px)" }}>
+                  <svg
+                    width="100%"
+                    height="100%"
+                    viewBox="0 0 860 320"
+                    preserveAspectRatio="none"
+                  >
+                    {Array.from({ length: 7 }, (_, i) => (
+                      <line
+                        key={`h-${i}`}
+                        x1="0"
+                        y1={i * 45}
+                        x2="860"
+                        y2={i * 45}
+                        stroke="rgba(255,255,255,0.035)"
+                        strokeWidth="1"
+                      />
+                    ))}
+                    {Array.from({ length: 14 }, (_, i) => (
+                      <line
+                        key={`v-${i}`}
+                        x1={i * 66}
+                        y1="0"
+                        x2={i * 66}
+                        y2="320"
+                        stroke="rgba(255,255,255,0.025)"
+                        strokeWidth="1"
+                      />
+                    ))}
+
+                    {bars.map((h, i) => {
+                      const x = 18 + i * 44;
+                      return (
+                        <rect
+                          key={i}
+                          x={x}
+                          y={280 - h}
+                          width="24"
+                          height={h}
+                          rx="3"
+                          fill="rgba(0,214,255,0.38)"
+                        />
+                      );
+                    })}
+
+                    <polyline
+                      points={line1}
+                      fill="none"
+                      stroke="#00eaff"
+                      strokeWidth="2.4"
+                      style={{ filter: "drop-shadow(0 0 8px rgba(0,234,255,0.34))" }}
+                    />
+                    <polyline
+                      points={line2}
+                      fill="none"
+                      stroke="#d7a100"
+                      strokeWidth="1.8"
+                      opacity="0.9"
+                      strokeDasharray="6 4"
+                      style={{ filter: "drop-shadow(0 0 7px rgba(215,161,0,0.28))" }}
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "0.86fr 1fr 1fr",
+                  gap: 10,
+                }}
+              >
+                <div
+                  style={{
+                    borderRadius: 14,
+                    border: "1px solid rgba(0,214,255,0.12)",
+                    background:
+                      "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                    padding: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div style={{ textAlign: "center" }}>
+                    <div
+                      style={{
+                        color: "#6f88af",
+                        fontSize: 10,
+                        fontWeight: 900,
+                        letterSpacing: 0.7,
+                        textTransform: "uppercase",
+                        marginBottom: 14,
+                      }}
+                    >
+                      Índice Singular
+                    </div>
+
+                    <div
+                      style={{
+                        width: 108,
+                        height: 108,
+                        borderRadius: "50%",
+                        margin: "0 auto",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background:
+                          "conic-gradient(#00ff9d 0deg, #00ff9d 290deg, rgba(255,255,255,0.08) 290deg 360deg)",
+                        boxShadow: "0 0 22px rgba(0,255,157,0.12)",
+                        padding: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: "50%",
+                          background: "#06101b",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexDirection: "column",
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: "#00ff9d",
+                            fontSize: 18,
+                            fontWeight: 900,
+                          }}
+                        >
+                          {insight.score}
+                        </span>
+                        <span
+                          style={{
+                            color: "#7f93b7",
+                            fontSize: 10,
+                          }}
+                        >
+                          Excelente
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    borderRadius: 14,
+                    border: "1px solid rgba(0,214,255,0.12)",
+                    background:
+                      "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                    padding: 14,
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#edf7ff",
+                      fontSize: 13,
+                      fontWeight: 900,
+                      marginBottom: 12,
+                    }}
+                  >
+                    Mercado Live
+                  </div>
+
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {liveList.map(([sym, price, change]) => (
+                      <div
+                        key={sym}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 8,
+                          paddingBottom: 8,
+                          borderBottom: "1px solid rgba(255,255,255,0.04)",
+                        }}
+                      >
+                        <div>
+                          <div style={{ color: "#edf6ff", fontSize: 12, fontWeight: 900 }}>
+                            {sym}
+                          </div>
+                          <div style={{ color: "#6f88af", fontSize: 10 }}>
+                            Mercado spot
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ color: "#dce8ff", fontSize: 12, fontWeight: 800 }}>
+                            {price}
+                          </div>
+                          <div style={{ color: "#00ff9d", fontSize: 11, fontWeight: 900 }}>
+                            {change}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    borderRadius: 14,
+                    border: "1px solid rgba(0,214,255,0.12)",
+                    background:
+                      "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                    padding: 14,
+                    display: "grid",
+                    alignContent: "start",
+                    gap: 10,
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#edf7ff",
+                      fontSize: 13,
+                      fontWeight: 900,
+                    }}
+                  >
+                    Métricas
+                  </div>
+
+                  {[
+                    ["Momentum", "78.4%", ui.cyan],
+                    ["Proteção", "92%", "#00ff9d"],
+                    ["Volatilidade", "34.2", ui.yellow],
+                    ["Desvio", "1.82", "#ff4fa3"],
+                  ].map(([k, v, c]) => (
+                    <div
+                      key={k}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        padding: "8px 0",
+                        borderBottom: "1px solid rgba(255,255,255,0.05)",
+                      }}
+                    >
+                      <span style={{ color: "#7f93b7", fontSize: 12 }}>{k}</span>
+                      <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>
+                        {v}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                borderRadius: 14,
+                border: "1px solid rgba(0,214,255,0.12)",
+                background:
+                  "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                padding: 12,
+                overflowY: "auto",
+              }}
+            >
+              <div
+                style={{
+                  color: "#edf7ff",
+                  fontSize: 13,
+                  fontWeight: 900,
+                  marginBottom: 12,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.7,
+                }}
+              >
+                Leitura do módulo
+              </div>
+
+              <div
+                style={{
+                  borderRadius: 12,
+                  border: "1px solid rgba(0,214,255,0.10)",
+                  background:
+                    "linear-gradient(180deg, rgba(6,14,24,0.98), rgba(5,10,20,0.98))",
+                  padding: 14,
+                  marginBottom: 12,
+                  minHeight: 108,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <div style={{ textAlign: "center" }}>
+                  <div
+                    style={{
+                      color: "#ff4fa3",
+                      fontSize: 32,
+                      fontWeight: 900,
+                      lineHeight: 1,
+                      textShadow: "0 0 12px rgba(255,79,163,0.34)",
+                    }}
+                  >
+                    {Math.max(4, Math.round(insight.score / 20))}
+                  </div>
+                  <div
+                    style={{
+                      color: "#7f93b7",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.7,
+                      marginTop: 6,
+                    }}
+                  >
+                    Score
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: 6 }}>
+                {[
+                  ["Ativo", insight.symbol, "#dce8ff"],
+                  ["Sinal", insight.signal === "COMPRA" ? "Neutro" : insight.signal, insight.signal === "COMPRA" ? ui.cyan : ui.yellow],
+                  ["Risco", "Alto", ui.red],
+                  ["Liquidez", "Inativo", "#8b97ad"],
+                  ["Euler", "Desalinhado", "#ff4fa3"],
+                ].map(([k, v, c]) => (
+                  <div
+                    key={k}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: "10px 0",
+                      borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    <span style={{ color: "#7f93b7", fontSize: 12 }}>{k}</span>
+                    <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>
+                      {v}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div
+                style={{
+                  marginTop: 14,
+                  borderRadius: 12,
+                  height: 82,
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  background:
+                    "radial-gradient(circle at 50% 50%, rgba(255,79,163,0.12), rgba(0,214,255,0.06), transparent 70%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#647da3",
+                  fontSize: 10,
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
+                }}
+              >
+                Campo quântico ativo
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              height: 40,
+              borderRadius: 10,
+              border: "1px solid rgba(0,214,255,0.10)",
+              background: "rgba(0,0,0,0.28)",
+              display: "flex",
+              alignItems: "center",
+              overflow: "hidden",
+              padding: "0 12px",
+              gap: 18,
+            }}
+          >
+            {[
+              ["ETH", "$3,482", "+1.12%", "#00ff9d"],
+              ["SOL", "$187.40", "-0.87%", "#ff4fa3"],
+              ["BNB", "$612.38", "+0.43%", "#00ff9d"],
+              ["ADA", "$0.847", "+3.21%", "#00ff9d"],
+              ["DOT", "$9.34", "-1.05%", "#ff4fa3"],
+              ["AVAX", "$42.18", "+4.78%", "#00ff9d"],
+              ["MATIC", "$1.23", "+0.93%", "#00ff9d"],
+            ].map(([sym, price, change, color]) => (
+              <div
+                key={sym}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  whiteSpace: "nowrap",
+                  fontSize: 11,
+                }}
+              >
+                <span style={{ color: ui.cyan, fontWeight: 900 }}>{sym}</span>
+                <span style={{ color: "#dce8ff" }}>{price}</span>
+                <span style={{ color: color as string, fontWeight: 900 }}>{change}</span>
               </div>
             ))}
           </div>
