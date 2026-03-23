@@ -1750,19 +1750,19 @@ function SmallStatCard({
         border: "1px solid rgba(45,226,255,0.12)",
         background:
           "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
-        padding: "10px 12px",
-        minHeight: 68,
+        padding: "8px 10px",
+        minHeight: 52,
         boxShadow: accent ? `0 0 18px ${accent}` : "none",
       }}
     >
       <div
         style={{
           color: "#6f88af",
-          fontSize: 10,
+          fontSize: 9,
           fontWeight: 900,
-          letterSpacing: 0.7,
+          letterSpacing: 0.75,
           textTransform: "uppercase",
-          marginBottom: 8,
+          marginBottom: 6,
         }}
       >
         {title}
@@ -1770,15 +1770,16 @@ function SmallStatCard({
       <div
         style={{
           color,
-          fontSize: 16,
+          fontSize: 15,
           fontWeight: 900,
-          marginBottom: 4,
+          marginBottom: 3,
           textShadow: `0 0 10px ${color}33`,
+          lineHeight: 1,
         }}
       >
         {value}
       </div>
-      {sub && <div style={{ color: "#8ea3c6", fontSize: 10, lineHeight: 1.35 }}>{sub}</div>}
+      {sub && <div style={{ color: "#7f95bb", fontSize: 9, lineHeight: 1.25 }}>{sub}</div>}
     </div>
   );
 }
@@ -2022,24 +2023,83 @@ function LiquidityPanel() {
     }
 
     if (tab === "Map") {
+      const volumeBars = [
+        { h: 72, c: "#149969" }, { h: 56, c: "#8f3452" }, { h: 86, c: "#149969" }, { h: 46, c: "#8f3452" },
+        { h: 66, c: "#8f3452" }, { h: 94, c: "#149969" }, { h: 52, c: "#149969" }, { h: 126, c: "#149969" },
+        { h: 104, c: "#8f3452" }, { h: 76, c: "#149969" }, { h: 112, c: "#149969" }, { h: 138, c: "#8f3452" },
+      ];
+      const xLabels = ["00:00","02:00","04:00","06:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"];
       return (
-        <div style={{ display: "grid", gap: 10 }}>
+        <div style={{ display: "grid", gap: 8 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Mapa de Preço</div>
-            <div style={{ color: ui.mut, fontSize: 11 }}>1H · VOL 22.13</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Mapa de Preço</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {["1M","5M","15M","1H","4H","1D"].map((tf) => (
+                  <button
+                    key={tf}
+                    style={{
+                      height: 22,
+                      minWidth: 28,
+                      borderRadius: 6,
+                      border: tf === "1H" ? "1px solid rgba(45,226,255,0.55)" : "1px solid rgba(255,255,255,0.08)",
+                      background: tf === "1H" ? "rgba(45,226,255,0.14)" : "rgba(255,255,255,0.02)",
+                      color: tf === "1H" ? "#dffcff" : "#7f95bb",
+                      fontSize: 9,
+                      fontWeight: 900,
+                      padding: "0 8px",
+                    }}
+                  >
+                    {tf}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ color: ui.mut, fontSize: 11 }}>VOL: 22.13</div>
           </div>
-          <div style={{ height: 320, borderRadius: 14, border: "1px solid rgba(255,255,255,0.05)", background: "linear-gradient(180deg, rgba(6,13,24,0.96), rgba(5,9,18,0.98))", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(45,226,255,0.04), transparent 40%)" }} />
-            <svg viewBox="0 0 800 320" style={{ width: "100%", height: "100%" }}>
-              <defs>
-                <linearGradient id="atlasMapFill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(45,226,255,0.26)" />
-                  <stop offset="100%" stopColor="rgba(45,226,255,0.02)" />
-                </linearGradient>
-              </defs>
-              <path d="M20 240 C90 120, 140 80, 210 150 S320 290, 390 210 S520 60, 600 120 S710 80, 780 35" fill="none" stroke="#2de2ff" strokeWidth="3" />
-              <path d="M20 240 C90 120, 140 80, 210 150 S320 290, 390 210 S520 60, 600 120 S710 80, 780 35 L780 320 L20 320 Z" fill="url(#atlasMapFill)" />
-            </svg>
+
+          <div style={{ height: 430, borderRadius: 14, border: "1px solid rgba(255,255,255,0.05)", background: "linear-gradient(180deg, rgba(6,13,24,0.96), rgba(5,9,18,0.98))", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(45,226,255,0.035), transparent 32%)" }} />
+            <div style={{ position: "absolute", left: 14, top: 14, zIndex: 2 }}>
+              <div style={{ color: "#eff7ff", fontSize: 19, fontWeight: 900, marginBottom: 4 }}>$71.500,00 <span style={{ color: "#27f59d", fontSize: 14, marginLeft: 8 }}>↗ +0.34%</span></div>
+            </div>
+
+            <div style={{ position: "absolute", left: 14, right: 14, top: 52, bottom: 118 }}>
+              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 42, color: "#5e7398", fontSize: 10, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "16px 0 26px" }}>
+                <span>$72k</span>
+                <span>$71k</span>
+                <span>$71k</span>
+                <span>$70k</span>
+                <span>$70k</span>
+              </div>
+              <div style={{ position: "absolute", left: 38, right: 0, top: 0, bottom: 0 }}>
+                <svg viewBox="0 0 760 260" style={{ width: "100%", height: "100%" }}>
+                  <defs>
+                    <linearGradient id="atlasMapFillV2" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="rgba(45,226,255,0.20)" />
+                      <stop offset="100%" stopColor="rgba(45,226,255,0.03)" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M12 190 C84 76, 152 34, 220 126 S332 272, 406 176 S516 20, 596 86 S676 56, 748 10" fill="none" stroke="#23dcff" strokeWidth="2.8" />
+                  <path d="M12 190 C84 76, 152 34, 220 126 S332 272, 406 176 S516 20, 596 86 S676 56, 748 10 L748 260 L12 260 Z" fill="url(#atlasMapFillV2)" />
+                </svg>
+              </div>
+            </div>
+
+            <div style={{ position: "absolute", left: 14, right: 14, bottom: 16, height: 98 }}>
+              <div style={{ position: "absolute", left: 42, right: 0, bottom: 0, display: "grid", gridTemplateColumns: "repeat(12, minmax(0, 1fr))", gap: 10, alignItems: "end", height: 92 }}>
+                {volumeBars.map((bar, idx) => (
+                  <div key={idx} style={{ display: "grid", gap: 6 }}>
+                    <div style={{ height: bar.h, borderRadius: 1, background: bar.c, opacity: 0.95 }} />
+                  </div>
+                ))}
+              </div>
+              <div style={{ position: "absolute", left: 42, right: 0, bottom: -2, display: "grid", gridTemplateColumns: "repeat(12, minmax(0, 1fr))", gap: 10 }}>
+                {xLabels.map((label) => (
+                  <div key={label} style={{ color: "#56709b", fontSize: 9, textAlign: "center" }}>{label}</div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       );
@@ -2218,8 +2278,8 @@ function LiquidityPanel() {
         ))}
       </div>
 
-      <div style={{ padding: 12, display: "grid", gap: 12, flex: 1 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 10 }}>
+      <div style={{ padding: 10, display: "grid", gap: 10, flex: 1 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8 }}>
           <SmallStatCard title="Liquidez Superior" value="$72.200" sub="Bloco vendedor forte acima do preço atual." color={ui.yellow} />
           <SmallStatCard title="Liquidez Inferior" value="$69.800" sub="Absorção compradora ganhando espessura." color={ui.green} />
           <SmallStatCard title="Cluster Dominante" value="BTC Core" sub="Maior concentração institucional." color={ui.cyan} />
@@ -2227,13 +2287,13 @@ function LiquidityPanel() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1.26fr 0.62fr", gap: 12, flex: 1, minHeight: 0 }}>
-          <div data-atlas-scroll="cyan" style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgba(45,226,255,0.55) rgba(255,255,255,0.04)" }}>
+          <div data-atlas-scroll="cyan" style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgba(45,226,255,0.55) rgba(255,255,255,0.04)" }}>
             {renderMain()}
           </div>
 
           <div style={{ display: "grid", gap: 12 }}>
-            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14 }}>
-              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>Leitura rápida</div>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12 }}>
+              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 10 }}>Leitura rápida</div>
               <div style={{ display: "grid", gap: 10 }}>
                 {[["Liquidez acima", "Pesada", ui.red],["Liquidez abaixo", "Saudável", ui.green],["Risco curto", "Controlado", ui.yellow],["Confluência", "8 / 9", ui.cyan],["Fluxo", "Positivo", ui.green],["Volatilidade", "Moderada", "#dce8ff"]].map(([k, v, c]) => (
                   <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
@@ -2243,8 +2303,8 @@ function LiquidityPanel() {
                 ))}
               </div>
             </div>
-            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14 }}>
-              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>IA Análise</div>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12 }}>
+              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 10 }}>IA Análise</div>
               <div style={{ color: "#8ea2c8", fontSize: 12, lineHeight: 1.6 }}>Cenário favorece continuação de alta. Confluência de 8/9 indicadores positivos. Liquidez superior em $72.200 é o próximo alvo.</div>
             </div>
           </div>
