@@ -2411,6 +2411,7 @@ function ChartPanel({
   mode: ModeKey;
   symbol: string;
   timeframe: Timeframe;
+  selectedTool: ToolKey;
 }) {
   const mainRef = useRef<HTMLDivElement>(null);
   const volOverlayRef = useRef<HTMLDivElement>(null);
