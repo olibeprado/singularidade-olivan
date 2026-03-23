@@ -652,7 +652,6 @@ function LeftToolbar({
   selectedTool,
   onSelectTool,
 }: {
-  selectedTool: ToolKey;
   onSelectTool: (tool: ToolKey) => void;
 }) {
   const groups = [
@@ -1179,7 +1178,6 @@ function ScannerPanelContinuous({
   assets: AssetScore[];
   selectedSymbol: string;
   onSelectSymbol: (symbol: string) => void;
-  selectedTool: ToolKey;
 }) {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -1357,7 +1355,6 @@ function MasterScannerPanel({
   assets: AssetScore[];
   selectedSymbol: string;
   onSelectSymbol: (symbol: string) => void;
-  selectedTool: ToolKey;
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -2413,7 +2410,6 @@ function ChartPanel({
   mode: ModeKey;
   symbol: string;
   timeframe: Timeframe;
-  selectedTool: ToolKey;
 }) {
   const mainRef = useRef<HTMLDivElement>(null);
   const volOverlayRef = useRef<HTMLDivElement>(null);
@@ -4142,7 +4138,6 @@ function WorkspaceByModule({
   insight: AIInsight;
   scannerAssets: AssetScore[];
   onSelectSymbol: (symbol: string) => void;
-  selectedTool: ToolKey;
 }) {
   if (activeModule === "Scanner") {
     return <ChartPanel candles={candles} indicators={indicators} selectedObject={selectedObject} mode={mode} symbol={symbol} timeframe={timeframe} selectedTool={selectedTool} />;
