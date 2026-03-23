@@ -113,17 +113,16 @@ type AssetScore = {
 
 type ToolKey =
   | "cursor"
-  | "dot"
-  | "eye"
+  | "point"
+  | "marker"
   | "trendLine"
   | "ray"
   | "arrow"
   | "horizontal"
-  | "horizontalRay"
   | "vertical"
   | "parallelChannel"
   | "regressionChannel"
-  | "rangeChannel"
+  | "range"
   | "grid"
   | "pitchfork"
   | "gannBox"
@@ -131,10 +130,7 @@ type ToolKey =
   | "fibRetracement"
   | "fibProjection";
 
-type DrawPoint = {
-  x: number;
-  y: number;
-};
+type DrawPoint = { x: number; y: number };
 
 type DrawObject = {
   id: string;
@@ -143,9 +139,7 @@ type DrawObject = {
   points: DrawPoint[];
   locked?: boolean;
   hidden?: boolean;
-  color?: string;
 };
-
 
 type ScannerEvent = {
   time: string;
@@ -167,130 +161,6 @@ const TOP_MODULES: TopModuleKey[] = [
   "Liquidez",
 ];
 const LIQUIDITY_TABS = ["Liquidez", "Map", "Clusters", "Eventos", "Fluxo Institucional", "Notícias IA Atlas"];
-
-const TOOL_GROUPS: {
-  title: string;
-  items: { key: ToolKey; icon: React.ReactNode; label: string }[];
-}[] = [
-  {
-    title: "CURSOR",
-    items: [
-      { key: "cursor", icon: <MousePointer2 size={15} />, label: "Navegar" },
-      { key: "dot", icon: <Circle size={15} />, label: "Ponto" },
-      { key: "eye", icon: <Eye size={15} />, label: "Marcação" },
-    ],
-  },
-  {
-    title: "LINHAS DE TENDÊNCIA",
-    items: [
-      { key: "trendLine", icon: <TrendingUp size={15} />, label: "Linha" },
-      { key: "ray", icon: <MoveUpRight size={15} />, label: "Raio" },
-      { key: "arrow", icon: <ArrowUp size={15} />, label: "Seta" },
-      { key: "horizontal", icon: <ArrowRight size={15} />, label: "Horizontal" },
-      { key: "vertical", icon: <ArrowDown size={15} />, label: "Vertical" },
-      { key: "horizontalRay", icon: <Plus size={15} />, label: "Linha infinita" },
-    ],
-  },
-  {
-    title: "CANAIS",
-    items: [
-      { key: "parallelChannel", icon: <GitBranch size={15} />, label: "Canal paralelo" },
-      { key: "regressionChannel", icon: <BarChart2 size={15} />, label: "Canal regressão" },
-      { key: "rangeChannel", icon: <SlidersHorizontal size={15} />, label: "Faixa" },
-      { key: "grid", icon: <Grid2X2 size={15} />, label: "Grade" },
-    ],
-  },
-  {
-    title: "GAFOS & GANN",
-    items: [
-      { key: "pitchfork", icon: <Spline size={15} />, label: "Pitchfork" },
-      { key: "gannBox", icon: <Network size={15} />, label: "Gann Box" },
-      { key: "gannSquare", icon: <Square size={15} />, label: "Gann Square" },
-    ],
-  },
-  {
-    title: "FIBONACCI",
-    items: [
-      { key: "fibRetracement", icon: <Ruler size={15} />, label: "Fib Retracement" },
-      { key: "fibProjection", icon: <ArrowRight size={15} />, label: "Fib Projection" },
-    ],
-  },
-];
-
-const TOOL_META: Record<ToolKey, { name: string; clicks: number; color: string }> = {
-  cursor: { name: "Cursor", clicks: 0, color: "#2de2ff" },
-  dot: { name: "Ponto", clicks: 1, color: "#2de2ff" },
-  eye: { name: "Marca visual", clicks: 1, color: "#f7c948" },
-  trendLine: { name: "Linha de tendência", clicks: 2, color: "#2de2ff" },
-  ray: { name: "Raio", clicks: 2, color: "#27f59d" },
-  arrow: { name: "Seta", clicks: 2, color: "#ff9d2e" },
-  horizontal: { name: "Linha horizontal", clicks: 1, color: "#31c8ff" },
-  horizontalRay: { name: "Linha horizontal infinita", clicks: 1, color: "#31e9ff" },
-  vertical: { name: "Linha vertical", clicks: 1, color: "#ff6b86" },
-  parallelChannel: { name: "Canal paralelo", clicks: 3, color: "#8b5cf6" },
-  regressionChannel: { name: "Canal regressão", clicks: 3, color: "#2de2ff" },
-  rangeChannel: { name: "Canal de faixa", clicks: 3, color: "#f7c948" },
-  grid: { name: "Grade", clicks: 2, color: "#64748b" },
-  pitchfork: { name: "Pitchfork", clicks: 3, color: "#27f59d" },
-  gannBox: { name: "Gann Box", clicks: 2, color: "#ff4fa3" },
-  gannSquare: { name: "Gann Square", clicks: 2, color: "#ff9d2e" },
-  fibRetracement: { name: "Fib Retracement", clicks: 2, color: "#f7c948" },
-  fibProjection: { name: "Fib Projection", clicks: 3, color: "#31e9ff" },
-};
-
-function pointDistance(a: DrawPoint, b: DrawPoint) {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
-function distancePointToSegment(p: DrawPoint, a: DrawPoint, b: DrawPoint) {
-  const l2 = (b.x - a.x) ** 2 + (b.y - a.y) ** 2;
-  if (l2 === 0) return pointDistance(p, a);
-  let t = ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / l2;
-  t = Math.max(0, Math.min(1, t));
-  return pointDistance(p, { x: a.x + t * (b.x - a.x), y: a.y + t * (b.y - a.y) });
-}
-
-function toolNeedsClicks(tool: ToolKey) {
-  return TOOL_META[tool].clicks;
-}
-
-function createObjectFromPoints(tool: ToolKey, points: DrawPoint[]): DrawObject {
-  return {
-    id: `${tool}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    name: TOOL_META[tool].name,
-    type: tool,
-    points,
-    color: TOOL_META[tool].color,
-    locked: false,
-    hidden: false,
-  };
-}
-
-function objectHitTest(obj: DrawObject, p: DrawPoint) {
-  const pts = obj.points;
-  if (pts.length === 0 || obj.hidden) return false;
-  if (pts.length === 1) return pointDistance(p, pts[0]) < 12;
-  if (obj.type === "horizontal" || obj.type === "horizontalRay") return Math.abs(p.y - pts[0].y) < 10;
-  if (obj.type === "vertical") return Math.abs(p.x - pts[0].x) < 10;
-  if (obj.type === "parallelChannel" || obj.type === "regressionChannel" || obj.type === "rangeChannel") {
-    if (pts.length < 3) return false;
-    return (
-      distancePointToSegment(p, pts[0], pts[1]) < 10 ||
-      distancePointToSegment(p, pts[0], pts[2]) < 10 ||
-      distancePointToSegment(p, pts[1], pts[2]) < 10
-    );
-  }
-  if (obj.type === "gannBox" || obj.type === "gannSquare" || obj.type === "grid") {
-    const a = pts[0], b = pts[1] ?? pts[0];
-    const left = Math.min(a.x, b.x) - 8;
-    const right = Math.max(a.x, b.x) + 8;
-    const top = Math.min(a.y, b.y) - 8;
-    const bottom = Math.max(a.y, b.y) + 8;
-    return p.x >= left && p.x <= right && p.y >= top && p.y <= bottom
-  }
-  return distancePointToSegment(p, pts[0], pts[pts.length - 1]) < 10;
-}
-
 
 const ui = {
   bg: "#060913",
@@ -771,11 +641,56 @@ function ModuleStrip({
 
 function LeftToolbar({
   activeTool,
-  onToolChange,
+  onSelectTool,
 }: {
   activeTool: ToolKey;
-  onToolChange: (tool: ToolKey) => void;
+  onSelectTool: (tool: ToolKey) => void;
 }) {
+  const groups: { title: string; items: { key: ToolKey; icon: React.ReactNode; label: string }[] }[] = [
+    {
+      title: "CURSOR",
+      items: [
+        { key: "cursor", icon: <MousePointer2 size={15} />, label: "Navegar" },
+        { key: "point", icon: <Circle size={15} />, label: "Ponto" },
+        { key: "marker", icon: <Eye size={15} />, label: "Marcador" },
+      ],
+    },
+    {
+      title: "LINHAS DE TENDÊNCIA",
+      items: [
+        { key: "trendLine", icon: <TrendingUp size={15} />, label: "Linha" },
+        { key: "ray", icon: <MoveUpRight size={15} />, label: "Raio" },
+        { key: "arrow", icon: <ArrowUp size={15} />, label: "Seta" },
+        { key: "horizontal", icon: <ArrowRight size={15} />, label: "Horizontal" },
+        { key: "vertical", icon: <ArrowDown size={15} />, label: "Vertical" },
+      ],
+    },
+    {
+      title: "CANAIS",
+      items: [
+        { key: "parallelChannel", icon: <GitBranch size={15} />, label: "Canal Paralelo" },
+        { key: "regressionChannel", icon: <BarChart2 size={15} />, label: "Canal Regressão" },
+        { key: "range", icon: <SlidersHorizontal size={15} />, label: "Faixa" },
+        { key: "grid", icon: <Grid2X2 size={15} />, label: "Grid" },
+      ],
+    },
+    {
+      title: "GAFOS & GANN",
+      items: [
+        { key: "pitchfork", icon: <Spline size={15} />, label: "Pitchfork" },
+        { key: "gannBox", icon: <Network size={15} />, label: "Gann Box" },
+        { key: "gannSquare", icon: <Square size={15} />, label: "Gann Square" },
+      ],
+    },
+    {
+      title: "FIBONACCI",
+      items: [
+        { key: "fibRetracement", icon: <Ruler size={15} />, label: "Retracement" },
+        { key: "fibProjection", icon: <ArrowRight size={15} />, label: "Projection" },
+      ],
+    },
+  ];
+
   return (
     <div
       data-atlas-scroll="cyan"
@@ -792,7 +707,7 @@ function LeftToolbar({
         flexShrink: 0,
       }}
     >
-      {TOOL_GROUPS.map((group, gi) => (
+      {groups.map((group, gi) => (
         <div key={gi} style={{ display: "grid", gap: 8 }}>
           <div
             style={{
@@ -807,13 +722,13 @@ function LeftToolbar({
             {group.title}
           </div>
 
-          {group.items.map((tool, ti) => {
+          {group.items.map((tool) => {
             const isActive = activeTool === tool.key;
             return (
               <button
-                key={ti}
+                key={tool.key}
                 title={tool.label}
-                onClick={() => onToolChange(tool.key)}
+                onClick={() => onSelectTool(tool.key)}
                 style={{
                   width: 40,
                   height: 40,
@@ -831,7 +746,6 @@ function LeftToolbar({
                   justifyContent: "center",
                   cursor: "pointer",
                   boxShadow: isActive ? "0 0 18px rgba(45,226,255,0.18)" : "none",
-                  transition: "all 140ms ease",
                 }}
               >
                 {tool.icon}
@@ -2472,183 +2386,139 @@ function LiquidityPanel() {
   );
 }
 
-function DrawingOverlay({
-  objects,
-  activeTool,
-  selectedId,
-  draftPoints,
-  onPointerDown,
-  onPointerMove,
-  onPointerUp,
-  isDragging,
-}: {
-  objects: DrawObject[];
-  activeTool: ToolKey;
-  selectedId: string | null;
-  draftPoints: DrawPoint[];
-  onPointerDown: (e: React.PointerEvent<SVGSVGElement>) => void;
-  onPointerMove: (e: React.PointerEvent<SVGSVGElement>) => void;
-  onPointerUp: (e: React.PointerEvent<SVGSVGElement>) => void;
-  isDragging: boolean;
-}) {
-  const renderObject = (obj: DrawObject) => {
-    if (obj.hidden) return null;
-    const pts = obj.points;
-    const stroke = obj.color ?? "#2de2ff";
-    const selected = obj.id === selectedId;
-    const common = {
-      stroke,
-      strokeWidth: selected ? 2.4 : 1.8,
-      fill: "none",
-      opacity: obj.locked ? 0.55 : 1,
-    };
-    const handles = selected
-      ? pts.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={4} fill="#eef6ff" stroke={stroke} strokeWidth={1.2} />
-        ))
-      : null;
-
-    if (pts.length === 1) {
-      return (
-        <g key={obj.id}>
-          <circle cx={pts[0].x} cy={pts[0].y} r={obj.type === "eye" ? 8 : 5} fill={obj.type === "eye" ? "rgba(247,201,72,0.18)" : "rgba(45,226,255,0.2)"} stroke={stroke} strokeWidth={2} />
-          {handles}
-        </g>
-      );
-    }
-
-    const [a, b, c] = pts;
-    if (obj.type === "horizontal" || obj.type === "horizontalRay") {
-      return <g key={obj.id}><line x1={0} y1={a.y} x2={4000} y2={a.y} {...common} strokeDasharray={obj.type === "horizontalRay" ? "6 5" : "0"} />{handles}</g>;
-    }
-    if (obj.type === "vertical") {
-      return <g key={obj.id}><line x1={a.x} y1={0} x2={a.x} y2={3000} {...common} strokeDasharray="5 5" />{handles}</g>;
-    }
-    if (obj.type === "gannBox" || obj.type === "gannSquare" || obj.type === "grid") {
-      const left = Math.min(a.x, b.x), top = Math.min(a.y, b.y);
-      const w = Math.abs(b.x - a.x), h = obj.type === "gannSquare" ? Math.abs(b.x - a.x) : Math.abs(b.y - a.y);
-      const actualTop = obj.type === "gannSquare" ? (a.y <= b.y ? a.y : a.y - h) : top;
-      return (
-        <g key={obj.id}>
-          <rect x={left} y={actualTop} width={w} height={h} {...common} fill="rgba(255,255,255,0.02)" />
-          <line x1={left} y1={actualTop} x2={left + w} y2={actualTop + h} {...common} strokeDasharray="4 4" />
-          <line x1={left + w} y1={actualTop} x2={left} y2={actualTop + h} {...common} strokeDasharray="4 4" />
-          {obj.type === "grid" && Array.from({ length: 3 }).map((_, i) => (
-            <g key={i}>
-              <line x1={left + ((i + 1) * w) / 4} y1={actualTop} x2={left + ((i + 1) * w) / 4} y2={actualTop + h} {...common} strokeDasharray="3 5" />
-              <line x1={left} y1={actualTop + ((i + 1) * h) / 4} x2={left + w} y2={actualTop + ((i + 1) * h) / 4} {...common} strokeDasharray="3 5" />
-            </g>
-          ))}
-          {handles}
-        </g>
-      );
-    }
-    if (obj.type === "parallelChannel" || obj.type === "regressionChannel" || obj.type === "rangeChannel") {
-      if (!c) return null;
-      return (
-        <g key={obj.id}>
-          <polygon points={`${a.x},${a.y} ${b.x},${b.y} ${c.x},${c.y} ${a.x + (c.x - b.x)},${a.y + (c.y - b.y)}`} {...common} fill="rgba(45,226,255,0.08)" />
-          <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} {...common} />
-          <line x1={a.x + (c.x - b.x)} y1={a.y + (c.y - b.y)} x2={c.x} y2={c.y} {...common} />
-          {obj.type !== "rangeChannel" && <line x1={a.x + (c.x - b.x) / 2} y1={a.y + (c.y - b.y) / 2} x2={b.x + (c.x - b.x) / 2} y2={b.y + (c.y - b.y) / 2} {...common} strokeDasharray="5 5" />}
-          {handles}
-        </g>
-      );
-    }
-    if (obj.type === "pitchfork") {
-      if (!c) return null;
-      const mx = (b.x + c.x) / 2, my = (b.y + c.y) / 2;
-      return (
-        <g key={obj.id}>
-          <line x1={a.x} y1={a.y} x2={mx} y2={my} {...common} />
-          <line x1={b.x} y1={b.y} x2={mx + (mx - a.x)} y2={my + (my - a.y)} {...common} />
-          <line x1={c.x} y1={c.y} x2={mx + (mx - a.x)} y2={my + (my - a.y)} {...common} />
-          {handles}
-        </g>
-      );
-    }
-    if (obj.type === "fibRetracement") {
-      const left = Math.min(a.x, b.x), right = Math.max(a.x, b.x);
-      const top = a.y, bottom = b.y;
-      const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
-      return (
-        <g key={obj.id}>
-          {levels.map((lv) => {
-            const y = top + (bottom - top) * lv;
-            return (
-              <g key={lv}>
-                <line x1={left} y1={y} x2={right} y2={y} {...common} strokeDasharray={lv === 0 || lv === 1 ? "0" : "4 4"} />
-                <text x={right + 6} y={y + 3} fill={stroke} fontSize={10}>{lv.toFixed(3)}</text>
-              </g>
-            );
-          })}
-          {handles}
-        </g>
-      );
-    }
-    if (obj.type === "fibProjection") {
-      if (!c) return null;
-      const dx = c.x - b.x, dy = c.y - b.y;
-      const levels = [0.618, 1, 1.618];
-      return (
-        <g key={obj.id}>
-          <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} {...common} />
-          <line x1={b.x} y1={b.y} x2={c.x} y2={c.y} {...common} />
-          {levels.map((lv) => (
-            <g key={lv}>
-              <line x1={c.x} y1={c.y} x2={c.x + dx * lv} y2={c.y + dy * lv} {...common} strokeDasharray="5 5" />
-              <text x={c.x + dx * lv + 4} y={c.y + dy * lv + 3} fill={stroke} fontSize={10}>{lv.toFixed(3)}</text>
-            </g>
-          ))}
-          {handles}
-        </g>
-      );
-    }
-    return (
-      <g key={obj.id}>
-        <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} {...common} />
-        {obj.type === "ray" && <line x1={b.x} y1={b.y} x2={b.x + (b.x - a.x) * 8} y2={b.y + (b.y - a.y) * 8} {...common} strokeDasharray="4 5" />}
-        {obj.type === "arrow" && (
-          <polygon
-            points={`${b.x},${b.y} ${b.x - 10},${b.y - 4} ${b.x - 10},${b.y + 4}`}
-            fill={stroke}
-            stroke={stroke}
-          />
-        )}
-        {handles}
-      </g>
-    );
-  };
-
-  const draft =
-    draftPoints.length > 0 ? (
-      <g opacity={0.9}>
-        {renderObject(createObjectFromPoints(activeTool, draftPoints))}
-      </g>
-    ) : null;
-
-  return (
-    <svg
-      width="100%"
-      height="100%"
-      viewBox="0 0 1000 1000"
-      preserveAspectRatio="none"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      style={{
-        position: "absolute",
-        inset: 0,
-        zIndex: 4,
-        cursor: activeTool === "cursor" && !isDragging ? "default" : "crosshair",
-      }}
-    >
-      {objects.map(renderObject)}
-      {draft}
-    </svg>
-  );
+function clampPoint(point: DrawPoint, width: number, height: number): DrawPoint {
+  return { x: clamp(point.x, 0, width), y: clamp(point.y, 0, height) };
 }
 
+function toolDisplayName(tool: ToolKey) {
+  const map: Record<ToolKey, string> = {
+    cursor: "Cursor",
+    point: "Ponto",
+    marker: "Marcador",
+    trendLine: "Linha",
+    ray: "Raio",
+    arrow: "Seta",
+    horizontal: "Horizontal",
+    vertical: "Vertical",
+    parallelChannel: "Canal Paralelo",
+    regressionChannel: "Canal Regressão",
+    range: "Faixa",
+    grid: "Grid",
+    pitchfork: "Pitchfork",
+    gannBox: "Gann Box",
+    gannSquare: "Gann Square",
+    fibRetracement: "Fib Retracement",
+    fibProjection: "Fib Projection",
+  };
+  return map[tool];
+}
+
+function makeDrawObject(tool: ToolKey, point: DrawPoint): DrawObject {
+  const id = `${tool}-${Math.random().toString(36).slice(2, 9)}`;
+  const second = { x: point.x + 120, y: point.y + 60 };
+  const third = { x: point.x + 60, y: point.y - 50 };
+  switch (tool) {
+    case "point":
+    case "marker":
+    case "horizontal":
+    case "vertical":
+      return { id, name: toolDisplayName(tool), type: tool, points: [point] };
+    case "pitchfork":
+      return { id, name: toolDisplayName(tool), type: tool, points: [point, second, third] };
+    default:
+      return { id, name: toolDisplayName(tool), type: tool, points: [point, second] };
+  }
+}
+
+function drawObjectSvg(obj: DrawObject, isSelected: boolean, width: number, height: number) {
+  if (obj.hidden) return null;
+  const stroke = isSelected ? "#f7c948" : "#2de2ff";
+  const fill = isSelected ? "rgba(247,201,72,0.12)" : "rgba(45,226,255,0.10)";
+  const p1 = obj.points[0];
+  const p2 = obj.points[1] ?? p1;
+  const p3 = obj.points[2] ?? { x: (p1.x + p2.x) / 2, y: p1.y - 60 };
+  const minX = Math.min(p1.x, p2.x);
+  const maxX = Math.max(p1.x, p2.x);
+  const minY = Math.min(p1.y, p2.y);
+  const maxY = Math.max(p1.y, p2.y);
+  const common = { stroke, strokeWidth: isSelected ? 2.3 : 1.6, fill: 'none' } as const;
+
+  switch (obj.type) {
+    case "point":
+      return <circle cx={p1.x} cy={p1.y} r={5} fill={stroke} stroke="rgba(255,255,255,0.6)" strokeWidth={1} />;
+    case "marker":
+      return <circle cx={p1.x} cy={p1.y} r={10} fill={fill} stroke={stroke} strokeWidth={2} />;
+    case "trendLine":
+      return <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} {...common} />;
+    case "ray": {
+      const dx = p2.x - p1.x || 1;
+      const dy = p2.y - p1.y;
+      const scale = (width - p1.x) / dx;
+      return <line x1={p1.x} y1={p1.y} x2={clamp(p1.x + dx * scale, 0, width)} y2={clamp(p1.y + dy * scale, 0, height)} {...common} />;
+    }
+    case "arrow":
+      return (
+        <g>
+          <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} {...common} />
+          <polygon points={`${p2.x},${p2.y} ${p2.x - 12},${p2.y - 6} ${p2.x - 8},${p2.y + 8}`} fill={stroke} />
+        </g>
+      );
+    case "horizontal":
+      return <line x1={0} y1={p1.y} x2={width} y2={p1.y} {...common} strokeDasharray="5 5" />;
+    case "vertical":
+      return <line x1={p1.x} y1={0} x2={p1.x} y2={height} {...common} strokeDasharray="5 5" />;
+    case "parallelChannel":
+    case "regressionChannel": {
+      const offset = obj.type === 'regressionChannel' ? 44 : 34;
+      return (
+        <g>
+          <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} {...common} />
+          <line x1={p1.x} y1={p1.y + offset} x2={p2.x} y2={p2.y + offset} {...common} />
+          <line x1={p1.x} y1={p1.y} x2={p1.x} y2={p1.y + offset} {...common} strokeDasharray="4 4" />
+          <line x1={p2.x} y1={p2.y} x2={p2.x} y2={p2.y + offset} {...common} strokeDasharray="4 4" />
+        </g>
+      );
+    }
+    case "range":
+    case "gannBox":
+    case "gannSquare":
+      return (
+        <g>
+          <rect x={minX} y={minY} width={Math.max(18, maxX - minX)} height={Math.max(18, maxY - minY)} rx={obj.type==='gannSquare'?0:8} fill={fill} stroke={stroke} strokeWidth={1.8} />
+          {(obj.type === 'gannBox' || obj.type === 'gannSquare') && <line x1={minX} y1={minY} x2={maxX} y2={maxY} {...common} />}
+        </g>
+      );
+    case "grid":
+      return (
+        <g>
+          <rect x={minX} y={minY} width={Math.max(18, maxX - minX)} height={Math.max(18, maxY - minY)} fill="transparent" stroke={stroke} strokeWidth={1.4} />
+          {Array.from({ length: 4 }).map((_, i) => <line key={`v${i}`} x1={minX + ((maxX - minX) / 4) * i} y1={minY} x2={minX + ((maxX - minX) / 4) * i} y2={maxY} {...common} strokeDasharray="3 5" />)}
+          {Array.from({ length: 4 }).map((_, i) => <line key={`h${i}`} x1={minX} y1={minY + ((maxY - minY) / 4) * i} x2={maxX} y2={minY + ((maxY - minY) / 4) * i} {...common} strokeDasharray="3 5" />)}
+        </g>
+      );
+    case "pitchfork":
+      return (
+        <g>
+          <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} {...common} />
+          <line x1={p1.x} y1={p1.y} x2={p3.x} y2={p3.y} {...common} />
+          <line x1={p2.x} y1={p2.y} x2={p3.x} y2={p3.y} {...common} />
+        </g>
+      );
+    case "fibRetracement": {
+      const levels = [0, 0.236, 0.382, 0.5, 0.618, 1];
+      return <g>{levels.map((lvl) => { const y = minY + (maxY - minY) * lvl; return <line key={lvl} x1={minX} y1={y} x2={maxX} y2={y} {...common} strokeDasharray="5 4" />; })}</g>;
+    }
+    case "fibProjection":
+      return (
+        <g>
+          <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} {...common} />
+          <line x1={p2.x} y1={p2.y} x2={clamp(p2.x + (p2.x - p1.x), 0, width)} y2={clamp(p2.y + (p2.y - p1.y), 0, height)} {...common} strokeDasharray="6 5" />
+        </g>
+      );
+    default:
+      return null;
+  }
+}
 
 function ChartPanel({
   candles,
@@ -2657,12 +2527,16 @@ function ChartPanel({
   selectedObject,
   selectedId,
   activeTool,
-  onToolChange,
-  onSelectObject,
-  onUpdateObjects,
   mode,
   symbol,
   timeframe,
+  onSelectObject,
+  onAddObject,
+  onUpdateObject,
+  onToggleLocked,
+  onToggleHidden,
+  onClearAll,
+  onDeleteSelected,
 }: {
   candles: CandleData[];
   indicators: IndicatorData[];
@@ -2670,88 +2544,26 @@ function ChartPanel({
   selectedObject: DrawObject | null;
   selectedId: string | null;
   activeTool: ToolKey;
-  onToolChange: (tool: ToolKey) => void;
-  onSelectObject: (id: string | null) => void;
-  onUpdateObjects: React.Dispatch<React.SetStateAction<DrawObject[]>>;
   mode: ModeKey;
   symbol: string;
   timeframe: Timeframe;
+  onSelectObject: (id: string | null) => void;
+  onAddObject: (obj: DrawObject) => void;
+  onUpdateObject: (id: string, updater: (obj: DrawObject) => DrawObject) => void;
+  onToggleLocked: () => void;
+  onToggleHidden: () => void;
+  onClearAll: () => void;
+  onDeleteSelected: () => void;
 }) {
   const mainRef = useRef<HTMLDivElement>(null);
   const volOverlayRef = useRef<HTMLDivElement>(null);
   const rsiRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<SVGSVGElement>(null);
+  const dragStateRef = useRef<{ id: string; last: DrawPoint } | null>(null);
 
   const [livePrice, setLivePrice] = useState<number>(candles[candles.length - 1]?.close ?? 0);
   const [priceChange, setPriceChange] = useState<number>(0);
-  const [draftPoints, setDraftPoints] = useState<DrawPoint[]>([]);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState<DrawPoint | null>(null);
-  const paneWrapRef = useRef<HTMLDivElement>(null);
-
-  const getLocalPoint = (e: React.PointerEvent<SVGSVGElement>): DrawPoint => {
-    const rect = paneWrapRef.current?.getBoundingClientRect();
-    if (!rect) return { x: 0, y: 0 };
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
-
-  const handleOverlayDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    const point = getLocalPoint(e);
-    const hit = [...objects].reverse().find((obj) => objectHitTest(obj, point) && !obj.locked && !obj.hidden);
-
-    if (activeTool === "cursor") {
-      if (hit) {
-        onSelectObject(hit.id);
-        setDraggingId(hit.id);
-        const anchor = hit.points[0] ?? point;
-        setDragOffset({ x: point.x - anchor.x, y: point.y - anchor.y });
-      } else {
-        onSelectObject(null);
-      }
-      return;
-    }
-
-    onSelectObject(null);
-    const next = [...draftPoints, point];
-    const needs = toolNeedsClicks(activeTool);
-    if (next.length >= needs) {
-      const obj = createObjectFromPoints(activeTool, next);
-      onUpdateObjects((prev) => [...prev, obj]);
-      onSelectObject(obj.id);
-      setDraftPoints([]);
-      onToolChange("cursor");
-    } else {
-      setDraftPoints(next);
-    }
-  };
-
-  const handleOverlayMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    const point = getLocalPoint(e);
-    if (draggingId && dragOffset) {
-      onUpdateObjects((prev) =>
-        prev.map((obj) => {
-          if (obj.id !== draggingId || obj.locked) return obj;
-          const dx = point.x - dragOffset.x - (obj.points[0]?.x ?? 0);
-          const dy = point.y - dragOffset.y - (obj.points[0]?.y ?? 0);
-          return {
-            ...obj,
-            points: obj.points.map((pt) => ({ x: pt.x + dx, y: pt.y + dy })),
-          };
-        })
-      );
-      return;
-    }
-    if (draftPoints.length > 0) {
-      const next = [...draftPoints];
-      if (next.length === 1) next.push(point);
-      else next[next.length - 1] = point;
-      setDraftPoints(next);
-    }
-  };
-
-  const handleOverlayUp = () => {
-    setDraggingId(null);
-    setDragOffset(null);
-  };
+  const [overlaySize, setOverlaySize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     if (!mainRef.current || !volOverlayRef.current || !rsiRef.current) return;
@@ -2803,30 +2615,12 @@ function ChartPanel({
       }))
     );
 
-    const ma20 = mc.addLineSeries({
-      color: "#d2b000",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
+    const ma20 = mc.addLineSeries({ color: "#d2b000", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
     ma20.setData(computeSMA(candles, 20).map((d) => ({ time: d.time as Time, value: d.value })));
-
-    const ma50 = mc.addLineSeries({
-      color: "#8b5cf6",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
+    const ma50 = mc.addLineSeries({ color: "#8b5cf6", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
     ma50.setData(computeSMA(candles, 50).map((d) => ({ time: d.time as Time, value: d.value })));
-
-    const ema100 = mc.addLineSeries({
-      color: "#22d3ee",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
+    const ema100 = mc.addLineSeries({ color: "#22d3ee", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
     ema100.setData(computeEMA(candles, 100).map((d) => ({ time: d.time as Time, value: d.value })));
-
     mc.timeScale().fitContent();
 
     const last = candles[candles.length - 1];
@@ -2840,20 +2634,11 @@ function ChartPanel({
       height: volOverlayRef.current.clientHeight,
       rightPriceScale: { visible: false, borderColor: "rgba(255,255,255,0)" },
       timeScale: { visible: false, borderColor: "rgba(255,255,255,0)" },
-      grid: {
-        vertLines: { color: "rgba(255,255,255,0)", style: 1 as const },
-        horzLines: { color: "rgba(255,255,255,0)", style: 1 as const },
-      },
+      grid: { vertLines: { color: "rgba(255,255,255,0)", style: 1 as const }, horzLines: { color: "rgba(255,255,255,0)", style: 1 as const } },
     });
 
     const volSeries = vc.addHistogramSeries({ priceScaleId: "" });
-    volSeries.setData(
-      candles.map((c) => ({
-        time: c.time as Time,
-        value: c.volume,
-        color: c.close >= c.open ? "rgba(55,244,173,0.42)" : "rgba(255,108,141,0.42)",
-      }))
-    );
+    volSeries.setData(candles.map((c) => ({ time: c.time as Time, value: c.volume, color: c.close >= c.open ? "rgba(55,244,173,0.42)" : "rgba(255,108,141,0.42)" })));
     vc.timeScale().fitContent();
 
     const rc: IChartApi = createChart(rsiRef.current, {
@@ -2862,19 +2647,8 @@ function ChartPanel({
       height: rsiRef.current.clientHeight,
     });
 
-    const rsiSeries = rc.addLineSeries({
-      color: "#8b5cf6",
-      lineWidth: 2,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    const mfiSeries = rc.addLineSeries({
-      color: "#d2b000",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-
+    const rsiSeries = rc.addLineSeries({ color: "#8b5cf6", lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+    const mfiSeries = rc.addLineSeries({ color: "#d2b000", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
     rsiSeries.setData(indicators.map((d) => ({ time: d.time as Time, value: clamp(d.rsi, 0, 100) })));
     mfiSeries.setData(indicators.map((d) => ({ time: d.time as Time, value: clamp(d.mfi, 0, 100) })));
     rc.timeScale().fitContent();
@@ -2887,11 +2661,15 @@ function ChartPanel({
     });
 
     const resize = () => {
-      if (mainRef.current) mc.applyOptions({ width: mainRef.current.clientWidth, height: mainRef.current.clientHeight });
+      if (mainRef.current) {
+        mc.applyOptions({ width: mainRef.current.clientWidth, height: mainRef.current.clientHeight });
+        setOverlaySize({ width: mainRef.current.clientWidth, height: mainRef.current.clientHeight });
+      }
       if (volOverlayRef.current) vc.applyOptions({ width: volOverlayRef.current.clientWidth, height: volOverlayRef.current.clientHeight });
       if (rsiRef.current) rc.applyOptions({ width: rsiRef.current.clientWidth, height: rsiRef.current.clientHeight });
     };
 
+    resize();
     window.addEventListener("resize", resize);
     return () => {
       window.removeEventListener("resize", resize);
@@ -2902,100 +2680,75 @@ function ChartPanel({
   }, [candles, indicators]);
 
   const isPositive = priceChange >= 0;
+  const visibleObjectCount = objects.filter((o) => !o.hidden).length;
+  const overlayInteractive = activeTool !== "cursor" || (!!selectedObject && !selectedObject.locked && !selectedObject.hidden);
+
+  const getRelativePoint = (e: React.MouseEvent<SVGSVGElement>): DrawPoint => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    return clampPoint({ x: e.clientX - rect.left, y: e.clientY - rect.top }, overlaySize.width, overlaySize.height);
+  };
+
+  const onOverlayMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    const point = getRelativePoint(e);
+    if (activeTool !== "cursor") {
+      const obj = makeDrawObject(activeTool, point);
+      onAddObject(obj);
+      onSelectObject(obj.id);
+      dragStateRef.current = { id: obj.id, last: point };
+      return;
+    }
+    if (selectedObject && !selectedObject.locked && !selectedObject.hidden) {
+      dragStateRef.current = { id: selectedObject.id, last: point };
+    }
+  };
+
+  const onOverlayMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const drag = dragStateRef.current;
+    if (!drag) return;
+    const point = getRelativePoint(e);
+    const dx = point.x - drag.last.x;
+    const dy = point.y - drag.last.y;
+    dragStateRef.current = { ...drag, last: point };
+    onUpdateObject(drag.id, (obj) => ({
+      ...obj,
+      points: obj.points.map((p, idx) => {
+        const next = activeTool !== "cursor" && idx === obj.points.length - 1
+          ? clampPoint(point, overlaySize.width, overlaySize.height)
+          : clampPoint({ x: p.x + dx, y: p.y + dy }, overlaySize.width, overlaySize.height);
+        return next;
+      }),
+    }));
+  };
+
+  const onOverlayMouseUp = () => {
+    dragStateRef.current = null;
+    if (activeTool !== "cursor") {
+      // stay on tool so user can keep drawing, but release chart immediately after mouseup
+    }
+  };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        width: "100%",
-        minWidth: 0,
-        background:
-          "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(6,10,18,0.98))",
-      }}
-    >
-      <div
-        style={{
-          padding: "8px 10px",
-          borderBottom: `1px solid ${ui.border}`,
-          background:
-            "linear-gradient(180deg, rgba(12,19,36,0.94), rgba(8,13,25,0.94))",
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.4fr repeat(4, 0.7fr) auto",
-            gap: 8,
-            alignItems: "center",
-          }}
-        >
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%", minWidth: 0, background: "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(6,10,18,0.98))" }}>
+      <div style={{ padding: "8px 10px", borderBottom: `1px solid ${ui.border}`, background: "linear-gradient(180deg, rgba(12,19,36,0.94), rgba(8,13,25,0.94))" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1.4fr repeat(4, 0.7fr) auto", gap: 8, alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <div
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 7,
-                background: "rgba(247,201,72,0.16)",
-                color: ui.yellow,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 10,
-                fontWeight: 900,
-              }}
-            >
-              SC
-            </div>
-
+            <div style={{ width: 24, height: 24, borderRadius: 7, background: "rgba(247,201,72,0.16)", color: ui.yellow, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900 }}>SC</div>
             <div>
               <div style={{ color: "#eef6ff", fontSize: 14, fontWeight: 900 }}>{symbol}</div>
-              <div
-                style={{
-                  color: "#7d91b6",
-                  fontSize: 10,
-                  fontWeight: 700,
-                }}
-              >
-                Scanner Atlas • Pasta: Cursor • Item: Navegar • TF: {timeframe}
-              </div>
+              <div style={{ color: "#7d91b6", fontSize: 10, fontWeight: 700 }}>Scanner Atlas • Pasta: Ferramentas • Item: {toolDisplayName(activeTool)} • TF: {timeframe}</div>
             </div>
           </div>
-
           {[
             ["Preço", livePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), "#4ef0cb"],
             ["Variação", `${isPositive ? "+" : ""}${priceChange.toFixed(2)}%`, isPositive ? ui.green : ui.red],
             ["Volume", formatCompact(candles[candles.length - 1]?.volume ?? 0), ui.cyan],
-            ["Desenhos", selectedObject ? "1" : "0", selectedObject ? ui.yellow : ui.red],
+            ["Desenhos", String(visibleObjectCount), visibleObjectCount ? ui.yellow : ui.red],
           ].map(([title, value, color]) => (
-            <div
-              key={title}
-              style={{
-                borderRadius: 13,
-                border: "1px solid rgba(255,255,255,0.06)",
-                background:
-                  "linear-gradient(180deg, rgba(8,15,31,0.98), rgba(7,12,24,0.96))",
-                minHeight: 58,
-                padding: "10px 13px",
-              }}
-            >
-              <div
-                style={{
-                  color: "#7f93b7",
-                  fontSize: 9,
-                  fontWeight: 900,
-                  letterSpacing: 0.8,
-                  textTransform: "uppercase",
-                  marginBottom: 6,
-                }}
-              >
-                {title}
-              </div>
+            <div key={title} style={{ borderRadius: 13, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(8,15,31,0.98), rgba(7,12,24,0.96))", minHeight: 58, padding: "10px 13px" }}>
+              <div style={{ color: "#7f93b7", fontSize: 9, fontWeight: 900, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6 }}>{title}</div>
               <div style={{ color: color as string, fontSize: 12, fontWeight: 900 }}>{value}</div>
             </div>
           ))}
-
           <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <TopButton active={mode === "auto"}>Auto</TopButton>
             <TopButton active={mode === "manual"}>Manual</TopButton>
@@ -3008,116 +2761,52 @@ function ChartPanel({
         </div>
       </div>
 
-      <div
-        style={{
-          height: 32,
-          padding: "0 10px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderBottom: `1px solid ${ui.border}`,
-          background: "rgba(255,255,255,0.015)",
-          flexShrink: 0,
-        }}
-      >
+      <div style={{ height: 32, padding: "0 10px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `1px solid ${ui.border}`, background: "rgba(255,255,255,0.015)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <TopButton active>Objetos</TopButton>
-          <TopButton
-            onClick={() =>
-              selectedId &&
-              onUpdateObjects((prev) =>
-                prev.map((obj) =>
-                  obj.id === selectedId ? { ...obj, locked: !obj.locked } : obj
-                )
-              )
-            }
-          >
-            {selectedObject?.locked ? "Destravar" : "Travar"}
-          </TopButton>
-          <TopButton
-            onClick={() =>
-              selectedId &&
-              onUpdateObjects((prev) =>
-                prev.map((obj) =>
-                  obj.id === selectedId ? { ...obj, hidden: !obj.hidden } : obj
-                )
-              )
-            }
-          >
-            {selectedObject?.hidden ? "Mostrar" : "Ocultar"}
-          </TopButton>
-          <TopButton
-            onClick={() => {
-              onUpdateObjects([]);
-              onSelectObject(null);
-              setDraftPoints([]);
-            }}
-          >
-            Limpar desenhos
-          </TopButton>
-          <TopButton
-            onClick={() => {
-              if (!selectedId) return;
-              onUpdateObjects((prev) => prev.filter((obj) => obj.id !== selectedId));
-              onSelectObject(null);
-            }}
-          >
-            Apagar selecionado
-          </TopButton>
+          <TopButton active={activeTool === 'cursor'}>Objetos</TopButton>
+          <TopButton onClick={onToggleLocked}>Travar</TopButton>
+          <TopButton onClick={onToggleHidden}>Ocultar</TopButton>
+          <TopButton onClick={onClearAll}>Limpar desenhos</TopButton>
+          <TopButton onClick={onDeleteSelected}>Apagar selecionado</TopButton>
         </div>
         <div style={{ color: "#7f93b7", fontSize: 10, fontWeight: 800 }}>
-          {selectedObject
-            ? `${selectedObject.name} • ${selectedObject.type}${selectedObject.locked ? " • travado" : ""}`
-            : `Ferramenta ativa: ${TOOL_META[activeTool].name}`}
+          {selectedObject ? `${selectedObject.name} • ${selectedObject.type}${selectedObject.locked ? ' • travado' : ''}${selectedObject.hidden ? ' • oculto' : ''}` : `Ferramenta ativa: ${toolDisplayName(activeTool)}`}
         </div>
       </div>
 
-      <div ref={paneWrapRef} style={{ position: "relative", flex: 1, minHeight: 0 }}>
+      <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
         <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
-        <DrawingOverlay
-          objects={objects}
-          activeTool={activeTool}
-          selectedId={selectedId}
-          draftPoints={draftPoints}
-          onPointerDown={handleOverlayDown}
-          onPointerMove={handleOverlayMove}
-          onPointerUp={handleOverlayUp}
-          isDragging={Boolean(draggingId)}
-        />
-        <div
-          ref={volOverlayRef}
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: 140,
-            pointerEvents: "none",
-            opacity: 0.95,
-            borderTop: "1px solid rgba(255,255,255,0.05)",
-          }}
-        />
+        <svg
+          ref={overlayRef}
+          width="100%"
+          height="100%"
+          viewBox={`0 0 ${Math.max(overlaySize.width, 1)} ${Math.max(overlaySize.height, 1)}`}
+          preserveAspectRatio="none"
+          onMouseDown={overlayInteractive ? onOverlayMouseDown : undefined}
+          onMouseMove={overlayInteractive ? onOverlayMouseMove : undefined}
+          onMouseUp={overlayInteractive ? onOverlayMouseUp : undefined}
+          onMouseLeave={overlayInteractive ? onOverlayMouseUp : undefined}
+          style={{ position: "absolute", inset: 0, pointerEvents: overlayInteractive ? 'auto' : 'none', cursor: activeTool === 'cursor' ? (selectedObject && !selectedObject.locked ? 'grab' : 'default') : 'crosshair' }}
+        >
+          {objects.map((obj) => (
+            <g key={obj.id} onMouseDown={(e) => {
+              if (activeTool !== 'cursor') return;
+              if (obj.hidden) return;
+              e.stopPropagation();
+              onSelectObject(obj.id);
+              if (!obj.locked) dragStateRef.current = { id: obj.id, last: getRelativePoint(e as React.MouseEvent<SVGSVGElement>) };
+            }}>
+              {drawObjectSvg(obj, obj.id === selectedId, overlaySize.width, overlaySize.height)}
+            </g>
+          ))}
+        </svg>
+        <div ref={volOverlayRef} style={{ position: "absolute", left: 0, right: 0, bottom: 112, height: 110, pointerEvents: "none", opacity: 0.96 }} />
       </div>
 
-      <div
-        style={{
-          width: "100%",
-          flexShrink: 0,
-          borderTop: `1px solid ${ui.border}`,
-          borderBottom: `1px solid ${ui.border}`,
-          background: "#0a0f1d",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "5px 14px" }}>
-          <span style={{ color: "#7f93b7", fontSize: 10, fontFamily: "monospace" }}>RSI / MFI</span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}>
-            <span style={{ width: 12, height: 2, background: "#8b5cf6", display: "inline-block" }} />
-            RSI
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}>
-            <span style={{ width: 12, height: 2, background: "#d2b000", display: "inline-block" }} />
-            MFI
-          </span>
+      <div style={{ borderTop: `1px solid ${ui.border}`, background: "linear-gradient(180deg, rgba(9,14,26,0.98), rgba(6,10,18,0.98))" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderBottom: `1px solid ${ui.border}` }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}><span style={{ width: 12, height: 2, background: "#8b5cf6", display: "inline-block" }} />RSI</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}><span style={{ width: 12, height: 2, background: "#d2b000", display: "inline-block" }} />MFI</span>
         </div>
         <div ref={rsiRef} style={{ height: 112, width: "100%" }} />
       </div>
@@ -4327,9 +4016,6 @@ function WorkspaceByModule({
   selectedObject,
   selectedId,
   activeTool,
-  onToolChange,
-  onSelectObject,
-  onUpdateObjects,
   mode,
   symbol,
   timeframe,
@@ -4337,6 +4023,13 @@ function WorkspaceByModule({
   insight,
   scannerAssets,
   onSelectSymbol,
+  onSelectObject,
+  onAddObject,
+  onUpdateObject,
+  onToggleLocked,
+  onToggleHidden,
+  onClearAll,
+  onDeleteSelected,
 }: {
   activeModule: TopModuleKey;
   candles: CandleData[];
@@ -4345,9 +4038,6 @@ function WorkspaceByModule({
   selectedObject: DrawObject | null;
   selectedId: string | null;
   activeTool: ToolKey;
-  onToolChange: (tool: ToolKey) => void;
-  onSelectObject: (id: string | null) => void;
-  onUpdateObjects: React.Dispatch<React.SetStateAction<DrawObject[]>>;
   mode: ModeKey;
   symbol: string;
   timeframe: Timeframe;
@@ -4355,9 +4045,16 @@ function WorkspaceByModule({
   insight: AIInsight;
   scannerAssets: AssetScore[];
   onSelectSymbol: (symbol: string) => void;
+  onSelectObject: (id: string | null) => void;
+  onAddObject: (obj: DrawObject) => void;
+  onUpdateObject: (id: string, updater: (obj: DrawObject) => DrawObject) => void;
+  onToggleLocked: () => void;
+  onToggleHidden: () => void;
+  onClearAll: () => void;
+  onDeleteSelected: () => void;
 }) {
   if (activeModule === "Scanner") {
-    return <ChartPanel candles={candles} indicators={indicators} objects={objects} selectedObject={selectedObject} selectedId={selectedId} activeTool={activeTool} onToolChange={onToolChange} onSelectObject={onSelectObject} onUpdateObjects={onUpdateObjects} mode={mode} symbol={symbol} timeframe={timeframe} />;
+    return <ChartPanel candles={candles} indicators={indicators} objects={objects} selectedObject={selectedObject} selectedId={selectedId} activeTool={activeTool} mode={mode} symbol={symbol} timeframe={timeframe} onSelectObject={onSelectObject} onAddObject={onAddObject} onUpdateObject={onUpdateObject} onToggleLocked={onToggleLocked} onToggleHidden={onToggleHidden} onClearAll={onClearAll} onDeleteSelected={onDeleteSelected} />;
   }
   if (activeModule === "Mestre Scanner") {
     return <div style={{ height: "100%", padding: 10 }}><MasterScannerPanel assets={scannerAssets} selectedSymbol={symbol} onSelectSymbol={onSelectSymbol} /></div>;
@@ -4468,7 +4165,7 @@ export default function AtlasChartPro2() {
       <ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
 
       <div style={{ display: "flex", minHeight: 0, flex: 1 }}>
-        <LeftToolbar activeTool={activeTool} onToolChange={setActiveTool} />
+        <LeftToolbar activeTool={activeTool} onSelectTool={setActiveTool} />
 
         <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
           <div
@@ -4488,9 +4185,6 @@ export default function AtlasChartPro2() {
                 selectedObject={selectedObject}
                 selectedId={selectedId}
                 activeTool={activeTool}
-                onToolChange={setActiveTool}
-                onSelectObject={setSelectedId}
-                onUpdateObjects={setObjects}
                 mode={mode}
                 symbol={activeAsset.symbol}
                 timeframe={timeframe}
@@ -4498,6 +4192,13 @@ export default function AtlasChartPro2() {
                 insight={insight}
                 scannerAssets={scannerAssets}
                 onSelectSymbol={setSelectedSymbol}
+                onSelectObject={setSelectedId}
+                onAddObject={(obj) => setObjects((prev) => [...prev, obj])}
+                onUpdateObject={(id, updater) => setObjects((prev) => prev.map((obj) => obj.id === id ? updater(obj) : obj))}
+                onToggleLocked={() => setObjects((prev) => prev.map((obj) => obj.id === selectedId ? { ...obj, locked: !obj.locked } : obj))}
+                onToggleHidden={() => setObjects((prev) => prev.map((obj) => obj.id === selectedId ? { ...obj, hidden: !obj.hidden } : obj))}
+                onClearAll={() => { setObjects([]); setSelectedId(null); }}
+                onDeleteSelected={() => { setObjects((prev) => prev.filter((obj) => obj.id !== selectedId)); setSelectedId(null); }}
               />
             </div>
 
