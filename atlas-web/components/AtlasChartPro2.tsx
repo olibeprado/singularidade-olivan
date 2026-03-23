@@ -255,7 +255,7 @@ function toolNeedsClicks(tool: ToolKey) {
 
 function createObjectFromPoints(tool: ToolKey, points: DrawPoint[]): DrawObject {
   return {
-    id: `${tool}-${Date.now()}-${Math.r&&om().toString(36).slice(2, 7)}`,
+    id: `${tool}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     name: TOOL_META[tool].name,
     type: tool,
     points,
