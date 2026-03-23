@@ -961,7 +961,7 @@ function AIInsightPanel({
                 borderBottom: "1px solid rgba(255,255,255,0.04)",
               }}
             >
-              <span style={{ color: "#7f93b7", fontSize: 12 }}>{k}</span>
+              <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
               <span style={{ color: c as string, fontSize: 12, fontWeight: 800 }}>
                 {v}
               </span>
@@ -1750,8 +1750,8 @@ function SmallStatCard({
         border: "1px solid rgba(45,226,255,0.16)",
         background:
           "linear-gradient(180deg, rgba(6,13,24,0.98), rgba(4,8,16,0.98))",
-        padding: "7px 10px 6px",
-        height: 56,
+        padding: "8px 12px 7px",
+        height: 60,
         overflow: "hidden",
         boxShadow: accent ? `0 0 18px ${accent}` : "none",
         display: "flex",
@@ -1762,7 +1762,7 @@ function SmallStatCard({
       <div
         style={{
           color: "#6f88af",
-          fontSize: 8,
+          fontSize: 9,
           fontWeight: 900,
           letterSpacing: 0.78,
           textTransform: "uppercase",
@@ -1775,7 +1775,7 @@ function SmallStatCard({
       <div
         style={{
           color,
-          fontSize: 11,
+          fontSize: 14,
           fontWeight: 900,
           marginBottom: 1,
           textShadow: `0 0 10px ${color}33`,
@@ -1788,8 +1788,8 @@ function SmallStatCard({
         <div
           style={{
             color: "#7f95bb",
-            fontSize: 7,
-            lineHeight: 1.05,
+            fontSize: 8,
+            lineHeight: 1.1,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -2170,7 +2170,7 @@ function LiquidityPanel() {
                     <span style={{ color: color as string, fontSize: 10, fontWeight: 900 }}>{label}</span>
                     <span style={{ color: color as string, fontSize: 14, fontWeight: 900 }}>{price}</span>
                   </div>
-                  <div style={{ color: "#9bb0d2", fontSize: 12 }}>{desc}</div>
+                  <div style={{ color: "#9bb0d2", fontSize: 13 }}>{desc}</div>
                 </div>
               </div>
             ))}
@@ -2181,17 +2181,17 @@ function LiquidityPanel() {
 
     if (tab === "Fluxo Institucional") {
       return (
-        <div style={{ display: "grid", gap: 12 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div style={{ display: "grid", gap: 10, alignContent: "start", marginTop: -2 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div style={{ borderRadius: 14, border: `1px solid ${ui.green}55`, background: "rgba(10, 31, 24, 0.55)", padding: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                <div style={{ color: "#f1fbff", fontSize: 13, fontWeight: 900 }}>Cenário Alta</div>
-                <div style={{ color: ui.green, fontSize: 18, fontWeight: 900 }}>93%</div>
+                <div style={{ color: "#f1fbff", fontSize: 14, fontWeight: 900 }}>Cenário Alta</div>
+                <div style={{ color: ui.green, fontSize: 20, fontWeight: 900 }}>93%</div>
               </div>
               <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: 10 }}><div style={{ width: "93%", height: "100%", background: ui.green }} /></div>
               <div style={{ display: "grid", gap: 6 }}>
                 {[['Alvo 1', '$91.672', ui.green], ['Alvo 2', '$99.732', ui.cyan], ['Stop Loss', '$83.887', ui.yellow]].map(([label, val, c]) => (
-                  <div key={String(label)} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                  <div key={String(label)} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                     <span style={{ color: '#8ea2c8' }}>{label}</span>
                     <span style={{ color: c as string, fontWeight: 900 }}>{val}</span>
                   </div>
@@ -2200,13 +2200,13 @@ function LiquidityPanel() {
             </div>
             <div style={{ borderRadius: 14, border: `1px solid ${ui.red}55`, background: "rgba(31, 10, 20, 0.55)", padding: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                <div style={{ color: "#f1fbff", fontSize: 13, fontWeight: 900 }}>Cenário Baixa</div>
-                <div style={{ color: ui.red, fontSize: 18, fontWeight: 900 }}>7%</div>
+                <div style={{ color: "#f1fbff", fontSize: 14, fontWeight: 900 }}>Cenário Baixa</div>
+                <div style={{ color: ui.red, fontSize: 20, fontWeight: 900 }}>7%</div>
               </div>
               <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: 10 }}><div style={{ width: "7%", height: "100%", background: ui.red }} /></div>
               <div style={{ display: "grid", gap: 6 }}>
                 {[['Alvo 1', '$83.242', ui.red], ['Alvo 2', '$79.650', '#ff7e91'], ['Stop Loss', '$89.430', ui.yellow]].map(([label, val, c]) => (
-                  <div key={String(label)} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                  <div key={String(label)} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                     <span style={{ color: '#8ea2c8' }}>{label}</span>
                     <span style={{ color: c as string, fontWeight: 900 }}>{val}</span>
                   </div>
@@ -2214,27 +2214,27 @@ function LiquidityPanel() {
               </div>
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "0.74fr 0.92fr 0.74fr", gap: 12, alignItems: 'stretch' }}>
-            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14 }}>
-              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 10 }}>Sentimento do Mercado</div>
-              <div style={{ height: 250, display: "grid", placeItems: "center" }}>
-                <div style={{ width: 170, height: 170, borderRadius: '50%', border: '12px solid rgba(45,226,255,0.15)', borderTopColor: ui.yellow, borderRightColor: ui.green, borderBottomColor: '#ff008055', position: 'relative' }}>
+          <div style={{ display: "grid", gridTemplateColumns: "0.74fr 0.92fr 0.74fr", gap: 10, alignItems: 'stretch' }}>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12 }}>
+              <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 8 }}>Sentimento do Mercado</div>
+              <div style={{ height: 226, display: "grid", placeItems: "center" }}>
+                <div style={{ width: 162, height: 162, borderRadius: '50%', border: '12px solid rgba(45,226,255,0.15)', borderTopColor: ui.yellow, borderRightColor: ui.green, borderBottomColor: '#ff008055', position: 'relative' }}>
                   <div style={{ position: 'absolute', inset: 26, borderRadius: '50%', background: 'radial-gradient(circle, rgba(7,13,24,1), rgba(5,10,18,1))', display: 'grid', placeItems: 'center' }}>
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ color: ui.green, fontSize: 38, fontWeight: 900, lineHeight: 1 }}>59</div>
-                      <div style={{ color: '#8ea2c8', fontSize: 12, marginTop: 6 }}>Ganância</div>
+                      <div style={{ color: ui.green, fontSize: 42, fontWeight: 900, lineHeight: 1 }}>59</div>
+                      <div style={{ color: '#8ea2c8', fontSize: 13, marginTop: 6 }}>Ganância</div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14, display: "grid", gap: 10 }}>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12, display: "grid", gap: 8 }}>
               <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Fluxo Institucional</div>
               {[["🦈", "Tubarões", "-125M", false], ["🏛️", "Institucionais", "+582M", true], ["🐟", "Sardinhas", "+320M", true]].map(([icon, name, val, pos]) => (
                 <div key={String(name)} style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 12, background: 'rgba(255,255,255,0.015)' }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: 'center', marginBottom: 8 }}>
-                    <span style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, display: 'flex', gap: 8, alignItems: 'center' }}><span>{icon}</span>{name}</span>
-                    <span style={{ color: pos ? ui.green : ui.red, fontSize: 18, fontWeight: 900 }}>{val}</span>
+                    <span style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, display: 'flex', gap: 8, alignItems: 'center' }}><span>{icon}</span>{name}</span>
+                    <span style={{ color: pos ? ui.green : ui.red, fontSize: 20, fontWeight: 900 }}>{val}</span>
                   </div>
                   <div style={{ height: 12, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden", display: "grid", gridTemplateColumns: "51fr 49fr", marginBottom: 6 }}>
                     <div style={{ background: ui.green }} />
@@ -2247,9 +2247,9 @@ function LiquidityPanel() {
                 </div>
               ))}
             </div>
-            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14 }}>
-              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 10 }}>Livro de Ofertas</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 0.8fr 0.9fr', color: '#6f88af', fontSize: 10, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 6 }}>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12 }}>
+              <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 8 }}>Livro de Ofertas</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 0.8fr 0.9fr', color: '#6f88af', fontSize: 11, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 6 }}>
                 <span>Preço</span><span>Qtd</span><span>Total</span>
               </div>
               <div style={{ display: 'grid', gap: 8 }}>
@@ -2257,7 +2257,7 @@ function LiquidityPanel() {
                   ['$87.026','0.666','$417K', ui.red], ['$85.869','6.538','$471K', ui.red], ['$87.886','4.878','$284K', ui.red], ['$87.627','6.447','$413K', ui.red], ['$87.318','10.774','$279K', ui.red],
                   ['$87.112','10.515','$365K', ui.green], ['$87.118','11.838','$194K', ui.green], ['$86.715','10.027','$280K', ui.green], ['$87.047','11.168','$70K', ui.green], ['$86.688','2.729','$321K', ui.green],
                 ].map(([price, qty, total, c], idx) => (
-                  <div key={String(price)+idx} style={{ display: 'grid', gridTemplateColumns: '1fr 0.8fr 0.9fr', fontSize: 12 }}>
+                  <div key={String(price)+idx} style={{ display: 'grid', gridTemplateColumns: '1fr 0.8fr 0.9fr', fontSize: 13 }}>
                     <span style={{ color: c as string, fontWeight: 900 }}>{price}</span>
                     <span style={{ color: '#9bb0d2' }}>{qty}</span>
                     <span style={{ color: '#7086ad' }}>{total}</span>
@@ -2271,7 +2271,7 @@ function LiquidityPanel() {
     }
 
     return (
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         {[
           ["Negativo", "Fed mantém taxa de juros em 5,25% - 5,50%", ui.red],
           ["Positivo", "BlackRock adiciona mais $2.1B em Bitcoin ETF", ui.green],
@@ -2297,34 +2297,34 @@ function LiquidityPanel() {
         ))}
       </div>
 
-      <div style={{ padding: 8, display: "grid", gap: 8, flex: 1 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, alignItems: "start" }}>
+      <div style={{ padding: 6, display: "grid", gap: 6, flex: 1 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, alignItems: "start", alignContent: "start" }}>
           <SmallStatCard title="Liquidez Superior" value="$72.200" sub="Bloco vendedor forte acima do preço atual." color={ui.yellow} />
           <SmallStatCard title="Liquidez Inferior" value="$69.800" sub="Absorção compradora ganhando espessura." color={ui.green} />
           <SmallStatCard title="Cluster Dominante" value="BTC Core" sub="Maior concentração institucional." color={ui.cyan} />
           <SmallStatCard title="Pressão Instantânea" value="+18.6%" sub="Fluxo favorecendo continuação curta." color={ui.green} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.26fr 0.62fr", gap: 12, flex: 1, minHeight: 0 }}>
-          <div data-atlas-scroll="cyan" style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgba(45,226,255,0.55) rgba(255,255,255,0.04)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1.26fr 0.62fr", gap: 10, flex: 1, minHeight: 0, alignItems: "start" }}>
+          <div data-atlas-scroll="cyan" style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 8, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgba(45,226,255,0.55) rgba(255,255,255,0.04)" }}>
             {renderMain()}
           </div>
 
           <div style={{ display: "grid", gap: 12 }}>
             <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12 }}>
-              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 10 }}>Leitura rápida</div>
+              <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 8 }}>Leitura rápida</div>
               <div style={{ display: "grid", gap: 10 }}>
                 {[["Liquidez acima", "Pesada", ui.red],["Liquidez abaixo", "Saudável", ui.green],["Risco curto", "Controlado", ui.yellow],["Confluência", "8 / 9", ui.cyan],["Fluxo", "Positivo", ui.green],["Volatilidade", "Moderada", "#dce8ff"]].map(([k, v, c]) => (
                   <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
-                    <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>{v}</span>
+                    <span style={{ color: "#8ea2c8", fontSize: 13 }}>{k}</span>
+                    <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12 }}>
-              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 10 }}>IA Análise</div>
-              <div style={{ color: "#8ea2c8", fontSize: 12, lineHeight: 1.6 }}>Cenário favorece continuação de alta. Confluência de 8/9 indicadores positivos. Liquidez superior em $72.200 é o próximo alvo.</div>
+              <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 8 }}>IA Análise</div>
+              <div style={{ color: "#8ea2c8", fontSize: 13, lineHeight: 1.7 }}>Cenário favorece continuação de alta. Confluência de 8/9 indicadores positivos. Liquidez superior em $72.200 é o próximo alvo.</div>
             </div>
           </div>
         </div>
@@ -2843,8 +2843,8 @@ function EulerModule({ insight }: { insight: AIInsight }) {
                     borderBottom: "1px solid rgba(255,255,255,0.05)",
                   }}
                 >
-                  <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
-                  <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>{v}</span>
+                  <span style={{ color: "#8ea2c8", fontSize: 13 }}>{k}</span>
+                  <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
                 </div>
               ))}
             </div>
@@ -3175,8 +3175,8 @@ function SingularidadeModule({ insight }: { insight: AIInsight }) {
                       borderBottom: "1px solid rgba(255,255,255,0.05)",
                     }}
                   >
-                    <span style={{ color: "#7f93b7", fontSize: 12 }}>{k}</span>
-                    <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>{v}</span>
+                    <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                    <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
                   </div>
                 ))}
               </div>
@@ -3254,8 +3254,8 @@ function SingularidadeModule({ insight }: { insight: AIInsight }) {
                     borderBottom: "1px solid rgba(255,255,255,0.05)",
                   }}
                 >
-                  <span style={{ color: "#7f93b7", fontSize: 12 }}>{k}</span>
-                  <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>{v}</span>
+                  <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                  <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
                 </div>
               ))}
             </div>
@@ -3597,8 +3597,8 @@ function IAAtlasModule({ insight }: { insight: AIInsight }) {
                 ["Euler", "Alinhado", ui.green],
               ].map(([k, v, c]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                  <span style={{ color: "#7f93b7", fontSize: 12 }}>{k}</span>
-                  <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>{v}</span>
+                  <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                  <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
                 </div>
               ))}
             </div>
@@ -3794,8 +3794,8 @@ function EstruturaModule({ insight }: { insight: AIInsight }) {
                       borderBottom: "1px solid rgba(255,255,255,0.05)",
                     }}
                   >
-                    <span style={{ color: "#7f93b7", fontSize: 12 }}>{k}</span>
-                    <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>{v}</span>
+                    <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                    <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
                   </div>
                 ))}
               </div>
@@ -3824,8 +3824,8 @@ function EstruturaModule({ insight }: { insight: AIInsight }) {
                   ["Stop Loss", "$84,711"],
                 ].map(([k, v]) => (
                   <div key={k} style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "#7f93b7", fontSize: 12 }}>{k}</span>
-                    <span style={{ color: k === "Stop Loss" ? ui.yellow : "#dce8ff", fontSize: 12, fontWeight: 900 }}>{v}</span>
+                    <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                    <span style={{ color: k === "Stop Loss" ? ui.yellow : "#dce8ff", fontSize: 13, fontWeight: 900 }}>{v}</span>
                   </div>
                 ))}
               </div>
@@ -3852,8 +3852,8 @@ function EstruturaModule({ insight }: { insight: AIInsight }) {
                   ["Stop Loss", "$85,257"],
                 ].map(([k, v]) => (
                   <div key={k} style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "#7f93b7", fontSize: 12 }}>{k}</span>
-                    <span style={{ color: k === "Stop Loss" ? ui.yellow : "#dce8ff", fontSize: 12, fontWeight: 900 }}>{v}</span>
+                    <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                    <span style={{ color: k === "Stop Loss" ? ui.yellow : "#dce8ff", fontSize: 13, fontWeight: 900 }}>{v}</span>
                   </div>
                 ))}
               </div>
