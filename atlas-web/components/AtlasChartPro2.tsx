@@ -2011,130 +2011,193 @@ function HeatmapBars() {
 function LiquidityPanel() {
   const [tab, setTab] = useState("Liquidez");
 
+  const renderMain = () => {
+    if (tab === "Liquidez") {
+      return (
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Mapa de Liquidez</div>
+          <HeatmapBars />
+        </div>
+      );
+    }
+
+    if (tab === "Map") {
+      return (
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Mapa de Preço</div>
+            <div style={{ color: ui.mut, fontSize: 11 }}>1H · VOL 22.13</div>
+          </div>
+          <div style={{ height: 320, borderRadius: 14, border: "1px solid rgba(255,255,255,0.05)", background: "linear-gradient(180deg, rgba(6,13,24,0.96), rgba(5,9,18,0.98))", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(45,226,255,0.04), transparent 40%)" }} />
+            <svg viewBox="0 0 800 320" style={{ width: "100%", height: "100%" }}>
+              <defs>
+                <linearGradient id="atlasMapFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="rgba(45,226,255,0.26)" />
+                  <stop offset="100%" stopColor="rgba(45,226,255,0.02)" />
+                </linearGradient>
+              </defs>
+              <path d="M20 240 C90 120, 140 80, 210 150 S320 290, 390 210 S520 60, 600 120 S710 80, 780 35" fill="none" stroke="#2de2ff" strokeWidth="3" />
+              <path d="M20 240 C90 120, 140 80, 210 150 S320 290, 390 210 S520 60, 600 120 S710 80, 780 35 L780 320 L20 320 Z" fill="url(#atlasMapFill)" />
+            </svg>
+          </div>
+        </div>
+      );
+    }
+
+    if (tab === "Clusters") {
+      return (
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Mapa de Clusters</div>
+            <div style={{ color: ui.mut, fontSize: 11 }}>Select Active · Select All</div>
+          </div>
+          <div style={{ height: 320, borderRadius: 14, border: "1px solid rgba(255,255,255,0.05)", background: "linear-gradient(180deg, rgba(6,13,24,0.96), rgba(5,9,18,0.98))", position: "relative" }}>
+            {[
+              ["BTC Core", 180, 165, 96, "#8b5cf6"],
+              ["ETH Core", 360, 105, 70, "#2de2ff"],
+              ["BTC Alta", 120, 285, 52, "#27f59d"],
+              ["Whale Sell", 420, 260, 46, "#ff4d8d"],
+              ["Retail", 300, 305, 34, "#ff944d"],
+            ].map(([name, x, y, size, color]) => (
+              <div key={String(name)} style={{ position: "absolute", left: Number(x), top: Number(y), width: Number(size), height: Number(size), borderRadius: 999, border: `1px solid ${color}`, boxShadow: `0 0 25px ${color}33`, display: "grid", placeItems: "center", color: color as string, fontSize: 12, fontWeight: 900, transform: "translate(-50%, -50%)" }}>
+                <div style={{ textAlign: "center", lineHeight: 1.1 }}>{name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (tab === "Eventos") {
+      return (
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Livro de Trade</div>
+            <div style={{ color: ui.mut, fontSize: 11 }}>Tempo Real</div>
+          </div>
+          <div style={{ display: "grid", gap: 10 }}>
+            {[
+              ["14:32", "LIQUIDAÇÃO", "$71.265", "Liquidação em massa shorts detectada", ui.green],
+              ["14:28", "WHALE", "$70.980", "Ordem de compra institucional +$12.4M", ui.green],
+              ["14:21", "CLUSTER", "$71.100", "BTC Core absorvendo pressão vendedora", ui.cyan],
+              ["14:15", "PRESSÃO", "$70.750", "Pressão vendedora concentrada em $70.800", ui.red],
+              ["14:08", "SUPORTE", "$71.420", "Suporte forte confirmado em $71.200", ui.green],
+            ].map(([time, label, price, desc, color]) => (
+              <div key={String(time)} style={{ display: "grid", gridTemplateColumns: "54px 1fr", gap: 10, alignItems: "center" }}>
+                <div style={{ color: ui.mut, fontSize: 11 }}>{time}</div>
+                <div style={{ borderRadius: 12, border: `1px solid ${color}55`, background: `${color}14`, padding: "12px 14px" }}>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ color: color as string, fontSize: 10, fontWeight: 900 }}>{label}</span>
+                    <span style={{ color: color as string, fontSize: 14, fontWeight: 900 }}>{price}</span>
+                  </div>
+                  <div style={{ color: "#9bb0d2", fontSize: 12 }}>{desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (tab === "Fluxo Institucional") {
+      return (
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ borderRadius: 14, border: `1px solid ${ui.green}55`, background: "rgba(10, 31, 24, 0.55)", padding: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
+                <div style={{ color: "#f1fbff", fontSize: 13, fontWeight: 900 }}>Cenário Alta</div>
+                <div style={{ color: ui.green, fontSize: 20, fontWeight: 900 }}>93%</div>
+              </div>
+              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}><div style={{ width: "93%", height: "100%", background: ui.green }} /></div>
+            </div>
+            <div style={{ borderRadius: 14, border: `1px solid ${ui.red}55`, background: "rgba(31, 10, 20, 0.55)", padding: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
+                <div style={{ color: "#f1fbff", fontSize: 13, fontWeight: 900 }}>Cenário Baixa</div>
+                <div style={{ color: ui.red, fontSize: 20, fontWeight: 900 }}>7%</div>
+              </div>
+              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}><div style={{ width: "7%", height: "100%", background: ui.red }} /></div>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "0.8fr 1fr", gap: 12 }}>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 16 }}>
+              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>Sentimento do Mercado</div>
+              <div style={{ height: 180, display: "grid", placeItems: "center", color: ui.green, fontSize: 46, fontWeight: 900 }}>59</div>
+            </div>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 16, display: "grid", gap: 12 }}>
+              {[["Tubarões", "-125M", false], ["Institucionais", "+582M", true], ["Sardinhas", "+320M", true]].map(([name, val, pos]) => (
+                <div key={String(name)} style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>{name}</span>
+                    <span style={{ color: pos ? ui.green : ui.red, fontSize: 18, fontWeight: 900 }}>{val}</span>
+                  </div>
+                  <div style={{ height: 10, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden", display: "grid", gridTemplateColumns: "51fr 49fr" }}>
+                    <div style={{ background: ui.green }} />
+                    <div style={{ background: ui.red }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {[
+          ["Negativo", "Fed mantém taxa de juros em 5,25% - 5,50%", ui.red],
+          ["Positivo", "BlackRock adiciona mais $2.1B em Bitcoin ETF", ui.green],
+          ["Positivo", "Binance anuncia suporte para Ethereum Shanghai", ui.green],
+          ["Neutro", "Regulação crypto na Europa: MiCA entra em vigor", ui.yellow],
+        ].map(([tone, title, color]) => (
+          <div key={String(title)} style={{ borderRadius: 14, border: `1px solid ${color}55`, background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 16, minHeight: 180 }}>
+            <div style={{ color: color as string, fontSize: 11, fontWeight: 900, marginBottom: 10 }}>{tone}</div>
+            <div style={{ color: "#f1fbff", fontSize: 18, fontWeight: 900, lineHeight: 1.2, marginBottom: 10 }}>{title}</div>
+            <div style={{ color: "#8ea2c8", fontSize: 12, lineHeight: 1.5 }}>Análise IA Atlas integrada ao módulo de liquidez para leitura rápida do impacto no fluxo.</div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div
-      style={{
-        height: "100%",
-        borderRadius: 12,
-        border: `1px solid ${ui.border}`,
-        background:
-          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <div
-        style={{
-          minHeight: 42,
-          padding: "6px 14px",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          borderBottom: `1px solid ${ui.border}`,
-          flexWrap: "wrap",
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ color: "#f2f7ff", fontSize: 13, fontWeight: 900, marginRight: 6 }}>
-          Liquidez Avançada
-        </span>
+    <div style={{ height: "100%", borderRadius: 12, border: `1px solid ${ui.border}`, background: "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div style={{ minHeight: 42, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid ${ui.border}`, flexWrap: "wrap", flexShrink: 0 }}>
+        <span style={{ color: "#f2f7ff", fontSize: 13, fontWeight: 900, marginRight: 6 }}>Liquidez Avançada</span>
         {LIQUIDITY_TABS.map((t) => (
-          <TopButton key={t} active={tab === t} onClick={() => setTab(t)}>
-            {t}
-          </TopButton>
+          <TopButton key={t} active={tab === t} onClick={() => setTab(t)}>{t}</TopButton>
         ))}
       </div>
 
       <div style={{ padding: 12, display: "grid", gap: 12, flex: 1 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: 10,
-          }}
-        >
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 10 }}>
           <SmallStatCard title="Liquidez Superior" value="$72.200" sub="Bloco vendedor forte acima do preço atual." color={ui.yellow} />
           <SmallStatCard title="Liquidez Inferior" value="$69.800" sub="Absorção compradora ganhando espessura." color={ui.green} />
           <SmallStatCard title="Cluster Dominante" value="BTC Core" sub="Maior concentração institucional." color={ui.cyan} />
           <SmallStatCard title="Pressão Instantânea" value="+18.6%" sub="Fluxo favorecendo continuação curta." color={ui.green} />
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.26fr 0.62fr",
-            gap: 12,
-            flex: 1,
-            minHeight: 0,
-          }}
-        >
-          <div
-            data-atlas-scroll="cyan"
-            style={{
-              borderRadius: 14,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background:
-                "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
-              padding: 14,
-              overflowY: "auto",
-              scrollbarWidth: "thin",
-              scrollbarColor: "rgba(45,226,255,0.55) rgba(255,255,255,0.04)",
-            }}
-          >
-            <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
-              {tab === "Liquidez" ? "Liquidez Avançada" : tab}
-            </div>
-
-            {tab === "Liquidez" ? (
-              <HeatmapBars />
-            ) : (
-              <div
-                style={{
-                  height: 180,
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.05)",
-                  background:
-                    "radial-gradient(circle at 50% 30%, rgba(45,226,255,0.18), transparent 30%), radial-gradient(circle at 72% 52%, rgba(39,245,157,0.18), transparent 26%), radial-gradient(circle at 36% 70%, rgba(247,201,72,0.16), transparent 24%), linear-gradient(180deg, rgba(5,10,20,0.95), rgba(7,11,20,0.98))",
-                }}
-              />
-            )}
+        <div style={{ display: "grid", gridTemplateColumns: "1.26fr 0.62fr", gap: 12, flex: 1, minHeight: 0 }}>
+          <div data-atlas-scroll="cyan" style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgba(45,226,255,0.55) rgba(255,255,255,0.04)" }}>
+            {renderMain()}
           </div>
 
-          <div
-            style={{
-              borderRadius: 14,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background:
-                "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
-              padding: 14,
-            }}
-          >
-            <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
-              Leitura rápida
+          <div style={{ display: "grid", gap: 12 }}>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14 }}>
+              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>Leitura rápida</div>
+              <div style={{ display: "grid", gap: 10 }}>
+                {[["Liquidez acima", "Pesada", ui.red],["Liquidez abaixo", "Saudável", ui.green],["Risco curto", "Controlado", ui.yellow],["Confluência", "8 / 9", ui.cyan],["Fluxo", "Positivo", ui.green],["Volatilidade", "Moderada", "#dce8ff"]].map(([k, v, c]) => (
+                  <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
+                    <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div style={{ display: "grid", gap: 10 }}>
-              {[
-                ["Liquidez acima", "Pesada", ui.red],
-                ["Liquidez abaixo", "Saudável", ui.green],
-                ["Risco curto", "Controlado", ui.yellow],
-                ["Confluência", "8 / 9", ui.cyan],
-                ["Fluxo", "Positivo", ui.green],
-                ["Volatilidade", "Moderada", "#dce8ff"],
-              ].map(([k, v, c]) => (
-                <div
-                  key={k}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    padding: "8px 0",
-                    borderBottom: "1px solid rgba(255,255,255,0.05)",
-                  }}
-                >
-                  <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
-                  <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>{v}</span>
-                </div>
-              ))}
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14 }}>
+              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>IA Análise</div>
+              <div style={{ color: "#8ea2c8", fontSize: 12, lineHeight: 1.6 }}>Cenário favorece continuação de alta. Confluência de 8/9 indicadores positivos. Liquidez superior em $72.200 é o próximo alvo.</div>
             </div>
           </div>
         </div>
