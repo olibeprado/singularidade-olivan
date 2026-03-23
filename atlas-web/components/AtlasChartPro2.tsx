@@ -1667,7 +1667,7 @@ function MasterScannerPanel({
                           borderRadius: 999,
                           background: "rgba(247,201,72,0.14)",
                           color: ui.yellow,
-                          fontSize: 9,
+                          fontSize: 8,
                           fontWeight: 900,
                         }}
                       >
@@ -1747,22 +1747,27 @@ function SmallStatCard({
     <div
       style={{
         borderRadius: 14,
-        border: "1px solid rgba(45,226,255,0.12)",
+        border: "1px solid rgba(45,226,255,0.16)",
         background:
-          "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
-        padding: "8px 10px",
-        minHeight: 52,
+          "linear-gradient(180deg, rgba(6,13,24,0.98), rgba(4,8,16,0.98))",
+        padding: "7px 10px 6px",
+        height: 56,
+        overflow: "hidden",
         boxShadow: accent ? `0 0 18px ${accent}` : "none",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
       }}
     >
       <div
         style={{
           color: "#6f88af",
-          fontSize: 9,
+          fontSize: 8,
           fontWeight: 900,
-          letterSpacing: 0.75,
+          letterSpacing: 0.78,
           textTransform: "uppercase",
-          marginBottom: 6,
+          marginBottom: 2,
+          lineHeight: 1,
         }}
       >
         {title}
@@ -1770,16 +1775,30 @@ function SmallStatCard({
       <div
         style={{
           color,
-          fontSize: 15,
+          fontSize: 11,
           fontWeight: 900,
-          marginBottom: 3,
+          marginBottom: 1,
           textShadow: `0 0 10px ${color}33`,
           lineHeight: 1,
         }}
       >
         {value}
       </div>
-      {sub && <div style={{ color: "#7f95bb", fontSize: 9, lineHeight: 1.25 }}>{sub}</div>}
+      {sub && (
+        <div
+          style={{
+            color: "#7f95bb",
+            fontSize: 7,
+            lineHeight: 1.05,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            opacity: 0.9,
+          }}
+        >
+          {sub}
+        </div>
+      )}
     </div>
   );
 }
@@ -2278,8 +2297,8 @@ function LiquidityPanel() {
         ))}
       </div>
 
-      <div style={{ padding: 10, display: "grid", gap: 10, flex: 1 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8 }}>
+      <div style={{ padding: 8, display: "grid", gap: 8, flex: 1 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, alignItems: "start" }}>
           <SmallStatCard title="Liquidez Superior" value="$72.200" sub="Bloco vendedor forte acima do preço atual." color={ui.yellow} />
           <SmallStatCard title="Liquidez Inferior" value="$69.800" sub="Absorção compradora ganhando espessura." color={ui.green} />
           <SmallStatCard title="Cluster Dominante" value="BTC Core" sub="Maior concentração institucional." color={ui.cyan} />
