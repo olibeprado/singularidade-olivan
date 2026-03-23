@@ -2297,7 +2297,16 @@ function LiquidityPanel() {
         ))}
       </div>
 
-      <div style={{ padding: 6, display: "grid", gap: 6, flex: 1 }}>
+      <div
+        style={{
+          padding: 6,
+          display: "grid",
+          gap: tab === "Liquidez" ? 4 : 6,
+          flex: 1,
+          alignContent: "start",
+          gridTemplateRows: tab === "Liquidez" ? "auto auto" : "auto 1fr",
+        }}
+      >
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, alignItems: "start", alignContent: "start" }}>
           <SmallStatCard title="Liquidez Superior" value="$72.200" sub="Bloco vendedor forte acima do preço atual." color={ui.yellow} />
           <SmallStatCard title="Liquidez Inferior" value="$69.800" sub="Absorção compradora ganhando espessura." color={ui.green} />
@@ -2305,12 +2314,22 @@ function LiquidityPanel() {
           <SmallStatCard title="Pressão Instantânea" value="+18.6%" sub="Fluxo favorecendo continuação curta." color={ui.green} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.26fr 0.62fr", gap: 10, flex: 1, minHeight: 0, alignItems: "start" }}>
-          <div data-atlas-scroll="cyan" style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 8, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgba(45,226,255,0.55) rgba(255,255,255,0.04)" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.26fr 0.62fr",
+            gap: 10,
+            flex: tab === "Liquidez" ? "0 0 auto" : 1,
+            minHeight: 0,
+            alignItems: "start",
+            marginTop: tab === "Liquidez" ? -2 : 0,
+          }}
+        >
+          <div data-atlas-scroll="cyan" style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 8, overflowY: tab === "Liquidez" ? "visible" : "auto", scrollbarWidth: "thin", scrollbarColor: "rgba(45,226,255,0.55) rgba(255,255,255,0.04)", minHeight: tab === "Liquidez" ? "auto" : 0 }}>
             {renderMain()}
           </div>
 
-          <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ display: "grid", gap: 12, alignContent: "start" }}>
             <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12 }}>
               <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 8 }}>Leitura rápida</div>
               <div style={{ display: "grid", gap: 10 }}>
