@@ -1750,8 +1750,8 @@ function SmallStatCard({
         border: "1px solid rgba(45,226,255,0.12)",
         background:
           "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
-        padding: 12,
-        minHeight: 84,
+        padding: "10px 12px",
+        minHeight: 68,
         boxShadow: accent ? `0 0 18px ${accent}` : "none",
       }}
     >
@@ -1770,15 +1770,15 @@ function SmallStatCard({
       <div
         style={{
           color,
-          fontSize: 18,
+          fontSize: 16,
           fontWeight: 900,
-          marginBottom: 6,
+          marginBottom: 4,
           textShadow: `0 0 10px ${color}33`,
         }}
       >
         {value}
       </div>
-      {sub && <div style={{ color: "#9bb0d4", fontSize: 11 }}>{sub}</div>}
+      {sub && <div style={{ color: "#8ea3c6", fontSize: 10, lineHeight: 1.35 }}>{sub}</div>}
     </div>
   );
 }
@@ -2104,39 +2104,87 @@ function LiquidityPanel() {
       return (
         <div style={{ display: "grid", gap: 12 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div style={{ borderRadius: 14, border: `1px solid ${ui.green}55`, background: "rgba(10, 31, 24, 0.55)", padding: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ borderRadius: 14, border: `1px solid ${ui.green}55`, background: "rgba(10, 31, 24, 0.55)", padding: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                 <div style={{ color: "#f1fbff", fontSize: 13, fontWeight: 900 }}>Cenário Alta</div>
-                <div style={{ color: ui.green, fontSize: 20, fontWeight: 900 }}>93%</div>
+                <div style={{ color: ui.green, fontSize: 18, fontWeight: 900 }}>93%</div>
               </div>
-              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}><div style={{ width: "93%", height: "100%", background: ui.green }} /></div>
+              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: 10 }}><div style={{ width: "93%", height: "100%", background: ui.green }} /></div>
+              <div style={{ display: "grid", gap: 6 }}>
+                {[['Alvo 1', '$91.672', ui.green], ['Alvo 2', '$99.732', ui.cyan], ['Stop Loss', '$83.887', ui.yellow]].map(([label, val, c]) => (
+                  <div key={String(label)} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                    <span style={{ color: '#8ea2c8' }}>{label}</span>
+                    <span style={{ color: c as string, fontWeight: 900 }}>{val}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div style={{ borderRadius: 14, border: `1px solid ${ui.red}55`, background: "rgba(31, 10, 20, 0.55)", padding: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ borderRadius: 14, border: `1px solid ${ui.red}55`, background: "rgba(31, 10, 20, 0.55)", padding: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                 <div style={{ color: "#f1fbff", fontSize: 13, fontWeight: 900 }}>Cenário Baixa</div>
-                <div style={{ color: ui.red, fontSize: 20, fontWeight: 900 }}>7%</div>
+                <div style={{ color: ui.red, fontSize: 18, fontWeight: 900 }}>7%</div>
               </div>
-              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}><div style={{ width: "7%", height: "100%", background: ui.red }} /></div>
+              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: 10 }}><div style={{ width: "7%", height: "100%", background: ui.red }} /></div>
+              <div style={{ display: "grid", gap: 6 }}>
+                {[['Alvo 1', '$83.242', ui.red], ['Alvo 2', '$79.650', '#ff7e91'], ['Stop Loss', '$89.430', ui.yellow]].map(([label, val, c]) => (
+                  <div key={String(label)} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                    <span style={{ color: '#8ea2c8' }}>{label}</span>
+                    <span style={{ color: c as string, fontWeight: 900 }}>{val}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "0.8fr 1fr", gap: 12 }}>
-            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 16 }}>
-              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>Sentimento do Mercado</div>
-              <div style={{ height: 180, display: "grid", placeItems: "center", color: ui.green, fontSize: 46, fontWeight: 900 }}>59</div>
+          <div style={{ display: "grid", gridTemplateColumns: "0.74fr 0.92fr 0.74fr", gap: 12, alignItems: 'stretch' }}>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14 }}>
+              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 10 }}>Sentimento do Mercado</div>
+              <div style={{ height: 250, display: "grid", placeItems: "center" }}>
+                <div style={{ width: 170, height: 170, borderRadius: '50%', border: '12px solid rgba(45,226,255,0.15)', borderTopColor: ui.yellow, borderRightColor: ui.green, borderBottomColor: '#ff008055', position: 'relative' }}>
+                  <div style={{ position: 'absolute', inset: 26, borderRadius: '50%', background: 'radial-gradient(circle, rgba(7,13,24,1), rgba(5,10,18,1))', display: 'grid', placeItems: 'center' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ color: ui.green, fontSize: 38, fontWeight: 900, lineHeight: 1 }}>59</div>
+                      <div style={{ color: '#8ea2c8', fontSize: 12, marginTop: 6 }}>Ganância</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 16, display: "grid", gap: 12 }}>
-              {[["Tubarões", "-125M", false], ["Institucionais", "+582M", true], ["Sardinhas", "+320M", true]].map(([name, val, pos]) => (
-                <div key={String(name)} style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>{name}</span>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14, display: "grid", gap: 10 }}>
+              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Fluxo Institucional</div>
+              {[["🦈", "Tubarões", "-125M", false], ["🏛️", "Institucionais", "+582M", true], ["🐟", "Sardinhas", "+320M", true]].map(([icon, name, val, pos]) => (
+                <div key={String(name)} style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 12, background: 'rgba(255,255,255,0.015)' }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: 'center', marginBottom: 8 }}>
+                    <span style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, display: 'flex', gap: 8, alignItems: 'center' }}><span>{icon}</span>{name}</span>
                     <span style={{ color: pos ? ui.green : ui.red, fontSize: 18, fontWeight: 900 }}>{val}</span>
                   </div>
-                  <div style={{ height: 10, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden", display: "grid", gridTemplateColumns: "51fr 49fr" }}>
+                  <div style={{ height: 12, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden", display: "grid", gridTemplateColumns: "51fr 49fr", marginBottom: 6 }}>
                     <div style={{ background: ui.green }} />
-                    <div style={{ background: ui.red }} />
+                    <div style={{ background: '#ea4c89' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10 }}>
+                    <span style={{ color: '#5ce4a2' }}>51% comprando</span>
+                    <span style={{ color: '#ff7a97' }}>49% vendendo</span>
                   </div>
                 </div>
               ))}
+            </div>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 14 }}>
+              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 10 }}>Livro de Ofertas</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 0.8fr 0.9fr', color: '#6f88af', fontSize: 10, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 6 }}>
+                <span>Preço</span><span>Qtd</span><span>Total</span>
+              </div>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {[
+                  ['$87.026','0.666','$417K', ui.red], ['$85.869','6.538','$471K', ui.red], ['$87.886','4.878','$284K', ui.red], ['$87.627','6.447','$413K', ui.red], ['$87.318','10.774','$279K', ui.red],
+                  ['$87.112','10.515','$365K', ui.green], ['$87.118','11.838','$194K', ui.green], ['$86.715','10.027','$280K', ui.green], ['$87.047','11.168','$70K', ui.green], ['$86.688','2.729','$321K', ui.green],
+                ].map(([price, qty, total, c], idx) => (
+                  <div key={String(price)+idx} style={{ display: 'grid', gridTemplateColumns: '1fr 0.8fr 0.9fr', fontSize: 12 }}>
+                    <span style={{ color: c as string, fontWeight: 900 }}>{price}</span>
+                    <span style={{ color: '#9bb0d2' }}>{qty}</span>
+                    <span style={{ color: '#7086ad' }}>{total}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -2188,7 +2236,7 @@ function LiquidityPanel() {
               <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>Leitura rápida</div>
               <div style={{ display: "grid", gap: 10 }}>
                 {[["Liquidez acima", "Pesada", ui.red],["Liquidez abaixo", "Saudável", ui.green],["Risco curto", "Controlado", ui.yellow],["Confluência", "8 / 9", ui.cyan],["Fluxo", "Positivo", ui.green],["Volatilidade", "Moderada", "#dce8ff"]].map(([k, v, c]) => (
-                  <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <span style={{ color: "#8ea2c8", fontSize: 12 }}>{k}</span>
                     <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>{v}</span>
                   </div>
@@ -3469,7 +3517,7 @@ function IAAtlasModule({ insight }: { insight: AIInsight }) {
                 ["Liquidez", "Ativo", ui.green],
                 ["Euler", "Alinhado", ui.green],
               ].map(([k, v, c]) => (
-                <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                   <span style={{ color: "#7f93b7", fontSize: 12 }}>{k}</span>
                   <span style={{ color: c as string, fontSize: 12, fontWeight: 900 }}>{v}</span>
                 </div>
