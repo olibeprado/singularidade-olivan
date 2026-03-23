@@ -117,6 +117,39 @@ type DrawObject = {
   type: string;
 };
 
+type ToolKey =
+  | "cursor"
+  | "cross"
+  | "trendline"
+  | "hline"
+  | "vline"
+  | "ray"
+  | "extended"
+  | "channel"
+  | "pitchfork"
+  | "fib"
+  | "fibext"
+  | "fibarc"
+  | "fibfan"
+  | "rect"
+  | "triangle"
+  | "ellipse"
+  | "measure"
+  | "text"
+  | "magnet";
+
+type ChartDrawObject = {
+  id: string;
+  type: "trendline" | "hline" | "vline" | "ray";
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  locked?: boolean;
+  hidden?: boolean;
+  color?: string;
+};
+
 type ScannerEvent = {
   time: string;
   title: string;
@@ -615,49 +648,55 @@ function ModuleStrip({
   );
 }
 
-function LeftToolbar() {
+function LeftToolbar({
+  selectedTool,
+  onSelectTool,
+}: {
+  selectedTool: ToolKey;
+  onSelectTool: (tool: ToolKey) => void;
+}) {
   const groups = [
     {
       title: "CURSOR",
       items: [
-        { icon: <MousePointer2 size={15} />, active: true },
-        { icon: <Circle size={15} /> },
-        { icon: <Eye size={15} /> },
+        { key: "cursor" as ToolKey, icon: <MousePointer2 size={15} />, label: "Cursor" },
+        { key: "cross" as ToolKey, icon: <Circle size={15} />, label: "Cross" },
+        { key: "magnet" as ToolKey, icon: <Eye size={15} />, label: "Magnet" },
       ],
     },
     {
       title: "LINHAS DE TENDÊNCIA",
       items: [
-        { icon: <TrendingUp size={15} /> },
-        { icon: <MoveUpRight size={15} /> },
-        { icon: <ArrowUp size={15} /> },
-        { icon: <ArrowRight size={15} /> },
-        { icon: <ArrowDown size={15} /> },
-        { icon: <Plus size={15} /> },
+        { key: "trendline" as ToolKey, icon: <TrendingUp size={15} />, label: "Trend" },
+        { key: "ray" as ToolKey, icon: <MoveUpRight size={15} />, label: "Ray" },
+        { key: "extended" as ToolKey, icon: <ArrowUp size={15} />, label: "Ext." },
+        { key: "hline" as ToolKey, icon: <ArrowRight size={15} />, label: "H-Line" },
+        { key: "vline" as ToolKey, icon: <ArrowDown size={15} />, label: "V-Line" },
+        { key: "measure" as ToolKey, icon: <Plus size={15} />, label: "Measure" },
       ],
     },
     {
       title: "CANAIS",
       items: [
-        { icon: <GitBranch size={15} /> },
-        { icon: <BarChart2 size={15} /> },
-        { icon: <SlidersHorizontal size={15} /> },
-        { icon: <Grid2X2 size={15} /> },
+        { key: "channel" as ToolKey, icon: <GitBranch size={15} />, label: "Channel" },
+        { key: "pitchfork" as ToolKey, icon: <BarChart2 size={15} />, label: "Pitchfork" },
+        { key: "fib" as ToolKey, icon: <SlidersHorizontal size={15} />, label: "Fib" },
+        { key: "fibext" as ToolKey, icon: <Grid2X2 size={15} />, label: "FibExt" },
       ],
     },
     {
-      title: "GAFOS & GANN",
+      title: "GRAFOS & GANN",
       items: [
-        { icon: <Spline size={15} /> },
-        { icon: <Network size={15} /> },
-        { icon: <Square size={15} /> },
+        { key: "triangle" as ToolKey, icon: <Spline size={15} />, label: "Tri" },
+        { key: "ellipse" as ToolKey, icon: <Network size={15} />, label: "Ellipse" },
+        { key: "rect" as ToolKey, icon: <Square size={15} />, label: "Rect" },
       ],
     },
     {
       title: "FIBONACCI",
       items: [
-        { icon: <Ruler size={15} /> },
-        { icon: <ArrowRight size={15} /> },
+        { key: "fibarc" as ToolKey, icon: <Ruler size={15} />, label: "Arc" },
+        { key: "fibfan" as ToolKey, icon: <ArrowRight size={15} />, label: "Fan" },
       ],
     },
   ];
@@ -693,31 +732,36 @@ function LeftToolbar() {
             {group.title}
           </div>
 
-          {group.items.map((tool, ti) => (
-            <button
-              key={ti}
-              style={{
-                width: 40,
-                height: 40,
-                margin: "0 auto",
-                borderRadius: 12,
-                border: tool.active
-                  ? "1px solid rgba(45,226,255,0.28)"
-                  : "1px solid rgba(255,255,255,0.04)",
-                background: tool.active
-                  ? "radial-gradient(circle at 50% 50%, rgba(45,226,255,0.18), rgba(45,226,255,0.04))"
-                  : "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008))",
-                color: tool.active ? ui.cyan : "#90a4c8",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                boxShadow: tool.active ? "0 0 18px rgba(45,226,255,0.18)" : "none",
-              }}
-            >
-              {tool.icon}
-            </button>
-          ))}
+          {group.items.map((tool) => {
+            const active = selectedTool === tool.key;
+            return (
+              <button
+                key={tool.key}
+                title={tool.label}
+                onClick={() => onSelectTool(tool.key)}
+                style={{
+                  width: 40,
+                  height: 40,
+                  margin: "0 auto",
+                  borderRadius: 12,
+                  border: active
+                    ? "1px solid rgba(45,226,255,0.28)"
+                    : "1px solid rgba(255,255,255,0.04)",
+                  background: active
+                    ? "radial-gradient(circle at 50% 50%, rgba(45,226,255,0.18), rgba(45,226,255,0.04))"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008))",
+                  color: active ? ui.cyan : "#90a4c8",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  boxShadow: active ? "0 0 18px rgba(45,226,255,0.18)" : "none",
+                }}
+              >
+                {tool.icon}
+              </button>
+            );
+          })}
         </div>
       ))}
 
@@ -2359,6 +2403,7 @@ function ChartPanel({
   mode,
   symbol,
   timeframe,
+  selectedTool,
 }: {
   candles: CandleData[];
   indicators: IndicatorData[];
@@ -2370,6 +2415,11 @@ function ChartPanel({
   const mainRef = useRef<HTMLDivElement>(null);
   const volOverlayRef = useRef<HTMLDivElement>(null);
   const rsiRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<SVGSVGElement>(null);
+
+  const [drawings, setDrawings] = useState<ChartDrawObject[]>([]);
+  const [draft, setDraft] = useState<ChartDrawObject | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
 
   const [livePrice, setLivePrice] = useState<number>(candles[candles.length - 1]?.close ?? 0);
   const [priceChange, setPriceChange] = useState<number>(0);
@@ -2524,6 +2574,143 @@ function ChartPanel({
 
   const isPositive = priceChange >= 0;
 
+  const interactiveTool = selectedTool === "trendline" || selectedTool === "hline" || selectedTool === "vline" || selectedTool === "ray";
+  const overlayPointerEvents = interactiveTool || dragId ? "auto" : "none";
+
+  const getLocalPoint = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top, w: rect.width, h: rect.height };
+  };
+
+  const distToSegment = (px: number, py: number, x1: number, y1: number, x2: number, y2: number) => {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D || 1;
+    let t = dot / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    const xx = x1 + C * t;
+    const yy = y1 + D * t;
+    const dx = px - xx;
+    const dy = py - yy;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const hitDrawing = (x: number, y: number) => {
+    for (let i = drawings.length - 1; i >= 0; i -= 1) {
+      const d = drawings[i];
+      if (d.hidden) continue;
+      if (d.type === "hline" && Math.abs(y - d.y1) < 8) return d.id;
+      if (d.type === "vline" && Math.abs(x - d.x1) < 8) return d.id;
+      if (distToSegment(x, y, d.x1, d.y1, d.x2, d.y2) < 8) return d.id;
+    }
+    return null;
+  };
+
+  const handleOverlayMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    const p = getLocalPoint(e);
+    const existingId = hitDrawing(p.x, p.y);
+    if (!interactiveTool && existingId) {
+      setDragId(existingId);
+      return;
+    }
+    if (selectedTool === "trendline" || selectedTool === "ray") {
+      const obj: ChartDrawObject = {
+        id: `d-${Date.now()}`,
+        type: selectedTool,
+        x1: p.x,
+        y1: p.y,
+        x2: p.x,
+        y2: p.y,
+        color: "#2de2ff",
+      };
+      setDraft(obj);
+      return;
+    }
+    if (selectedTool === "hline") {
+      setDrawings((prev) => prev.concat({
+        id: `d-${Date.now()}`,
+        type: "hline",
+        x1: 0,
+        y1: p.y,
+        x2: p.w,
+        y2: p.y,
+        color: "#f7c948",
+      }));
+      return;
+    }
+    if (selectedTool === "vline") {
+      setDrawings((prev) => prev.concat({
+        id: `d-${Date.now()}`,
+        type: "vline",
+        x1: p.x,
+        y1: 0,
+        x2: p.x,
+        y2: p.h,
+        color: "#ff9d2e",
+      }));
+    }
+  };
+
+  const handleOverlayMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const p = getLocalPoint(e);
+    if (draft) {
+      setDraft((prev) => prev ? {
+        ...prev,
+        x2: selectedTool === "ray" ? Math.max(p.x, prev.x1 + 8) : p.x,
+        y2: p.y,
+      } : prev);
+      return;
+    }
+    if (dragId) {
+      setDrawings((prev) => prev.map((d) => {
+        if (d.id !== dragId || d.locked) return d;
+        if (d.type === "hline") {
+          const dy = p.y - d.y1;
+          return { ...d, y1: p.y, y2: p.y };
+        }
+        if (d.type === "vline") {
+          return { ...d, x1: p.x, x2: p.x };
+        }
+        const w = d.x2 - d.x1;
+        const h = d.y2 - d.y1;
+        return { ...d, x1: p.x - w / 2, y1: p.y - h / 2, x2: p.x + w / 2, y2: p.y + h / 2 };
+      }));
+    }
+  };
+
+  const handleOverlayMouseUp = () => {
+    if (draft) {
+      setDrawings((prev) => prev.concat(draft));
+      setDraft(null);
+    }
+    if (dragId) setDragId(null);
+  };
+
+  const toolLabelMap: Record<ToolKey, string> = {
+    cursor: "Cursor",
+    cross: "Cross",
+    trendline: "Trendline",
+    hline: "Linha Horizontal",
+    vline: "Linha Vertical",
+    ray: "Ray",
+    extended: "Extended",
+    channel: "Channel",
+    pitchfork: "Pitchfork",
+    fib: "Fibonacci",
+    fibext: "Fib Ext",
+    fibarc: "Fib Arc",
+    fibfan: "Fib Fan",
+    rect: "Retângulo",
+    triangle: "Triângulo",
+    ellipse: "Elipse",
+    measure: "Medida",
+    text: "Texto",
+    magnet: "Magnet",
+  };
+
   return (
     <div
       style={{
@@ -2579,7 +2766,7 @@ function ChartPanel({
                   fontWeight: 700,
                 }}
               >
-                Scanner Atlas • Pasta: Cursor • Item: Navegar • TF: {timeframe}
+                Scanner Atlas • Ferramenta: {toolLabelMap[selectedTool]} • TF: {timeframe}
               </div>
             </div>
           </div>
@@ -2588,7 +2775,7 @@ function ChartPanel({
             ["Preço", livePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), "#4ef0cb"],
             ["Variação", `${isPositive ? "+" : ""}${priceChange.toFixed(2)}%`, isPositive ? ui.green : ui.red],
             ["Volume", formatCompact(candles[candles.length - 1]?.volume ?? 0), ui.cyan],
-            ["Desenhos", selectedObject ? "1" : "0", selectedObject ? ui.yellow : ui.red],
+            ["Desenhos", String(drawings.length + (draft ? 1 : 0)), drawings.length > 0 || draft ? ui.yellow : ui.red],
           ].map(([title, value, color]) => (
             <div
               key={title}
@@ -2643,18 +2830,55 @@ function ChartPanel({
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <TopButton active>Objetos</TopButton>
-          <TopButton>Travar</TopButton>
-          <TopButton>Ocultar</TopButton>
-          <TopButton>Limpar desenhos</TopButton>
-          <TopButton>Apagar selecionado</TopButton>
+          <TopButton onClick={() => setDrawings((prev) => prev.map((d) => d.id === dragId ? { ...d, locked: !d.locked } : d))}>Travar</TopButton>
+          <TopButton onClick={() => setDrawings((prev) => prev.map((d) => d.id === dragId ? { ...d, hidden: !d.hidden } : d))}>Ocultar</TopButton>
+          <TopButton onClick={() => { setDrawings([]); setDraft(null); }}>Limpar desenhos</TopButton>
+          <TopButton onClick={() => setDrawings((prev) => prev.filter((d) => d.id !== dragId))}>Apagar selecionado</TopButton>
         </div>
         <div style={{ color: "#7f93b7", fontSize: 10, fontWeight: 800 }}>
-          {selectedObject ? `${selectedObject.name} • ${selectedObject.type}` : "Nenhum objeto selecionado"}
+          {dragId ? `${drawings.find((d) => d.id === dragId)?.type ?? "obj"} selecionado` : "Nenhum objeto selecionado"}
         </div>
       </div>
 
       <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
         <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
+        <svg
+          ref={overlayRef}
+          width="100%"
+          height="100%"
+          viewBox={`0 0 ${mainRef.current?.clientWidth || 1000} ${mainRef.current?.clientHeight || 600}`}
+          preserveAspectRatio="none"
+          onMouseDown={handleOverlayMouseDown}
+          onMouseMove={handleOverlayMouseMove}
+          onMouseUp={handleOverlayMouseUp}
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 4,
+            pointerEvents: overlayPointerEvents as any,
+            cursor: interactiveTool ? "crosshair" : dragId ? "move" : "default",
+          }}
+        >
+          {[...drawings, ...(draft ? [draft] : [])].filter((d) => !d.hidden).map((d) => {
+            const common = {
+              stroke: d.color || "#2de2ff",
+              strokeWidth: dragId === d.id ? 2.5 : 1.8,
+              opacity: d.locked ? 0.65 : 0.95,
+            };
+            if (d.type === "hline" || d.type === "vline" || d.type === "trendline" || d.type === "ray") {
+              const x2 = d.type === "ray" ? Math.max(d.x2, (mainRef.current?.clientWidth || d.x2)) : d.x2;
+              const y2 = d.type === "ray" ? d.y1 + ((d.y2 - d.y1) / Math.max((d.x2 - d.x1), 1)) * (x2 - d.x1) : d.y2;
+              return (
+                <g key={d.id}>
+                  <line x1={d.x1} y1={d.y1} x2={x2} y2={y2} {...common} />
+                  <circle cx={d.x1} cy={d.y1} r={3} fill={d.color || "#2de2ff"} opacity={0.95} />
+                  {(d.type !== "hline" && d.type !== "vline") && <circle cx={d.x2} cy={d.y2} r={3} fill={d.color || "#2de2ff"} opacity={0.95} />}
+                </g>
+              );
+            }
+            return null;
+          })}
+        </svg>
         <div
           ref={volOverlayRef}
           style={{
@@ -3902,6 +4126,7 @@ function WorkspaceByModule({
   insight,
   scannerAssets,
   onSelectSymbol,
+  selectedTool,
 }: {
   activeModule: TopModuleKey;
   candles: CandleData[];
@@ -3916,7 +4141,7 @@ function WorkspaceByModule({
   onSelectSymbol: (symbol: string) => void;
 }) {
   if (activeModule === "Scanner") {
-    return <ChartPanel candles={candles} indicators={indicators} selectedObject={selectedObject} mode={mode} symbol={symbol} timeframe={timeframe} />;
+    return <ChartPanel candles={candles} indicators={indicators} selectedObject={selectedObject} mode={mode} symbol={symbol} timeframe={timeframe} selectedTool={selectedTool} />;
   }
   if (activeModule === "Mestre Scanner") {
     return <div style={{ height: "100%", padding: 10 }}><MasterScannerPanel assets={scannerAssets} selectedSymbol={symbol} onSelectSymbol={onSelectSymbol} /></div>;
@@ -3934,7 +4159,8 @@ export default function AtlasChartPro2() {
   const [timeframe, setTimeframe] = useState<Timeframe>("15m");
   const [mode] = useState<ModeKey>("auto");
   const [activeModule, setActiveModule] = useState<TopModuleKey>("Scanner");
-  const [objects] = useState<DrawObject[]>([{ id: "1", name: "Linha 1", type: "line" }]);
+  const [selectedTool, setSelectedTool] = useState<ToolKey>("cursor");
+  const [objects] = useState<DrawObject[]>([]);
   const [selectedId] = useState<string | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC");
 
@@ -4026,7 +4252,7 @@ export default function AtlasChartPro2() {
       <ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
 
       <div style={{ display: "flex", minHeight: 0, flex: 1 }}>
-        <LeftToolbar />
+        <LeftToolbar selectedTool={selectedTool} onSelectTool={setSelectedTool} />
 
         <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
           <div
@@ -4050,6 +4276,7 @@ export default function AtlasChartPro2() {
                 insight={insight}
                 scannerAssets={scannerAssets}
                 onSelectSymbol={setSelectedSymbol}
+                selectedTool={selectedTool}
               />
             </div>
 
