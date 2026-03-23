@@ -4140,6 +4140,7 @@ function WorkspaceByModule({
   insight: AIInsight;
   scannerAssets: AssetScore[];
   onSelectSymbol: (symbol: string) => void;
+  selectedTool: ToolKey;
 }) {
   if (activeModule === "Scanner") {
     return <ChartPanel candles={candles} indicators={indicators} selectedObject={selectedObject} mode={mode} symbol={symbol} timeframe={timeframe} selectedTool={selectedTool} />;
