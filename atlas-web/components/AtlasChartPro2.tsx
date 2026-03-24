@@ -2591,7 +2591,7 @@ function ChartPanel({
     height: mainRef.current?.clientHeight || 600,
   });
 
-  const getLocalPoint = (e: React.MouseEvent<SVGSVGElement>) => {
+  const getLocalPoint = <T extends SVGElement>(e: React.MouseEvent<T>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top, w: rect.width, h: rect.height };
   };
