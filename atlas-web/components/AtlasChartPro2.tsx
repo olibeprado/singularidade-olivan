@@ -1,1968 +1,4322 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PROMETEUS — O Fogo do Conhecimento</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap');
-:root{
-  --bg0:#07090d;--bg1:#0c0e14;--bg2:#10131a;--bg3:#151820;
-  --bd:#1c2030;--bd2:#242a3a;
-  --t0:#e4e8f2;--t1:#7a859a;--t2:#424e63;
-  --cyan:#00d4ff;--green:#00e676;--red:#ff3060;
-  --yellow:#ffd54f;--orange:#ff9100;--purple:#c77dff;--blue:#448aff;
-  --up:#00c853;--dn:#ff1744;
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Syne',sans-serif;background:var(--bg0);color:var(--t0);height:100vh;overflow:hidden;display:flex;flex-direction:column;user-select:none;}
+"use client";
 
-/* NAV */
-.nav{display:flex;align-items:center;height:40px;background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 10px;gap:6px;flex-shrink:0;}
-.logo{display:flex;align-items:center;gap:7px;margin-right:8px;}
-.logo-sym{width:24px;height:24px;background:linear-gradient(135deg,var(--cyan),var(--blue));border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#000;}
-.logo-txt{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:2.5px;color:var(--t0);}
-.sep{width:1px;height:20px;background:var(--bd);margin:0 6px;}
-.asset-sel{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--bd);border-radius:5px;padding:3px 8px;cursor:pointer;font-size:12px;font-weight:700;transition:.15s;}
-.asset-sel:hover{border-color:var(--cyan);}
-.abadge{background:var(--cyan);color:#000;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:800;}
-.price{display:flex;align-items:center;gap:8px;padding:0 10px;}
-.cprice{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;}
-.cchg{font-size:12px;font-weight:700;color:var(--green);}
-.cchg.neg{color:var(--red);}
-.tfs{display:flex;gap:1px;}
-.tf{padding:3px 7px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;color:var(--t1);background:transparent;border:1px solid transparent;font-family:'JetBrains Mono',monospace;transition:.12s;}
-.tf:hover{color:var(--t0);background:var(--bg2);}
-.tf.on{background:var(--cyan);color:#000;border-color:var(--cyan);}
-.navr{margin-left:auto;display:flex;align-items:center;gap:4px;}
-.ntab{padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;color:var(--t1);background:transparent;border:none;transition:.12s;}
-.ntab:hover,.ntab.on{color:var(--t0);background:var(--bg2);}
-.pnl{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.25);color:var(--green);padding:2px 9px;border-radius:4px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;}
-.ibtn{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;color:var(--t1);font-size:13px;transition:.12s;background:transparent;border:none;}
-.ibtn:hover{color:var(--t0);background:var(--bg2);}
-.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
-.live{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--cyan);margin-right:4px;}
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  createChart,
+  ColorType,
+  CrosshairMode,
+  IChartApi,
+  Time,
+} from "lightweight-charts";
+import {
+  Activity,
+  BarChart2,
+  Bell,
+  BrainCircuit,
+  ChevronDown,
+  ChevronRight,
+  Droplets,
+  Eye,
+  Layers3,
+  Maximize2,
+  MousePointer2,
+  PenTool,
+  RotateCcw,
+  Ruler,
+  ScanSearch,
+  Search,
+  Settings,
+  Shapes,
+  Sigma,
+  Square,
+  Star,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+  Type,
+  Waves,
+  Plus,
+  Minus,
+  MoveUpRight,
+  ArrowRight,
+  ArrowDown,
+  ArrowUp,
+  GitBranch,
+  Grid2X2,
+  Circle,
+  Spline,
+  Network,
+  SlidersHorizontal,
+} from "lucide-react";
 
-/* TABNAV */
-.tabnav{display:flex;align-items:center;height:34px;background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 10px;gap:3px;flex-shrink:0;}
-.tab2{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;color:var(--t1);background:transparent;border:1px solid transparent;transition:.12s;}
-.tab2:hover{color:var(--t0);background:var(--bg2);}
-.tab2.on{color:var(--cyan);background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.2);}
+type Timeframe = "1m" | "5m" | "15m" | "30m" | "1H" | "4H" | "1D";
+type ModeKey = "auto" | "manual" | "space";
+type TopModuleKey =
+  | "Fluxo"
+  | "Singularidade"
+  | "IA Atlas"
+  | "Scanner"
+  | "Mestre Scanner"
+  | "Estrutura"
+  | "Euler"
+  | "Liquidez";
 
-/* MAIN */
-.main{display:flex;flex:1;overflow:hidden;}
+type CandleData = {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
 
-/* LEFT TOOLBAR */
-.ltb{width:42px;background:var(--bg1);border-right:1px solid var(--bd);display:flex;flex-direction:column;align-items:center;padding:6px 0;gap:1px;flex-shrink:0;overflow:hidden;}
-.tsep{width:26px;height:1px;background:var(--bd);margin:3px 0;}
-.tgrp{font-size:7px;color:var(--t2);letter-spacing:.8px;text-transform:uppercase;writing-mode:vertical-rl;transform:rotate(180deg);margin:3px 0;}
-.tbtn{width:30px;height:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:5px;cursor:pointer;color:var(--t1);font-size:13px;transition:.12s;position:relative;}
-.tbtn:hover{color:var(--t0);background:var(--bg2);}
-.tbtn.on{color:var(--cyan);background:rgba(0,212,255,.1);}
-.tbtn .tlbl{font-size:6px;color:inherit;line-height:1;margin-top:1px;opacity:.7;}
-.tbtn[title]:hover::after{content:attr(title);position:absolute;left:36px;top:50%;transform:translateY(-50%);background:var(--bg3);border:1px solid var(--bd2);color:var(--t0);font-size:10px;padding:3px 7px;border-radius:4px;white-space:nowrap;z-index:999;font-family:'JetBrains Mono',monospace;}
+type IndicatorData = {
+  time: number;
+  rsi: number;
+  mfi: number;
+};
 
-/* CHART AREA */
-.chart-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.ctb{display:flex;align-items:center;height:36px;background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 10px;gap:8px;flex-shrink:0;}
-.cinfo{display:flex;align-items:center;gap:14px;flex:1;}
-.csym{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--cyan);}
-.cstat{display:flex;flex-direction:column;}
-.csl{font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;}
-.csv{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;}
-.csv.g{color:var(--green)}.csv.r{color:var(--red)}.csv.y{color:var(--yellow)}
-.ctbr{display:flex;align-items:center;gap:3px;}
-.cbtn{padding:2px 7px;border:1px solid var(--bd);border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;color:var(--t1);background:transparent;transition:.12s;}
-.cbtn:hover{color:var(--t0);border-color:var(--bd2);background:var(--bg2);}
-.cbtn.on{color:var(--cyan);border-color:var(--cyan);background:rgba(0,212,255,.08);}
+type StructureItem = {
+  label: string;
+  value?: string;
+  type: "positive" | "strong" | "negative" | "neutral" | "dots";
+  dots?: number;
+};
 
-/* DRAWING TOOLBAR */
-.dtb{display:flex;align-items:center;height:30px;background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 10px;gap:2px;flex-shrink:0;}
-.dbtn{padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;cursor:pointer;color:var(--t1);background:transparent;border:none;transition:.12s;}
-.dbtn:hover{color:var(--t0);background:var(--bg2);}
-.dbtn.danger{color:rgba(255,48,96,.7);}
-.dbtn.danger:hover{color:var(--red);background:rgba(255,48,96,.08);}
-.atool{font-size:10px;color:var(--cyan);font-weight:700;margin-left:auto;}
+type AIInsight = {
+  symbol: string;
+  price: number;
+  score: number;
+  signal: string;
+  riskLevel: string;
+  riskType: string;
+  invalidation: number;
+  trendBias: "bullish" | "bearish" | "neutral";
+  structure: StructureItem[];
+  structure2: StructureItem[];
+};
 
-/* CANVAS */
-.cwrap{flex:1;position:relative;overflow:hidden;background:var(--bg0);}
-#C{display:block;width:100%;height:100%;}
+type AssetScore = {
+  symbol: string;
+  volumeScore: number;
+  rsiMfi: number;
+  price: number;
+  change: number;
+  trend: "up" | "down" | "neutral";
+  color: string;
+  aiScore: number;
+  signal: string;
+  riskLevel: string;
+  riskType: string;
+  invalidation: number;
+};
 
-/* OSCILLATOR */
-.oscpan{height:90px;background:var(--bg0);border-top:1px solid var(--bd);flex-shrink:0;position:relative;}
-.osclbl{position:absolute;top:3px;left:8px;display:flex;gap:8px;z-index:2;}
-.oscind{display:flex;align-items:center;gap:3px;font-size:9px;font-family:'JetBrains Mono',monospace;}
-.osd{width:10px;height:2px;border-radius:1px;}
-#OC{display:block;width:100%;height:100%;}
+type DrawObject = {
+  id: string;
+  name: string;
+  type: string;
+};
 
-/* RIGHT PANEL */
-.rp{width:215px;background:var(--bg1);border-left:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0;}
-.rph{padding:7px 10px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;}
-.rpt{font-size:11px;font-weight:700;letter-spacing:.5px;}
-.rpc{cursor:pointer;color:var(--t2);font-size:11px;}
-.rpc:hover{color:var(--t0);}
-.rpb{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin;scrollbar-color:var(--bd) transparent;}
+type ToolKey =
+  | "cursor"
+  | "cross"
+  | "trendline"
+  | "hline"
+  | "vline"
+  | "ray"
+  | "extended"
+  | "channel"
+  | "pitchfork"
+  | "fib"
+  | "fibext"
+  | "fibarc"
+  | "fibfan"
+  | "rect"
+  | "triangle"
+  | "ellipse"
+  | "measure"
+  | "text"
+  | "magnet";
 
-.acard{background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:9px;margin-bottom:8px;}
-.acardh{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
-.aico{width:22px;height:22px;background:linear-gradient(135deg,#f7931a,#ff9100);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;}
-.aname{font-size:11px;font-weight:700;}
-.aprx{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;}
-.sbar{display:flex;gap:1px;margin:5px 0;}
-.sseg{height:4px;border-radius:2px;flex:1;background:var(--bd);transition:.3s;}
-.sseg.f{background:var(--green);}
-.cbadge{display:inline-block;background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.28);color:var(--green);font-size:9px;font-weight:800;padding:2px 8px;border-radius:3px;letter-spacing:1px;}
-.vbadge{display:inline-block;background:rgba(255,48,96,.1);border:1px solid rgba(255,48,96,.25);color:var(--red);font-size:9px;font-weight:800;padding:2px 8px;border-radius:3px;letter-spacing:1px;}
-.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px;}
-.ml{font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px;}
-.mv{font-size:10px;font-weight:700;}
-.mv.g{color:var(--green)}.mv.r{color:var(--red)}.mv.y{color:var(--yellow)}.mv.o{color:var(--orange)}.mv.c{color:var(--cyan)}.mv.w{color:var(--t0)}
-.stitle{font-size:9px;font-weight:700;color:var(--t1);text-transform:uppercase;letter-spacing:1px;margin:9px 0 4px;padding-bottom:3px;border-bottom:1px solid var(--bd);}
-.srow{display:flex;align-items:center;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(28,32,48,.5);}
-.slbl{font-size:10px;color:var(--t1);}
-.sval{font-size:10px;font-weight:700;}
-.cdots{display:flex;gap:2px;}
-.cdot{width:7px;height:7px;border-radius:50%;background:var(--green);opacity:.2;transition:.3s;}
-.cdot.a{opacity:1;}
-.qbtn{width:100%;padding:6px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;border:none;transition:.15s;margin-bottom:4px;}
+type ChartDrawObject = {
+  id: string;
+  type: "trendline" | "hline" | "vline" | "ray";
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  locked?: boolean;
+  hidden?: boolean;
+  color?: string;
+};
 
-/* TOOLTIP */
-.tt{position:fixed;background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:7px 10px;font-size:10px;pointer-events:none;z-index:1000;display:none;font-family:'JetBrains Mono',monospace;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.5);}
-.ttr{display:flex;justify-content:space-between;gap:14px;margin-bottom:1px;}
-.ttl{color:var(--t2)}.ttv{font-weight:600;}
-.ttv.u{color:var(--up)}.ttv.d{color:var(--dn)}
+type ScannerEvent = {
+  time: string;
+  title: string;
+  tag: string;
+  tone: "positive" | "warning" | "neutral";
+};
 
-/* NOTIF */
-.nc{position:fixed;top:48px;right:225px;z-index:999;display:flex;flex-direction:column;gap:4px;pointer-events:none;}
-.notif{background:var(--bg3);border:1px solid var(--bd2);border-left:3px solid var(--cyan);border-radius:5px;padding:6px 10px;font-size:10px;animation:slin .25s ease,flout .25s ease 2.75s forwards;pointer-events:auto;font-family:'JetBrains Mono',monospace;}
-@keyframes slin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
-@keyframes flout{to{opacity:0;transform:translateX(16px)}}
-
-/* MODAL */
-.mo{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center;}
-.md{background:var(--bg2);border:1px solid var(--bd2);border-radius:9px;padding:18px;min-width:270px;}
-.mdt{font-size:13px;font-weight:700;margin-bottom:11px;}
-.mdi{width:100%;background:var(--bg0);border:1px solid var(--bd);border-radius:4px;padding:7px 9px;color:var(--t0);font-size:11px;font-family:inherit;margin-bottom:6px;}
-.mdi:focus{outline:none;border-color:var(--cyan);}
-.mdl{font-size:9px;color:var(--t2);margin-bottom:2px;display:block;}
-.mda{display:flex;gap:6px;margin-top:10px;}
-.mdbtn{flex:1;padding:7px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;border:none;transition:.15s;}
-.mdbtn.p{background:var(--cyan);color:#000;}
-.mdbtn.s{background:var(--bg3);color:var(--t1);border:1px solid var(--bd);}
-
-/* CONTEXT MENU */
-.ctx{position:fixed;background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;padding:4px 0;z-index:800;display:none;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5);}
-.cxi{padding:6px 12px;font-size:11px;cursor:pointer;color:var(--t0);display:flex;align-items:center;gap:7px;transition:.1s;}
-.cxi:hover{background:var(--bg3);}
-.cxi.danger{color:var(--red);}
-.cxsep{height:1px;background:var(--bd);margin:3px 0;}
-
-
-.swatch{width:22px;height:22px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:.12s;flex-shrink:0;}
-.swatch:hover{border-color:var(--t0);transform:scale(1.1);}
-.swatch.sel{border-color:#fff;}
-.stab{padding:4px 10px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;color:var(--t1);background:transparent;border:1px solid var(--bd);transition:.12s;}
-.stab:hover{color:var(--t0);}
-.stab.on{background:var(--cyan);color:#000;border-color:var(--cyan);}
-.fib-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:5px;align-items:center;}
-.fib-row input[type=number]{background:var(--bg0);border:1px solid var(--bd);border-radius:3px;padding:3px 5px;color:var(--t0);font-size:10px;font-family:'JetBrains Mono',monospace;width:70px;}
-.fib-row input[type=color]{width:20px;height:20px;border:none;padding:0;border-radius:3px;cursor:pointer;background:transparent;}
-.fib-row .del-fib{background:transparent;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:2px 4px;}
-.fib-row input[type=checkbox]{accent-color:var(--cyan);}
-::-webkit-scrollbar{width:3px;}
-::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
-</style>
-</head>
-<body>
-
-<!-- NAV -->
-<div class="nav">
-  <div class="logo"><div class="logo-sym">🔥</div><div class="logo-txt">PROMETEUS</div></div>
-  <div class="asset-sel" onclick="openAssetModal()"><span class="abadge">8</span><span>BTC</span><span style="color:var(--t2);font-size:9px;">▼</span></div>
-  <div class="price"><span class="cprice" id="tp">$84,273</span><span class="cchg" id="tc">+2.80%</span></div>
-  <div class="sep"></div>
-  <div class="tfs">
-    <button class="tf" onclick="setTF('1m',this)">1m</button>
-    <button class="tf" onclick="setTF('5m',this)">5m</button>
-    <button class="tf on" onclick="setTF('15m',this)">15m</button>
-    <button class="tf" onclick="setTF('30m',this)">30m</button>
-    <button class="tf" onclick="setTF('1H',this)">1H</button>
-    <button class="tf" onclick="setTF('4H',this)">4H</button>
-    <button class="tf" onclick="setTF('1D',this)">1D</button>
-  </div>
-  <button class="cbtn" onclick="toggleReplay()" id="rbtn">▶ Replay</button>
-  <div class="live"><div class="pulse"></div>AO VIVO</div>
-  <div class="navr">
-    <button class="ntab on" onclick="ntab(this,'grafico')">Gráfico</button>
-    <button class="ntab" onclick="ntab(this,'ordens')">Ordens</button>
-    <button class="ntab" onclick="ntab(this,'posicoes')">Posições</button>
-    <button class="ntab" onclick="ntab(this,'iaatlas')">IA Atlas</button>
-    <button class="ntab" onclick="ntab(this,'fluxo')">Fluxo</button>
-    <div class="sep"></div>
-    <div class="pnl" id="pnl">+2.80%</div>
-    <button class="ibtn" onclick="openAlertModal()">🔔</button>
-    <button class="ibtn" onclick="notify('Configurações abertas','cyan')">⚙</button>
-  </div>
-</div>
-
-<!-- TABNAV -->
-<div class="tabnav">
-  <div class="tab2" onclick="t2(this)">📊 Fluxo</div>
-  <div class="tab2" onclick="t2(this)">🌀 Singularidade</div>
-  <div class="tab2" onclick="t2(this)">⭐ IA Atlas</div>
-  <div class="tab2 on" onclick="t2(this)">🔭 Scanner</div>
-  <div class="tab2" onclick="t2(this)">🎯 Mestre Scanner</div>
-  <div class="tab2" onclick="t2(this)">📐 Estrutura</div>
-  <div class="tab2" onclick="t2(this)">🔢 Euler</div>
-  <div class="tab2" onclick="t2(this)">💧 Liquidez</div>
-</div>
-
-<!-- MAIN -->
-<div class="main">
-
-  <!-- LEFT TOOLBAR -->
-  <div class="ltb">
-    <!-- CURSOR group -->
-    <div class="tbtn on" id="tool_cursor" onclick="setTool('cursor',this)" title="Cursor (V)">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M1 1l3.5 10 2-3 3-1.5L1 1z"/></svg>
-      <span class="tlbl">CURSOR</span>
-    </div>
-    <div class="tbtn" id="tool_cross" onclick="setTool('cross',this)" title="Mira (C)">✛</div>
-    <div class="tsep"></div>
-
-    <!-- LINE group -->
-    <div class="tgrp">LINHAS</div>
-    <div class="tbtn" id="tool_trendline" onclick="setTool('trendline',this)" title="Tendência (T)">╱</div>
-    <div class="tbtn" id="tool_hline" onclick="setTool('hline',this)" title="Horizontal (H)">—</div>
-    <div class="tbtn" id="tool_vline" onclick="setTool('vline',this)" title="Vertical (K)">│</div>
-    <div class="tbtn" id="tool_ray" onclick="setTool('ray',this)" title="Raio (R)">→</div>
-    <div class="tbtn" id="tool_extended" onclick="setTool('extended',this)" title="Estendida">⟷</div>
-    <div class="tsep"></div>
-
-    <!-- CHANNEL group -->
-    <div class="tgrp">CANAIS</div>
-    <div class="tbtn" id="tool_channel" onclick="setTool('channel',this)" title="Canal Paralelo">⦀</div>
-    <div class="tbtn" id="tool_pitchfork" onclick="setTool('pitchfork',this)" title="Pitchfork">⑂</div>
-    <div class="tsep"></div>
-
-    <!-- FIBONACCI group -->
-    <div class="tgrp">FIBO</div>
-    <div class="tbtn" id="tool_fib" onclick="setTool('fib',this)" title="Fibonacci Retr. (F)">
-      <span style="font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;">FIB</span>
-    </div>
-    <div class="tbtn" id="tool_fibext" onclick="setTool('fibext',this)" title="Fib Extensão">
-      <span style="font-size:8px;font-family:'JetBrains Mono',monospace;">EXT</span>
-    </div>
-    <div class="tbtn" id="tool_fibarc" onclick="setTool('fibarc',this)" title="Fib Arcos">◌</div>
-    <div class="tbtn" id="tool_fibfan" onclick="setTool('fibfan',this)" title="Fib Fan">⋱</div>
-    <div class="tsep"></div>
-
-    <!-- SHAPES group -->
-    <div class="tgrp">FORMAS</div>
-    <div class="tbtn" id="tool_rect" onclick="setTool('rect',this)" title="Retângulo (G)">▭</div>
-    <div class="tbtn" id="tool_triangle" onclick="setTool('triangle',this)" title="Triângulo">△</div>
-    <div class="tbtn" id="tool_ellipse" onclick="setTool('ellipse',this)" title="Elipse">◯</div>
-    <div class="tsep"></div>
-
-    <!-- OTHER -->
-    <div class="tgrp">MISC</div>
-    <div class="tbtn" id="tool_measure" onclick="setTool('measure',this)" title="Medir (M)">⟺</div>
-    <div class="tbtn" id="tool_text" onclick="setTool('text',this)" title="Texto (X)">T</div>
-    <div class="tbtn" id="tool_magnet" onclick="toggleMagnet(this)" title="Magneto">⦿</div>
-    <div class="tsep"></div>
-    <div class="tbtn" onclick="undoDrawing()" title="Desfazer (Z)">↩</div>
-    <div class="tbtn" onclick="clearDrawings()" title="Limpar tudo">✕</div>
-  </div>
-
-  <!-- CHART AREA -->
-  <div class="chart-area">
-    <!-- CHART TOOLBAR -->
-    <div class="ctb">
-      <div class="cinfo">
-        <span class="csym">BTC/USDT</span>
-        <div class="cstat"><span class="csl">PREÇO</span><span class="csv" id="cp">84,273.62</span></div>
-        <div class="cstat"><span class="csl">VAR</span><span class="csv g" id="cc">+0.16%</span></div>
-        <div class="cstat"><span class="csl">VOL</span><span class="csv" id="cv">680.47</span></div>
-        <div class="cstat"><span class="csl">ALTO</span><span class="csv g" id="ch">88,234</span></div>
-        <div class="cstat"><span class="csl">BAIXO</span><span class="csv r" id="cl">79,102</span></div>
-        <div class="cstat"><span class="csl">DESENHOS</span><span class="csv y" id="dc">0</span></div>
-      </div>
-      <div class="ctbr">
-        <button class="cbtn on" id="autoB" onclick="setMode('auto',this)">Auto</button>
-        <button class="cbtn" id="manB" onclick="setMode('manual',this)">Manual</button>
-        <button class="cbtn" onclick="followPrice()">Seguir</button>
-        <button class="cbtn" onclick="zoomOut()">−</button>
-        <button class="cbtn" onclick="zoomIn()">+</button>
-        <button class="cbtn" onclick="goNow()">Agora</button>
-        <button class="cbtn" onclick="resetChart()">Reset</button>
-      </div>
-    </div>
-
-    <!-- DRAWING TOOLBAR -->
-    <div class="dtb">
-      <button class="dbtn" onclick="lockAllDrawings()">🔒 Travar</button>
-      <button class="dbtn" onclick="toggleHideDrawings()">👁 Ocultar</button>
-      <button class="dbtn" onclick="clearDrawings()">🗑 Limpar</button>
-      <button class="dbtn danger" onclick="deleteSelectedDrawing()">✕ Apagar sel.</button>
-      <div class="sep" style="margin:0 4px;"></div>
-      <button class="dbtn" onclick="setDrawColor('#ffd54f')">🟡</button>
-      <button class="dbtn" onclick="setDrawColor('#00d4ff')">🔵</button>
-      <button class="dbtn" onclick="setDrawColor('#00e676')">🟢</button>
-      <button class="dbtn" onclick="setDrawColor('#ff3060')">🔴</button>
-      <button class="dbtn" onclick="setDrawColor('#c77dff')">🟣</button>
-      <div class="sep" style="margin:0 4px;"></div>
-      <button class="dbtn" onclick="toggleMA(21,'#ffd54f')">MA21</button>
-      <button class="dbtn" onclick="toggleMA(55,'#448aff')">MA55</button>
-      <button class="dbtn" onclick="toggleMA(89,'#c77dff')">MA89</button>
-      <button class="dbtn" onclick="toggleMA(200,'#ff9100')">MA200</button>
-      <span class="atool" id="atool">Ferramenta: Cursor</span>
-    </div>
-
-    <!-- CANVAS WRAPPER -->
-    <div class="cwrap" id="CW">
-      <canvas id="C"></canvas>
-    </div>
-
-    <!-- OSCILLATOR -->
-    <div class="oscpan">
-      <div class="osclbl">
-        <div class="oscind"><div class="osd" style="background:#c77dff;"></div><span style="color:#c77dff;">RSI</span><span id="rsiV" style="color:#c77dff;margin-left:3px;">—</span></div>
-        <div class="oscind"><div class="osd" style="background:#00e5ff;"></div><span style="color:#00e5ff;">MFI</span><span id="mfiV" style="color:#00e5ff;margin-left:3px;">—</span></div>
-        <div class="oscind"><div class="osd" style="background:#ffd54f;"></div><span style="color:#ffd54f;">MACD</span></div>
-      </div>
-      <canvas id="OC"></canvas>
-    </div>
-  </div>
-
-  <!-- RIGHT PANEL -->
-  <div class="rp">
-    <div class="rph">
-      <span class="rpt">IA Atlas Insights</span>
-      <span class="rpc" onclick="this.closest('.rp').style.display='none'">✕</span>
-    </div>
-    <div class="rpb">
-      <div class="acard">
-        <div class="acardh">
-          <div style="display:flex;align-items:center;gap:6px;">
-            <div class="aico">₿</div>
-            <div><div style="font-size:8px;color:var(--t2);">8 BTC</div><div class="aname">BTC</div></div>
-          </div>
-          <div style="text-align:right;">
-            <div class="aprx" id="pp">74,682</div>
-            <div style="font-size:9px;color:var(--t2);">84 ↑</div>
-          </div>
-        </div>
-        <div class="sbar" id="sb"></div>
-        <span class="cbadge" id="sig">COMPRA</span>
-        <div class="mgrid">
-          <div><div class="ml">Risco</div><div class="mv y">Moderado</div></div>
-          <div><div class="ml">Tipo</div><div class="mv o">Volatilidade</div></div>
-          <div><div class="ml">Invalidação</div><div class="mv w">$69,180</div></div>
-          <div><div class="ml">Fonte</div><div class="mv c">binance</div></div>
-        </div>
-      </div>
-
-      <div class="stitle">Estrutura</div>
-      <div class="srow"><span class="slbl">Fluxo</span><span class="sval" style="color:var(--green)">Positivo</span></div>
-      <div class="srow"><span class="slbl">Momentum</span><span class="sval" style="color:var(--green)">Forte</span></div>
-      <div class="srow"><span class="slbl">Liquidez</span><span class="sval" style="color:var(--cyan)">Ativo</span></div>
-      <div class="srow">
-        <span class="slbl">Confluência</span>
-        <div class="cdots" id="cdots"></div>
-      </div>
-
-      <div class="stitle">Scanner</div>
-      <div class="srow"><span class="slbl">Estrutura</span><span class="sval" style="color:var(--green)">Positivo</span></div>
-      <div class="srow"><span class="slbl">Momentum</span><span class="sval" style="color:var(--green)">Forte</span></div>
-      <div class="srow"><span class="slbl">Confluência</span><span class="sval" style="color:var(--t0)">8 / 9</span></div>
-      <div class="srow"><span class="slbl">Razão Prata</span><span class="sval" style="color:var(--green)">Forte</span></div>
-      <div class="srow"><span class="slbl">Ciclo</span><span class="sval" style="color:var(--cyan)">Acelerado</span></div>
-
-      <div class="stitle">Confluência</div>
-      <div class="srow"><span class="slbl">Euler</span><span class="sval" style="color:var(--green)">Alinhado</span></div>
-      <div class="srow"><span class="slbl">Razão Prata</span><span class="sval" style="color:var(--green)">Forte</span></div>
-      <div class="srow"><span class="slbl">Risco Assimét.</span><span class="sval" style="color:var(--yellow)">Bom</span></div>
-      <div class="srow"><span class="slbl">Invalidação</span><span class="sval" style="color:var(--t0)">Controlada</span></div>
-
-      <div class="stitle" style="margin-top:12px;">Ações Rápidas</div>
-      <button class="qbtn" onclick="qa('long')" style="background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.25);color:var(--green);">▲ LONG BTC</button>
-      <button class="qbtn" onclick="qa('short')" style="background:rgba(255,48,96,.08);border:1px solid rgba(255,48,96,.2);color:var(--red);">▼ SHORT BTC</button>
-      <button class="qbtn" onclick="openAlertModal()" style="background:rgba(255,213,79,.08);border:1px solid rgba(255,213,79,.2);color:var(--yellow);">🔔 ALERTA PREÇO</button>
-    </div>
-  </div>
-</div>
-
-<!-- TOOLTIP -->
-<div class="tt" id="TT">
-  <div class="ttr"><span class="ttl">Abertura</span><span class="ttv" id="tO">—</span></div>
-  <div class="ttr"><span class="ttl">Máxima</span><span class="ttv u" id="tH">—</span></div>
-  <div class="ttr"><span class="ttl">Mínima</span><span class="ttv d" id="tL">—</span></div>
-  <div class="ttr"><span class="ttl">Fechamento</span><span class="ttv" id="tC">—</span></div>
-  <div class="ttr" style="margin-top:3px;"><span class="ttl">Volume</span><span class="ttv" id="tV">—</span></div>
-</div>
-
-<!-- NOTIF CONTAINER -->
-<div class="nc" id="NC"></div>
-
-<!-- ALERT MODAL -->
-<div class="mo" id="alertMo">
-  <div class="md">
-    <div class="mdt">🔔 Criar Alerta de Preço</div>
-    <span class="mdl">Preço alvo</span>
-    <input class="mdi" id="aPrice" type="number" placeholder="Ex: 85000">
-    <span class="mdl">Condição</span>
-    <select class="mdi" id="aCond">
-      <option value="above">Acima do preço</option>
-      <option value="below">Abaixo do preço</option>
-    </select>
-    <div class="mda">
-      <button class="mdbtn s" onclick="closeMo('alertMo')">Cancelar</button>
-      <button class="mdbtn p" onclick="createAlert()">Criar Alerta</button>
-    </div>
-  </div>
-</div>
-
-<!-- TEXT MODAL -->
-<div class="mo" id="textMo">
-  <div class="md">
-    <div class="mdt">✏ Adicionar Texto</div>
-    <input class="mdi" id="tText" placeholder="Digite o texto..." autofocus>
-    <select class="mdi" id="tSize">
-      <option value="11">Pequeno</option>
-      <option value="13" selected>Médio</option>
-      <option value="16">Grande</option>
-      <option value="20">Muito Grande</option>
-    </select>
-    <div class="mda">
-      <button class="mdbtn s" onclick="closeMo('textMo')">Cancelar</button>
-      <button class="mdbtn p" onclick="addText()">Adicionar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ASSET MODAL -->
-<div class="mo" id="assetMo">
-  <div class="md">
-    <div class="mdt">🔍 Selecionar Ativo</div>
-    <input class="mdi" id="assetSearch" placeholder="Buscar... BTC, ETH, SOL" oninput="filterAssets(this.value)">
-    <div id="assetList" style="max-height:200px;overflow-y:auto;"></div>
-    <div class="mda"><button class="mdbtn s" onclick="closeMo('assetMo')">Fechar</button></div>
-  </div>
-</div>
-
-
-<!-- SETTINGS MODAL -->
-<div class="mo" id="settingsMo">
-  <div class="md" style="min-width:340px;max-width:420px;max-height:85vh;overflow-y:auto;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="mdt" id="settingsTitle" style="margin-bottom:0;">⚙ Configurações</div>
-      <span onclick="closeMo('settingsMo')" style="cursor:pointer;color:var(--t2);font-size:14px;">✕</span>
-    </div>
-
-    <!-- TABS -->
-    <div style="display:flex;gap:3px;margin-bottom:12px;border-bottom:1px solid var(--bd);padding-bottom:8px;">
-      <button class="stab on" id="stab_style" onclick="switchSettingsTab('style')">🎨 Estilo</button>
-      <button class="stab" id="stab_levels" onclick="switchSettingsTab('levels')">📊 Níveis</button>
-      <button class="stab" id="stab_visibility" onclick="switchSettingsTab('visibility')">👁 Visibilidade</button>
-    </div>
-
-    <!-- STYLE TAB -->
-    <div id="sTab_style">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div>
-          <span class="mdl">Cor da linha</span>
-          <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:5px;">
-            <div class="swatch" style="background:#ffd54f" onclick="setSwatch('#ffd54f')"></div>
-            <div class="swatch" style="background:#00d4ff" onclick="setSwatch('#00d4ff')"></div>
-            <div class="swatch" style="background:#00e676" onclick="setSwatch('#00e676')"></div>
-            <div class="swatch" style="background:#ff3060" onclick="setSwatch('#ff3060')"></div>
-            <div class="swatch" style="background:#c77dff" onclick="setSwatch('#c77dff')"></div>
-            <div class="swatch" style="background:#ff9100" onclick="setSwatch('#ff9100')"></div>
-            <div class="swatch" style="background:#448aff" onclick="setSwatch('#448aff')"></div>
-            <div class="swatch" style="background:#ffffff" onclick="setSwatch('#ffffff')"></div>
-            <input type="color" id="sColorPicker" style="width:22px;height:22px;border:none;padding:0;border-radius:3px;cursor:pointer;" onchange="setSwatch(this.value)">
-          </div>
-        </div>
-        <div>
-          <span class="mdl">Prévia da cor</span>
-          <div id="sColorPreview" style="width:100%;height:22px;border-radius:4px;margin-top:5px;border:1px solid var(--bd2);background:#ffd54f;"></div>
-        </div>
-        <div>
-          <span class="mdl">Espessura</span>
-          <select class="mdi" id="sWidth" style="margin-top:4px;">
-            <option value="1">Fina (1px)</option>
-            <option value="1.5">Normal (1.5px)</option>
-            <option value="2" selected>Média (2px)</option>
-            <option value="3">Grossa (3px)</option>
-            <option value="4">Muito Grossa (4px)</option>
-          </select>
-        </div>
-        <div>
-          <span class="mdl">Estilo da linha</span>
-          <select class="mdi" id="sLineStyle" style="margin-top:4px;">
-            <option value="solid">Sólida ───</option>
-            <option value="dashed">Tracejada ─ ─</option>
-            <option value="dotted">Pontilhada · · ·</option>
-          </select>
-        </div>
-        <div>
-          <span class="mdl">Opacidade fundo <span id="sFillOpacityVal">10%</span></span>
-          <input type="range" id="sFillOpacity" min="0" max="40" value="10" style="width:100%;margin-top:6px;accent-color:var(--cyan);" oninput="document.getElementById('sFillOpacityVal').textContent=this.value+'%'">
-        </div>
-        <div>
-          <span class="mdl">Mostrar preço</span>
-          <select class="mdi" id="sShowPrice" style="margin-top:4px;">
-            <option value="1">Sim</option>
-            <option value="0">Não</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- FIB SPECIFIC -->
-      <div id="sFibSection" style="display:none;margin-top:12px;">
-        <div style="font-size:10px;font-weight:700;color:var(--t1);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;border-top:1px solid var(--bd);padding-top:8px;">Níveis Fibonacci</div>
-        <div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:4px;align-items:center;font-size:9px;color:var(--t2);margin-bottom:4px;padding:0 2px;">
-          <span>Vis.</span><span>Valor %</span><span>Cor</span><span>Del.</span>
-        </div>
-        <div id="sFibLevels" style="display:flex;flex-direction:column;gap:4px;max-height:170px;overflow-y:auto;"></div>
-        <button onclick="addFibLevel()" style="margin-top:7px;padding:4px 12px;background:var(--bg3);border:1px solid var(--bd);border-radius:4px;color:var(--cyan);font-size:10px;cursor:pointer;width:100%;">+ Adicionar nível</button>
-      </div>
-
-      <!-- TEXT SPECIFIC -->
-      <div id="sTextSection" style="display:none;margin-top:10px;border-top:1px solid var(--bd);padding-top:10px;">
-        <span class="mdl">Conteúdo do texto</span>
-        <input class="mdi" id="sTextContent" style="margin-top:4px;">
-        <span class="mdl" style="margin-top:6px;display:block;">Tamanho da fonte</span>
-        <select class="mdi" id="sTextSize" style="margin-top:4px;">
-          <option value="10">Pequeno (10px)</option>
-          <option value="13" selected>Médio (13px)</option>
-          <option value="16">Grande (16px)</option>
-          <option value="20">Muito Grande (20px)</option>
-          <option value="26">Enorme (26px)</option>
-        </select>
-        <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;">
-          <input type="checkbox" id="sTextBold" style="accent-color:var(--cyan);">
-          <span>Negrito</span>
-        </label>
-      </div>
-
-      <!-- HLINE SPECIFIC -->
-      <div id="sHLineSection" style="display:none;margin-top:10px;border-top:1px solid var(--bd);padding-top:10px;">
-        <span class="mdl">Preço exato</span>
-        <input class="mdi" id="sHLinePrice" type="number" step="1" style="margin-top:4px;">
-        <span class="mdl" style="margin-top:6px;display:block;">Rótulo personalizado</span>
-        <input class="mdi" id="sHLineLabel" placeholder="Ex: Suporte, Resistência..." style="margin-top:4px;">
-      </div>
-
-      <!-- CHANNEL SPECIFIC -->
-      <div id="sChannelSection" style="display:none;margin-top:10px;border-top:1px solid var(--bd);padding-top:10px;">
-        <span class="mdl">Largura do canal (offset) <span id="sChannelVal"></span></span>
-        <input type="range" id="sChannelOffset" min="-8000" max="8000" value="0" style="width:100%;margin-top:6px;accent-color:var(--cyan);" oninput="previewChannel(this.value)">
-      </div>
-
-      <!-- RECT SPECIFIC -->
-      <div id="sRectSection" style="display:none;margin-top:10px;border-top:1px solid var(--bd);padding-top:10px;">
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:6px;">
-          <input type="checkbox" id="sRectPercent" checked style="accent-color:var(--cyan);">
-          <span>Mostrar variação %</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;">
-          <input type="checkbox" id="sRectPrices" checked style="accent-color:var(--cyan);">
-          <span>Mostrar preços</span>
-        </label>
-      </div>
-
-      <!-- TRENDLINE SPECIFIC -->
-      <div id="sTrendSection" style="display:none;margin-top:10px;border-top:1px solid var(--bd);padding-top:10px;">
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:6px;">
-          <input type="checkbox" id="sTrendArrow" checked style="accent-color:var(--cyan);">
-          <span>Mostrar seta</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;">
-          <input type="checkbox" id="sTrendAngle" style="accent-color:var(--cyan);">
-          <span>Mostrar ângulo</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;margin-top:6px;">
-          <input type="checkbox" id="sTrendVariation" style="accent-color:var(--cyan);">
-          <span>Mostrar variação %</span>
-        </label>
-      </div>
-    </div>
-
-    <!-- LEVELS TAB -->
-    <div id="sTab_levels" style="display:none;">
-      <div id="sLevelsContent" style="font-size:11px;color:var(--t1);"></div>
-    </div>
-
-    <!-- VISIBILITY TAB -->
-    <div id="sTab_visibility" style="display:none;">
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <label style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:6px 0;border-bottom:1px solid var(--bd);">
-          <span>Visível no gráfico</span>
-          <input type="checkbox" id="sVisible" checked style="accent-color:var(--cyan);width:15px;height:15px;">
-        </label>
-        <label style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:6px 0;border-bottom:1px solid var(--bd);">
-          <span>Travado (não mover)</span>
-          <input type="checkbox" id="sLocked" style="accent-color:var(--cyan);width:15px;height:15px;">
-        </label>
-        <label style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:6px 0;border-bottom:1px solid var(--bd);">
-          <span>Mostrar em todas as TFs</span>
-          <input type="checkbox" id="sShowAllTF" checked style="accent-color:var(--cyan);width:15px;height:15px;">
-        </label>
-        <div style="margin-top:4px;">
-          <span class="mdl">Nota / Descrição</span>
-          <textarea class="mdi" id="sNote" placeholder="Adicione uma nota..." rows="3" style="resize:vertical;margin-top:5px;"></textarea>
-        </div>
-      </div>
-    </div>
-
-    <div class="mda" style="margin-top:14px;">
-      <button class="mdbtn s" onclick="closeMo('settingsMo')">Cancelar</button>
-      <button class="mdbtn p" onclick="applySettings()">✓ Aplicar</button>
-    </div>
-  </div>
-</div>
-
-<!-- CONTEXT MENU -->
-<div class="ctx" id="CTX">
-  <div class="cxi" onclick="ctxAction('edit')">⚙ Configurações</div>
-  <div class="cxi" onclick="ctxAction('lock')">🔒 Travar / Destravar</div>
-  <div class="cxi" onclick="ctxAction('hide')">👁 Ocultar / Mostrar</div>
-  <div class="cxsep"></div>
-  <div class="cxi danger" onclick="ctxAction('delete')">🗑 Apagar</div>
-</div>
-
-<script>
-// ========================================
-// STATE
-// ========================================
-let TF = '15m';
-let tool = 'cursor';
-let drawColor = '#ffd54f';
-let drawings = [];
-let selDraw = null;
-let isDrawing = false;
-let drawPt1 = null;
-let pendingText = null;
-let alerts = [];
-let magnetOn = false;
-let hideDrawings = false;
-let mas = { 21: true, 55: true, 89: true, 200: false };
-let visN = 80;
-let panOff = 0;
-let panStart = null;
-let mouse = { x: -1, y: -1 };
-let hoverIdx = null;
-let replayMode = false;
-let animId;
-let CW, canvas, ctx, oscCanvas, oscCtx;
-let W = 0, H = 0;
-
-const ASSETS = ['BTC','ETH','SOL','BNB','XRP','DOGE','ADA','AVAX','MATIC','DOT','LINK','UNI','ATOM','LTC','TRX'];
-
-// FIB LEVELS
-const FIB_LEVELS = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.272, 1.618];
-const FIB_COLORS = ['#ffd54f','#00d4ff','#00e676','#ff9100','#c77dff','#ff3060','#ffd54f','#448aff','#00e676'];
-
-const DEFAULT_FIB_LEVELS = [
-  { pct: 0,     color: '#ffd54f', visible: true },
-  { pct: 0.236, color: '#00d4ff', visible: true },
-  { pct: 0.382, color: '#00e676', visible: true },
-  { pct: 0.5,   color: '#ff9100', visible: true },
-  { pct: 0.618, color: '#c77dff', visible: true },
-  { pct: 0.786, color: '#ff3060', visible: true },
-  { pct: 1.0,   color: '#ffd54f', visible: true },
-  { pct: 1.272, color: '#448aff', visible: false },
-  { pct: 1.618, color: '#00e676', visible: false },
+const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
+const NAV_TABS = ["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"];
+const TOP_MODULES: TopModuleKey[] = [
+  "Fluxo",
+  "Singularidade",
+  "IA Atlas",
+  "Scanner",
+  "Mestre Scanner",
+  "Estrutura",
+  "Euler",
+  "Liquidez",
 ];
+const LIQUIDITY_TABS = ["Liquidez", "Map", "Clusters", "Eventos", "Fluxo Institucional", "Notícias IA Atlas"];
 
-// ========================================
-// CANDLE GENERATION
-// ========================================
-function genCandles(n = 200) {
-  const cs = [];
-  let p = 82000 + Math.random() * 5000;
-  const now = Date.now();
-  const ms = { '1m':60e3,'5m':300e3,'15m':900e3,'30m':1800e3,'1H':3600e3,'4H':14400e3,'1D':86400e3 };
-  const iv = ms[TF] || 900e3;
-  for (let i = n - 1; i >= 0; i--) {
-    const o = p;
-    const chg = (Math.random() - 0.475) * p * 0.009;
-    const c = p + chg;
-    const hi = Math.max(o, c) + Math.random() * p * 0.004;
-    const lo = Math.min(o, c) - Math.random() * p * 0.004;
-    const vol = 150 + Math.random() * 700;
-    cs.push({ o, h: hi, l: lo, c, v: vol, t: now - i * iv });
-    p = c;
-  }
-  return cs;
-}
-let candles = genCandles(200);
+const ui = {
+  bg: "#060913",
+  bg2: "#050810",
+  border: "#172133",
+  text: "#ebf3ff",
+  mut: "#7f93b7",
+  cyan: "#2de2ff",
+  cyan2: "#00d8ff",
+  green: "#27f59d",
+  yellow: "#f7c948",
+  red: "#ff6b86",
+  magenta: "#ff4fa3",
+  orange: "#ff9d2e",
+};
 
-// ========================================
-// INDICATORS
-// ========================================
-function calcRSI(cs, p = 14) {
-  const r = new Array(cs.length).fill(null);
-  if (cs.length < p + 1) return r;
-  let g = 0, l = 0;
-  for (let i = 1; i <= p; i++) {
-    const d = cs[i].c - cs[i - 1].c;
-    if (d >= 0) g += d; else l -= d;
-  }
-  let ag = g / p, al = l / p;
-  r[p] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
-  for (let i = p + 1; i < cs.length; i++) {
-    const d = cs[i].c - cs[i - 1].c;
-    ag = (ag * (p - 1) + Math.max(0, d)) / p;
-    al = (al * (p - 1) + Math.max(0, -d)) / p;
-    r[i] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
-  }
-  return r;
+function clamp(v: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, v));
 }
 
-function calcMA(cs, p) {
-  return cs.map((_, i) => {
-    if (i < p - 1) return null;
-    let s = 0;
-    for (let j = i - p + 1; j <= i; j++) s += cs[j].c;
-    return s / p;
+function formatCompact(n: number) {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)}B`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(2)}K`;
+  return n.toFixed(2);
+}
+
+function symbolBasePrice(symbol: string) {
+  const map: Record<string, number> = {
+    BTC: 74682,
+    ETH: 3932,
+    SOL: 174.8,
+    BNB: 610.75,
+    XRP: 2.147,
+    DOGE: 0.387,
+    AVAX: 38.87,
+    DOT: 8.98,
+    ADA: 0.847,
+    ARB: 1.21,
+    SEI: 0.58,
+    INJ: 65.99,
+    CORE: 1.9,
+    PET: 0.65,
+  };
+  return map[symbol] ?? 100;
+}
+
+function generateCandles(count = 240, startPrice = 74500): CandleData[] {
+  const now = Math.floor(Date.now() / 1000);
+  const candles: CandleData[] = [];
+  let prevClose = startPrice;
+
+  for (let i = count; i > 0; i--) {
+    const time = now - i * 300;
+    const wave =
+      Math.sin(i / 11) * (startPrice * 0.0045) +
+      Math.cos(i / 17) * (startPrice * 0.0022);
+    const drift = (Math.random() - 0.49) * (startPrice * 0.0065) + wave;
+    const open = prevClose;
+    const close = Math.max(0.0001, open + drift);
+    const high = Math.max(open, close) + Math.random() * (startPrice * 0.0035);
+    const low = Math.min(open, close) - Math.random() * (startPrice * 0.0035);
+    const volume = 120 + Math.random() * 1400;
+    candles.push({ time, open, high, low, close, volume });
+    prevClose = close;
+  }
+
+  return candles;
+}
+
+function generateIndicators(candles: CandleData[]): IndicatorData[] {
+  return candles.map((c, i) => {
+    const rsi = clamp(48 + Math.sin(i / 8) * 14 + (Math.random() - 0.5) * 6, 5, 95);
+    const mfi = clamp(52 + Math.cos(i / 10) * 16 + (Math.random() - 0.5) * 6, 5, 95);
+    return { time: c.time, rsi, mfi };
   });
 }
 
-// ========================================
-// CANVAS SETUP
-// ========================================
-function init() {
-  CW = document.getElementById('CW');
-  canvas = document.getElementById('C');
-  if (!canvas) { console.error('Canvas #C não encontrado'); return; }
-  ctx = canvas.getContext('2d');
-  oscCanvas = document.getElementById('OC');
-  if (!oscCanvas) { console.error('Canvas #OC não encontrado'); return; }
-  oscCtx = oscCanvas.getContext('2d');
-
-  // Bind canvas events after canvas is confirmed to exist
-  bindCanvasEvents();
-
-  resize();
-  buildScoreBars(84);
-  buildConfDots(8, 9);
-  updatePrice();
+function computeSMA(candles: CandleData[], period: number) {
+  return candles.map((c, i) => {
+    if (i < period - 1) return { time: c.time, value: c.close };
+    let sum = 0;
+    for (let j = i - period + 1; j <= i; j++) sum += candles[j].close;
+    return { time: c.time, value: sum / period };
+  });
 }
 
-function bindCanvasEvents() {
-  canvas.addEventListener('mousemove', onMouseMove);
-  canvas.addEventListener('mouseleave', onMouseLeave);
-  canvas.addEventListener('mousedown', onMouseDown);
-  canvas.addEventListener('mouseup', onMouseUp);
-  canvas.addEventListener('wheel', e => { e.preventDefault(); e.deltaY < 0 ? zoomIn() : zoomOut(); }, { passive: false });
-  canvas.addEventListener('dblclick', onDblClick);
-  canvas.addEventListener('contextmenu', onContextMenu);
-}
-
-function resize() {
-  W = CW.clientWidth; H = CW.clientHeight;
-  canvas.width = W; canvas.height = H;
-  const op = document.querySelector('.oscpan');
-  oscCanvas.width = op.clientWidth; oscCanvas.height = op.clientHeight;
-  draw(); drawOsc();
-}
-
-// ========================================
-// PRICE UTILS
-// ========================================
-function getRange() {
-  const s = Math.max(0, candles.length - visN - Math.round(panOff));
-  const e = Math.min(candles.length, s + visN);
-  const vis = candles.slice(s, e);
-  if (!vis.length) return { min: 0, max: 1 };
-  let mn = Infinity, mx = -Infinity;
-  for (const c of vis) { if (c.l < mn) mn = c.l; if (c.h > mx) mx = c.h; }
-  const pad = (mx - mn) * 0.12;
-  return { min: mn - pad, max: mx + pad };
-}
-
-function p2y(price, rng, chartH) {
-  return chartH - ((price - rng.min) / (rng.max - rng.min)) * chartH + 8;
-}
-
-function y2p(y, rng, chartH) {
-  return rng.max - ((y - 8) / chartH) * (rng.max - rng.min);
-}
-
-function getVis() {
-  const s = Math.max(0, candles.length - visN - Math.round(panOff));
-  const e = Math.min(candles.length, s + visN);
-  return { vis: candles.slice(s, e), si: s };
-}
-
-function x2candleIdx(x) {
-  const cw = (W - 62) / visN;
-  return Math.floor(x / cw);
-}
-
-// ========================================
-// MAIN DRAW
-// ========================================
-function draw() {
-  ctx.clearRect(0, 0, W, H);
-  const rng = getRange();
-  const chartH = H * 0.78;
-  const volH = H * 0.16;
-  const volY = chartH + 10;
-  const cw = (W - 62) / visN;
-  const bw = Math.max(1.5, cw * 0.65);
-  const { vis, si } = getVis();
-
-  // === GRID ===
-  ctx.strokeStyle = '#1c2030'; ctx.lineWidth = 0.5;
-  for (let i = 0; i <= 7; i++) {
-    const price = rng.min + (rng.max - rng.min) * (i / 7);
-    const y = p2y(price, rng, chartH);
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W - 62, y); ctx.stroke();
-    ctx.fillStyle = '#424e63'; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'left';
-    ctx.fillText(price.toFixed(0), W - 60, y + 3);
+function computeEMA(candles: CandleData[], period: number) {
+  const k = 2 / (period + 1);
+  const ema: { time: number; value: number }[] = [];
+  let prev = candles[0]?.close ?? 0;
+  for (let i = 0; i < candles.length; i++) {
+    const close = candles[i].close;
+    const value = i === 0 ? close : close * k + prev * (1 - k);
+    ema.push({ time: candles[i].time, value });
+    prev = value;
   }
-  // Vertical grid
-  for (let i = 0; i < vis.length; i += Math.max(1, Math.floor(vis.length / 8))) {
-    const x = i * cw + cw / 2;
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, chartH); ctx.stroke();
-  }
+  return ema;
+}
 
-  // === MAs ===
-  const maConf = [
-    { p: 21, c: '#ffd54f', w: 1.5 },
-    { p: 55, c: '#448aff', w: 1.5 },
-    { p: 89, c: '#c77dff', w: 1.2 },
-    { p: 200, c: '#ff9100', w: 1.2 }
+function generateSparkline(count: number, start: number, trend: "up" | "down" | "neutral") {
+  const arr: number[] = [];
+  let value = start;
+  for (let i = 0; i < count; i++) {
+    const drift = trend === "up" ? 1.3 : trend === "down" ? -1.2 : 0.12;
+    value += drift + (Math.random() - 0.5) * 3;
+    arr.push(value);
+  }
+  return arr;
+}
+
+function getScoreVisual(score: number) {
+  if (score >= 80) return { color: ui.green, label: "Compra" };
+  if (score >= 50) return { color: ui.yellow, label: "Neutro" };
+  return { color: ui.red, label: "Baixa" };
+}
+
+function symbolToInsight(asset: AssetScore): AIInsight {
+  return {
+    symbol: asset.symbol,
+    price: asset.price,
+    score: asset.aiScore,
+    signal: asset.signal,
+    riskLevel: asset.riskLevel,
+    riskType: asset.riskType,
+    invalidation: asset.invalidation,
+    trendBias: asset.trend === "up" ? "bullish" : asset.trend === "down" ? "bearish" : "neutral",
+    structure: [
+      {
+        label: "Fluxo",
+        value:
+          asset.trend === "up" ? "Positivo" : asset.trend === "down" ? "Pressão" : "Neutro",
+        type:
+          asset.trend === "up" ? "positive" : asset.trend === "down" ? "negative" : "neutral",
+      },
+      {
+        label: "Momentum",
+        value: asset.aiScore >= 80 ? "Forte" : asset.aiScore >= 60 ? "Moderado" : "Fraco",
+        type: asset.aiScore >= 80 ? "strong" : asset.aiScore >= 60 ? "neutral" : "negative",
+      },
+      {
+        label: "Liquidez",
+        value:
+          asset.volumeScore >= 70 ? "Ativo" : asset.volumeScore >= 50 ? "Médio" : "Baixo",
+        type:
+          asset.volumeScore >= 70 ? "positive" : asset.volumeScore >= 50 ? "neutral" : "negative",
+      },
+      {
+        label: "Confluência",
+        type: "dots",
+        dots: Math.max(2, Math.min(9, Math.round(asset.aiScore / 11))),
+      },
+    ],
+    structure2: [
+      {
+        label: "Euler",
+        value:
+          asset.trend === "up" ? "Alinhado" : asset.trend === "down" ? "Pressão" : "Estável",
+        type:
+          asset.trend === "up" ? "positive" : asset.trend === "down" ? "negative" : "neutral",
+      },
+      {
+        label: "Razão de Prata",
+        value: asset.rsiMfi >= 60 ? "Forte" : asset.rsiMfi >= 45 ? "Estável" : "Fraca",
+        type: asset.rsiMfi >= 60 ? "positive" : asset.rsiMfi >= 45 ? "neutral" : "negative",
+      },
+      {
+        label: "Risco Assimétrico",
+        value: asset.change >= 0 ? "Bom" : "Sensível",
+        type: asset.change >= 0 ? "positive" : "negative",
+      },
+      {
+        label: "Invalidação",
+        value: asset.change >= 0 ? "Controlada" : "Próxima",
+        type: asset.change >= 0 ? "neutral" : "negative",
+      },
+    ],
+  };
+}
+
+function ModuleButton({
+  icon,
+  text,
+  active,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        height: 34,
+        padding: "0 14px",
+        borderRadius: 12,
+        border: active
+          ? "1px solid rgba(247,201,72,0.34)"
+          : "1px solid rgba(255,255,255,0.06)",
+        background: active
+          ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
+          : "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))",
+        color: active ? "#ffe39a" : "#d9e8ff",
+        fontSize: 12,
+        fontWeight: 800,
+        cursor: "pointer",
+      }}
+    >
+      {icon}
+      {text}
+    </button>
+  );
+}
+
+function TopButton({
+  children,
+  active,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        height: 29,
+        padding: "0 10px",
+        borderRadius: 9,
+        border: active
+          ? "1px solid rgba(247,201,72,0.34)"
+          : "1px solid rgba(255,255,255,0.06)",
+        background: active
+          ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
+          : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
+        color: active ? ui.yellow : "#dce8ff",
+        fontSize: 11,
+        fontWeight: 800,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TopBar({
+  symbol,
+  price,
+  change,
+  timeframe,
+  onTimeframeChange,
+}: {
+  symbol: string;
+  price: number;
+  change: number;
+  timeframe: Timeframe;
+  onTimeframeChange: (tf: Timeframe) => void;
+}) {
+  const [replayMode, setReplayMode] = useState(false);
+  const isPositive = change >= 0;
+
+  return (
+    <div
+      style={{
+        height: 64,
+        padding: "0 14px",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        borderBottom: `1px solid ${ui.border}`,
+        background:
+          "radial-gradient(circle at top, rgba(14,28,60,0.86), rgba(6,10,20,0.98) 55%)",
+        flexShrink: 0,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginRight: 8 }}>
+        <div
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 11,
+            background:
+              "linear-gradient(135deg, rgba(42,231,255,0.22), rgba(119,77,255,0.28))",
+            border: "1px solid rgba(255,255,255,0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 0 24px rgba(46,226,255,0.16)",
+          }}
+        >
+          <Activity size={17} color="#e8f7ff" />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span
+            style={{
+              color: "#f6fbff",
+              fontSize: 17,
+              fontWeight: 900,
+              letterSpacing: 0.3,
+            }}
+          >
+            SINGULARIDADE
+          </span>
+          <span
+            style={{
+              color: ui.cyan,
+              fontSize: 10,
+              fontWeight: 900,
+              background: "rgba(45,226,255,0.1)",
+              padding: "3px 6px",
+              borderRadius: 999,
+            }}
+          >
+            OBP
+          </span>
+        </div>
+      </div>
+
+      <div style={{ width: 1, height: 30, background: "rgba(255,255,255,0.08)" }} />
+
+      <button
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 7,
+          height: 36,
+          padding: "0 12px",
+          borderRadius: 10,
+          border: "1px solid rgba(255,255,255,0.07)",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))",
+          color: "#eef6ff",
+          fontSize: 13,
+          fontWeight: 800,
+          cursor: "pointer",
+        }}
+      >
+        <span style={{ color: ui.yellow }}>₿</span>
+        {symbol}
+        <ChevronDown size={13} color="#8295bb" />
+      </button>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span
+          style={{
+            color: "#f6fbff",
+            fontSize: 13,
+            fontFamily: "monospace",
+            fontWeight: 900,
+          }}
+        >
+          ${price.toLocaleString()}
+        </span>
+        <span
+          style={{
+            color: isPositive ? ui.green : ui.red,
+            fontSize: 12,
+            fontFamily: "monospace",
+            fontWeight: 900,
+          }}
+        >
+          {isPositive ? "+" : ""}
+          {change.toFixed(2)}%
+        </span>
+      </div>
+
+      <div style={{ width: 1, height: 30, background: "rgba(255,255,255,0.08)" }} />
+
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        {TIMEFRAMES.map((tf) => (
+          <TopButton key={tf} active={timeframe === tf} onClick={() => onTimeframeChange(tf)}>
+            {tf}
+          </TopButton>
+        ))}
+      </div>
+
+      <div style={{ width: 1, height: 30, background: "rgba(255,255,255,0.08)" }} />
+
+      <button
+        onClick={() => setReplayMode(!replayMode)}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          height: 32,
+          padding: "0 10px",
+          borderRadius: 10,
+          border: replayMode ? "1px solid rgba(247,201,72,0.34)" : "1px solid transparent",
+          background: replayMode
+            ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
+            : "transparent",
+          color: replayMode ? ui.yellow : "#8da1c7",
+          fontSize: 12,
+          fontWeight: 800,
+          cursor: "pointer",
+        }}
+      >
+        <RotateCcw size={12} />
+        Replay
+      </button>
+
+      <div style={{ flex: 1 }} />
+
+      <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+        {NAV_TABS.map((tab, i) => (
+          <TopButton key={tab} active={i === 0}>
+            {tab}
+          </TopButton>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: 8 }}>
+        <span style={{ color: ui.green, fontSize: 12, fontWeight: 900 }}>
+          {isPositive ? "+" : ""}
+          {change.toFixed(2)}%
+        </span>
+        <Search size={15} color="#90a4c8" />
+        <Bell size={15} color="#90a4c8" />
+        <Settings size={15} color="#90a4c8" />
+      </div>
+    </div>
+  );
+}
+
+function ModuleStrip({
+  activeModule,
+  onChange,
+}: {
+  activeModule: TopModuleKey;
+  onChange: (m: TopModuleKey) => void;
+}) {
+  const icons: Record<TopModuleKey, React.ReactNode> = {
+    Fluxo: <Waves size={13} />,
+    Singularidade: <BrainCircuit size={13} />,
+    "IA Atlas": <Activity size={13} />,
+    Scanner: <ScanSearch size={13} />,
+    "Mestre Scanner": <Star size={13} />,
+    Estrutura: <Layers3 size={13} />,
+    Euler: <Sigma size={13} />,
+    Liquidez: <Droplets size={13} />,
+  };
+
+  return (
+    <div
+      style={{
+        height: 50,
+        padding: "0 16px",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        borderBottom: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(8,12,23,0.98), rgba(7,11,20,0.98))",
+        flexShrink: 0,
+      }}
+    >
+      {TOP_MODULES.map((module) => (
+        <ModuleButton
+          key={module}
+          icon={icons[module]}
+          text={module}
+          active={activeModule === module}
+          onClick={() => onChange(module)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function LeftToolbar({
+  selectedTool,
+  onSelectTool,
+}: {
+  selectedTool: ToolKey;
+  onSelectTool: (tool: ToolKey) => void;
+}) {
+  const groups = [
+    {
+      title: "CURSOR",
+      items: [
+        { key: "cursor" as ToolKey, icon: <MousePointer2 size={15} />, label: "Cursor" },
+        { key: "cross" as ToolKey, icon: <Circle size={15} />, label: "Cross" },
+        { key: "magnet" as ToolKey, icon: <Eye size={15} />, label: "Magnet" },
+      ],
+    },
+    {
+      title: "LINHAS DE TENDÊNCIA",
+      items: [
+        { key: "trendline" as ToolKey, icon: <TrendingUp size={15} />, label: "Trend" },
+        { key: "ray" as ToolKey, icon: <MoveUpRight size={15} />, label: "Ray" },
+        { key: "extended" as ToolKey, icon: <ArrowUp size={15} />, label: "Ext." },
+        { key: "hline" as ToolKey, icon: <ArrowRight size={15} />, label: "H-Line" },
+        { key: "vline" as ToolKey, icon: <ArrowDown size={15} />, label: "V-Line" },
+        { key: "measure" as ToolKey, icon: <Plus size={15} />, label: "Measure" },
+      ],
+    },
+    {
+      title: "CANAIS",
+      items: [
+        { key: "channel" as ToolKey, icon: <GitBranch size={15} />, label: "Channel" },
+        { key: "pitchfork" as ToolKey, icon: <BarChart2 size={15} />, label: "Pitchfork" },
+        { key: "fib" as ToolKey, icon: <SlidersHorizontal size={15} />, label: "Fib" },
+        { key: "fibext" as ToolKey, icon: <Grid2X2 size={15} />, label: "FibExt" },
+      ],
+    },
+    {
+      title: "GRAFOS & GANN",
+      items: [
+        { key: "triangle" as ToolKey, icon: <Spline size={15} />, label: "Tri" },
+        { key: "ellipse" as ToolKey, icon: <Network size={15} />, label: "Ellipse" },
+        { key: "rect" as ToolKey, icon: <Square size={15} />, label: "Rect" },
+      ],
+    },
+    {
+      title: "FIBONACCI",
+      items: [
+        { key: "fibarc" as ToolKey, icon: <Ruler size={15} />, label: "Arc" },
+        { key: "fibfan" as ToolKey, icon: <ArrowRight size={15} />, label: "Fan" },
+      ],
+    },
   ];
-  for (const m of maConf) {
-    if (!mas[m.p]) continue;
-    const ma = calcMA(candles, m.p);
-    ctx.strokeStyle = m.c; ctx.lineWidth = m.w; ctx.globalAlpha = 0.85;
-    ctx.beginPath(); let st = false;
-    for (let i = 0; i < vis.length; i++) {
-      const v = ma[si + i];
-      if (v == null) continue;
-      const x = i * cw + cw / 2;
-      const y = p2y(v, rng, chartH);
-      st ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), st = true);
+
+  return (
+    <div
+      data-atlas-scroll="cyan"
+      style={{
+        width: 74,
+        borderRight: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(6,9,17,0.98))",
+        display: "flex",
+        flexDirection: "column",
+        padding: "10px 8px",
+        gap: 12,
+        overflowY: "auto",
+        flexShrink: 0,
+      }}
+    >
+      {groups.map((group, gi) => (
+        <div key={gi} style={{ display: "grid", gap: 8 }}>
+          <div
+            style={{
+              color: "#536887",
+              fontSize: 8,
+              fontWeight: 900,
+              letterSpacing: 0.9,
+              textTransform: "uppercase",
+              textAlign: "center",
+            }}
+          >
+            {group.title}
+          </div>
+
+          {group.items.map((tool) => {
+            const active = selectedTool === tool.key;
+            return (
+              <button
+                key={tool.key}
+                title={tool.label}
+                onClick={() => onSelectTool(tool.key)}
+                style={{
+                  width: 40,
+                  height: 40,
+                  margin: "0 auto",
+                  borderRadius: 12,
+                  border: active
+                    ? "1px solid rgba(45,226,255,0.28)"
+                    : "1px solid rgba(255,255,255,0.04)",
+                  background: active
+                    ? "radial-gradient(circle at 50% 50%, rgba(45,226,255,0.18), rgba(45,226,255,0.04))"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008))",
+                  color: active ? ui.cyan : "#90a4c8",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  boxShadow: active ? "0 0 18px rgba(45,226,255,0.18)" : "none",
+                }}
+              >
+                {tool.icon}
+              </button>
+            );
+          })}
+        </div>
+      ))}
+
+      <div style={{ flex: 1 }} />
+
+      <button
+        style={{
+          width: 40,
+          height: 40,
+          margin: "0 auto",
+          borderRadius: 12,
+          border: "1px solid rgba(255,255,255,0.05)",
+          background: "rgba(255,255,255,0.02)",
+          color: "#90a4c8",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+        }}
+      >
+        <Settings size={15} />
+      </button>
+    </div>
+  );
+}
+
+function ScoreDots({ count, total = 9 }: { count: number; total?: number }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+      {Array.from({ length: total }).map((_, i) => (
+        <span
+          key={i}
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            display: "inline-block",
+            background:
+              i < count
+                ? "linear-gradient(180deg, #31e9ff, #18b7ff)"
+                : "rgba(255,255,255,0.14)",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function StructureRow({ item }: { item: StructureItem }) {
+  const getColor = (type: StructureItem["type"]) => {
+    switch (type) {
+      case "positive":
+        return ui.green;
+      case "strong":
+        return "#9fffbc";
+      case "negative":
+        return ui.red;
+      case "neutral":
+        return "#aab7d1";
+      default:
+        return "#dbe7ff";
     }
-    ctx.stroke(); ctx.globalAlpha = 1;
-  }
+  };
 
-  // === VOLUME ===
-  let maxV = 0;
-  for (const c of vis) if (c.v > maxV) maxV = c.v;
-  for (let i = 0; i < vis.length; i++) {
-    const c = vis[i];
-    const x = i * cw + cw / 2;
-    const vh = (c.v / maxV) * volH;
-    ctx.fillStyle = c.c >= c.o ? 'rgba(0,200,83,.35)' : 'rgba(255,23,68,.35)';
-    ctx.fillRect(x - bw / 2, volY + volH - vh, bw, vh);
-  }
-
-  // === CANDLES ===
-  for (let i = 0; i < vis.length; i++) {
-    const c = vis[i];
-    const x = i * cw + cw / 2;
-    const up = c.c >= c.o;
-    const col = up ? '#00c853' : '#ff1744';
-    const alpha = hoverIdx === i ? 1 : 0.88;
-
-    ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.globalAlpha = alpha;
-    ctx.beginPath(); ctx.moveTo(x, p2y(c.h, rng, chartH)); ctx.lineTo(x, p2y(c.l, rng, chartH)); ctx.stroke();
-
-    const by = p2y(Math.max(c.o, c.c), rng, chartH);
-    const bh = Math.max(1, p2y(Math.min(c.o, c.c), rng, chartH) - by);
-    ctx.fillStyle = col;
-    ctx.fillRect(x - bw / 2, by, bw, bh);
-    ctx.globalAlpha = 1;
-  }
-
-  // === CURRENT PRICE LINE ===
-  const last = candles[candles.length - 1].c;
-  const ly = p2y(last, rng, chartH);
-  ctx.strokeStyle = 'rgba(0,230,118,.5)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(0, ly); ctx.lineTo(W - 62, ly); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = '#00c853';
-  ctx.fillRect(W - 62, ly - 9, 62, 18);
-  ctx.fillStyle = '#000'; ctx.font = 'bold 9px JetBrains Mono'; ctx.textAlign = 'center';
-  ctx.fillText(last.toFixed(0), W - 31, ly + 3);
-
-  // === TIME AXIS ===
-  ctx.fillStyle = '#424e63'; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'center';
-  const step = Math.max(1, Math.floor(vis.length / 8));
-  for (let i = 0; i < vis.length; i += step) {
-    const d = new Date(vis[i].t);
-    const lbl = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-    ctx.fillText(lbl, i * cw + cw / 2, H - 2);
-  }
-
-  // === CROSSHAIR ===
-  if (mouse.x >= 0 && mouse.y >= 0) {
-    ctx.strokeStyle = 'rgba(122,133,154,.35)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(mouse.x, 0); ctx.lineTo(mouse.x, chartH); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, mouse.y); ctx.lineTo(W - 62, mouse.y); ctx.stroke();
-    ctx.setLineDash([]);
-    if (mouse.y > 0 && mouse.y < chartH) {
-      const hp = y2p(mouse.y, rng, chartH);
-      ctx.fillStyle = '#1c2030';
-      ctx.fillRect(W - 62, mouse.y - 9, 62, 18);
-      ctx.fillStyle = '#7a859a'; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'center';
-      ctx.fillText(hp.toFixed(0), W - 31, mouse.y + 3);
-    }
-  }
-
-  // === DRAWINGS ===
-  if (!hideDrawings) drawAllDrawings(rng, chartH, vis, cw, si);
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "7px 0",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <ChevronRight size={10} color="#66789d" />
+        <span style={{ fontSize: 12, color: "#8ea2c8" }}>{item.label}</span>
+      </div>
+      {item.type === "dots" && item.dots !== undefined ? (
+        <ScoreDots count={item.dots} />
+      ) : (
+        <span style={{ fontSize: 12, color: getColor(item.type), fontWeight: 700 }}>
+          {item.value}
+        </span>
+      )}
+    </div>
+  );
 }
 
-// ========================================
-// DRAWING ENGINE
-// ========================================
-function drawAllDrawings(rng, chartH, vis, cw, si) {
-  for (const d of drawings) {
-    if (d.hidden) continue;
-    const isSel = d === selDraw;
-    ctx.strokeStyle = d.color || '#ffd54f';
-    ctx.fillStyle = d.color || '#ffd54f';
-    ctx.lineWidth = isSel ? 2.5 : 1.8;
-    ctx.globalAlpha = isSel ? 1 : 0.85;
+function AIInsightPanel({
+  insight,
+  topModule,
+}: {
+  insight: AIInsight;
+  topModule: TopModuleKey;
+}) {
+  const scoreColor =
+    insight.score >= 80 ? ui.green : insight.score >= 60 ? ui.yellow : ui.red;
 
-    switch (d.type) {
-      case 'hline': drawHLine(d, rng, chartH, isSel); break;
-      case 'vline': drawVLine(d, cw, chartH, isSel); break;
-      case 'trendline': drawTrendLine(d, rng, chartH, isSel); break;
-      case 'ray': drawRay(d, rng, chartH, isSel); break;
-      case 'extended': drawExtended(d, rng, chartH, isSel); break;
-      case 'channel': drawChannel(d, rng, chartH, isSel); break;
-      case 'pitchfork': drawPitchfork(d, rng, chartH, isSel); break;
-      case 'fib': drawFib(d, rng, chartH, isSel); break;
-      case 'fibext': drawFibExt(d, rng, chartH, isSel); break;
-      case 'fibarc': drawFibArc(d, rng, chartH, isSel); break;
-      case 'fibfan': drawFibFan(d, rng, chartH, isSel); break;
-      case 'rect': drawRect(d, rng, chartH, isSel); break;
-      case 'triangle': drawTriangle(d, rng, chartH, isSel); break;
-      case 'ellipse': drawEllipse(d, rng, chartH, isSel); break;
-      case 'measure': drawMeasure(d, rng, chartH, isSel); break;
-      case 'text': drawTextDraw(d, rng, chartH); break;
-    }
-    ctx.globalAlpha = 1;
-  }
+  const moduleLabel =
+    topModule === "Scanner" ? "IA Atlas Insights" : `${topModule} Insights`;
 
-  // Preview while drawing
-  if (isDrawing && drawPt1) {
-    ctx.strokeStyle = drawColor;
-    ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
-    drawPreview(rng, chartH);
-    ctx.setLineDash([]);
-  }
+  return (
+    <div
+      style={{
+        height: "100%",
+        background:
+          "linear-gradient(180deg, rgba(6,10,20,0.98), rgba(4,7,15,0.98))",
+        overflowY: "auto",
+      }}
+    >
+      <div
+        style={{
+          padding: "12px 16px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <span
+          style={{
+            color: "#e8f1ff",
+            fontSize: 12,
+            fontWeight: 800,
+            letterSpacing: 0.45,
+          }}
+        >
+          {moduleLabel}
+        </span>
+        <ChevronDown size={14} color="#6c7da2" />
+      </div>
 
-  // Selection handles
-  if (selDraw) drawHandles(selDraw, rng, chartH);
+      <div style={{ padding: 16, borderBottom: `1px solid ${ui.border}` }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 8,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ color: ui.yellow, fontSize: 12 }}>₿</span>
+            <span style={{ color: "#d8e6ff", fontSize: 12, fontFamily: "monospace" }}>
+              {insight.symbol}
+            </span>
+          </div>
+          <span style={{ color: "#96a8cb", fontSize: 12, fontFamily: "monospace" }}>
+            {insight.price.toLocaleString()}
+          </span>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+          }}
+        >
+          <span
+            style={{
+              color: "#f3f8ff",
+              fontSize: 19,
+              fontWeight: 900,
+              letterSpacing: 0.4,
+            }}
+          >
+            {insight.symbol}
+          </span>
+
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
+            <span
+              style={{
+                color: scoreColor,
+                fontSize: 20,
+                fontWeight: 900,
+              }}
+            >
+              {insight.score}
+            </span>
+            <TrendingUp size={14} color={scoreColor} />
+          </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: 10,
+            display: "grid",
+            gridTemplateColumns: "1fr auto",
+            gap: 8,
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              height: 6,
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.08)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${insight.score}%`,
+                height: "100%",
+                borderRadius: 999,
+                background:
+                  "linear-gradient(90deg, rgba(49,233,255,0.95), rgba(36,245,155,0.95))",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              padding: "5px 10px",
+              borderRadius: 7,
+              background: `${scoreColor}22`,
+              color: scoreColor,
+              fontSize: 11,
+              fontWeight: 900,
+            }}
+          >
+            {insight.signal}
+          </div>
+        </div>
+
+        <div style={{ marginTop: 14 }}>
+          {[
+            ["Risco", insight.riskLevel, ui.yellow],
+            ["Tipo", insight.riskType, ui.red],
+            ["Invalidação", `$${insight.invalidation.toLocaleString()}`, "#eef5ff"],
+            ["Fonte", "binance", "#d9e8ff"],
+          ].map(([k, v, c]) => (
+            <div
+              key={k}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "6px 0",
+                borderBottom: "1px solid rgba(255,255,255,0.04)",
+              }}
+            >
+              <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+              <span style={{ color: c as string, fontSize: 12, fontWeight: 800 }}>
+                {v}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: "12px 16px 4px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 8,
+          }}
+        >
+          <span
+            style={{
+              color: "#e8f1ff",
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: 0.45,
+            }}
+          >
+            Estrutura
+          </span>
+          <ChevronRight size={12} color="#6c7da2" />
+        </div>
+        {insight.structure.map((item, i) => (
+          <StructureRow key={i} item={item} />
+        ))}
+      </div>
+
+      <div
+        style={{
+          margin: 12,
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.06)",
+          background:
+            "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))",
+          padding: 12,
+        }}
+      >
+        <div
+          style={{
+            color: "#ecf4ff",
+            fontSize: 12,
+            fontWeight: 900,
+            marginBottom: 10,
+          }}
+        >
+          {topModule}
+        </div>
+
+        {[
+          ["Estrutura", insight.structure[0]?.value || "Neutro", ui.green],
+          ["Momentum", insight.structure[1]?.value || "Moderado", "#9fffbc"],
+          ["Confluência", `${Math.max(2, Math.min(9, Math.round(insight.score / 11)))} / 9`, ui.green],
+          ["Razão de Prata", insight.structure2[1]?.value || "Estável", ui.green],
+          ["Ciclo", insight.score >= 75 ? "Acelerado" : "Normal", ui.cyan],
+        ].map(([a, b, c]) => (
+          <div
+            key={a}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              padding: "6px 0",
+              borderBottom: "1px solid rgba(255,255,255,0.04)",
+              fontSize: 12,
+            }}
+          >
+            <span style={{ color: "#8397bd" }}>{a}</span>
+            <span style={{ color: c as string, fontWeight: 800 }}>{b}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ padding: "0 16px 16px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 8,
+          }}
+        >
+          <span
+            style={{
+              color: "#e8f1ff",
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: 0.45,
+            }}
+          >
+            Confluência
+          </span>
+          <ChevronRight size={12} color="#6c7da2" />
+        </div>
+        {insight.structure2.map((item, i) => (
+          <StructureRow key={i} item={item} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
-function drawHLine(d, rng, chartH, sel) {
-  const y = p2y(d.price, rng, chartH);
-  if (y < 0 || y > chartH) return;
-  ctx.lineWidth = d.lineWidth || 1.5;
-  const ls = d.lineStyle || 'solid';
-  ctx.setLineDash(ls === 'dashed' ? [5,3] : ls === 'dotted' ? [2,3] : d.dashed ? [5,3] : []);
-  ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W - 62, y); ctx.stroke();
-  ctx.setLineDash([]);
-  if (d.showPrice !== false) {
-    ctx.font = 'bold 9px JetBrains Mono'; ctx.textAlign = 'left';
-    ctx.fillText(d.price.toFixed(2), 4, y - 3);
-    if (d.label) {
-      ctx.font = 'bold 10px JetBrains Mono';
-      ctx.fillText(d.label, 80, y - 3);
-    }
-  }
+function MiniSparkline({ data, trend }: { data: number[]; trend: "up" | "down" | "neutral" }) {
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const w = 86;
+  const h = 34;
+  const points = data
+    .map((v, i) => {
+      const x = (i / (data.length - 1)) * w;
+      const y = h - ((v - min) / range) * h;
+      return `${x},${y}`;
+    })
+    .join(" ");
+  const color = trend === "up" ? ui.green : trend === "down" ? ui.red : "#8ea2c8";
+
+  return (
+    <svg width={w} height={h}>
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
-function drawVLine(d, cw, chartH, sel) {
-  const x = d.xi * cw + cw / 2;
-  ctx.setLineDash([4, 3]);
-  ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, chartH); ctx.stroke();
-  ctx.setLineDash([]);
+function ScoreBar({ value, max = 100 }: { value: number; max?: number }) {
+  const pct = Math.min(100, (value / max) * 100);
+  const visual = getScoreVisual(value);
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div
+        style={{
+          width: 62,
+          height: 6,
+          background: "rgba(255,255,255,0.08)",
+          borderRadius: 999,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            width: `${pct}%`,
+            height: "100%",
+            borderRadius: 999,
+            background: visual.color,
+          }}
+        />
+      </div>
+      <span style={{ fontSize: 10, fontWeight: 900, color: visual.color }}>{visual.label}</span>
+    </div>
+  );
 }
 
-function drawTrendLine(d, rng, chartH, sel) {
-  const y1 = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  ctx.lineWidth = d.lineWidth || 1.8;
-  const ls = d.lineStyle || 'solid';
-  ctx.setLineDash(ls === 'dashed' ? [5,3] : ls === 'dotted' ? [2,3] : []);
-  ctx.beginPath(); ctx.moveTo(d.x1, y1); ctx.lineTo(d.x2, y2); ctx.stroke();
-  ctx.setLineDash([]);
-  if (d.showArrow !== false) {
-    const angle = Math.atan2(y2 - y1, d.x2 - d.x1);
-    ctx.lineWidth = d.lineWidth || 1.8;
-    ctx.beginPath();
-    ctx.moveTo(d.x2, y2);
-    ctx.lineTo(d.x2 - 10 * Math.cos(angle - 0.4), y2 - 10 * Math.sin(angle - 0.4));
-    ctx.moveTo(d.x2, y2);
-    ctx.lineTo(d.x2 - 10 * Math.cos(angle + 0.4), y2 - 10 * Math.sin(angle + 0.4));
-    ctx.stroke();
-  }
-  if (d.showAngle) {
-    const angle = Math.atan2(-(y2 - y1), d.x2 - d.x1) * 180 / Math.PI;
-    ctx.fillStyle = d.color; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'left';
-    ctx.fillText(angle.toFixed(1) + '°', (d.x1 + d.x2)/2 + 4, (y1 + y2)/2 - 4);
-  }
-  if (d.showVariation && d.p1 && d.p2) {
-    const pct = ((d.p2 - d.p1) / d.p1 * 100).toFixed(2);
-    ctx.fillStyle = d.color; ctx.font = 'bold 9px JetBrains Mono'; ctx.textAlign = 'center';
-    ctx.fillText((pct > 0 ? '+' : '') + pct + '%', (d.x1 + d.x2)/2, (y1 + y2)/2 + 12);
-  }
+function ScannerPanelContinuous({
+  assets,
+  selectedSymbol,
+  onSelectSymbol,
+}: {
+  assets: AssetScore[];
+  selectedSymbol: string;
+  onSelectSymbol: (symbol: string) => void;
+}) {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filtered = useMemo(() => {
+    if (!searchTerm.trim()) return assets;
+    const q = searchTerm.toLowerCase();
+    return assets.filter((a) => a.symbol.toLowerCase().includes(q));
+  }, [assets, searchTerm]);
+
+  const sparklines = useMemo(
+    () => filtered.map((a) => generateSparkline(24, 40 + Math.random() * 40, a.trend)),
+    [filtered]
+  );
+
+  return (
+    <div
+      style={{
+        height: "100%",
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          padding: "10px 12px 8px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "grid",
+          gap: 8,
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 178px",
+            gap: 10,
+            alignItems: "center",
+          }}
+        >
+          <span style={{ color: "#f1f7ff", fontSize: 13, fontWeight: 900 }}>
+            MESTRE SCANNER
+          </span>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              height: 32,
+              padding: "0 10px",
+              borderRadius: 9,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.03)",
+            }}
+          >
+            <Search size={13} color="#8ca0c6" />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar moeda..."
+              style={{
+                flex: 1,
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#e9f3ff",
+                fontSize: 11,
+              }}
+            />
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.1fr 0.92fr 0.98fr 0.92fr 1fr",
+            gap: 10,
+            color: "#6c7da2",
+            fontSize: 11,
+          }}
+        >
+          <span>Top Forge</span>
+          <span>Sinal</span>
+          <span>Preço</span>
+          <span>RSI / MFI</span>
+          <span>Mini Chart</span>
+        </div>
+      </div>
+
+      <div data-atlas-scroll="cyan" style={{ flex: 1, overflowY: "auto" }}>
+        {filtered.map((asset, i) => (
+          <div
+            key={asset.symbol}
+            onClick={() => onSelectSymbol(asset.symbol)}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.1fr 0.92fr 0.98fr 0.92fr 1fr",
+              gap: 10,
+              padding: "11px 12px",
+              borderBottom: "1px solid rgba(255,255,255,0.045)",
+              alignItems: "center",
+              cursor: "pointer",
+              background:
+                asset.symbol === selectedSymbol
+                  ? "linear-gradient(90deg, rgba(247,201,72,0.10), rgba(45,226,255,0.06))"
+                  : "transparent",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: asset.color,
+                  display: "inline-block",
+                }}
+              />
+              <span style={{ color: "#edf5ff", fontSize: 12, fontWeight: 800 }}>
+                {asset.symbol}
+              </span>
+            </div>
+
+            <ScoreBar value={asset.volumeScore} />
+
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ color: "#eef5ff", fontSize: 12, fontFamily: "monospace" }}>
+                ${asset.price.toLocaleString()}
+              </span>
+              <span
+                style={{
+                  color: asset.change >= 0 ? ui.green : ui.red,
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  fontWeight: 800,
+                }}
+              >
+                {asset.change >= 0 ? "+" : ""}
+                {asset.change.toFixed(1)}%
+              </span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {asset.trend === "up" ? (
+                <TrendingUp size={11} color={ui.green} />
+              ) : asset.trend === "down" ? (
+                <TrendingDown size={11} color={ui.red} />
+              ) : (
+                <Activity size={11} color="#a2b3d3" />
+              )}
+              <span style={{ color: "#8fd6ff", fontSize: 12, fontFamily: "monospace" }}>
+                {asset.rsiMfi.toFixed(1)}
+              </span>
+            </div>
+
+            <MiniSparkline data={sparklines[i]} trend={asset.trend} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-function drawRay(d, rng, chartH, sel) {
-  const y = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  const dx = d.x2 - d.x1; const dy = y2 - y;
-  const ext = W * 2;
-  const len = Math.sqrt(dx * dx + dy * dy) || 1;
-  const ex = d.x1 + (dx / len) * ext;
-  const ey = y + (dy / len) * ext;
-  ctx.beginPath(); ctx.moveTo(d.x1, y); ctx.lineTo(ex, ey); ctx.stroke();
-}
 
-function drawExtended(d, rng, chartH, sel) {
-  const y1 = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  const dx = d.x2 - d.x1; const dy = y2 - y1;
-  const len = Math.sqrt(dx * dx + dy * dy) || 1;
-  const ext = W * 2;
-  ctx.beginPath();
-  ctx.moveTo(d.x1 - (dx / len) * ext, y1 - (dy / len) * ext);
-  ctx.lineTo(d.x2 + (dx / len) * ext, y2 + (dy / len) * ext);
-  ctx.stroke();
-}
+function MasterScannerPanel({
+  assets,
+  selectedSymbol,
+  onSelectSymbol,
+}: {
+  assets: AssetScore[];
+  selectedSymbol: string;
+  onSelectSymbol: (symbol: string) => void;
+}) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [favoriteSymbols, setFavoriteSymbols] = useState<string[]>(["BTC", "ETH"]);
+  const [sortKey, setSortKey] = useState<"price" | "change" | "dominance">("dominance");
+  const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
 
-function drawChannel(d, rng, chartH, sel) {
-  const y1 = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  const offset = p2y(d.p1, rng, chartH) - p2y(d.p1 + d.offset, rng, chartH);
-  ctx.beginPath(); ctx.moveTo(d.x1, y1); ctx.lineTo(d.x2, y2); ctx.stroke();
-  ctx.setLineDash([4, 3]);
-  ctx.beginPath(); ctx.moveTo(d.x1, y1 + offset); ctx.lineTo(d.x2, y2 + offset); ctx.stroke();
-  ctx.setLineDash([]);
-  // Fill
-  ctx.globalAlpha = 0.06;
-  ctx.fillStyle = d.color;
-  ctx.beginPath();
-  ctx.moveTo(d.x1, y1); ctx.lineTo(d.x2, y2);
-  ctx.lineTo(d.x2, y2 + offset); ctx.lineTo(d.x1, y1 + offset);
-  ctx.closePath(); ctx.fill();
-  ctx.globalAlpha = 0.85;
-}
+  const dominanceMap = useMemo<Record<string, number>>(
+    () => ({
+      BTC: 52.43,
+      ETH: 17.82,
+      SOL: 4.96,
+      BNB: 3.74,
+      XRP: 2.96,
+      DOGE: 1.98,
+      AVAX: 1.31,
+      ADA: 1.14,
+      DOT: 0.74,
+      ARB: 0.29,
+    }),
+    []
+  );
 
-function drawPitchfork(d, rng, chartH, sel) {
-  if (!d.p3) return;
-  const y1 = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  const y3 = p2y(d.p3, rng, chartH);
-  const midX = (d.x2 + d.x3) / 2;
-  const midY = (y2 + y3) / 2;
-  ctx.beginPath(); ctx.moveTo(d.x1, y1); ctx.lineTo(midX, midY); ctx.stroke();
-  ctx.setLineDash([3, 3]);
-  ctx.beginPath(); ctx.moveTo(d.x1, y1); ctx.lineTo(midX + (midX - d.x1) * 2, midY - (y2 - y3) / 2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(d.x1, y1); ctx.lineTo(midX + (midX - d.x1) * 2, midY + (y2 - y3) / 2); ctx.stroke();
-  ctx.setLineDash([]);
-}
-
-function drawFib(d, rng, chartH, sel) {
-  const y1 = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  const x1 = d.x1, x2 = d.x2;
-  const priceDiff = d.p2 - d.p1;
-  const minX = Math.min(x1, x2);
-  const lw = d.lineWidth || 1.5;
-  const ls = d.lineStyle || 'solid';
-  const fillAlpha = (d.fillOpacity !== undefined ? d.fillOpacity : 10) / 100;
-  const levels = d.fibLevels || DEFAULT_FIB_LEVELS;
-
-  levels.forEach((lvl, i) => {
-    if (!lvl.visible) return;
-    const price = d.p1 + priceDiff * lvl.pct;
-    const y = p2y(price, rng, chartH);
-    if (y < -50 || y > chartH + 50) return;
-    ctx.strokeStyle = lvl.color;
-    ctx.lineWidth = (lvl.pct === 0 || lvl.pct === 1) ? lw + 0.5 : lw;
-    ctx.globalAlpha = 0.8;
-    const dash = ls === 'dashed' ? [5,3] : ls === 'dotted' ? [2,3] : (lvl.pct === 0.5 ? [4,3] : []);
-    ctx.setLineDash(dash);
-    ctx.beginPath(); ctx.moveTo(minX, y); ctx.lineTo(W - 62, y); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 1;
-    if (d.showPrice !== false) {
-      ctx.fillStyle = lvl.color;
-      ctx.font = 'bold 9px JetBrains Mono'; ctx.textAlign = 'left';
-      ctx.fillText(((lvl.pct) * 100).toFixed(1) + '%  ' + price.toFixed(0), minX + 4, y - 3);
-    }
-  });
-
-  // Shading between consecutive visible levels
-  const vis = levels.filter(l => l.visible);
-  for (let i = 0; i < vis.length - 1; i++) {
-    const py1 = p2y(d.p1 + priceDiff * vis[i].pct, rng, chartH);
-    const py2 = p2y(d.p1 + priceDiff * vis[i+1].pct, rng, chartH);
-    ctx.globalAlpha = fillAlpha;
-    ctx.fillStyle = vis[i].color;
-    ctx.fillRect(minX, Math.min(py1, py2), W - 62 - minX, Math.abs(py2 - py1));
-  }
-  ctx.globalAlpha = 1;
-
-  // Side bracket
-  ctx.strokeStyle = d.color; ctx.lineWidth = lw + 0.5;
-  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-}
-
-function drawFibExt(d, rng, chartH, sel) {
-  if (!d.p3) return;
-  const extLevels = [0, 0.618, 1.0, 1.272, 1.618, 2.0, 2.618];
-  const priceDiff = d.p2 - d.p1;
-  extLevels.forEach((lvl, i) => {
-    const price = d.p3 + priceDiff * lvl;
-    const y = p2y(price, rng, chartH);
-    if (y < -20 || y > chartH + 20) return;
-    ctx.strokeStyle = FIB_COLORS[i % FIB_COLORS.length];
-    ctx.lineWidth = 1; ctx.globalAlpha = 0.7;
-    ctx.beginPath(); ctx.moveTo(Math.min(d.x1, d.x2), y); ctx.lineTo(W - 62, y); ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = FIB_COLORS[i % FIB_COLORS.length];
-    ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'left';
-    ctx.fillText(`Ext ${(lvl * 100).toFixed(0)}%  ${price.toFixed(0)}`, Math.min(d.x1, d.x2) + 4, y - 3);
-  });
-}
-
-function drawFibArc(d, rng, chartH, sel) {
-  const y1 = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  const r = Math.sqrt((d.x2 - d.x1) ** 2 + (y2 - y1) ** 2);
-  [0.382, 0.5, 0.618, 1.0].forEach((lvl, i) => {
-    ctx.strokeStyle = FIB_COLORS[i]; ctx.lineWidth = 1; ctx.globalAlpha = 0.7;
-    ctx.beginPath(); ctx.arc(d.x1, y1, r * lvl, 0, Math.PI * 2); ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = FIB_COLORS[i]; ctx.font = '9px JetBrains Mono';
-    ctx.fillText(`${(lvl * 100).toFixed(0)}%`, d.x1 + r * lvl + 3, y1);
-  });
-}
-
-function drawFibFan(d, rng, chartH, sel) {
-  const y1 = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  const priceDiff = Math.abs(d.p2 - d.p1);
-  [0.236, 0.382, 0.5, 0.618, 0.786].forEach((lvl, i) => {
-    const targetY = y1 + (y2 - y1) * lvl;
-    const ext = W * 2;
-    const dx = d.x2 - d.x1; const dy = targetY - y1;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    ctx.strokeStyle = FIB_COLORS[i]; ctx.lineWidth = 1; ctx.globalAlpha = 0.7;
-    ctx.beginPath(); ctx.moveTo(d.x1, y1);
-    ctx.lineTo(d.x1 + (dx / len) * ext, y1 + (dy / len) * ext); ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = FIB_COLORS[i]; ctx.font = '9px JetBrains Mono';
-    const tx = d.x1 + (dx / len) * 120, ty = y1 + (dy / len) * 120;
-    ctx.fillText(`${(lvl * 100).toFixed(1)}%`, tx + 3, ty);
-  });
-}
-
-function drawRect(d, rng, chartH, sel) {
-  const y1 = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  const rx = Math.min(d.x1, d.x2), ry = Math.min(y1, y2);
-  const rw = Math.abs(d.x2 - d.x1), rh = Math.abs(y2 - y1);
-  ctx.globalAlpha = 0.12; ctx.fillStyle = d.color;
-  ctx.fillRect(rx, ry, rw, rh);
-  ctx.globalAlpha = 0.85; ctx.strokeStyle = d.color;
-  ctx.strokeRect(rx, ry, rw, rh);
-  // Price labels
-  ctx.fillStyle = d.color; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'left';
-  ctx.fillText(d.p1.toFixed(0), rx + 3, y1 - 3);
-  ctx.fillText(d.p2.toFixed(0), rx + 3, y2 + 10);
-  const pct = ((d.p2 - d.p1) / d.p1 * 100).toFixed(2);
-  ctx.textAlign = 'center';
-  ctx.fillText(`${pct > 0 ? '+' : ''}${pct}%`, rx + rw / 2, ry + rh / 2 + 4);
-}
-
-function drawTriangle(d, rng, chartH, sel) {
-  if (!d.p3) return;
-  const y1 = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  const y3 = p2y(d.p3, rng, chartH);
-  ctx.globalAlpha = 0.1; ctx.fillStyle = d.color;
-  ctx.beginPath(); ctx.moveTo(d.x1, y1); ctx.lineTo(d.x2, y2); ctx.lineTo(d.x3, y3); ctx.closePath(); ctx.fill();
-  ctx.globalAlpha = 0.85;
-  ctx.beginPath(); ctx.moveTo(d.x1, y1); ctx.lineTo(d.x2, y2); ctx.lineTo(d.x3, y3); ctx.closePath(); ctx.stroke();
-}
-
-function drawEllipse(d, rng, chartH, sel) {
-  const y1 = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  const cx = (d.x1 + d.x2) / 2, cy = (y1 + y2) / 2;
-  const rx = Math.abs(d.x2 - d.x1) / 2, ry = Math.abs(y2 - y1) / 2;
-  ctx.globalAlpha = 0.08; ctx.fillStyle = d.color;
-  ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.globalAlpha = 0.85;
-  ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
-}
-
-function drawMeasure(d, rng, chartH, sel) {
-  const y1 = p2y(d.p1, rng, chartH);
-  const y2 = p2y(d.p2, rng, chartH);
-  const diff = d.p2 - d.p1;
-  const pct = (diff / d.p1 * 100).toFixed(2);
-  ctx.globalAlpha = 0.1; ctx.fillStyle = diff >= 0 ? '#00e676' : '#ff3060';
-  ctx.fillRect(Math.min(d.x1, d.x2), Math.min(y1, y2), Math.abs(d.x2 - d.x1), Math.abs(y2 - y1));
-  ctx.globalAlpha = 0.85;
-  ctx.strokeStyle = diff >= 0 ? '#00e676' : '#ff3060'; ctx.lineWidth = 1.5;
-  ctx.strokeRect(Math.min(d.x1, d.x2), Math.min(y1, y2), Math.abs(d.x2 - d.x1), Math.abs(y2 - y1));
-  // Labels
-  ctx.fillStyle = diff >= 0 ? '#00e676' : '#ff3060';
-  ctx.font = 'bold 11px JetBrains Mono'; ctx.textAlign = 'center';
-  const mx = (d.x1 + d.x2) / 2, my = (y1 + y2) / 2;
-  ctx.fillText(`${diff >= 0 ? '+' : ''}${pct}%`, mx, my - 6);
-  ctx.font = '9px JetBrains Mono';
-  ctx.fillText(`${diff >= 0 ? '+' : ''}${diff.toFixed(0)} USDT`, mx, my + 8);
-  // Price tags
-  ctx.textAlign = 'left';
-  ctx.fillText(d.p1.toFixed(0), Math.min(d.x1, d.x2) + 3, y1 - 2);
-  ctx.fillText(d.p2.toFixed(0), Math.min(d.x1, d.x2) + 3, y2 + 10);
-}
-
-function drawTextDraw(d, rng, chartH) {
-  const y = p2y(d.p1, rng, chartH);
-  ctx.fillStyle = d.color;
-  ctx.font = `${d.size || 13}px JetBrains Mono`;
-  ctx.textAlign = 'left';
-  ctx.fillText(d.text, d.x1, y);
-}
-
-function drawPreview(rng, chartH) {
-  const x1 = drawPt1.x, y1 = drawPt1.y;
-  const x2 = mouse.x, y2 = mouse.y;
-  ctx.strokeStyle = drawColor; ctx.lineWidth = 1.5;
-
-  if (tool === 'hline') {
-    ctx.beginPath(); ctx.moveTo(0, y1); ctx.lineTo(W - 62, y1); ctx.stroke();
-    ctx.fillStyle = drawColor; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'left';
-    ctx.fillText(y2p(y1, rng, chartH).toFixed(0), 4, y1 - 3);
-  } else if (tool === 'vline') {
-    ctx.beginPath(); ctx.moveTo(x1, 0); ctx.lineTo(x1, chartH); ctx.stroke();
-  } else if (tool === 'trendline') {
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-  } else if (tool === 'ray') {
-    const dx = x2 - x1; const dy = y2 - y1;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 + (dx / len) * W * 2, y1 + (dy / len) * W * 2); ctx.stroke();
-  } else if (tool === 'extended') {
-    const dx = x2 - x1; const dy = y2 - y1;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    ctx.beginPath();
-    ctx.moveTo(x1 - (dx / len) * W * 2, y1 - (dy / len) * W * 2);
-    ctx.lineTo(x2 + (dx / len) * W * 2, y2 + (dy / len) * W * 2); ctx.stroke();
-  } else if (tool === 'channel') {
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    ctx.setLineDash([4, 3]);
-    ctx.beginPath(); ctx.moveTo(x1, y1 + 30); ctx.lineTo(x2, y2 + 30); ctx.stroke();
-    ctx.setLineDash([]);
-  } else if (tool === 'fib') {
-    const p1 = y2p(y1, rng, chartH);
-    const p2 = y2p(y2, rng, chartH);
-    const pDiff = p2 - p1;
-    FIB_LEVELS.forEach((lvl, i) => {
-      const py = p2y(p1 + pDiff * lvl, rng, chartH);
-      if (py < -20 || py > chartH + 20) return;
-      ctx.strokeStyle = FIB_COLORS[i % FIB_COLORS.length]; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(Math.min(x1, x2), py); ctx.lineTo(W - 62, py); ctx.stroke();
-      ctx.fillStyle = FIB_COLORS[i % FIB_COLORS.length]; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'left';
-      ctx.fillText(`${(lvl * 100).toFixed(1)}%`, Math.min(x1, x2) + 3, py - 2);
-    });
-    ctx.strokeStyle = drawColor; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-  } else if (tool === 'rect' || tool === 'measure') {
-    const rx = Math.min(x1, x2), ry = Math.min(y1, y2);
-    const rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1);
-    ctx.globalAlpha = 0.1; ctx.fillStyle = drawColor; ctx.fillRect(rx, ry, rw, rh);
-    ctx.globalAlpha = 1; ctx.strokeRect(rx, ry, rw, rh);
-    if (tool === 'measure') {
-      const p1 = y2p(y1, rng, chartH), p2 = y2p(y2, rng, chartH);
-      const pct = ((p2 - p1) / p1 * 100).toFixed(2);
-      ctx.fillStyle = drawColor; ctx.font = 'bold 11px JetBrains Mono'; ctx.textAlign = 'center';
-      ctx.fillText(`${pct > 0 ? '+' : ''}${pct}%`, rx + rw / 2, ry + rh / 2 + 4);
-    }
-  } else if (tool === 'ellipse') {
-    const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-    const rx = Math.abs(x2 - x1) / 2, ry2 = Math.abs(y2 - y1) / 2;
-    ctx.globalAlpha = 0.08; ctx.fillStyle = drawColor;
-    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry2, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry2, 0, 0, Math.PI * 2); ctx.stroke();
-  } else if (tool === 'fibarc') {
-    const r = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-    [0.382, 0.5, 0.618, 1.0].forEach((lvl, i) => {
-      ctx.strokeStyle = FIB_COLORS[i]; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(x1, y1, r * lvl, 0, Math.PI * 2); ctx.stroke();
-    });
-  } else if (tool === 'fibfan') {
-    [0.236, 0.382, 0.5, 0.618, 0.786].forEach((lvl, i) => {
-      const ty = y1 + (y2 - y1) * lvl;
-      const dx = x2 - x1; const dy = ty - y1;
-      const len = Math.sqrt(dx * dx + dy * dy) || 1;
-      ctx.strokeStyle = FIB_COLORS[i]; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 + (dx / len) * W * 2, y1 + (dy / len) * W * 2); ctx.stroke();
-    });
-  }
-}
-
-function drawHandles(d, rng, chartH) {
-  ctx.fillStyle = '#fff'; ctx.strokeStyle = d.color; ctx.lineWidth = 1.5;
-  const pts = getHandlePoints(d, rng, chartH);
-  for (const pt of pts) {
-    ctx.beginPath(); ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  }
-}
-
-function getHandlePoints(d, rng, chartH) {
-  const pts = [];
-  if (d.x1 !== undefined) pts.push({ x: d.x1, y: p2y(d.p1, rng, chartH) });
-  if (d.x2 !== undefined && d.p2 !== undefined) pts.push({ x: d.x2, y: p2y(d.p2, rng, chartH) });
-  return pts;
-}
-
-// ========================================
-// OSCILLATOR
-// ========================================
-function drawOsc() {
-  const ow = oscCanvas.width, oh = oscCanvas.height;
-  oscCtx.clearRect(0, 0, ow, oh);
-  const rsi = calcRSI(candles);
-  const { vis, si } = getVis();
-  const cw = (ow - 40) / visN;
-
-  // Grid
-  oscCtx.strokeStyle = '#1c2030'; oscCtx.lineWidth = 0.5;
-  [30, 50, 70].forEach(l => {
-    const y = oh - (l / 100) * (oh - 14) - 4;
-    oscCtx.beginPath(); oscCtx.moveTo(0, y); oscCtx.lineTo(ow - 40, y); oscCtx.stroke();
-    oscCtx.fillStyle = '#424e63'; oscCtx.font = '8px JetBrains Mono';
-    oscCtx.fillText(l, ow - 36, y + 3);
-  });
-
-  // RSI
-  oscCtx.strokeStyle = '#c77dff'; oscCtx.lineWidth = 1.5; oscCtx.beginPath();
-  let st = false;
-  for (let i = 0; i < vis.length; i++) {
-    const v = rsi[si + i]; if (!v) continue;
-    const x = i * cw + cw / 2, y = oh - (v / 100) * (oh - 14) - 4;
-    st ? oscCtx.lineTo(x, y) : (oscCtx.moveTo(x, y), st = true);
-  }
-  oscCtx.stroke();
-
-  // MFI (approx)
-  oscCtx.strokeStyle = '#00e5ff'; oscCtx.lineWidth = 1; oscCtx.setLineDash([2, 2]);
-  oscCtx.beginPath(); st = false;
-  for (let i = 0; i < vis.length; i++) {
-    const v = rsi[si + i]; if (!v) continue;
-    const mfi = Math.max(0, Math.min(100, v + (Math.sin(i * 0.3) * 8)));
-    const x = i * cw + cw / 2, y = oh - (mfi / 100) * (oh - 14) - 4;
-    st ? oscCtx.lineTo(x, y) : (oscCtx.moveTo(x, y), st = true);
-  }
-  oscCtx.stroke(); oscCtx.setLineDash([]);
-
-  const lr = rsi[rsi.length - 1];
-  document.getElementById('rsiV').textContent = lr ? lr.toFixed(1) : '—';
-  document.getElementById('mfiV').textContent = lr ? (lr + 3).toFixed(1) : '—';
-}
-
-// ========================================
-// CANVAS EVENTS (named functions)
-// ========================================
-function onMouseMove(e) {
-  const r = canvas.getBoundingClientRect();
-  mouse = { x: e.clientX - r.left, y: e.clientY - r.top };
-  const { vis } = getVis();
-  const cw = (W - 62) / visN;
-  const ci = Math.floor(mouse.x / cw);
-  hoverIdx = (ci >= 0 && ci < vis.length) ? ci : null;
-
-  if (hoverIdx !== null) {
-    const c = vis[hoverIdx];
-    document.getElementById('tO').textContent = c.o.toFixed(2);
-    document.getElementById('tH').textContent = c.h.toFixed(2);
-    document.getElementById('tL').textContent = c.l.toFixed(2);
-    document.getElementById('tC').textContent = c.c.toFixed(2);
-    document.getElementById('tV').textContent = c.v.toFixed(2);
-    document.getElementById('tC').className = 'ttv ' + (c.c >= c.o ? 'u' : 'd');
-    const tt = document.getElementById('TT');
-    tt.style.display = 'block';
-    tt.style.left = (e.clientX + 15) + 'px';
-    tt.style.top = (e.clientY - 70) + 'px';
-  } else {
-    document.getElementById('TT').style.display = 'none';
-  }
-
-  if (panStart && e.buttons === 1 && tool === 'cursor') {
-    const cw2 = (W - 62) / visN;
-    panOff = panStart.off + (e.clientX - panStart.x) / cw2;
-    panOff = Math.max(-(candles.length - visN), Math.min(0, panOff));
-  }
-  draw();
-}
-
-function onMouseLeave() {
-  mouse = { x: -1, y: -1 }; hoverIdx = null;
-  document.getElementById('TT').style.display = 'none';
-  draw();
-}
-
-function onMouseDown(e) {
-  if (e.button === 2) return;
-  const r = canvas.getBoundingClientRect();
-  const mx = e.clientX - r.left, my = e.clientY - r.top;
-
-  if (tool === 'cursor') {
-    panStart = { x: e.clientX, off: panOff };
-    selDraw = hitTestDrawings(mx, my);
-    draw(); return;
-  }
-  if (tool === 'text') {
-    pendingText = { x: mx, y: my };
-    document.getElementById('textMo').style.display = 'flex';
-    document.getElementById('tText').focus();
-    return;
-  }
-  if (!isDrawing) { isDrawing = true; drawPt1 = { x: mx, y: my }; }
-}
-
-function onMouseUp(e) {
-  const r = canvas.getBoundingClientRect();
-  const mx = e.clientX - r.left, my = e.clientY - r.top;
-  panStart = null;
-  if (!isDrawing || !drawPt1) return;
-  if (tool === 'cursor') return;
-
-  const rng = getRange(); const chartH = H * 0.78;
-  const p1 = y2p(drawPt1.y, rng, chartH);
-  const p2 = y2p(my, rng, chartH);
-  const cw = (W - 62) / visN;
-
-  let d = null;
-  switch (tool) {
-    case 'hline':     d = { type:'hline', price:p1, color:drawColor, dashed:true }; break;
-    case 'vline':     d = { type:'vline', xi:Math.floor(drawPt1.x/cw), color:drawColor }; break;
-    case 'trendline': d = { type:'trendline', x1:drawPt1.x, y1:drawPt1.y, x2:mx, y2:my, p1, p2, color:drawColor }; break;
-    case 'ray':       d = { type:'ray', x1:drawPt1.x, x2:mx, p1, p2, color:drawColor }; break;
-    case 'extended':  d = { type:'extended', x1:drawPt1.x, x2:mx, p1, p2, color:drawColor }; break;
-    case 'channel':   d = { type:'channel', x1:drawPt1.x, x2:mx, p1, p2, offset:-(p1-p2)*0.3, color:drawColor }; break;
-    case 'pitchfork': d = { type:'pitchfork', x1:drawPt1.x, p1, x2:mx, p2, color:drawColor }; break;
-    case 'fib':       d = { type:'fib', x1:drawPt1.x, x2:mx, p1, p2, color:drawColor }; break;
-    case 'fibext':    d = { type:'fibext', x1:drawPt1.x, x2:mx, p1, p2, p3:p2-Math.abs(p2-p1)*0.5, color:drawColor }; break;
-    case 'fibarc':    d = { type:'fibarc', x1:drawPt1.x, x2:mx, p1, p2, color:drawColor }; break;
-    case 'fibfan':    d = { type:'fibfan', x1:drawPt1.x, x2:mx, p1, p2, color:drawColor }; break;
-    case 'rect':      d = { type:'rect', x1:drawPt1.x, x2:mx, p1, p2, color:drawColor }; break;
-    case 'triangle':  d = { type:'triangle', x1:drawPt1.x, p1, x2:mx, p2, x3:(drawPt1.x+mx)/2, p3:Math.max(p1,p2)+Math.abs(p2-p1)*0.5, color:drawColor }; break;
-    case 'ellipse':   d = { type:'ellipse', x1:drawPt1.x, x2:mx, p1, p2, color:drawColor }; break;
-    case 'measure':   d = { type:'measure', x1:drawPt1.x, x2:mx, p1, p2, color:drawColor }; break;
-  }
-
-  if (d) {
-    drawings.push(d); selDraw = d;
-    document.getElementById('dc').textContent = drawings.length;
-    notify(`✓ ${tool.toUpperCase()} adicionado`, 'green');
-  }
-  isDrawing = false; drawPt1 = null;
-  draw();
-}
-
-function onDblClick(e) {
-  const r = canvas.getBoundingClientRect();
-  const mx = e.clientX - r.left, my = e.clientY - r.top;
-  if (tool === 'cursor') {
-    const hit = hitTestDrawings(mx, my);
-    if (hit) {
-      openSettings(hit);
+  const toggleSort = (key: "price" | "change" | "dominance") => {
+    if (sortKey === key) {
+      setSortDir((prev) => (prev === "desc" ? "asc" : "desc"));
       return;
     }
-    const rng = getRange(); const chartH = H * 0.78;
-    drawings.push({ type:'hline', price:y2p(my,rng,chartH), color:drawColor, dashed:true });
-    document.getElementById('dc').textContent = drawings.length;
-    notify('Linha horizontal rápida — duplo clique para configurar'); draw();
-  }
-}
+    setSortKey(key);
+    setSortDir("desc");
+  };
 
-function onContextMenu(e) {
-  e.preventDefault();
-  const r = canvas.getBoundingClientRect();
-  const hit = hitTestDrawings(e.clientX - r.left, e.clientY - r.top);
-  if (hit) {
-    selDraw = hit;
-    const ctxMenu = document.getElementById('CTX');
-    ctxMenu.style.display = 'block';
-    ctxMenu.style.left = e.clientX + 'px';
-    ctxMenu.style.top = e.clientY + 'px';
-  }
-  draw();
-}
+  const toggleFavorite = (symbol: string) => {
+    setFavoriteSymbols((prev) =>
+      prev.includes(symbol) ? prev.filter((item) => item !== symbol) : [...prev, symbol]
+    );
+  };
 
-document.addEventListener('click', () => {
-  document.getElementById('CTX').style.display = 'none';
-});
+  const orderedRows = useMemo(() => {
+    const decorated = assets.map((asset) => ({
+      ...asset,
+      dominance: dominanceMap[asset.symbol] ?? Number((0.12 + asset.volumeScore / 1000).toFixed(2)),
+      favorite: favoriteSymbols.includes(asset.symbol),
+    }));
 
-function hitTestDrawings(mx, my) {
-  const rng = getRange(); const chartH = H * 0.78;
-  for (let i = drawings.length - 1; i >= 0; i--) {
-    const d = drawings[i];
-    if (d.type === 'hline') {
-      const y = p2y(d.price, rng, chartH);
-      if (Math.abs(my - y) < 6) return d;
-    } else if (d.type === 'rect' || d.type === 'fib' || d.type === 'measure' || d.type === 'ellipse') {
-      const y1 = p2y(d.p1, rng, chartH), y2 = p2y(d.p2, rng, chartH);
-      if (mx >= Math.min(d.x1, d.x2) - 5 && mx <= Math.max(d.x1, d.x2) + 5 &&
-          my >= Math.min(y1, y2) - 5 && my <= Math.max(y1, y2) + 5) return d;
-    } else if (d.x1 !== undefined) {
-      const y1 = p2y(d.p1, rng, chartH);
-      const y2 = d.p2 ? p2y(d.p2, rng, chartH) : y1;
-      const dist = pointToSegDist(mx, my, d.x1, y1, (d.x2 || d.x1 + 100), y2);
-      if (dist < 8) return d;
+    const btc = decorated.find((item) => item.symbol === "BTC");
+    let others = decorated.filter((item) => item.symbol !== "BTC");
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      others = others.filter((item) => item.symbol.toLowerCase().includes(q));
     }
+
+    if (showFavoritesOnly) {
+      others = others.filter((item) => item.favorite);
+    }
+
+    others = [...others].sort((a, b) => {
+      const dir = sortDir === "desc" ? -1 : 1;
+      const av = sortKey === "price" ? a.price : sortKey === "change" ? a.change : a.dominance;
+      const bv = sortKey === "price" ? b.price : sortKey === "change" ? b.change : b.dominance;
+      if (av < bv) return 1 * dir;
+      if (av > bv) return -1 * dir;
+      return a.symbol.localeCompare(b.symbol);
+    });
+
+    return btc ? [btc, ...others] : others;
+  }, [assets, dominanceMap, favoriteSymbols, searchTerm, showFavoritesOnly, sortDir, sortKey]);
+
+  const marketPositive =
+    assets.filter((item) => item.change >= 0).length / Math.max(1, assets.length) >= 0.6;
+
+  return (
+    <div
+      style={{
+        height: "100%",
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background: "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          padding: "10px 14px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "grid",
+          gap: 10,
+          flexShrink: 0,
+          background:
+            "radial-gradient(circle at top, rgba(0,216,255,0.08), transparent 38%), linear-gradient(180deg, rgba(10,16,28,0.98), rgba(7,10,19,0.98))",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 220px auto auto",
+            gap: 10,
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <div style={{ color: "#f2f7ff", fontSize: 18, fontWeight: 900, letterSpacing: 0.5 }}>
+              MESTRE SCANNER
+            </div>
+            <div style={{ color: "#7f93b7", fontSize: 11 }}>
+              Dominância BTC em evidência, BTC fixo e ordenação por preço ou variação.
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              height: 36,
+              padding: "0 12px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.03)",
+            }}
+          >
+            <Search size={14} color="#8ca0c6" />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar ativo..."
+              style={{
+                flex: 1,
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#e9f3ff",
+                fontSize: 12,
+              }}
+            />
+          </div>
+
+          <button
+            onClick={() => setShowFavoritesOnly(false)}
+            style={{
+              height: 34,
+              padding: "0 12px",
+              borderRadius: 10,
+              border: !showFavoritesOnly
+                ? "1px solid rgba(45,226,255,0.25)"
+                : "1px solid rgba(255,255,255,0.06)",
+              background: !showFavoritesOnly
+                ? "linear-gradient(180deg, rgba(45,226,255,0.14), rgba(45,226,255,0.04))"
+                : "rgba(255,255,255,0.03)",
+              color: !showFavoritesOnly ? ui.cyan : "#dce8ff",
+              fontSize: 11,
+              fontWeight: 900,
+              cursor: "pointer",
+            }}
+          >
+            Mercado
+          </button>
+
+          <button
+            onClick={() => setShowFavoritesOnly(true)}
+            style={{
+              height: 34,
+              padding: "0 12px",
+              borderRadius: 10,
+              border: showFavoritesOnly
+                ? "1px solid rgba(247,201,72,0.3)"
+                : "1px solid rgba(255,255,255,0.06)",
+              background: showFavoritesOnly
+                ? "linear-gradient(180deg, rgba(247,201,72,0.15), rgba(247,201,72,0.04))"
+                : "rgba(255,255,255,0.03)",
+              color: showFavoritesOnly ? ui.yellow : "#dce8ff",
+              fontSize: 11,
+              fontWeight: 900,
+              cursor: "pointer",
+            }}
+          >
+            Favoritos
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gap: 10,
+          }}
+        >
+          <SmallStatCard
+            title="Dominância BTC"
+            value="52.43%"
+            sub="BTC liderando o fluxo macro."
+            color={ui.yellow}
+            accent="rgba(247,201,72,0.12)"
+          />
+          <SmallStatCard
+            title="BTC Fixo"
+            value="$74.682"
+            sub="Sempre visível no topo do scanner."
+            color={ui.cyan}
+            accent="rgba(45,226,255,0.1)"
+          />
+          <SmallStatCard
+            title="Favoritos"
+            value={`${favoriteSymbols.length}`}
+            sub="Lista rápida com seus ativos-chave."
+            color={ui.green}
+            accent="rgba(39,245,157,0.1)"
+          />
+          <SmallStatCard
+            title="Mercado"
+            value={marketPositive ? "Bull Bias" : "Cautela"}
+            sub={marketPositive ? "Mais ativos subindo do que caindo." : "Mercado misto e seletivo."}
+            color={marketPositive ? ui.green : ui.red}
+            accent={marketPositive ? "rgba(39,245,157,0.1)" : "rgba(255,107,134,0.08)"}
+          />
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.2fr 0.9fr 0.95fr 0.9fr 0.8fr 1fr",
+            gap: 10,
+            color: "#6c7da2",
+            fontSize: 11,
+            alignItems: "center",
+          }}
+        >
+          <span>Ativo</span>
+          <span>Top Forge</span>
+          <button
+            onClick={() => toggleSort("price")}
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              color: sortKey === "price" ? ui.cyan : "#6c7da2",
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            Preço {sortKey === "price" ? (sortDir === "desc" ? "↓" : "↑") : ""}
+          </button>
+          <button
+            onClick={() => toggleSort("change")}
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              color: sortKey === "change" ? ui.cyan : "#6c7da2",
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            % 24h {sortKey === "change" ? (sortDir === "desc" ? "↓" : "↑") : ""}
+          </button>
+          <button
+            onClick={() => toggleSort("dominance")}
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              color: sortKey === "dominance" ? ui.cyan : "#6c7da2",
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            Dom. BTC {sortKey === "dominance" ? (sortDir === "desc" ? "↓" : "↑") : ""}
+          </button>
+          <span>Mini Chart</span>
+        </div>
+      </div>
+
+      <div
+        data-atlas-scroll="cyan"
+        style={{ flex: 1, overflowY: "auto", padding: "0 0 4px" }}
+      >
+        {orderedRows.map((asset, index) => {
+          const spark = generateSparkline(22, 42 + index * 2, asset.trend);
+          const isBtc = asset.symbol === "BTC";
+          const isFav = favoriteSymbols.includes(asset.symbol);
+          const scoreVisual = getScoreVisual(asset.aiScore);
+          const dominance = dominanceMap[asset.symbol] ?? 0;
+
+          return (
+            <div
+              key={asset.symbol}
+              onClick={() => onSelectSymbol(asset.symbol)}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.2fr 0.9fr 0.95fr 0.9fr 0.8fr 1fr",
+                gap: 10,
+                padding: "12px 14px",
+                borderBottom: "1px solid rgba(255,255,255,0.045)",
+                alignItems: "center",
+                cursor: "pointer",
+                background: isBtc
+                  ? "linear-gradient(90deg, rgba(247,201,72,0.14), rgba(45,226,255,0.08))"
+                  : asset.symbol === selectedSymbol
+                  ? "linear-gradient(90deg, rgba(45,226,255,0.08), rgba(255,255,255,0.01))"
+                  : "transparent",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(asset.symbol);
+                  }}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 8,
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: isFav ? "rgba(247,201,72,0.12)" : "rgba(255,255,255,0.03)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    color: isFav ? ui.yellow : "#7f93b7",
+                  }}
+                >
+                  <Star size={13} fill={isFav ? ui.yellow : "transparent"} />
+                </button>
+
+                <div style={{ display: "grid", gap: 2 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: asset.color,
+                        display: "inline-block",
+                        boxShadow: `0 0 12px ${asset.color}`,
+                      }}
+                    />
+                    <span style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>
+                      {asset.symbol}
+                    </span>
+                    {isBtc && (
+                      <span
+                        style={{
+                          padding: "3px 7px",
+                          borderRadius: 999,
+                          background: "rgba(247,201,72,0.14)",
+                          color: ui.yellow,
+                          fontSize: 8,
+                          fontWeight: 900,
+                        }}
+                      >
+                        FIXO
+                      </span>
+                    )}
+                  </div>
+                  <span style={{ color: "#6c7da2", fontSize: 10 }}>
+                    {isBtc ? "Referência principal do scanner." : "Ordenação dinâmica por mercado."}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <div style={{ color: scoreVisual.color, fontSize: 12, fontWeight: 900 }}>
+                  {asset.signal}
+                </div>
+                <ScoreBar value={asset.aiScore} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ color: "#eef5ff", fontSize: 12, fontFamily: "monospace" }}>
+                  ${asset.price.toLocaleString()}
+                </span>
+                <span style={{ color: "#7f93b7", fontSize: 10 }}>
+                  {asset.riskType}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  color: asset.change >= 0 ? ui.green : ui.red,
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  fontWeight: 900,
+                }}
+              >
+                {asset.change >= 0 ? "+" : ""}
+                {asset.change.toFixed(2)}%
+              </div>
+
+              <div
+                style={{
+                  color: isBtc ? ui.yellow : "#dce8ff",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  fontWeight: 900,
+                }}
+              >
+                {dominance.toFixed(2)}%
+              </div>
+
+              <MiniSparkline data={spark} trend={asset.trend} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+function SmallStatCard({
+  title,
+  value,
+  sub,
+  color,
+  accent,
+}: {
+  title: string;
+  value: string;
+  sub?: string;
+  color: string;
+  accent?: string;
+}) {
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        border: "1px solid rgba(45,226,255,0.16)",
+        background:
+          "linear-gradient(180deg, rgba(6,13,24,0.98), rgba(4,8,16,0.98))",
+        padding: "8px 12px 7px",
+        height: 60,
+        overflow: "hidden",
+        boxShadow: accent ? `0 0 18px ${accent}` : "none",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+      }}
+    >
+      <div
+        style={{
+          color: "#6f88af",
+          fontSize: 9,
+          fontWeight: 900,
+          letterSpacing: 0.78,
+          textTransform: "uppercase",
+          marginBottom: 2,
+          lineHeight: 1,
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          color,
+          fontSize: 14,
+          fontWeight: 900,
+          marginBottom: 1,
+          textShadow: `0 0 10px ${color}33`,
+          lineHeight: 1,
+        }}
+      >
+        {value}
+      </div>
+      {sub && (
+        <div
+          style={{
+            color: "#7f95bb",
+            fontSize: 8,
+            lineHeight: 1.1,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            opacity: 0.9,
+          }}
+        >
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EventRealtimePanel({ events }: { events: ScannerEvent[] }) {
+  const rows = events.slice(0, 7).map((event, index) => {
+    const amountBase = [67.0, 23.1, 234.7, 89.2, 67.8, 45.6, 125.4][index] ?? 42.8;
+    const priceBase = [65508, 65395, 65385, 65420, 65380, 65400, 65450][index] ?? 65410;
+    const exchangeBase = ["OKX", "Binance", "OKX", "Coinbase Pro", "Bybit", "Kraken", "Binance"][index] ?? "Exchange";
+    const severityWidth = [58, 28, 72, 52, 88, 33, 78][index] ?? 50;
+    const severityLabel = index % 3 === 0 ? "Baixo" : index % 3 === 1 ? "Alto" : "Médio";
+    const rightColor =
+      severityLabel === "Alto" ? ui.red : severityLabel === "Médio" ? ui.yellow : ui.green;
+    const leftDot = event.tone === "positive" ? ui.green : event.tone === "warning" ? ui.yellow : "#ff5050";
+
+    return {
+      ...event,
+      amountBase,
+      priceBase,
+      exchangeBase,
+      severityWidth,
+      severityLabel,
+      rightColor,
+      leftDot,
+    };
+  });
+
+  return (
+    <div
+      style={{
+        height: "100%",
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(6,10,18,0.98), rgba(4,7,14,0.98))",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          height: 42,
+          padding: "0 12px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "#00e117",
+              display: "inline-block",
+            }}
+          />
+          <span style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>
+            Eventos em Tempo Real
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              padding: "4px 8px",
+              borderRadius: 6,
+              background: "rgba(0,225,23,0.08)",
+              color: "#00e117",
+              fontSize: 10,
+              fontWeight: 900,
+            }}
+          >
+            Live
+          </span>
+          <span style={{ color: "#7f93b7", fontSize: 11, fontWeight: 700 }}>
+            {rows.length} eventos
+          </span>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: 8, display: "grid", gap: 8 }}>
+        {rows.map((event, i) => (
+          <div
+            key={`${event.time}-${i}`}
+            style={{
+              position: "relative",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background:
+                "linear-gradient(180deg, rgba(9,14,24,0.98), rgba(7,11,20,0.98))",
+              padding: "12px 12px 12px 28px",
+              overflow: "hidden",
+              minHeight: 62,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: 10,
+                top: 18,
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: event.leftDot,
+              }}
+            />
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.2fr 0.8fr 0.54fr",
+                gap: 12,
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <div style={{ color: "#f0f7ff", fontSize: 12, fontWeight: 900, marginBottom: 3 }}>
+                  {event.title}
+                </div>
+                <div style={{ color: "#7f93b7", fontSize: 11 }}>{event.exchangeBase}</div>
+              </div>
+
+              <div style={{ textAlign: "center" }}>
+                <div style={{ color: "#eef5ff", fontSize: 12, fontWeight: 900, fontFamily: "monospace" }}>
+                  {event.amountBase.toFixed(1)} BTC
+                </div>
+                <div style={{ color: "#7f93b7", fontSize: 11, fontFamily: "monospace" }}>
+                  ${event.priceBase.toLocaleString()}
+                </div>
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <div style={{ color: "#dce8ff", fontSize: 12, fontFamily: "monospace", marginBottom: 4 }}>
+                  {event.time}
+                </div>
+                <div style={{ color: event.rightColor, fontSize: 12, fontWeight: 900 }}>
+                  {event.severityLabel}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: 10,
+                height: 3,
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.05)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${event.severityWidth}%`,
+                  height: "100%",
+                  borderRadius: 999,
+                  background:
+                    event.severityLabel === "Alto"
+                      ? "linear-gradient(90deg, #29ff72, #ff3c57)"
+                      : event.severityLabel === "Médio"
+                      ? "linear-gradient(90deg, #ffb300, #ff4b57)"
+                      : "linear-gradient(90deg, #29ff72, #24d6ff)",
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HeatmapBars() {
+  const rows = [
+    { label: "72.200", value: 88, color: "rgba(49,233,255,0.85)" },
+    { label: "71.800", value: 72, color: "rgba(39,245,157,0.82)" },
+    { label: "71.200", value: 58, color: "rgba(247,201,72,0.82)" },
+    { label: "70.800", value: 96, color: "rgba(255,107,134,0.82)" },
+    { label: "70.300", value: 66, color: "rgba(49,233,255,0.85)" },
+    { label: "69.900", value: 47, color: "rgba(39,245,157,0.82)" },
+  ];
+
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      {rows.map((r) => (
+        <div
+          key={r.label}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "64px 1fr 46px",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span style={{ color: "#9ab0d4", fontSize: 12, fontFamily: "monospace" }}>
+            {r.label}
+          </span>
+
+          <div
+            style={{
+              height: 12,
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.06)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${r.value}%`,
+                height: "100%",
+                borderRadius: 999,
+                background: r.color,
+              }}
+            />
+          </div>
+
+          <span style={{ color: "#e9f3ff", fontSize: 11, fontWeight: 800, textAlign: "right" }}>
+            {r.value}%
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LiquidityPanel() {
+  const [tab, setTab] = useState("Liquidez");
+
+  const renderMain = () => {
+    if (tab === "Liquidez") {
+      return (
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Mapa de Liquidez</div>
+          <HeatmapBars />
+        </div>
+      );
+    }
+
+    if (tab === "Map") {
+      const volumeBars = [
+        { h: 72, c: "#149969" }, { h: 56, c: "#8f3452" }, { h: 86, c: "#149969" }, { h: 46, c: "#8f3452" },
+        { h: 66, c: "#8f3452" }, { h: 94, c: "#149969" }, { h: 52, c: "#149969" }, { h: 126, c: "#149969" },
+        { h: 104, c: "#8f3452" }, { h: 76, c: "#149969" }, { h: 112, c: "#149969" }, { h: 138, c: "#8f3452" },
+      ];
+      const xLabels = ["00:00","02:00","04:00","06:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"];
+      return (
+        <div style={{ display: "grid", gap: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Mapa de Preço</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {["1M","5M","15M","1H","4H","1D"].map((tf) => (
+                  <button
+                    key={tf}
+                    style={{
+                      height: 22,
+                      minWidth: 28,
+                      borderRadius: 6,
+                      border: tf === "1H" ? "1px solid rgba(45,226,255,0.55)" : "1px solid rgba(255,255,255,0.08)",
+                      background: tf === "1H" ? "rgba(45,226,255,0.14)" : "rgba(255,255,255,0.02)",
+                      color: tf === "1H" ? "#dffcff" : "#7f95bb",
+                      fontSize: 9,
+                      fontWeight: 900,
+                      padding: "0 8px",
+                    }}
+                  >
+                    {tf}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ color: ui.mut, fontSize: 11 }}>VOL: 22.13</div>
+          </div>
+
+          <div style={{ height: 430, borderRadius: 14, border: "1px solid rgba(255,255,255,0.05)", background: "linear-gradient(180deg, rgba(6,13,24,0.96), rgba(5,9,18,0.98))", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(45,226,255,0.035), transparent 32%)" }} />
+            <div style={{ position: "absolute", left: 14, top: 14, zIndex: 2 }}>
+              <div style={{ color: "#eff7ff", fontSize: 19, fontWeight: 900, marginBottom: 4 }}>$71.500,00 <span style={{ color: "#27f59d", fontSize: 14, marginLeft: 8 }}>↗ +0.34%</span></div>
+            </div>
+
+            <div style={{ position: "absolute", left: 14, right: 14, top: 52, bottom: 118 }}>
+              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 42, color: "#5e7398", fontSize: 10, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "16px 0 26px" }}>
+                <span>$72k</span>
+                <span>$71k</span>
+                <span>$71k</span>
+                <span>$70k</span>
+                <span>$70k</span>
+              </div>
+              <div style={{ position: "absolute", left: 38, right: 0, top: 0, bottom: 0 }}>
+                <svg viewBox="0 0 760 260" style={{ width: "100%", height: "100%" }}>
+                  <defs>
+                    <linearGradient id="atlasMapFillV2" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="rgba(45,226,255,0.20)" />
+                      <stop offset="100%" stopColor="rgba(45,226,255,0.03)" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M12 190 C84 76, 152 34, 220 126 S332 272, 406 176 S516 20, 596 86 S676 56, 748 10" fill="none" stroke="#23dcff" strokeWidth="2.8" />
+                  <path d="M12 190 C84 76, 152 34, 220 126 S332 272, 406 176 S516 20, 596 86 S676 56, 748 10 L748 260 L12 260 Z" fill="url(#atlasMapFillV2)" />
+                </svg>
+              </div>
+            </div>
+
+            <div style={{ position: "absolute", left: 14, right: 14, bottom: 16, height: 98 }}>
+              <div style={{ position: "absolute", left: 42, right: 0, bottom: 0, display: "grid", gridTemplateColumns: "repeat(12, minmax(0, 1fr))", gap: 10, alignItems: "end", height: 92 }}>
+                {volumeBars.map((bar, idx) => (
+                  <div key={idx} style={{ display: "grid", gap: 6 }}>
+                    <div style={{ height: bar.h, borderRadius: 1, background: bar.c, opacity: 0.95 }} />
+                  </div>
+                ))}
+              </div>
+              <div style={{ position: "absolute", left: 42, right: 0, bottom: -2, display: "grid", gridTemplateColumns: "repeat(12, minmax(0, 1fr))", gap: 10 }}>
+                {xLabels.map((label) => (
+                  <div key={label} style={{ color: "#56709b", fontSize: 9, textAlign: "center" }}>{label}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (tab === "Clusters") {
+      return (
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Mapa de Clusters</div>
+            <div style={{ color: ui.mut, fontSize: 11 }}>Select Active · Select All</div>
+          </div>
+          <div style={{ height: 320, borderRadius: 14, border: "1px solid rgba(255,255,255,0.05)", background: "linear-gradient(180deg, rgba(6,13,24,0.96), rgba(5,9,18,0.98))", position: "relative" }}>
+            {[
+              ["BTC Core", 180, 165, 96, "#8b5cf6"],
+              ["ETH Core", 360, 105, 70, "#2de2ff"],
+              ["BTC Alta", 120, 285, 52, "#27f59d"],
+              ["Whale Sell", 420, 260, 46, "#ff4d8d"],
+              ["Retail", 300, 305, 34, "#ff944d"],
+            ].map(([name, x, y, size, color]) => (
+              <div key={String(name)} style={{ position: "absolute", left: Number(x), top: Number(y), width: Number(size), height: Number(size), borderRadius: 999, border: `1px solid ${color}`, boxShadow: `0 0 25px ${color}33`, display: "grid", placeItems: "center", color: color as string, fontSize: 12, fontWeight: 900, transform: "translate(-50%, -50%)" }}>
+                <div style={{ textAlign: "center", lineHeight: 1.1 }}>{name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (tab === "Eventos") {
+      return (
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Livro de Trade</div>
+            <div style={{ color: ui.mut, fontSize: 11 }}>Tempo Real</div>
+          </div>
+          <div style={{ display: "grid", gap: 10 }}>
+            {[
+              ["14:32", "LIQUIDAÇÃO", "$71.265", "Liquidação em massa shorts detectada", ui.green],
+              ["14:28", "WHALE", "$70.980", "Ordem de compra institucional +$12.4M", ui.green],
+              ["14:21", "CLUSTER", "$71.100", "BTC Core absorvendo pressão vendedora", ui.cyan],
+              ["14:15", "PRESSÃO", "$70.750", "Pressão vendedora concentrada em $70.800", ui.red],
+              ["14:08", "SUPORTE", "$71.420", "Suporte forte confirmado em $71.200", ui.green],
+            ].map(([time, label, price, desc, color]) => (
+              <div key={String(time)} style={{ display: "grid", gridTemplateColumns: "54px 1fr", gap: 10, alignItems: "center" }}>
+                <div style={{ color: ui.mut, fontSize: 11 }}>{time}</div>
+                <div style={{ borderRadius: 12, border: `1px solid ${color}55`, background: `${color}14`, padding: "12px 14px" }}>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ color: color as string, fontSize: 10, fontWeight: 900 }}>{label}</span>
+                    <span style={{ color: color as string, fontSize: 14, fontWeight: 900 }}>{price}</span>
+                  </div>
+                  <div style={{ color: "#9bb0d2", fontSize: 13 }}>{desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (tab === "Fluxo Institucional") {
+      return (
+        <div style={{ display: "grid", gap: 10, alignContent: "start", marginTop: -2 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ borderRadius: 14, border: `1px solid ${ui.green}55`, background: "rgba(10, 31, 24, 0.55)", padding: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <div style={{ color: "#f1fbff", fontSize: 14, fontWeight: 900 }}>Cenário Alta</div>
+                <div style={{ color: ui.green, fontSize: 20, fontWeight: 900 }}>93%</div>
+              </div>
+              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: 10 }}><div style={{ width: "93%", height: "100%", background: ui.green }} /></div>
+              <div style={{ display: "grid", gap: 6 }}>
+                {[['Alvo 1', '$91.672', ui.green], ['Alvo 2', '$99.732', ui.cyan], ['Stop Loss', '$83.887', ui.yellow]].map(([label, val, c]) => (
+                  <div key={String(label)} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: '#8ea2c8' }}>{label}</span>
+                    <span style={{ color: c as string, fontWeight: 900 }}>{val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ borderRadius: 14, border: `1px solid ${ui.red}55`, background: "rgba(31, 10, 20, 0.55)", padding: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <div style={{ color: "#f1fbff", fontSize: 14, fontWeight: 900 }}>Cenário Baixa</div>
+                <div style={{ color: ui.red, fontSize: 20, fontWeight: 900 }}>7%</div>
+              </div>
+              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: 10 }}><div style={{ width: "7%", height: "100%", background: ui.red }} /></div>
+              <div style={{ display: "grid", gap: 6 }}>
+                {[['Alvo 1', '$83.242', ui.red], ['Alvo 2', '$79.650', '#ff7e91'], ['Stop Loss', '$89.430', ui.yellow]].map(([label, val, c]) => (
+                  <div key={String(label)} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: '#8ea2c8' }}>{label}</span>
+                    <span style={{ color: c as string, fontWeight: 900 }}>{val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "0.74fr 0.92fr 0.74fr", gap: 10, alignItems: 'stretch' }}>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12 }}>
+              <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 8 }}>Sentimento do Mercado</div>
+              <div style={{ height: 226, display: "grid", placeItems: "center" }}>
+                <div style={{ width: 162, height: 162, borderRadius: '50%', border: '12px solid rgba(45,226,255,0.15)', borderTopColor: ui.yellow, borderRightColor: ui.green, borderBottomColor: '#ff008055', position: 'relative' }}>
+                  <div style={{ position: 'absolute', inset: 26, borderRadius: '50%', background: 'radial-gradient(circle, rgba(7,13,24,1), rgba(5,10,18,1))', display: 'grid', placeItems: 'center' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ color: ui.green, fontSize: 42, fontWeight: 900, lineHeight: 1 }}>59</div>
+                      <div style={{ color: '#8ea2c8', fontSize: 13, marginTop: 6 }}>Ganância</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12, display: "grid", gap: 8 }}>
+              <div style={{ color: "#edf5ff", fontSize: 13, fontWeight: 900 }}>Fluxo Institucional</div>
+              {[["🦈", "Tubarões", "-125M", false], ["🏛️", "Institucionais", "+582M", true], ["🐟", "Sardinhas", "+320M", true]].map(([icon, name, val, pos]) => (
+                <div key={String(name)} style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 12, background: 'rgba(255,255,255,0.015)' }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: 'center', marginBottom: 8 }}>
+                    <span style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, display: 'flex', gap: 8, alignItems: 'center' }}><span>{icon}</span>{name}</span>
+                    <span style={{ color: pos ? ui.green : ui.red, fontSize: 20, fontWeight: 900 }}>{val}</span>
+                  </div>
+                  <div style={{ height: 12, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden", display: "grid", gridTemplateColumns: "51fr 49fr", marginBottom: 6 }}>
+                    <div style={{ background: ui.green }} />
+                    <div style={{ background: '#ea4c89' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10 }}>
+                    <span style={{ color: '#5ce4a2' }}>51% comprando</span>
+                    <span style={{ color: '#ff7a97' }}>49% vendendo</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12 }}>
+              <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 8 }}>Livro de Ofertas</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 0.8fr 0.9fr', color: '#6f88af', fontSize: 11, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 6 }}>
+                <span>Preço</span><span>Qtd</span><span>Total</span>
+              </div>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {[
+                  ['$87.026','0.666','$417K', ui.red], ['$85.869','6.538','$471K', ui.red], ['$87.886','4.878','$284K', ui.red], ['$87.627','6.447','$413K', ui.red], ['$87.318','10.774','$279K', ui.red],
+                  ['$87.112','10.515','$365K', ui.green], ['$87.118','11.838','$194K', ui.green], ['$86.715','10.027','$280K', ui.green], ['$87.047','11.168','$70K', ui.green], ['$86.688','2.729','$321K', ui.green],
+                ].map(([price, qty, total, c], idx) => (
+                  <div key={String(price)+idx} style={{ display: 'grid', gridTemplateColumns: '1fr 0.8fr 0.9fr', fontSize: 13 }}>
+                    <span style={{ color: c as string, fontWeight: 900 }}>{price}</span>
+                    <span style={{ color: '#9bb0d2' }}>{qty}</span>
+                    <span style={{ color: '#7086ad' }}>{total}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {[
+          ["Negativo", "Fed mantém taxa de juros em 5,25% - 5,50%", ui.red],
+          ["Positivo", "BlackRock adiciona mais $2.1B em Bitcoin ETF", ui.green],
+          ["Positivo", "Binance anuncia suporte para Ethereum Shanghai", ui.green],
+          ["Neutro", "Regulação crypto na Europa: MiCA entra em vigor", ui.yellow],
+        ].map(([tone, title, color]) => (
+          <div key={String(title)} style={{ borderRadius: 14, border: `1px solid ${color}55`, background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 16, minHeight: 180 }}>
+            <div style={{ color: color as string, fontSize: 11, fontWeight: 900, marginBottom: 10 }}>{tone}</div>
+            <div style={{ color: "#f1fbff", fontSize: 18, fontWeight: 900, lineHeight: 1.2, marginBottom: 10 }}>{title}</div>
+            <div style={{ color: "#8ea2c8", fontSize: 12, lineHeight: 1.5 }}>Análise IA Atlas integrada ao módulo de liquidez para leitura rápida do impacto no fluxo.</div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ height: "100%", borderRadius: 12, border: `1px solid ${ui.border}`, background: "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div style={{ minHeight: 42, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid ${ui.border}`, flexWrap: "wrap", flexShrink: 0 }}>
+        <span style={{ color: "#f2f7ff", fontSize: 13, fontWeight: 900, marginRight: 6 }}>Liquidez Avançada</span>
+        {LIQUIDITY_TABS.map((t) => (
+          <TopButton key={t} active={tab === t} onClick={() => setTab(t)}>{t}</TopButton>
+        ))}
+      </div>
+
+      <div
+        style={{
+          padding: 6,
+          display: "grid",
+          gap: tab === "Liquidez" ? 4 : 6,
+          flex: 1,
+          alignContent: "start",
+          gridTemplateRows: tab === "Liquidez" ? "auto auto" : "auto 1fr",
+        }}
+      >
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, alignItems: "start", alignContent: "start" }}>
+          <SmallStatCard title="Liquidez Superior" value="$72.200" sub="Bloco vendedor forte acima do preço atual." color={ui.yellow} />
+          <SmallStatCard title="Liquidez Inferior" value="$69.800" sub="Absorção compradora ganhando espessura." color={ui.green} />
+          <SmallStatCard title="Cluster Dominante" value="BTC Core" sub="Maior concentração institucional." color={ui.cyan} />
+          <SmallStatCard title="Pressão Instantânea" value="+18.6%" sub="Fluxo favorecendo continuação curta." color={ui.green} />
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.26fr 0.62fr",
+            gap: 10,
+            flex: tab === "Liquidez" ? "0 0 auto" : 1,
+            minHeight: 0,
+            alignItems: "start",
+            marginTop: tab === "Liquidez" ? -2 : 0,
+          }}
+        >
+          <div data-atlas-scroll="cyan" style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 8, overflowY: tab === "Liquidez" ? "visible" : "auto", scrollbarWidth: "thin", scrollbarColor: "rgba(45,226,255,0.55) rgba(255,255,255,0.04)", minHeight: tab === "Liquidez" ? "auto" : 0 }}>
+            {renderMain()}
+          </div>
+
+          <div style={{ display: "grid", gap: 12, alignContent: "start" }}>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12 }}>
+              <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 8 }}>Leitura rápida</div>
+              <div style={{ display: "grid", gap: 10 }}>
+                {[["Liquidez acima", "Pesada", ui.red],["Liquidez abaixo", "Saudável", ui.green],["Risco curto", "Controlado", ui.yellow],["Confluência", "8 / 9", ui.cyan],["Fluxo", "Positivo", ui.green],["Volatilidade", "Moderada", "#dce8ff"]].map(([k, v, c]) => (
+                  <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <span style={{ color: "#8ea2c8", fontSize: 13 }}>{k}</span>
+                    <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(9,15,29,0.98), rgba(7,12,24,0.98))", padding: 12 }}>
+              <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 8 }}>IA Análise</div>
+              <div style={{ color: "#8ea2c8", fontSize: 13, lineHeight: 1.7 }}>Cenário favorece continuação de alta. Confluência de 8/9 indicadores positivos. Liquidez superior em $72.200 é o próximo alvo.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChartPanel({
+  candles,
+  indicators,
+  selectedObject,
+  mode,
+  symbol,
+  timeframe,
+  selectedTool,
+}: {
+  candles: CandleData[];
+  indicators: IndicatorData[];
+  selectedObject: DrawObject | null;
+  mode: ModeKey;
+  symbol: string;
+  timeframe: Timeframe;
+  selectedTool: ToolKey;
+}) {
+  const mainRef = useRef<HTMLDivElement>(null);
+  const volOverlayRef = useRef<HTMLDivElement>(null);
+  const rsiRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<SVGSVGElement>(null);
+
+  const [drawings, setDrawings] = useState<ChartDrawObject[]>([]);
+  const [draft, setDraft] = useState<ChartDrawObject | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+
+  const [livePrice, setLivePrice] = useState<number>(candles[candles.length - 1]?.close ?? 0);
+  const [priceChange, setPriceChange] = useState<number>(0);
+
+  useEffect(() => {
+    if (!mainRef.current || !volOverlayRef.current || !rsiRef.current) return;
+
+    const baseChartOpts = {
+      layout: {
+        background: { type: ColorType.Solid, color: "transparent" },
+        textColor: "#7085ad",
+        fontFamily: "JetBrains Mono, monospace",
+        fontSize: 10,
+      },
+      grid: {
+        vertLines: { color: "rgba(255,255,255,0.035)", style: 1 as const },
+        horzLines: { color: "rgba(255,255,255,0.035)", style: 1 as const },
+      },
+      crosshair: { mode: CrosshairMode.Normal },
+      rightPriceScale: { borderColor: "rgba(255,255,255,0.08)" },
+      timeScale: {
+        borderColor: "rgba(255,255,255,0.08)",
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      handleScroll: true,
+      handleScale: true,
+    };
+
+    const mc: IChartApi = createChart(mainRef.current, {
+      ...baseChartOpts,
+      width: mainRef.current.clientWidth,
+      height: mainRef.current.clientHeight,
+    });
+
+    const cSeries = mc.addCandlestickSeries({
+      upColor: "#37f4ad",
+      downColor: "#ff6c8d",
+      borderUpColor: "#37f4ad",
+      borderDownColor: "#ff6c8d",
+      wickUpColor: "#37f4ad",
+      wickDownColor: "#ff6c8d",
+    });
+
+    cSeries.setData(
+      candles.map((c) => ({
+        time: c.time as Time,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+      }))
+    );
+
+    const ma20 = mc.addLineSeries({
+      color: "#d2b000",
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    });
+    ma20.setData(computeSMA(candles, 20).map((d) => ({ time: d.time as Time, value: d.value })));
+
+    const ma50 = mc.addLineSeries({
+      color: "#8b5cf6",
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    });
+    ma50.setData(computeSMA(candles, 50).map((d) => ({ time: d.time as Time, value: d.value })));
+
+    const ema100 = mc.addLineSeries({
+      color: "#22d3ee",
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    });
+    ema100.setData(computeEMA(candles, 100).map((d) => ({ time: d.time as Time, value: d.value })));
+
+    mc.timeScale().fitContent();
+
+    const last = candles[candles.length - 1];
+    const prev = candles[candles.length - 2] ?? last;
+    setLivePrice(last.close);
+    setPriceChange(((last.close - prev.close) / prev.close) * 100);
+
+    const vc: IChartApi = createChart(volOverlayRef.current, {
+      ...baseChartOpts,
+      width: volOverlayRef.current.clientWidth,
+      height: volOverlayRef.current.clientHeight,
+      rightPriceScale: { visible: false, borderColor: "rgba(255,255,255,0)" },
+      timeScale: { visible: false, borderColor: "rgba(255,255,255,0)" },
+      grid: {
+        vertLines: { color: "rgba(255,255,255,0)", style: 1 as const },
+        horzLines: { color: "rgba(255,255,255,0)", style: 1 as const },
+      },
+    });
+
+    const volSeries = vc.addHistogramSeries({ priceScaleId: "" });
+    volSeries.setData(
+      candles.map((c) => ({
+        time: c.time as Time,
+        value: c.volume,
+        color: c.close >= c.open ? "rgba(55,244,173,0.42)" : "rgba(255,108,141,0.42)",
+      }))
+    );
+    vc.timeScale().fitContent();
+
+    const rc: IChartApi = createChart(rsiRef.current, {
+      ...baseChartOpts,
+      width: rsiRef.current.clientWidth,
+      height: rsiRef.current.clientHeight,
+    });
+
+    const rsiSeries = rc.addLineSeries({
+      color: "#8b5cf6",
+      lineWidth: 2,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    });
+    const mfiSeries = rc.addLineSeries({
+      color: "#d2b000",
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    });
+
+    rsiSeries.setData(indicators.map((d) => ({ time: d.time as Time, value: clamp(d.rsi, 0, 100) })));
+    mfiSeries.setData(indicators.map((d) => ({ time: d.time as Time, value: clamp(d.mfi, 0, 100) })));
+    rc.timeScale().fitContent();
+
+    mc.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (range !== null) {
+        vc.timeScale().setVisibleLogicalRange(range);
+        rc.timeScale().setVisibleLogicalRange(range);
+      }
+    });
+
+    const resize = () => {
+      if (mainRef.current) mc.applyOptions({ width: mainRef.current.clientWidth, height: mainRef.current.clientHeight });
+      if (volOverlayRef.current) vc.applyOptions({ width: volOverlayRef.current.clientWidth, height: volOverlayRef.current.clientHeight });
+      if (rsiRef.current) rc.applyOptions({ width: rsiRef.current.clientWidth, height: rsiRef.current.clientHeight });
+    };
+
+    window.addEventListener("resize", resize);
+    return () => {
+      window.removeEventListener("resize", resize);
+      mc.remove();
+      vc.remove();
+      rc.remove();
+    };
+  }, [candles, indicators]);
+
+  const isPositive = priceChange >= 0;
+
+  const interactiveTool = selectedTool === "trendline" || selectedTool === "hline" || selectedTool === "vline" || selectedTool === "ray";
+  const overlayPointerEvents = interactiveTool || dragId ? "auto" : "none";
+
+  const getLocalPoint = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top, w: rect.width, h: rect.height };
+  };
+
+  const distToSegment = (px: number, py: number, x1: number, y1: number, x2: number, y2: number) => {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D || 1;
+    let t = dot / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    const xx = x1 + C * t;
+    const yy = y1 + D * t;
+    const dx = px - xx;
+    const dy = py - yy;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const hitDrawing = (x: number, y: number) => {
+    for (let i = drawings.length - 1; i >= 0; i -= 1) {
+      const d = drawings[i];
+      if (d.hidden) continue;
+      if (d.type === "hline" && Math.abs(y - d.y1) < 8) return d.id;
+      if (d.type === "vline" && Math.abs(x - d.x1) < 8) return d.id;
+      if (distToSegment(x, y, d.x1, d.y1, d.x2, d.y2) < 8) return d.id;
+    }
+    return null;
+  };
+
+  const handleOverlayMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    const p = getLocalPoint(e);
+    const existingId = hitDrawing(p.x, p.y);
+    if (!interactiveTool && existingId) {
+      setDragId(existingId);
+      return;
+    }
+    if (selectedTool === "trendline" || selectedTool === "ray") {
+      const obj: ChartDrawObject = {
+        id: `d-${Date.now()}`,
+        type: selectedTool,
+        x1: p.x,
+        y1: p.y,
+        x2: p.x,
+        y2: p.y,
+        color: "#2de2ff",
+      };
+      setDraft(obj);
+      return;
+    }
+    if (selectedTool === "hline") {
+      setDrawings((prev) => prev.concat({
+        id: `d-${Date.now()}`,
+        type: "hline",
+        x1: 0,
+        y1: p.y,
+        x2: p.w,
+        y2: p.y,
+        color: "#f7c948",
+      }));
+      return;
+    }
+    if (selectedTool === "vline") {
+      setDrawings((prev) => prev.concat({
+        id: `d-${Date.now()}`,
+        type: "vline",
+        x1: p.x,
+        y1: 0,
+        x2: p.x,
+        y2: p.h,
+        color: "#ff9d2e",
+      }));
+    }
+  };
+
+  const handleOverlayMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const p = getLocalPoint(e);
+    if (draft) {
+      setDraft((prev) => prev ? {
+        ...prev,
+        x2: selectedTool === "ray" ? Math.max(p.x, prev.x1 + 8) : p.x,
+        y2: p.y,
+      } : prev);
+      return;
+    }
+    if (dragId) {
+      setDrawings((prev) => prev.map((d) => {
+        if (d.id !== dragId || d.locked) return d;
+        if (d.type === "hline") {
+          const dy = p.y - d.y1;
+          return { ...d, y1: p.y, y2: p.y };
+        }
+        if (d.type === "vline") {
+          return { ...d, x1: p.x, x2: p.x };
+        }
+        const w = d.x2 - d.x1;
+        const h = d.y2 - d.y1;
+        return { ...d, x1: p.x - w / 2, y1: p.y - h / 2, x2: p.x + w / 2, y2: p.y + h / 2 };
+      }));
+    }
+  };
+
+  const handleOverlayMouseUp = () => {
+    if (draft) {
+      setDrawings((prev) => prev.concat(draft));
+      setDraft(null);
+    }
+    if (dragId) setDragId(null);
+  };
+
+  const toolLabelMap: Record<ToolKey, string> = {
+    cursor: "Cursor",
+    cross: "Cross",
+    trendline: "Trendline",
+    hline: "Linha Horizontal",
+    vline: "Linha Vertical",
+    ray: "Ray",
+    extended: "Extended",
+    channel: "Channel",
+    pitchfork: "Pitchfork",
+    fib: "Fibonacci",
+    fibext: "Fib Ext",
+    fibarc: "Fib Arc",
+    fibfan: "Fib Fan",
+    rect: "Retângulo",
+    triangle: "Triângulo",
+    ellipse: "Elipse",
+    measure: "Medida",
+    text: "Texto",
+    magnet: "Magnet",
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        width: "100%",
+        minWidth: 0,
+        background:
+          "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(6,10,18,0.98))",
+      }}
+    >
+      <div
+        style={{
+          padding: "8px 10px",
+          borderBottom: `1px solid ${ui.border}`,
+          background:
+            "linear-gradient(180deg, rgba(12,19,36,0.94), rgba(8,13,25,0.94))",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.4fr repeat(4, 0.7fr) auto",
+            gap: 8,
+            alignItems: "center",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 7,
+                background: "rgba(247,201,72,0.16)",
+                color: ui.yellow,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 10,
+                fontWeight: 900,
+              }}
+            >
+              SC
+            </div>
+
+            <div>
+              <div style={{ color: "#eef6ff", fontSize: 14, fontWeight: 900 }}>{symbol}</div>
+              <div
+                style={{
+                  color: "#7d91b6",
+                  fontSize: 10,
+                  fontWeight: 700,
+                }}
+              >
+                Scanner Atlas • Ferramenta: {toolLabelMap[selectedTool]} • TF: {timeframe}
+              </div>
+            </div>
+          </div>
+
+          {[
+            ["Preço", livePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), "#4ef0cb"],
+            ["Variação", `${isPositive ? "+" : ""}${priceChange.toFixed(2)}%`, isPositive ? ui.green : ui.red],
+            ["Volume", formatCompact(candles[candles.length - 1]?.volume ?? 0), ui.cyan],
+            ["Desenhos", String(drawings.length + (draft ? 1 : 0)), drawings.length > 0 || draft ? ui.yellow : ui.red],
+          ].map(([title, value, color]) => (
+            <div
+              key={title}
+              style={{
+                borderRadius: 13,
+                border: "1px solid rgba(255,255,255,0.06)",
+                background:
+                  "linear-gradient(180deg, rgba(8,15,31,0.98), rgba(7,12,24,0.96))",
+                minHeight: 58,
+                padding: "10px 13px",
+              }}
+            >
+              <div
+                style={{
+                  color: "#7f93b7",
+                  fontSize: 9,
+                  fontWeight: 900,
+                  letterSpacing: 0.8,
+                  textTransform: "uppercase",
+                  marginBottom: 6,
+                }}
+              >
+                {title}
+              </div>
+              <div style={{ color: color as string, fontSize: 12, fontWeight: 900 }}>{value}</div>
+            </div>
+          ))}
+
+          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
+            <TopButton active={mode === "auto"}>Auto</TopButton>
+            <TopButton active={mode === "manual"}>Manual</TopButton>
+            <TopButton active={mode === "space"}>Seguir + Espaço</TopButton>
+            <TopButton>Zoom -</TopButton>
+            <TopButton>Zoom +</TopButton>
+            <TopButton>Agora</TopButton>
+            <TopButton>Reset</TopButton>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          height: 32,
+          padding: "0 10px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottom: `1px solid ${ui.border}`,
+          background: "rgba(255,255,255,0.015)",
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <TopButton active>Objetos</TopButton>
+          <TopButton onClick={() => setDrawings((prev) => prev.map((d) => d.id === dragId ? { ...d, locked: !d.locked } : d))}>Travar</TopButton>
+          <TopButton onClick={() => setDrawings((prev) => prev.map((d) => d.id === dragId ? { ...d, hidden: !d.hidden } : d))}>Ocultar</TopButton>
+          <TopButton onClick={() => { setDrawings([]); setDraft(null); }}>Limpar desenhos</TopButton>
+          <TopButton onClick={() => setDrawings((prev) => prev.filter((d) => d.id !== dragId))}>Apagar selecionado</TopButton>
+        </div>
+        <div style={{ color: "#7f93b7", fontSize: 10, fontWeight: 800 }}>
+          {dragId ? `${drawings.find((d) => d.id === dragId)?.type ?? "obj"} selecionado` : "Nenhum objeto selecionado"}
+        </div>
+      </div>
+
+      <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+        <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
+        <svg
+          ref={overlayRef}
+          width="100%"
+          height="100%"
+          viewBox={`0 0 ${mainRef.current?.clientWidth || 1000} ${mainRef.current?.clientHeight || 600}`}
+          preserveAspectRatio="none"
+          onMouseDown={handleOverlayMouseDown}
+          onMouseMove={handleOverlayMouseMove}
+          onMouseUp={handleOverlayMouseUp}
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 4,
+            pointerEvents: overlayPointerEvents as any,
+            cursor: interactiveTool ? "crosshair" : dragId ? "move" : "default",
+          }}
+        >
+          {[...drawings, ...(draft ? [draft] : [])].filter((d) => !d.hidden).map((d) => {
+            const common = {
+              stroke: d.color || "#2de2ff",
+              strokeWidth: dragId === d.id ? 2.5 : 1.8,
+              opacity: d.locked ? 0.65 : 0.95,
+            };
+            if (d.type === "hline" || d.type === "vline" || d.type === "trendline" || d.type === "ray") {
+              const x2 = d.type === "ray" ? Math.max(d.x2, (mainRef.current?.clientWidth || d.x2)) : d.x2;
+              const y2 = d.type === "ray" ? d.y1 + ((d.y2 - d.y1) / Math.max((d.x2 - d.x1), 1)) * (x2 - d.x1) : d.y2;
+              return (
+                <g key={d.id}>
+                  <line x1={d.x1} y1={d.y1} x2={x2} y2={y2} {...common} />
+                  <circle cx={d.x1} cy={d.y1} r={3} fill={d.color || "#2de2ff"} opacity={0.95} />
+                  {(d.type !== "hline" && d.type !== "vline") && <circle cx={d.x2} cy={d.y2} r={3} fill={d.color || "#2de2ff"} opacity={0.95} />}
+                </g>
+              );
+            }
+            return null;
+          })}
+        </svg>
+        <div
+          ref={volOverlayRef}
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 140,
+            pointerEvents: "none",
+            opacity: 0.95,
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+          }}
+        />
+      </div>
+
+      <div
+        style={{
+          width: "100%",
+          flexShrink: 0,
+          borderTop: `1px solid ${ui.border}`,
+          borderBottom: `1px solid ${ui.border}`,
+          background: "#0a0f1d",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "5px 14px" }}>
+          <span style={{ color: "#7f93b7", fontSize: 10, fontFamily: "monospace" }}>RSI / MFI</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}>
+            <span style={{ width: 12, height: 2, background: "#8b5cf6", display: "inline-block" }} />
+            RSI
+          </span>
+          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}>
+            <span style={{ width: 12, height: 2, background: "#d2b000", display: "inline-block" }} />
+            MFI
+          </span>
+        </div>
+        <div ref={rsiRef} style={{ height: 112, width: "100%" }} />
+      </div>
+    </div>
+  );
+}
+
+function FluxoModule({ events }: { events: ScannerEvent[] }) {
+  return (
+    <div style={{ height: "100%", padding: 10 }}>
+      <div style={{ display: "grid", gap: 10, height: "100%" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          <SmallStatCard title="Fluxo Agressor" value="Comprador" sub="Agressão mantendo pressão positiva." color={ui.green} />
+          <SmallStatCard title="Absorção" value="Ativa" sub="Vendas sendo consumidas com firmeza." color={ui.cyan} />
+          <SmallStatCard title="Desequilíbrio" value="+18.6%" sub="Continuação favorecida no curto prazo." color={ui.yellow} />
+        </div>
+        <div style={{ minHeight: 0, flex: 1 }}>
+          <EventRealtimePanel events={events} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EulerModule({ insight }: { insight: AIInsight }) {
+  const bars = [52, 74, 61, 88, 46, 67, 58, 82, 49, 71, 63, 91, 56, 69];
+  const line1 = Array.from({ length: 40 }, (_, i) => {
+    const x = (i / 39) * 860;
+    const y = 168 + Math.sin(i / 3.2) * 24 + Math.cos(i / 5.5) * 14;
+    return `${x},${y}`;
+  }).join(" ");
+  const line2 = Array.from({ length: 40 }, (_, i) => {
+    const x = (i / 39) * 860;
+    const y = 192 + Math.cos(i / 3.8) * 28 + Math.sin(i / 6.2) * 10;
+    return `${x},${y}`;
+  }).join(" ");
+
+  return (
+    <div style={{ height: "100%", padding: 10, background: "linear-gradient(180deg, rgba(5,8,16,0.98), rgba(2,6,14,0.98))" }}>
+      <div
+        style={{
+          height: "100%",
+          borderRadius: 14,
+          border: "1px solid rgba(45,226,255,0.12)",
+          background: "linear-gradient(180deg, rgba(4,10,20,0.98), rgba(2,6,12,0.98))",
+          overflow: "hidden",
+          display: "grid",
+          gridTemplateRows: "auto auto 1fr auto",
+          gap: 10,
+          padding: 10,
+          boxShadow: "0 0 30px rgba(45,226,255,0.08)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 4px 0" }}>
+          <div>
+            <div style={{ color: "#eef6ff", fontSize: 15, fontWeight: 900, letterSpacing: 0.6 }}>Euler Quantum Interface</div>
+            <div style={{ color: "#6f88af", fontSize: 10, fontWeight: 800, letterSpacing: 0.5, textTransform: "uppercase" }}>
+              Scientific module • atlas sync active
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <TopButton active>Σ Fórmula</TopButton>
+            <TopButton>Sync</TopButton>
+            <span
+              style={{
+                color: ui.cyan,
+                fontSize: 10,
+                fontWeight: 900,
+                padding: "4px 8px",
+                borderRadius: 999,
+                background: "rgba(45,226,255,0.10)",
+                border: "1px solid rgba(45,226,255,0.18)",
+              }}
+            >
+              Módulo Ativo
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          <SmallStatCard title="Euler Core" value="Sincronizado" sub="Proporção e estrutura conversando bem." color={ui.cyan} accent="rgba(45,226,255,0.18)" />
+          <SmallStatCard title="Geometria" value="Limpa" sub="Movimento com boa leitura estrutural." color={ui.yellow} accent="rgba(247,201,72,0.16)" />
+          <SmallStatCard title="Pressão" value="Moderada" sub="Sem distorção excessiva no momento." color={ui.green} accent="rgba(39,245,157,0.14)" />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1.28fr 0.72fr", gap: 10, minHeight: 0 }}>
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(45,226,255,0.12)",
+              background:
+                "radial-gradient(circle at 50% 0%, rgba(45,226,255,0.08), transparent 35%), linear-gradient(180deg, rgba(6,12,24,0.98), rgba(3,7,14,0.98))",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                padding: "12px 14px 8px",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div>
+                <div style={{ color: "#eff7ff", fontSize: 13, fontWeight: 900 }}>Euler Data Stream</div>
+                <div style={{ color: "#6f88af", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  {insight.symbol} • previsão estrutural
+                </div>
+              </div>
+              <div style={{ color: ui.yellow, fontSize: 12, fontWeight: 900 }}>Score {insight.score}</div>
+            </div>
+
+            <div style={{ padding: 12, height: "calc(100% - 58px)" }}>
+              <svg width="100%" height="100%" viewBox="0 0 860 330" preserveAspectRatio="none">
+                {Array.from({ length: 8 }, (_, i) => (
+                  <line key={`h-${i}`} x1="0" y1={i * 45} x2="860" y2={i * 45} stroke="rgba(255,255,255,0.045)" strokeWidth="1" />
+                ))}
+                {Array.from({ length: 15 }, (_, i) => (
+                  <line key={`v-${i}`} x1={i * 61.4} y1="0" x2={i * 61.4} y2="330" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                ))}
+
+                {bars.map((h, i) => {
+                  const x = 26 + i * 56;
+                  return (
+                    <rect
+                      key={i}
+                      x={x}
+                      y={300 - h}
+                      width="22"
+                      height={h}
+                      rx="4"
+                      fill={i % 2 === 0 ? "rgba(45,226,255,0.38)" : "rgba(247,201,72,0.28)"}
+                    />
+                  );
+                })}
+
+                <polyline points={line1} fill="none" stroke={ui.cyan} strokeWidth="2.2" />
+                <polyline points={line2} fill="none" stroke={ui.yellow} strokeWidth="1.8" opacity="0.92" />
+              </svg>
+            </div>
+          </div>
+
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(45,226,255,0.12)",
+              background: "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(3,7,14,0.98))",
+              padding: 12,
+            }}
+          >
+            <div style={{ color: "#edf6ff", fontSize: 13, fontWeight: 900, marginBottom: 10 }}>
+              Leitura do Módulo
+            </div>
+
+            <div style={{ display: "grid", gap: 6 }}>
+              {[
+                ["Ativo", insight.symbol, "#dce8ff"],
+                ["Score", `${insight.score}`, ui.green],
+                ["Sinal", insight.signal, ui.yellow],
+                ["Risco", insight.riskLevel, ui.red],
+                ["Liquidez", insight.structure[2]?.value || "Médio", ui.cyan],
+                ["Euler", insight.structure2[0]?.value || "Estável", ui.green],
+              ].map(([k, v, c]) => (
+                <div
+                  key={k}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "8px 0",
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <span style={{ color: "#8ea2c8", fontSize: 13 }}>{k}</span>
+                  <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
+                </div>
+              ))}
+            </div>
+
+            <div
+              style={{
+                marginTop: 14,
+                borderRadius: "50%",
+                width: 120,
+                height: 120,
+                marginInline: "auto",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background:
+                  "radial-gradient(circle at 50% 50%, rgba(45,226,255,0.22), rgba(45,226,255,0.05) 55%, transparent 72%)",
+                border: "1px solid rgba(45,226,255,0.16)",
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
+                <div style={{ color: ui.cyan, fontSize: 28, fontWeight: 900 }}>{insight.score}</div>
+                <div
+                  style={{
+                    color: "#7f93b7",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: 0.8,
+                    textTransform: "uppercase",
+                    marginTop: 4,
+                  }}
+                >
+                  Sincronia
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+          <SmallStatCard title="Preço Atual" value={`$${insight.price.toLocaleString()}`} color={ui.cyan} />
+          <SmallStatCard title="Previsão Euler" value={`$${(insight.price * 1.018).toLocaleString()}`} color={ui.yellow} />
+          <SmallStatCard title="Vol. Médio" value="1.24M" color={ui.green} />
+          <SmallStatCard title="Máxima" value={`$${(insight.price * 1.032).toLocaleString()}`} color="#dce8ff" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SingularidadeModule({ insight }: { insight: AIInsight }) {
+  const bars = [44, 58, 51, 29, 35, 48, 31, 60, 26, 55, 47, 38, 25, 24, 37, 32, 41, 22];
+  const line1 = Array.from({ length: 36 }, (_, i) => {
+    const x = (i / 35) * 860;
+    const y = 130 + Math.sin(i / 4.8) * 20 + Math.cos(i / 7.2) * 10;
+    return `${x},${y}`;
+  }).join(" ");
+  const line2 = Array.from({ length: 36 }, (_, i) => {
+    const x = (i / 35) * 860;
+    const y = 190 + Math.cos(i / 5.4) * 16 + Math.sin(i / 8.4) * 8;
+    return `${x},${y}`;
+  }).join(" ");
+
+  const liveList = [
+    ["BTC", "$66,374.82", "+2.76%"],
+    ["ETH", "$3,931.95", "+2.58%"],
+    ["SOL", "$174.80", "+3.06%"],
+    ["ADA", "$0.6186", "+5.05%"],
+    ["DOT", "$8.4004", "+0.35%"],
+  ];
+
+  const singSignal = insight.signal === "COMPRA" ? "Neutro" : insight.signal;
+  const singSignalColor = insight.signal === "COMPRA" ? ui.cyan : ui.yellow;
+
+  return (
+    <div style={{ height: "100%", padding: 10, background: "linear-gradient(180deg, rgba(4,7,14,0.98), rgba(2,5,10,0.98))" }}>
+      <div
+        style={{
+          height: "100%",
+          borderRadius: 14,
+          border: "1px solid rgba(0,214,255,0.12)",
+          background: "linear-gradient(180deg, rgba(4,8,18,0.98), rgba(2,5,10,0.98))",
+          overflow: "hidden",
+          display: "grid",
+          gridTemplateRows: "auto auto 1fr auto",
+          gap: 10,
+          padding: 10,
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            background:
+              "linear-gradient(rgba(0,214,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,214,255,0.02) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            opacity: 0.35,
+          }}
+        />
+
+        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "2px 4px 0" }}>
+          <div>
+            <div style={{ color: "#eaf6ff", fontSize: 15, fontWeight: 900, letterSpacing: 0.8 }}>Singularidade Terminal</div>
+            <div style={{ color: "#6883aa", fontSize: 10, fontWeight: 800, letterSpacing: 0.5, textTransform: "uppercase" }}>
+              Quantum state monitor
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <span style={{ color: "#00ff9d", fontSize: 10, fontWeight: 900, letterSpacing: 0.7, textTransform: "uppercase" }}>
+              • Ao vivo
+            </span>
+            <span
+              style={{
+                color: ui.cyan,
+                fontSize: 10,
+                fontWeight: 900,
+                padding: "4px 8px",
+                borderRadius: 999,
+                background: "rgba(0,214,255,0.08)",
+                border: "1px solid rgba(0,214,255,0.16)",
+              }}
+            >
+              Módulo Ativo
+            </span>
+          </div>
+        </div>
+
+        <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          <SmallStatCard title="Pulso" value={insight.score >= 78 ? "Elevado" : insight.score >= 58 ? "Moderado" : "Baixo"} sub="Motor matemático em leitura viva." color={ui.cyan2} />
+          <SmallStatCard title="Ruído" value={insight.score >= 72 ? "Baixo" : insight.score >= 50 ? "Moderado" : "Elevado"} sub="Leitura mais limpa do movimento." color={ui.yellow} />
+          <SmallStatCard title="Fase" value={insight.score >= 75 ? "Expansão" : insight.score >= 55 ? "Transição" : "Neutro"} sub="Contexto de aceleração controlada." color={ui.magenta} />
+        </div>
+
+        <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "1.24fr 0.76fr", gap: 10, minHeight: 0 }}>
+          <div style={{ display: "grid", gridTemplateRows: "1fr auto", gap: 10, minHeight: 0 }}>
+            <div
+              style={{
+                borderRadius: 14,
+                border: "1px solid rgba(0,214,255,0.12)",
+                background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                overflow: "hidden",
+                minHeight: 0,
+              }}
+            >
+              <div
+                style={{
+                  padding: "12px 14px 8px",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: "#eef7ff", fontSize: 13, fontWeight: 900 }}>Singularidade</span>
+                  <span
+                    style={{
+                      color: ui.magenta,
+                      fontSize: 10,
+                      fontWeight: 900,
+                      padding: "3px 8px",
+                      borderRadius: 999,
+                      background: "rgba(255,79,163,0.10)",
+                      border: "1px solid rgba(255,79,163,0.16)",
+                    }}
+                  >
+                    {insight.price.toLocaleString()}
+                  </span>
+                </div>
+
+                <span
+                  style={{
+                    color: ui.cyan,
+                    fontSize: 10,
+                    fontWeight: 900,
+                    padding: "4px 10px",
+                    borderRadius: 999,
+                    background: "rgba(0,214,255,0.08)",
+                    border: "1px solid rgba(0,214,255,0.16)",
+                  }}
+                >
+                  Atlas Sync
+                </span>
+              </div>
+
+              <div style={{ padding: 12, height: "calc(100% - 52px)" }}>
+                <svg width="100%" height="100%" viewBox="0 0 860 320" preserveAspectRatio="none">
+                  {Array.from({ length: 7 }, (_, i) => (
+                    <line key={`h-${i}`} x1="0" y1={i * 45} x2="860" y2={i * 45} stroke="rgba(255,255,255,0.035)" strokeWidth="1" />
+                  ))}
+                  {Array.from({ length: 14 }, (_, i) => (
+                    <line key={`v-${i}`} x1={i * 66} y1="0" x2={i * 66} y2="320" stroke="rgba(255,255,255,0.025)" strokeWidth="1" />
+                  ))}
+
+                  {bars.map((h, i) => {
+                    const x = 18 + i * 44;
+                    return <rect key={i} x={x} y={280 - h} width="24" height={h} rx="3" fill="rgba(0,214,255,0.38)" />;
+                  })}
+
+                  <polyline points={line1} fill="none" stroke="#00eaff" strokeWidth="2.4" />
+                  <polyline points={line2} fill="none" stroke="#d7a100" strokeWidth="1.8" opacity="0.9" strokeDasharray="6 4" />
+                </svg>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "0.86fr 1fr 1fr", gap: 10 }}>
+              <div
+                style={{
+                  borderRadius: 14,
+                  border: "1px solid rgba(0,214,255,0.12)",
+                  background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                  padding: 14,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <div style={{ textAlign: "center" }}>
+                  <div
+                    style={{
+                      color: "#6f88af",
+                      fontSize: 10,
+                      fontWeight: 900,
+                      letterSpacing: 0.7,
+                      textTransform: "uppercase",
+                      marginBottom: 14,
+                    }}
+                  >
+                    Índice Singular
+                  </div>
+
+                  <div
+                    style={{
+                      width: 108,
+                      height: 108,
+                      borderRadius: "50%",
+                      margin: "0 auto",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "conic-gradient(#00ff9d 0deg, #00ff9d 290deg, rgba(255,255,255,0.08) 290deg 360deg)",
+                      padding: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        background: "#06101b",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexDirection: "column",
+                      }}
+                    >
+                      <span style={{ color: "#00ff9d", fontSize: 18, fontWeight: 900 }}>{insight.score}</span>
+                      <span style={{ color: "#7f93b7", fontSize: 10 }}>Excelente</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  borderRadius: 14,
+                  border: "1px solid rgba(0,214,255,0.12)",
+                  background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                  padding: 14,
+                }}
+              >
+                <div style={{ color: "#edf7ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
+                  Mercado Live
+                </div>
+
+                <div style={{ display: "grid", gap: 10 }}>
+                  {liveList.map(([sym, price, change]) => (
+                    <div
+                      key={sym}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                        paddingBottom: 8,
+                        borderBottom: "1px solid rgba(255,255,255,0.04)",
+                      }}
+                    >
+                      <div>
+                        <div style={{ color: "#edf6ff", fontSize: 12, fontWeight: 900 }}>{sym}</div>
+                        <div style={{ color: "#6f88af", fontSize: 10 }}>Mercado spot</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ color: "#dce8ff", fontSize: 12, fontWeight: 800 }}>{price}</div>
+                        <div style={{ color: "#00ff9d", fontSize: 11, fontWeight: 900 }}>{change}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  borderRadius: 14,
+                  border: "1px solid rgba(0,214,255,0.12)",
+                  background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                  padding: 14,
+                  display: "grid",
+                  alignContent: "start",
+                  gap: 10,
+                }}
+              >
+                <div style={{ color: "#edf7ff", fontSize: 13, fontWeight: 900 }}>Métricas</div>
+                {[
+                  ["Momentum", "78.4%", ui.cyan],
+                  ["Proteção", "92%", "#00ff9d"],
+                  ["Volatilidade", "34.2", ui.yellow],
+                  ["Desvio", "1.82", ui.magenta],
+                ].map(([k, v, c]) => (
+                  <div
+                    key={k}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: "8px 0",
+                      borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                    <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(0,214,255,0.12)",
+              background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+              padding: 12,
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                color: "#edf7ff",
+                fontSize: 13,
+                fontWeight: 900,
+                marginBottom: 12,
+                textTransform: "uppercase",
+                letterSpacing: 0.7,
+              }}
+            >
+              Leitura do módulo
+            </div>
+
+            <div
+              style={{
+                borderRadius: 12,
+                border: "1px solid rgba(0,214,255,0.10)",
+                background: "linear-gradient(180deg, rgba(6,14,24,0.98), rgba(5,10,20,0.98))",
+                padding: 14,
+                marginBottom: 12,
+                minHeight: 108,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
+                <div style={{ color: ui.magenta, fontSize: 32, fontWeight: 900 }}>
+                  {Math.max(4, Math.round(insight.score / 20))}
+                </div>
+                <div
+                  style={{
+                    color: "#7f93b7",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.7,
+                    marginTop: 6,
+                  }}
+                >
+                  Score
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gap: 6 }}>
+              {[
+                ["Ativo", insight.symbol, "#dce8ff"],
+                ["Sinal", singSignal, singSignalColor],
+                ["Risco", "Alto", ui.red],
+                ["Liquidez", "Inativo", "#8b97ad"],
+                ["Euler", "Desalinhado", ui.magenta],
+              ].map(([k, v, c]) => (
+                <div
+                  key={k}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "10px 0",
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                  <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
+                </div>
+              ))}
+            </div>
+
+            <div
+              style={{
+                marginTop: 14,
+                borderRadius: 12,
+                height: 82,
+                border: "1px solid rgba(255,255,255,0.05)",
+                background:
+                  "radial-gradient(circle at 50% 50%, rgba(255,79,163,0.12), rgba(0,214,255,0.06), transparent 70%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#647da3",
+                fontSize: 10,
+                textTransform: "uppercase",
+                letterSpacing: 1,
+              }}
+            >
+              Campo quântico ativo
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            height: 40,
+            borderRadius: 10,
+            border: "1px solid rgba(0,214,255,0.10)",
+            background: "rgba(0,0,0,0.28)",
+            display: "flex",
+            alignItems: "center",
+            overflow: "hidden",
+            padding: "0 12px",
+            gap: 18,
+          }}
+        >
+          {[
+            ["ETH", "$3,482", "+1.12%", "#00ff9d"],
+            ["SOL", "$187.40", "-0.87%", "#ff4fa3"],
+            ["BNB", "$612.38", "+0.43%", "#00ff9d"],
+            ["ADA", "$0.847", "+3.21%", "#00ff9d"],
+            ["DOT", "$9.34", "-1.05%", "#ff4fa3"],
+            ["AVAX", "$42.18", "+4.78%", "#00ff9d"],
+            ["MATIC", "$1.23", "+0.93%", "#00ff9d"],
+          ].map(([sym, price, change, color]) => (
+            <div
+              key={sym}
+              style={{ display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap", fontSize: 11 }}
+            >
+              <span style={{ color: ui.cyan, fontWeight: 900 }}>{sym}</span>
+              <span style={{ color: "#dce8ff" }}>{price}</span>
+              <span style={{ color: color as string, fontWeight: 900 }}>{change}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IAAtlasModule({ insight }: { insight: AIInsight }) {
+  const probUp = Math.min(88, Math.max(56, insight.score - 8));
+  const probDown = 100 - probUp - 10;
+  const priceLine = Array.from({ length: 28 }, (_, i) => {
+    const x = (i / 27) * 860;
+    const y = 110 + Math.sin(i / 4.2) * 18 + Math.cos(i / 7) * 8;
+    return `${x},${y}`;
+  }).join(" ");
+  const predLine = Array.from({ length: 28 }, (_, i) => {
+    const x = (i / 27) * 860;
+    const y = i < 18 ? 126 + Math.cos(i / 4.5) * 10 : 118 - (i - 18) * 1.1;
+    return `${x},${y}`;
+  }).join(" ");
+
+  return (
+    <div style={{ height: "100%", padding: 10, background: "linear-gradient(180deg, rgba(4,8,16,0.98), rgba(2,6,12,0.98))" }}>
+      <div
+        style={{
+          height: "100%",
+          borderRadius: 14,
+          border: "1px solid rgba(0,214,255,0.12)",
+          background: "linear-gradient(180deg, rgba(4,10,20,0.98), rgba(2,6,12,0.98))",
+          display: "grid",
+          gridTemplateRows: "auto auto 1fr auto",
+          gap: 10,
+          padding: 10,
+          overflow: "hidden",
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            background:
+              "linear-gradient(rgba(0,214,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(0,214,255,0.018) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            opacity: 0.35,
+          }}
+        />
+
+        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ color: "#eaf6ff", fontSize: 15, fontWeight: 900, letterSpacing: 0.8 }}>
+              IA ATLAS
+            </div>
+            <div style={{ color: "#6883aa", fontSize: 10, fontWeight: 800, letterSpacing: 0.5, textTransform: "uppercase" }}>
+              Sistema preditivo de ativos digitais
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <TopButton active>Atlas Sync</TopButton>
+            <span
+              style={{
+                color: "#00ff9d",
+                fontSize: 10,
+                fontWeight: 900,
+                letterSpacing: 0.7,
+                textTransform: "uppercase",
+              }}
+            >
+              • Online
+            </span>
+          </div>
+        </div>
+
+        <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "0.8fr 1.3fr 1fr", gap: 10 }}>
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(0,214,255,0.12)",
+              background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+              padding: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div style={{ textAlign: "center" }}>
+              <div
+                style={{
+                  width: 104,
+                  height: 104,
+                  borderRadius: "50%",
+                  margin: "0 auto 10px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "conic-gradient(#00ff9d 0deg, #24f5d6 300deg, rgba(255,255,255,0.08) 300deg 360deg)",
+                  padding: 8,
+                }}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: "50%",
+                    background: "#06101b",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexDirection: "column",
+                  }}
+                >
+                  <span style={{ color: "#00ff9d", fontSize: 20, fontWeight: 900 }}>{insight.score}</span>
+                  <span style={{ color: "#7f93b7", fontSize: 10 }}>Forte</span>
+                </div>
+              </div>
+              <div style={{ color: "#7f93b7", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.7 }}>
+                Score Atlas
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(0,214,255,0.12)",
+              background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+              padding: 12,
+              display: "grid",
+              gap: 10,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+              <div style={{ color: "#f0f7ff", fontSize: 18, fontWeight: 900 }}>${insight.price.toLocaleString()}</div>
+              <div style={{ color: ui.red, fontSize: 12, fontWeight: 900 }}>↘ -1.17%</div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+              <SmallStatCard title="Sinal" value="COMPRA" color={ui.green} />
+              <SmallStatCard title="Risco" value="Baixo" color={ui.green} />
+              <SmallStatCard title="Tendência" value={insight.trendBias === "bullish" ? "Alta" : insight.trendBias === "bearish" ? "Baixa" : "Neutra"} color={insight.trendBias === "bullish" ? ui.green : insight.trendBias === "bearish" ? ui.red : ui.yellow} />
+            </div>
+          </div>
+
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(0,214,255,0.12)",
+              background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+              padding: 12,
+            }}
+          >
+            <div style={{ color: "#edf7ff", fontSize: 13, fontWeight: 900, marginBottom: 10 }}>
+              Sentimento do Mercado
+            </div>
+            <div style={{ display: "grid", gap: 10 }}>
+              <SmallStatCard title="Fear & Greed" value="79" sub="Ganância extrema" color={ui.green} />
+              <SmallStatCard title="Dominância" value="55.1%" sub="Market cap" color={ui.cyan} />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 10, minHeight: 0 }}>
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(0,214,255,0.12)",
+              background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                padding: "12px 14px 8px",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div>
+                <div style={{ color: "#eef7ff", fontSize: 13, fontWeight: 900 }}>IA Atlas</div>
+                <div style={{ color: "#6f88af", fontSize: 10 }}>Análise preditiva</div>
+              </div>
+              <TopButton>Atlas Sync</TopButton>
+            </div>
+
+            <div style={{ padding: 12, height: "calc(100% - 52px)" }}>
+              <svg width="100%" height="100%" viewBox="0 0 860 320" preserveAspectRatio="none">
+                {Array.from({ length: 7 }, (_, i) => (
+                  <line key={`h-${i}`} x1="0" y1={i * 45} x2="860" y2={i * 45} stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                ))}
+                {Array.from({ length: 14 }, (_, i) => (
+                  <line key={`v-${i}`} x1={i * 66} y1="0" x2={i * 66} y2="320" stroke="rgba(255,255,255,0.02)" strokeWidth="1" />
+                ))}
+                <polyline points={priceLine} fill="none" stroke={ui.cyan} strokeWidth="2.3" />
+                <polyline points={predLine} fill="none" stroke={ui.yellow} strokeWidth="1.8" strokeDasharray="6 4" />
+                <rect x="0" y="110" width="860" height="170" fill="rgba(0,214,255,0.05)" />
+              </svg>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateRows: "1fr 1fr", gap: 10 }}>
+            <div
+              style={{
+                borderRadius: 14,
+                border: "1px solid rgba(0,214,255,0.12)",
+                background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                padding: 14,
+              }}
+            >
+              <div style={{ color: "#00ff9d", fontSize: 13, fontWeight: 900, marginBottom: 10 }}>
+                Probabilidade Alta
+              </div>
+              <div style={{ color: "#00ff9d", fontSize: 42, fontWeight: 900, marginBottom: 10 }}>
+                {probUp.toFixed(1)}%
+              </div>
+              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.06)", overflow: "hidden", marginBottom: 12 }}>
+                <div style={{ width: `${probUp}%`, height: "100%", background: "#00ff9d" }} />
+              </div>
+              <div style={{ display: "grid", gap: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#7f93b7", fontSize: 12 }}>Saída Alta</span>
+                  <span style={{ color: "#dce8ff", fontSize: 12, fontWeight: 900 }}>$98,500.00</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#7f93b7", fontSize: 12 }}>Stop Loss</span>
+                  <span style={{ color: ui.orange, fontSize: 12, fontWeight: 900 }}>$84,500.00</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                borderRadius: 14,
+                border: "1px solid rgba(255,79,163,0.16)",
+                background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                padding: 14,
+              }}
+            >
+              <div style={{ color: ui.magenta, fontSize: 13, fontWeight: 900, marginBottom: 10 }}>
+                Probabilidade Baixa
+              </div>
+              <div style={{ color: ui.magenta, fontSize: 42, fontWeight: 900, marginBottom: 10 }}>
+                {probDown.toFixed(1)}%
+              </div>
+              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.06)", overflow: "hidden", marginBottom: 12 }}>
+                <div style={{ width: `${probDown}%`, height: "100%", background: ui.magenta }} />
+              </div>
+              <div style={{ display: "grid", gap: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#7f93b7", fontSize: 12 }}>Saída Baixa</span>
+                  <span style={{ color: "#dce8ff", fontSize: 12, fontWeight: 900 }}>$82,000.00</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#7f93b7", fontSize: 12 }}>Stop Loss</span>
+                  <span style={{ color: ui.orange, fontSize: 12, fontWeight: 900 }}>$84,500.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 10 }}>
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(0,214,255,0.12)",
+              background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+              padding: 14,
+            }}
+          >
+            <div style={{ color: "#edf7ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
+              Módulo Atlas
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              {[
+                ["Ativo", insight.symbol, "#dce8ff"],
+                ["Risco", insight.riskLevel, ui.yellow],
+                ["Liquidez", "Ativo", ui.green],
+                ["Euler", "Alinhado", ui.green],
+              ].map(([k, v, c]) => (
+                <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                  <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(0,214,255,0.12)",
+              background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+              padding: 14,
+            }}
+          >
+            <div style={{ color: "#edf7ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
+              Previsão Temporal IA
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+              {[
+                ["1H", "55.0%", "30.0%", "15%"],
+                ["4H", "62.0%", "25.0%", "13%"],
+                ["1D", "73.0%", "19.0%", "8%"],
+                ["1W", "68.0%", "22.0%", "10%"],
+              ].map(([tf, up, down, neutral]) => (
+                <div key={tf} style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", paddingLeft: 10 }}>
+                  <div style={{ color: ui.cyan, fontSize: 12, fontWeight: 900, marginBottom: 8 }}>{tf}</div>
+                  <div style={{ color: ui.green, fontSize: 13, fontWeight: 900 }}>{up}</div>
+                  <div style={{ color: ui.magenta, fontSize: 13, fontWeight: 900 }}>{down}</div>
+                  <div style={{ color: ui.orange, fontSize: 13, fontWeight: 900 }}>{neutral}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EstruturaModule({ insight }: { insight: AIInsight }) {
+  const trend1 = Array.from({ length: 40 }, (_, i) => {
+    const x = (i / 39) * 860;
+    const y = 72 + Math.sin(i / 5.2) * 6 + Math.cos(i / 8.3) * 4;
+    return `${x},${y}`;
+  }).join(" ");
+  const trend2 = Array.from({ length: 40 }, (_, i) => {
+    const x = (i / 39) * 860;
+    const y = 102 + Math.cos(i / 5.8) * 8;
+    return `${x},${y}`;
+  }).join(" ");
+  const bars = Array.from({ length: 34 }, (_, i) => ({
+    up: 22 + ((i * 17) % 62),
+    down: 12 + ((i * 11) % 50),
+  }));
+
+  return (
+    <div style={{ height: "100%", padding: 10, background: "linear-gradient(180deg, rgba(4,8,16,0.98), rgba(2,6,12,0.98))" }}>
+      <div
+        style={{
+          height: "100%",
+          borderRadius: 14,
+          border: "1px solid rgba(0,214,255,0.12)",
+          background: "linear-gradient(180deg, rgba(4,10,20,0.98), rgba(2,6,12,0.98))",
+          overflow: "hidden",
+          display: "grid",
+          gridTemplateRows: "auto 1fr",
+          gap: 10,
+          padding: 10,
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            background:
+              "linear-gradient(rgba(0,214,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(0,214,255,0.018) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            opacity: 0.35,
+          }}
+        />
+
+        <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          <SmallStatCard title="Estrutura" value="Alinhada" sub="Tendência e contexto favorecem continuação." color={ui.cyan} />
+          <SmallStatCard title="Base" value="Testando" sub="Região central sustentando o preço." color={ui.yellow} />
+          <SmallStatCard title="Invalidação" value="Controlada" sub="Risco sistêmico ainda aceitável." color={ui.magenta} />
+        </div>
+
+        <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateRows: "1fr auto auto", gap: 10, minHeight: 0 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.18fr 0.82fr", gap: 10, minHeight: 0 }}>
+            <div
+              style={{
+                borderRadius: 14,
+                border: "1px solid rgba(0,214,255,0.12)",
+                background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  padding: "12px 14px 8px",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div style={{ color: "#eef7ff", fontSize: 13, fontWeight: 900 }}>Estrutura</div>
+                <TopButton>Atlas Sync</TopButton>
+              </div>
+
+              <div style={{ padding: 12, height: "calc(100% - 52px)" }}>
+                <svg width="100%" height="100%" viewBox="0 0 860 290" preserveAspectRatio="none">
+                  {Array.from({ length: 7 }, (_, i) => (
+                    <line key={`h-${i}`} x1="0" y1={i * 38} x2="860" y2={i * 38} stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                  ))}
+                  {Array.from({ length: 14 }, (_, i) => (
+                    <line key={`v-${i}`} x1={i * 66} y1="0" x2={i * 66} y2="290" stroke="rgba(255,255,255,0.02)" strokeWidth="1" />
+                  ))}
+
+                  {bars.map((b, i) => {
+                    const x = 18 + i * 24;
+                    return (
+                      <g key={i}>
+                        <rect x={x} y={250 - b.up} width="8" height={b.up} rx="2" fill="rgba(0,255,157,0.72)" />
+                        <rect x={x + 10} y={250 - b.down} width="8" height={b.down} rx="2" fill="rgba(255,91,111,0.72)" />
+                      </g>
+                    );
+                  })}
+
+                  <polyline points={trend1} fill="none" stroke={ui.cyan} strokeWidth="2.2" />
+                  <polyline points={trend2} fill="none" stroke={ui.yellow} strokeWidth="1.8" />
+                </svg>
+              </div>
+            </div>
+
+            <div
+              style={{
+                borderRadius: 14,
+                border: "1px solid rgba(0,214,255,0.12)",
+                background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                padding: 12,
+              }}
+            >
+              <div style={{ color: "#edf7ff", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
+                Leitura do Módulo
+              </div>
+
+              <div
+                style={{
+                  width: 110,
+                  height: 56,
+                  margin: "0 auto 14px",
+                  borderTopLeftRadius: 110,
+                  borderTopRightRadius: 110,
+                  border: "8px solid rgba(255,255,255,0.08)",
+                  borderBottom: "none",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    borderTopLeftRadius: 110,
+                    borderTopRightRadius: 110,
+                    border: `8px solid ${ui.green}`,
+                    borderBottom: "none",
+                    clipPath: "inset(0 35% 0 0)",
+                  }}
+                />
+                <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%)", color: ui.green, fontWeight: 900 }}>
+                  {insight.score}
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: 6 }}>
+                {[
+                  ["Ativo", insight.symbol, "#dce8ff"],
+                  ["Score", `${insight.score}`, ui.green],
+                  ["Sinal", "Compra Forte", ui.green],
+                  ["Risco", "Baixo", ui.green],
+                  ["Liquidez", "Ativo", ui.green],
+                  ["Euler", "Alinhado", ui.cyan],
+                ].map(([k, v, c]) => (
+                  <div
+                    key={k}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: "8px 0",
+                      borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                    <span style={{ color: c as string, fontSize: 13, fontWeight: 900 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div
+              style={{
+                borderRadius: 14,
+                border: "1px solid rgba(0,255,157,0.16)",
+                background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                padding: 14,
+              }}
+            >
+              <div style={{ color: "#00ff9d", fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
+                Cenário Alta
+              </div>
+              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.06)", overflow: "hidden", marginBottom: 12 }}>
+                <div style={{ width: "86%", height: "100%", background: "#00ff9d" }} />
+              </div>
+              <div style={{ display: "grid", gap: 8 }}>
+                {[
+                  ["Alvo 1", "$92,812"],
+                  ["Alvo 2", "$93,513"],
+                  ["Stop Loss", "$84,711"],
+                ].map(([k, v]) => (
+                  <div key={k} style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                    <span style={{ color: k === "Stop Loss" ? ui.yellow : "#dce8ff", fontSize: 13, fontWeight: 900 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div
+              style={{
+                borderRadius: 14,
+                border: "1px solid rgba(255,79,163,0.16)",
+                background: "linear-gradient(180deg, rgba(5,11,22,0.98), rgba(3,7,14,0.98))",
+                padding: 14,
+              }}
+            >
+              <div style={{ color: ui.magenta, fontSize: 13, fontWeight: 900, marginBottom: 12 }}>
+                Cenário Baixa
+              </div>
+              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.06)", overflow: "hidden", marginBottom: 12 }}>
+                <div style={{ width: "14%", height: "100%", background: ui.magenta }} />
+              </div>
+              <div style={{ display: "grid", gap: 8 }}>
+                {[
+                  ["Alvo 1", "$83,451"],
+                  ["Alvo 2", "$81,301"],
+                  ["Stop Loss", "$85,257"],
+                ].map(([k, v]) => (
+                  <div key={k} style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#7f93b7", fontSize: 13 }}>{k}</span>
+                    <span style={{ color: k === "Stop Loss" ? ui.yellow : "#dce8ff", fontSize: 13, fontWeight: 900 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <SmallStatCard title="Sentimento do Mercado" value="54" sub="Neutro" color={ui.yellow} />
+            <SmallStatCard title="Fluxo Institucional" value="+$523M" sub="Tubarões dominando o fluxo." color={ui.green} />
+            <SmallStatCard title="Livro de Ofertas" value="Ativo" sub="Bid/Ask com boa espessura." color={ui.cyan} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WorkspaceByModule({
+  activeModule,
+  candles,
+  indicators,
+  selectedObject,
+  mode,
+  symbol,
+  timeframe,
+  events,
+  insight,
+  scannerAssets,
+  onSelectSymbol,
+  selectedTool,
+}: {
+  activeModule: TopModuleKey;
+  candles: CandleData[];
+  indicators: IndicatorData[];
+  selectedObject: DrawObject | null;
+  mode: ModeKey;
+  symbol: string;
+  timeframe: Timeframe;
+  events: ScannerEvent[];
+  insight: AIInsight;
+  scannerAssets: AssetScore[];
+  onSelectSymbol: (symbol: string) => void;
+  selectedTool: ToolKey;
+}) {
+  if (activeModule === "Scanner") {
+    return <ChartPanel candles={candles} indicators={indicators} selectedObject={selectedObject} mode={mode} symbol={symbol} timeframe={timeframe} selectedTool={selectedTool} />;
   }
+  if (activeModule === "Mestre Scanner") {
+    return <div style={{ height: "100%", padding: 10 }}><MasterScannerPanel assets={scannerAssets} selectedSymbol={symbol} onSelectSymbol={onSelectSymbol} /></div>;
+  }
+  if (activeModule === "Fluxo") return <FluxoModule events={events} />;
+  if (activeModule === "Liquidez") return <div style={{ height: "100%", padding: 10 }}><LiquidityPanel /></div>;
+  if (activeModule === "Euler") return <EulerModule insight={insight} />;
+  if (activeModule === "Singularidade") return <SingularidadeModule insight={insight} />;
+  if (activeModule === "IA Atlas") return <IAAtlasModule insight={insight} />;
+  if (activeModule === "Estrutura") return <EstruturaModule insight={insight} />;
   return null;
 }
 
-function pointToSegDist(px, py, x1, y1, x2, y2) {
-  const dx = x2 - x1, dy = y2 - y1;
-  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy + 0.001)));
-  return Math.sqrt((px - x1 - t * dx) ** 2 + (py - y1 - t * dy) ** 2);
+export default function AtlasChartPro2() {
+  const [timeframe, setTimeframe] = useState<Timeframe>("15m");
+  const [mode] = useState<ModeKey>("auto");
+  const [activeModule, setActiveModule] = useState<TopModuleKey>("Scanner");
+  const [selectedTool, setSelectedTool] = useState<ToolKey>("cursor");
+  const [objects] = useState<DrawObject[]>([]);
+  const [selectedId] = useState<string | null>(null);
+  const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC");
+
+  const scannerAssets = useMemo<AssetScore[]>(
+    () => [
+      { symbol: "BTC", volumeScore: 82.41, rsiMfi: 64.82, price: 74682, change: 2.8, trend: "up", color: "#27f59d", aiScore: 84, signal: "COMPRA", riskLevel: "Moderado", riskType: "Volatilidade", invalidation: 69180.6 },
+      { symbol: "ETH", volumeScore: 73.35, rsiMfi: 58.1, price: 3932, change: 2.58, trend: "up", color: "#31c8ff", aiScore: 79, signal: "COMPRA", riskLevel: "Moderado", riskType: "Pullback", invalidation: 3560 },
+      { symbol: "SOL", volumeScore: 61.18, rsiMfi: 43.7, price: 174.8, change: 3.06, trend: "up", color: "#ffb14a", aiScore: 76, signal: "COMPRA", riskLevel: "Moderado", riskType: "Aceleração", invalidation: 166 },
+      { symbol: "BNB", volumeScore: 69.08, rsiMfi: 52.2, price: 610.75, change: 0.43, trend: "neutral", color: "#f7c948", aiScore: 61, signal: "NEUTRO", riskLevel: "Moderado", riskType: "Consolidação", invalidation: 584 },
+      { symbol: "XRP", volumeScore: 55.63, rsiMfi: 39.9, price: 2.147, change: -1.1, trend: "down", color: "#a783ff", aiScore: 36, signal: "BAIXA", riskLevel: "Moderado", riskType: "Pressão", invalidation: 2.32 },
+      { symbol: "DOGE", volumeScore: 66.14, rsiMfi: 57.6, price: 0.387, change: -0.81, trend: "down", color: "#22c55e", aiScore: 52, signal: "NEUTRO", riskLevel: "Moderado", riskType: "Volatilidade", invalidation: 0.35 },
+      { symbol: "AVAX", volumeScore: 71.44, rsiMfi: 61.82, price: 38.87, change: 3.48, trend: "up", color: "#31e9ff", aiScore: 77, signal: "COMPRA", riskLevel: "Moderado", riskType: "Aceleração", invalidation: 35.4 },
+      { symbol: "DOT", volumeScore: 60.22, rsiMfi: 49.5, price: 8.98, change: 2.15, trend: "up", color: "#ff4fa3", aiScore: 68, signal: "COMPRA", riskLevel: "Moderado", riskType: "Faixa", invalidation: 8.1 },
+      { symbol: "ADA", volumeScore: 62.5, rsiMfi: 51.8, price: 0.847, change: 3.21, trend: "up", color: "#00d8ff", aiScore: 71, signal: "COMPRA", riskLevel: "Moderado", riskType: "Pullback", invalidation: 0.79 },
+      { symbol: "ARB", volumeScore: 44.62, rsiMfi: 48.3, price: 1.21, change: 0.5, trend: "neutral", color: "#52b6ff", aiScore: 54, signal: "NEUTRO", riskLevel: "Moderado", riskType: "Faixa", invalidation: 1.12 },
+    ],
+    []
+  );
+
+  const scannerEvents = useMemo<ScannerEvent[]>(
+    () => [
+      { time: "23:31:25", title: "Compra Baleia", tag: "Fluxo • Scanner", tone: "positive" },
+      { time: "14:30:23", title: "Venda Retail", tag: "Confluência", tone: "neutral" },
+      { time: "14:29:47", title: "Compra Baleia", tag: "RSI / MFI", tone: "positive" },
+      { time: "14:29:47", title: "Venda Institucional", tag: "Risco Assimétrico", tone: "warning" },
+      { time: "14:31:08", title: "Liquidação Long", tag: "Eventos", tone: "warning" },
+      { time: "14:30:55", title: "Compra Algorítmica", tag: "Scanner+", tone: "positive" },
+      { time: "14:32:15", title: "Compra Grande", tag: "Singularidade", tone: "positive" },
+      { time: "14:31:42", title: "Venda Institucional", tag: "Confluência", tone: "neutral" },
+    ],
+    []
+  );
+
+  const activeAsset = useMemo(
+    () => scannerAssets.find((a) => a.symbol === selectedSymbol) ?? scannerAssets[0],
+    [scannerAssets, selectedSymbol]
+  );
+
+  const candles = useMemo(() => generateCandles(240, symbolBasePrice(activeAsset.symbol)), [activeAsset.symbol]);
+  const indicators = useMemo(() => generateIndicators(candles), [candles]);
+  const selectedObject = useMemo(
+    () => objects.find((o) => o.id === selectedId) ?? null,
+    [objects, selectedId]
+  );
+  const insight = useMemo(() => symbolToInsight(activeAsset), [activeAsset]);
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        background: ui.bg,
+        color: ui.text,
+        fontFamily: "Inter, Arial, sans-serif",
+      }}
+    >
+
+      <style>{`
+        [data-atlas-scroll="cyan"] {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(45,226,255,0.55) rgba(255,255,255,0.04);
+        }
+        [data-atlas-scroll="cyan"]::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        [data-atlas-scroll="cyan"]::-webkit-scrollbar-track {
+          background: rgba(255,255,255,0.03);
+          border-radius: 999px;
+        }
+        [data-atlas-scroll="cyan"]::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, rgba(45,226,255,0.72), rgba(0,216,255,0.38));
+          border-radius: 999px;
+          border: 1px solid rgba(45,226,255,0.18);
+        }
+      `}</style>
+
+      <TopBar
+        symbol={activeAsset.symbol}
+        price={activeAsset.price}
+        change={activeAsset.change}
+        timeframe={timeframe}
+        onTimeframeChange={setTimeframe}
+      />
+
+      <ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
+
+      <div style={{ display: "flex", minHeight: 0, flex: 1 }}>
+        <LeftToolbar selectedTool={selectedTool} onSelectTool={setSelectedTool} />
+
+        <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) 320px",
+              height: "100%",
+              minHeight: 0,
+            }}
+          >
+            <div style={{ minWidth: 0, minHeight: 0 }}>
+              <WorkspaceByModule
+                activeModule={activeModule}
+                candles={candles}
+                indicators={indicators}
+                selectedObject={selectedObject}
+                mode={mode}
+                symbol={activeAsset.symbol}
+                timeframe={timeframe}
+                events={scannerEvents}
+                insight={insight}
+                scannerAssets={scannerAssets}
+                onSelectSymbol={setSelectedSymbol}
+                selectedTool={selectedTool}
+              />
+            </div>
+
+            <div
+              style={{
+                minWidth: 0,
+                minHeight: 0,
+                borderLeft: `1px solid ${ui.border}`,
+                background:
+                  "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+                display: "grid",
+                gridTemplateRows:
+                  activeModule === "Scanner" || activeModule === "Mestre Scanner"
+                    ? "1fr"
+                    : "1fr auto",
+              }}
+            >
+              <AIInsightPanel insight={insight} topModule={activeModule} />
+
+              {activeModule !== "Scanner" && activeModule !== "Mestre Scanner" && (
+                <div
+                  style={{
+                    borderTop: `1px solid ${ui.border}`,
+                    padding: 10,
+                    background: "rgba(255,255,255,0.015)",
+                  }}
+                >
+                  <ScannerPanelContinuous
+                    assets={scannerAssets.slice(0, 6)}
+                    selectedSymbol={selectedSymbol}
+                    onSelectSymbol={setSelectedSymbol}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
-
-
-// ========================================
-// SETTINGS MODAL
-// ========================================
-
-function openSettings(d) {
-  if (!d) return;
-  selDraw = d;
-
-  const titles = {
-    hline:'Linha Horizontal', trendline:'Linha de Tendência', ray:'Raio',
-    extended:'Linha Estendida', channel:'Canal Paralelo', fib:'Fibonacci Retração',
-    fibext:'Fib Extensão', fibarc:'Fib Arcos', fibfan:'Fib Fan',
-    rect:'Retângulo', triangle:'Triângulo', ellipse:'Elipse',
-    measure:'Medição', text:'Texto', vline:'Linha Vertical', pitchfork:'Pitchfork'
-  };
-  document.getElementById('settingsTitle').textContent = '⚙ ' + (titles[d.type] || 'Configurações');
-
-  // Populate style tab
-  const color = d.color || '#ffd54f';
-  document.getElementById('sColorPreview').style.background = color;
-  document.getElementById('sColorPicker').value = color;
-  document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('sel', s.style.background === color || s.getAttribute('onclick')?.includes(color)));
-  document.getElementById('sWidth').value = d.lineWidth || 2;
-  document.getElementById('sLineStyle').value = d.lineStyle || 'solid';
-  document.getElementById('sFillOpacity').value = d.fillOpacity !== undefined ? d.fillOpacity : 10;
-  document.getElementById('sFillOpacityVal').textContent = (d.fillOpacity || 10) + '%';
-  document.getElementById('sShowPrice').value = d.showPrice !== false ? '1' : '0';
-  document.getElementById('sVisible').checked = !d.hidden;
-  document.getElementById('sLocked').checked = !!d.locked;
-  document.getElementById('sNote').value = d.note || '';
-
-  // Hide all specific sections
-  ['sFibSection','sTextSection','sHLineSection','sChannelSection','sRectSection','sTrendSection'].forEach(id => {
-    document.getElementById(id).style.display = 'none';
-  });
-
-  // Show type-specific sections
-  if (d.type === 'fib' || d.type === 'fibext' || d.type === 'fibarc' || d.type === 'fibfan') {
-    document.getElementById('sFibSection').style.display = 'block';
-    if (!d.fibLevels) d.fibLevels = JSON.parse(JSON.stringify(DEFAULT_FIB_LEVELS));
-    renderFibLevels(d.fibLevels);
-    renderLevelsTab(d);
-  } else if (d.type === 'text') {
-    document.getElementById('sTextSection').style.display = 'block';
-    document.getElementById('sTextContent').value = d.text || '';
-    document.getElementById('sTextSize').value = d.size || 13;
-    document.getElementById('sTextBold').checked = !!d.bold;
-  } else if (d.type === 'hline') {
-    document.getElementById('sHLineSection').style.display = 'block';
-    document.getElementById('sHLinePrice').value = d.price ? d.price.toFixed(2) : '';
-    document.getElementById('sHLineLabel').value = d.label || '';
-  } else if (d.type === 'channel') {
-    document.getElementById('sChannelSection').style.display = 'block';
-    document.getElementById('sChannelOffset').value = d.offset || 0;
-    document.getElementById('sChannelVal').textContent = (d.offset || 0).toFixed(0);
-  } else if (d.type === 'rect') {
-    document.getElementById('sRectSection').style.display = 'block';
-    document.getElementById('sRectPercent').checked = d.showPercent !== false;
-    document.getElementById('sRectPrices').checked = d.showPrices !== false;
-  } else if (d.type === 'trendline' || d.type === 'ray' || d.type === 'extended') {
-    document.getElementById('sTrendSection').style.display = 'block';
-    document.getElementById('sTrendArrow').checked = d.showArrow !== false;
-    document.getElementById('sTrendAngle').checked = !!d.showAngle;
-    document.getElementById('sTrendVariation').checked = !!d.showVariation;
-  }
-
-  switchSettingsTab('style');
-  document.getElementById('settingsMo').style.display = 'flex';
-}
-
-function renderFibLevels(levels) {
-  var container = document.getElementById('sFibLevels');
-  container.innerHTML = '';
-  for (var i = 0; i < levels.length; i++) {
-    var lvl = levels[i];
-    var row = document.createElement('div');
-    row.className = 'fib-row';
-    var chk = lvl.visible ? 'checked' : '';
-    var pct = (lvl.pct * 100).toFixed(1);
-    row.innerHTML = '<input type="checkbox" ' + chk + ' onchange="updateFibLevel(' + i + ',\'visible\',this.checked)">'
-      + '<input type="number" value="' + pct + '" step="0.1" min="-500" max="500" onchange="updateFibLevel(' + i + ',\'pct\',parseFloat(this.value)/100)">'
-      + '<input type="color" value="' + lvl.color + '" onchange="updateFibLevel(' + i + ',\'color\',this.value)">'
-      + '<button class="del-fib" onclick="removeFibLevel(' + i + ')">&#x2715;</button>';
-    container.appendChild(row);
-  }
-}
-
-function updateFibLevel(i, key, val) {
-  if (selDraw && selDraw.fibLevels) {
-    selDraw.fibLevels[i][key] = val;
-    draw();
-  }
-}
-
-function removeFibLevel(i) {
-  if (selDraw && selDraw.fibLevels) {
-    selDraw.fibLevels.splice(i, 1);
-    renderFibLevels(selDraw.fibLevels);
-    draw();
-  }
-}
-
-function addFibLevel() {
-  if (selDraw) {
-    if (!selDraw.fibLevels) selDraw.fibLevels = JSON.parse(JSON.stringify(DEFAULT_FIB_LEVELS));
-    selDraw.fibLevels.push({ pct: 2.0, color: '#00d4ff', visible: true });
-    renderFibLevels(selDraw.fibLevels);
-  }
-}
-
-function renderLevelsTab(d) {
-  var cont = document.getElementById('sLevelsContent');
-  if (!d.fibLevels) { cont.innerHTML = '<div style="color:var(--t2);padding:12px;font-size:10px;text-align:center;">Sem n\u00edveis configur\u00e1veis</div>'; return; }
-  var rng = getRange(); var chartH = H * 0.78;
-  var pDiff = d.p2 - d.p1;
-  var html = '<div style="font-size:9px;color:var(--t2);margin-bottom:8px;">N\u00edveis calculados com base nos pontos do desenho</div>';
-  d.fibLevels.filter(function(l){ return l.visible; }).forEach(function(l) {
-    var price = d.p1 + pDiff * l.pct;
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd);">'
-      + '<div style="display:flex;align-items:center;gap:6px;">'
-      + '<div style="width:10px;height:10px;border-radius:2px;background:' + l.color + ';"></div>'
-      + '<span style="font-size:10px;font-family:JetBrains Mono,monospace;">' + (l.pct*100).toFixed(1) + '%</span>'
-      + '</div>'
-      + '<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600;color:' + l.color + ';"> ' + price.toFixed(2) + '</span>'
-      + '</div>';
-  });
-  cont.innerHTML = html;
-}
-
-function switchSettingsTab(tab) {
-  ['style','levels','visibility'].forEach(t => {
-    document.getElementById('sTab_' + t).style.display = t === tab ? 'block' : 'none';
-    document.getElementById('stab_' + t).classList.toggle('on', t === tab);
-  });
-}
-
-function setSwatch(color) {
-  drawColor = color;
-  document.getElementById('sColorPreview').style.background = color;
-  document.getElementById('sColorPicker').value = color;
-  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('sel'));
-  if (selDraw) { selDraw.color = color; draw(); }
-}
-
-function previewChannel(val) {
-  document.getElementById('sChannelVal').textContent = parseFloat(val).toFixed(0);
-  if (selDraw && selDraw.type === 'channel') { selDraw.offset = parseFloat(val); draw(); }
-}
-
-function applySettings() {
-  if (!selDraw) { closeMo('settingsMo'); return; }
-  const d = selDraw;
-
-  // Style
-  d.color = document.getElementById('sColorPreview').style.background || d.color;
-  d.lineWidth = parseFloat(document.getElementById('sWidth').value);
-  d.lineStyle = document.getElementById('sLineStyle').value;
-  d.fillOpacity = parseInt(document.getElementById('sFillOpacity').value);
-  d.showPrice = document.getElementById('sShowPrice').value === '1';
-
-  // Visibility
-  d.hidden = !document.getElementById('sVisible').checked;
-  d.locked = document.getElementById('sLocked').checked;
-  d.note = document.getElementById('sNote').value;
-
-  // Type-specific
-  if (d.type === 'text') {
-    d.text = document.getElementById('sTextContent').value;
-    d.size = parseInt(document.getElementById('sTextSize').value);
-    d.bold = document.getElementById('sTextBold').checked;
-  } else if (d.type === 'hline') {
-    const p = parseFloat(document.getElementById('sHLinePrice').value);
-    if (!isNaN(p)) d.price = p;
-    d.label = document.getElementById('sHLineLabel').value;
-  } else if (d.type === 'channel') {
-    d.offset = parseFloat(document.getElementById('sChannelOffset').value);
-  } else if (d.type === 'rect') {
-    d.showPercent = document.getElementById('sRectPercent').checked;
-    d.showPrices = document.getElementById('sRectPrices').checked;
-  } else if (d.type === 'trendline' || d.type === 'ray' || d.type === 'extended') {
-    d.showArrow = document.getElementById('sTrendArrow').checked;
-    d.showAngle = document.getElementById('sTrendAngle').checked;
-    d.showVariation = document.getElementById('sTrendVariation').checked;
-  }
-
-  draw();
-  closeMo('settingsMo');
-  notify('✓ Configurações aplicadas', 'cyan');
-}
-
-// ========================================
-// TOOLBAR ACTIONS
-// ========================================
-function setTool(t, el) {
-  tool = t;
-  document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('on'));
-  if (el) el.classList.add('on');
-  const labels = {
-    cursor:'Cursor', cross:'Mira', trendline:'Tendência', hline:'Linha Horizontal',
-    vline:'Linha Vertical', ray:'Raio', extended:'Estendida', channel:'Canal',
-    pitchfork:'Pitchfork', fib:'Fibonacci Retração', fibext:'Fib Extensão',
-    fibarc:'Fib Arcos', fibfan:'Fib Fan', rect:'Retângulo', triangle:'Triângulo',
-    ellipse:'Elipse', measure:'Medir', text:'Texto', magnet:'Magneto'
-  };
-  document.getElementById('atool').textContent = 'Ferramenta: ' + (labels[t] || t);
-  canvas.style.cursor = t === 'cursor' ? 'default' : 'crosshair';
-  isDrawing = false; drawPt1 = null;
-}
-
-function toggleMagnet(el) {
-  magnetOn = !magnetOn;
-  el.classList.toggle('on', magnetOn);
-  notify(magnetOn ? '🧲 Magneto ON' : '🧲 Magneto OFF');
-}
-
-function setDrawColor(c) {
-  drawColor = c;
-  if (selDraw) { selDraw.color = c; draw(); }
-  notify(`Cor: ${c}`);
-}
-
-function toggleMA(p, c) { mas[p] = !mas[p]; draw(); notify(`MA${p} ${mas[p] ? 'ON' : 'OFF'}`); }
-function lockAllDrawings() { drawings.forEach(d => d.locked = !d.locked); notify('Desenhos travados'); }
-function toggleHideDrawings() { hideDrawings = !hideDrawings; draw(); notify(hideDrawings ? '🙈 Ocultos' : '👁 Visíveis'); }
-function deleteSelectedDrawing() {
-  if (selDraw) {
-    drawings = drawings.filter(d => d !== selDraw);
-    selDraw = null;
-    document.getElementById('dc').textContent = drawings.length;
-    draw();
-    notify('🗑 Desenho apagado — Delete', 'red');
-  } else {
-    notify('⚠ Clique em um desenho para selecionar', 'orange');
-  }
-}
-function clearDrawings() { drawings = []; selDraw = null; document.getElementById('dc').textContent = 0; draw(); notify('Limpo'); }
-function undoDrawing() {
-  if (drawings.length) { drawings.pop(); document.getElementById('dc').textContent = drawings.length; draw(); notify('Desfeito'); }
-}
-
-function ctxAction(a) {
-  if (!selDraw) return;
-  document.getElementById('CTX').style.display = 'none';
-  if (a === 'edit') { openSettings(selDraw); return; }
-  if (a === 'delete') { drawings = drawings.filter(d => d !== selDraw); selDraw = null; document.getElementById('dc').textContent = drawings.length; notify('🗑 Apagado','red'); }
-  else if (a === 'lock') { selDraw.locked = !selDraw.locked; notify(selDraw.locked ? '🔒 Travado' : '🔓 Destravado'); }
-  else if (a === 'hide') { selDraw.hidden = !selDraw.hidden; notify(selDraw.hidden ? '🙈 Oculto' : '👁 Visível'); }
-  else if (a === 'settings') { openSettings(selDraw); return; }
-  draw();
-}
-
-function addText() {
-  const txt = document.getElementById('tText').value;
-  const sz = parseInt(document.getElementById('tSize').value);
-  if (txt && pendingText) {
-    const rng = getRange(); const chartH = H * 0.78;
-    const price = y2p(pendingText.y, rng, chartH);
-    drawings.push({ type: 'text', x1: pendingText.x, p1: price, text: txt, size: sz, color: drawColor });
-    document.getElementById('dc').textContent = drawings.length;
-    draw(); notify(`Texto: "${txt}"`);
-  }
-  closeMo('textMo');
-}
-
-// ========================================
-// CHART CONTROLS
-// ========================================
-function setTF(tf, el) {
-  TF = tf;
-  document.querySelectorAll('.tf').forEach(b => b.classList.remove('on'));
-  el.classList.add('on');
-  candles = genCandles(200); draw(); drawOsc();
-  notify(`TF: ${tf}`);
-}
-
-function setMode(m, el) {
-  document.getElementById('autoB').classList.toggle('on', m === 'auto');
-  document.getElementById('manB').classList.toggle('on', m === 'manual');
-  notify(`Modo: ${m}`);
-}
-
-function followPrice() { panOff = 0; draw(); notify('Seguindo preço'); }
-function goNow() { panOff = 0; draw(); notify('Agora'); }
-function zoomIn() { visN = Math.max(15, visN - 8); draw(); drawOsc(); }
-function zoomOut() { visN = Math.min(200, visN + 8); draw(); drawOsc(); }
-function resetChart() { panOff = 0; visN = 80; clearDrawings(); notify('Reset'); }
-
-function toggleReplay() {
-  replayMode = !replayMode;
-  document.getElementById('rbtn').textContent = replayMode ? '⏸ Pausado' : '▶ Replay';
-  if (!replayMode) updatePrice();
-  notify(replayMode ? 'Pausado' : 'Ao vivo');
-}
-
-// ========================================
-// LIVE PRICE
-// ========================================
-function updatePrice() {
-  const last = candles[candles.length - 1];
-  const chg = (Math.random() - 0.49) * last.c * 0.0007;
-  last.c += chg; last.h = Math.max(last.h, last.c); last.l = Math.min(last.l, last.c);
-  if (Math.random() < 0.004) {
-    candles.push({ o: last.c, h: last.c, l: last.c, c: last.c, v: 100 + Math.random() * 500, t: Date.now() });
-    if (candles.length > 300) candles.shift();
-  }
-  const p = last.c;
-  const firstP = candles[0].c;
-  const pct = ((p - firstP) / firstP * 100);
-  const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  document.getElementById('tp').textContent = '$' + fmt(p);
-  document.getElementById('tc').textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
-  document.getElementById('tc').className = 'cchg' + (pct < 0 ? ' neg' : '');
-  document.getElementById('cp').textContent = p.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  document.getElementById('pp').textContent = fmt(p);
-  document.getElementById('pnl').textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
-  // Alert check
-  alerts.forEach(a => {
-    if (!a.triggered && ((a.cond === 'above' && p >= a.price) || (a.cond === 'below' && p <= a.price))) {
-      a.triggered = true;
-      notify(`🔔 ALERTA! BTC ${a.cond === 'above' ? '>' : '<'} $${a.price.toLocaleString()}`, 'yellow');
-    }
-  });
-  draw(); drawOsc();
-  if (!replayMode) setTimeout(updatePrice, 450);
-}
-
-// ========================================
-// MODALS
-// ========================================
-function openAlertModal() {
-  document.getElementById('aPrice').value = Math.round(candles[candles.length - 1].c + 500);
-  document.getElementById('alertMo').style.display = 'flex';
-}
-function createAlert() {
-  const p = parseFloat(document.getElementById('aPrice').value);
-  const c = document.getElementById('aCond').value;
-  if (!isNaN(p)) { alerts.push({ price: p, cond: c, triggered: false }); notify(`🔔 Alerta criado: $${p.toLocaleString()}`, 'yellow'); }
-  closeMo('alertMo');
-}
-function openAssetModal() {
-  const list = document.getElementById('assetList');
-  list.innerHTML = ASSETS.map(a => `<div onclick="selectAsset('${a}')" style="padding:7px 10px;cursor:pointer;font-size:11px;border-radius:4px;transition:.1s;" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">${a}/USDT</div>`).join('');
-  document.getElementById('assetMo').style.display = 'flex';
-}
-function filterAssets(q) {
-  const list = document.getElementById('assetList');
-  list.innerHTML = ASSETS.filter(a => a.toLowerCase().includes(q.toLowerCase())).map(a => `<div onclick="selectAsset('${a}')" style="padding:7px 10px;cursor:pointer;font-size:11px;border-radius:4px;">${a}/USDT</div>`).join('');
-}
-function selectAsset(a) { notify(`Ativo: ${a}`); closeMo('assetMo'); }
-function closeMo(id) { document.getElementById(id).style.display = 'none'; }
-
-
-// ========================================
-// UI HELPERS
-// ========================================
-function t2(el) { document.querySelectorAll('.tab2').forEach(t => t.classList.remove('on')); el.classList.add('on'); notify(el.textContent.trim()); }
-function ntab(el, t) { document.querySelectorAll('.ntab').forEach(n => n.classList.remove('on')); el.classList.add('on'); notify(t); }
-
-function buildScoreBars(score) {
-  const sb = document.getElementById('sb'); sb.innerHTML = '';
-  for (let i = 0; i < 10; i++) {
-    const s = document.createElement('div');
-    s.className = 'sseg' + (i < Math.round(score / 10) ? ' f' : '');
-    sb.appendChild(s);
-  }
-}
-function buildConfDots(n, max) {
-  const cd = document.getElementById('cdots'); cd.innerHTML = '';
-  for (let i = 0; i < max; i++) {
-    const d = document.createElement('div');
-    d.className = 'cdot' + (i < n ? ' a' : '');
-    cd.appendChild(d);
-  }
-}
-
-function qa(t) {
-  if (t === 'long') notify('✅ LONG BTC simulado', 'green');
-  else if (t === 'short') notify('⚠ SHORT BTC simulado', 'red');
-}
-
-function notify(msg, type = 'cyan') {
-  const colors = { cyan: 'var(--cyan)', green: 'var(--green)', red: 'var(--red)', yellow: 'var(--yellow)', orange: 'var(--orange)' };
-  const nc = document.getElementById('NC');
-  const el = document.createElement('div');
-  el.className = 'notif';
-  el.style.borderLeftColor = colors[type] || colors.cyan;
-  el.textContent = msg;
-  nc.appendChild(el);
-  setTimeout(() => el.remove(), 3200);
-}
-
-// ========================================
-// KEYBOARD SHORTCUTS
-// ========================================
-document.addEventListener('keydown', e => {
-  if (['alertMo','textMo','assetMo','settingsMo'].some(id => document.getElementById(id).style.display === 'flex')) return;
-  const map = {
-    'v': () => setTool('cursor', document.getElementById('tool_cursor')),
-    'c': () => setTool('cross', document.getElementById('tool_cross')),
-    't': () => setTool('trendline', document.getElementById('tool_trendline')),
-    'h': () => setTool('hline', document.getElementById('tool_hline')),
-    'k': () => setTool('vline', document.getElementById('tool_vline')),
-    'r': () => setTool('ray', document.getElementById('tool_ray')),
-    'f': () => setTool('fib', document.getElementById('tool_fib')),
-    'g': () => setTool('rect', document.getElementById('tool_rect')),
-    'm': () => setTool('measure', document.getElementById('tool_measure')),
-    'x': () => setTool('text', document.getElementById('tool_text')),
-    'z': () => undoDrawing(),
-    'Delete': () => deleteSelectedDrawing(),
-    'Backspace': () => deleteSelectedDrawing(),
-    'Escape': () => { selDraw = null; isDrawing = false; drawPt1 = null; setTool('cursor', document.getElementById('tool_cursor')); draw(); },
-    'Enter': () => { if (selDraw) openSettings(selDraw); },
-    '+': zoomIn, '=': zoomIn, '-': zoomOut,
-    ' ': () => { e.preventDefault(); followPrice(); },
-  };
-  if (map[e.key]) map[e.key]();
-});
-
-document.addEventListener('DOMContentLoaded', function() { document.querySelectorAll('.mo').forEach(function(m){ m.addEventListener('click', function(e){ if(e.target===m) m.style.display='none'; }); }); init(); });
-window.addEventListener('resize', function(){ if(canvas) resize(); });
-</script>
-</body>
-</html>
