@@ -3347,233 +3347,87 @@ function LiquidityPanel() {
 // ============================================================
 
 function ChartPanel({
-  candles,
-  indicators,
-  selectedObject,
-  mode,
-  symbol,
-  timeframe,
-  selectedTool,
-  drawingState,
-  onContextMenu,
-  onDoubleClick,
-  onSetSettingsDrawing,
-}: {
-  candles: CandleData[];
-  indicators: IndicatorData[];
-  selectedObject: DrawObject | null;
-  mode: ModeKey;
-  symbol: string;
-  timeframe: Timeframe;
-  selectedTool: DrawTool;
-  drawingState: ReturnType<typeof useDrawings>;
-  onContextMenu: (drawing: Drawing, x: number, y: number) => void;
-  onDoubleClick: (drawing: Drawing) => void;
-  onSetSettingsDrawing: (d: Drawing) => void;
-}) {
-  const mainRef = useRef<HTMLDivElement>(null);
-  const volOverlayRef = useRef<HTMLDivElement>(null);
-  const rsiRef = useRef<HTMLDivElement>(null);
-  const overlayRef = useRef<SVGSVGElement>(null);
+ // Dentro de ChartPanel, substitua estas funções:
 
-  const [livePrice, setLivePrice] = useState<number>(candles[candles.length - 1]?.close ?? 0);
-  const [priceChange, setPriceChange] = useState<number>(0);
-  const [svgSize, setSvgSize] = useState({ w: 1000, h: 600 });
-  const [draftStart, setDraftStart] = useState<{ x: number; y: number } | null>(null);
+const [dragId, setDragId] = useState<string | null>(null);
+const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
 
-  useEffect(() => {
-    if (!mainRef.current || !volOverlayRef.current || !rsiRef.current) return;
+const handleOverlayMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+  const p = getLocalPoint(e);
+  
+  // Verifica se clicou em algum desenho
+  const hit = drawingState.drawings.find(d => !d.hidden && hitTestDrawing(d, p.x, p.y));
+  
+  if (hit && !hit.locked) {
+    drawingState.setSelectedId(hit.id);
+    setDragId(hit.id);
+    setDragOffset({ x: p.x - hit.x1, y: p.y - hit.y1 });
+    if (e.button === 2) {
+      e.preventDefault();
+      onContextMenu(hit, e.clientX, e.clientY);
+    } else if (e.detail === 2) {
+      onDoubleClick(hit);
+    }
+    return;
+  }
 
-    const baseChartOpts = {
-      layout: {
-        background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#7085ad",
-        fontFamily: "JetBrains Mono, monospace",
-        fontSize: 10,
-      },
-      grid: {
-        vertLines: { color: "rgba(255,255,255,0.035)", style: 1 as const },
-        horzLines: { color: "rgba(255,255,255,0.035)", style: 1 as const },
-      },
-      crosshair: { mode: CrosshairMode.Normal },
-      rightPriceScale: { borderColor: "rgba(255,255,255,0.08)" },
-      timeScale: {
-        borderColor: "rgba(255,255,255,0.08)",
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      handleScroll: true,
-      handleScale: true,
-    };
+  // Se não clicou em desenho e está em modo de desenho
+  if (drawingState.activeTool !== "cursor") {
+    drawingState.setSelectedId(null);
+    setDraftStart(p);
+  } else {
+    drawingState.setSelectedId(null);
+    setDragId(null);
+    setDragOffset(null);
+  }
+};
 
-    const mc: IChartApi = createChart(mainRef.current, {
-      ...baseChartOpts,
-      width: mainRef.current.clientWidth,
-      height: mainRef.current.clientHeight,
-    });
-
-    const cSeries = mc.addCandlestickSeries({
-      upColor: "#37f4ad",
-      downColor: "#ff6c8d",
-      borderUpColor: "#37f4ad",
-      borderDownColor: "#ff6c8d",
-      wickUpColor: "#37f4ad",
-      wickDownColor: "#ff6c8d",
-    });
-
-    cSeries.setData(
-      candles.map((c) => ({
-        time: c.time as Time,
-        open: c.open,
-        high: c.high,
-        low: c.low,
-        close: c.close,
-      }))
-    );
-
-    const ma20 = mc.addLineSeries({
-      color: "#d2b000",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    ma20.setData(computeSMA(candles, 20).map((d) => ({ time: d.time as Time, value: d.value })));
-
-    const ma50 = mc.addLineSeries({
-      color: "#8b5cf6",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    ma50.setData(computeSMA(candles, 50).map((d) => ({ time: d.time as Time, value: d.value })));
-
-    const ema100 = mc.addLineSeries({
-      color: "#22d3ee",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    ema100.setData(computeEMA(candles, 100).map((d) => ({ time: d.time as Time, value: d.value })));
-
-    mc.timeScale().fitContent();
-
-    const last = candles[candles.length - 1];
-    const prev = candles[candles.length - 2] ?? last;
-    setLivePrice(last.close);
-    setPriceChange(((last.close - prev.close) / prev.close) * 100);
-
-    const vc: IChartApi = createChart(volOverlayRef.current, {
-      ...baseChartOpts,
-      width: volOverlayRef.current.clientWidth,
-      height: volOverlayRef.current.clientHeight,
-      rightPriceScale: { visible: false, borderColor: "rgba(255,255,255,0)" },
-      timeScale: { visible: false, borderColor: "rgba(255,255,255,0)" },
-      grid: {
-        vertLines: { color: "rgba(255,255,255,0)", style: 1 as const },
-        horzLines: { color: "rgba(255,255,255,0)", style: 1 as const },
-      },
-    });
-
-    const volSeries = vc.addHistogramSeries({ priceScaleId: "" });
-    volSeries.setData(
-      candles.map((c) => ({
-        time: c.time as Time,
-        value: c.volume,
-        color: c.close >= c.open ? "rgba(55,244,173,0.42)" : "rgba(255,108,141,0.42)",
-      }))
-    );
-    vc.timeScale().fitContent();
-
-    const rc: IChartApi = createChart(rsiRef.current, {
-      ...baseChartOpts,
-      width: rsiRef.current.clientWidth,
-      height: rsiRef.current.clientHeight,
-    });
-
-    const rsiSeries = rc.addLineSeries({
-      color: "#8b5cf6",
-      lineWidth: 2,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    const mfiSeries = rc.addLineSeries({
-      color: "#d2b000",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-
-    rsiSeries.setData(indicators.map((d) => ({ time: d.time as Time, value: clamp(d.rsi, 0, 100) })));
-    mfiSeries.setData(indicators.map((d) => ({ time: d.time as Time, value: clamp(d.mfi, 0, 100) })));
-    rc.timeScale().fitContent();
-
-    mc.timeScale().subscribeVisibleLogicalRangeChange((range) => {
-      if (range !== null) {
-        vc.timeScale().setVisibleLogicalRange(range);
-        rc.timeScale().setVisibleLogicalRange(range);
-      }
-    });
-
-    const resize = () => {
-      if (mainRef.current) {
-        const w = mainRef.current.clientWidth;
-        const h = mainRef.current.clientHeight;
-        mc.applyOptions({ width: w, height: h });
-        setSvgSize({ w, h });
-      }
-      if (volOverlayRef.current) vc.applyOptions({ width: volOverlayRef.current.clientWidth, height: volOverlayRef.current.clientHeight });
-      if (rsiRef.current) rc.applyOptions({ width: rsiRef.current.clientWidth, height: rsiRef.current.clientHeight });
-    };
-
-    window.addEventListener("resize", resize);
-    resize();
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      mc.remove();
-      vc.remove();
-      rc.remove();
-    };
-  }, [candles, indicators]);
-
-  const isPositive = priceChange >= 0;
-
-  const getLocalPoint = (e: React.MouseEvent<SVGSVGElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
-
-  const handleOverlayMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+const handleOverlayMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  const p = getLocalPoint(e);
+  
+  // Arrastar desenho existente
+  if (dragId && dragOffset) {
+    const drawing = drawingState.drawings.find(d => d.id === dragId);
+    if (drawing && !drawing.locked) {
+      const newX1 = p.x - dragOffset.x;
+      const newY1 = p.y - dragOffset.y;
+      const deltaX = newX1 - drawing.x1;
+      const deltaY = newY1 - drawing.y1;
+      
+      drawingState.updateDrawing(dragId, {
+        x1: newX1,
+        y1: newY1,
+        x2: drawing.x2 + deltaX,
+        y2: drawing.y2 + deltaY,
+      });
+    }
+    return;
+  }
+  
+  // Rascunho de novo desenho
+  if (draftStart && drawingState.activeTool !== "cursor") {
     const p = getLocalPoint(e);
-    const hit = drawingState.drawings.find(d => !d.hidden && hitTestDrawing(d, p.x, p.y));
-    if (hit && !hit.locked) {
-      drawingState.setSelectedId(hit.id);
-      if (e.button === 2) {
-        e.preventDefault();
-        onContextMenu(hit, e.clientX, e.clientY);
-      } else if (e.detail === 2) {
-        onDoubleClick(hit);
-      }
-      return;
+    setDraftEnd(p);
+    // Atualiza preview
+    if (drawingState.activeTool === "trendline" || drawingState.activeTool === "ray") {
+      const preview = newDrawing(drawingState.activeTool, draftStart.x, draftStart.y, p.x, p.y);
+      // Mostrar preview (podemos usar um estado temporário)
     }
+  }
+};
 
-    if (drawingState.activeTool !== "cursor") {
-      drawingState.setSelectedId(null);
-      setDraftStart(p);
-    } else {
-      drawingState.setSelectedId(null);
-    }
-  };
-
-  const handleOverlayMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (draftStart && drawingState.activeTool !== "cursor") {
-      // Just preview, actual creation on mouseup
-    }
-  };
-
-  const handleOverlayMouseUp = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (draftStart && drawingState.activeTool !== "cursor") {
-      const p = getLocalPoint(e);
+const handleOverlayMouseUp = (e: React.MouseEvent<SVGSVGElement>) => {
+  if (dragId) {
+    setDragId(null);
+    setDragOffset(null);
+    return;
+  }
+  
+  if (draftStart && drawingState.activeTool !== "cursor") {
+    const p = getLocalPoint(e);
+    // Evita criar desenho se não houve movimento significativo
+    const distance = Math.hypot(p.x - draftStart.x, p.y - draftStart.y);
+    if (distance > 5) {
       const newDraw = newDrawing(
         drawingState.activeTool,
         draftStart.x,
@@ -3582,227 +3436,11 @@ function ChartPanel({
         p.y
       );
       drawingState.addDrawing(newDraw);
-      setDraftStart(null);
     }
-  };
-
-  const toolLabelMap: Record<DrawTool, string> = {
-    cursor: "Cursor",
-    trendline: "Tendência",
-    hline: "Horizontal",
-    vline: "Vertical",
-    ray: "Raio",
-    extended: "Estendida",
-    channel: "Canal",
-    pitchfork: "Pitchfork",
-    fib: "Fibonacci",
-    fibext: "Fib Ext",
-    fibarc: "Fib Arc",
-    fibfan: "Fib Fan",
-    rect: "Retângulo",
-    triangle: "Triângulo",
-    ellipse: "Elipse",
-    measure: "Medida",
-    text: "Texto",
-  };
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        width: "100%",
-        minWidth: 0,
-        background:
-          "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(6,10,18,0.98))",
-      }}
-    >
-      <div
-        style={{
-          padding: "8px 10px",
-          borderBottom: `1px solid ${ui.border}`,
-          background:
-            "linear-gradient(180deg, rgba(12,19,36,0.94), rgba(8,13,25,0.94))",
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.4fr repeat(4, 0.7fr) auto",
-            gap: 8,
-            alignItems: "center",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <div
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 7,
-                background: "rgba(247,201,72,0.16)",
-                color: ui.yellow,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 10,
-                fontWeight: 900,
-              }}
-            >
-              SC
-            </div>
-
-            <div>
-              <div style={{ color: "#eef6ff", fontSize: 14, fontWeight: 900 }}>{symbol}</div>
-              <div
-                style={{
-                  color: "#7d91b6",
-                  fontSize: 10,
-                  fontWeight: 700,
-                }}
-              >
-                Scanner Atlas • Ferramenta: {toolLabelMap[drawingState.activeTool]} • TF: {timeframe}
-              </div>
-            </div>
-          </div>
-
-          {[
-            ["Preço", livePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), "#4ef0cb"],
-            ["Variação", `${isPositive ? "+" : ""}${priceChange.toFixed(2)}%`, isPositive ? ui.green : ui.red],
-            ["Volume", formatCompact(candles[candles.length - 1]?.volume ?? 0), ui.cyan],
-            ["Desenhos", String(drawingState.drawings.filter(d => !d.hidden).length), drawingState.drawings.length > 0 ? ui.yellow : ui.red],
-          ].map(([title, value, color]) => (
-            <div
-              key={title}
-              style={{
-                borderRadius: 13,
-                border: "1px solid rgba(255,255,255,0.06)",
-                background:
-                  "linear-gradient(180deg, rgba(8,15,31,0.98), rgba(7,12,24,0.96))",
-                minHeight: 58,
-                padding: "10px 13px",
-              }}
-            >
-              <div
-                style={{
-                  color: "#7f93b7",
-                  fontSize: 9,
-                  fontWeight: 900,
-                  letterSpacing: 0.8,
-                  textTransform: "uppercase",
-                  marginBottom: 6,
-                }}
-              >
-                {title}
-              </div>
-              <div style={{ color: color as string, fontSize: 12, fontWeight: 900 }}>{value}</div>
-            </div>
-          ))}
-
-          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
-            <TopButton active={mode === "auto"}>Auto</TopButton>
-            <TopButton active={mode === "manual"}>Manual</TopButton>
-            <TopButton active={mode === "space"}>Seguir + Espaço</TopButton>
-            <TopButton>Zoom -</TopButton>
-            <TopButton>Zoom +</TopButton>
-            <TopButton>Agora</TopButton>
-            <TopButton>Reset</TopButton>
-          </div>
-        </div>
-      </div>
-
-      <DrawingOptionsBar
-        selectedDrawing={drawingState.drawings.find(d => d.id === drawingState.selectedId) ?? null}
-        activeTool={drawingState.activeTool}
-        drawings={drawingState.drawings}
-        onDelete={drawingState.deleteSelected}
-        onClear={drawingState.clearAll}
-        onToggleLock={drawingState.toggleLock}
-        onOpenSettings={() => {
-          const selected = drawingState.drawings.find(d => d.id === drawingState.selectedId);
-          if (selected) onSetSettingsDrawing(selected);
-        }}
-        onSetColor={(c) => {
-          if (drawingState.selectedId) drawingState.updateDrawing(drawingState.selectedId, { color: c });
-        }}
-      />
-
-      <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
-        <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
-        <svg
-          ref={overlayRef}
-          width="100%"
-          height="100%"
-          viewBox={`0 0 ${svgSize.w} ${svgSize.h}`}
-          preserveAspectRatio="none"
-          onMouseDown={handleOverlayMouseDown}
-          onMouseMove={handleOverlayMouseMove}
-          onMouseUp={handleOverlayMouseUp}
-          onContextMenu={(e) => e.preventDefault()}
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 4,
-            pointerEvents: drawingState.activeTool !== "cursor" || drawingState.selectedId ? "auto" : "none",
-            onMouseDown={(e) => {
-  if (drawingState.activeTool === "cursor") {
-    // Deixa o gráfico tratar
-    e.stopPropagation();
-  } else {
-    handleOverlayMouseDown(e);
+    setDraftStart(null);
+    setDraftEnd(null);
   }
-}}
-        >
-          {drawingState.drawings.filter(d => !d.hidden).map(d => (
-            <g key={d.id}>
-              {renderDrawingSVG(d, svgSize.w, svgSize.h, d.id === drawingState.selectedId)}
-            </g>
-          ))}
-        </svg>
-        <div
-          ref={volOverlayRef}
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: 140,
-            pointerEvents: "none",
-            opacity: 0.95,
-            borderTop: "1px solid rgba(255,255,255,0.05)",
-          }}
-        />
-      </div>
-
-      <div
-        style={{
-          width: "100%",
-          flexShrink: 0,
-          borderTop: `1px solid ${ui.border}`,
-          borderBottom: `1px solid ${ui.border}`,
-          background: "#0a0f1d",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "5px 14px" }}>
-          <span style={{ color: "#7f93b7", fontSize: 10, fontFamily: "monospace" }}>RSI / MFI</span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}>
-            <span style={{ width: 12, height: 2, background: "#8b5cf6", display: "inline-block" }} />
-            RSI
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 10 }}>
-            <span style={{ width: 12, height: 2, background: "#d2b000", display: "inline-block" }} />
-            MFI
-          </span>
-        </div>
-        <div ref={rsiRef} style={{ height: 112, width: "100%" }} />
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// MODULE COMPONENTS
-// ============================================================
+};==================================
 
 function FluxoModule({ events }: { events: ScannerEvent[] }) {
   return (
