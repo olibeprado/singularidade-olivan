@@ -470,6 +470,48 @@ const TOOL_GROUPS_CONFIG = [
   ]},
 ];
 
+// ============================================================
+// NOVA LEFT TOOLBAR COM SUBMENUS HOVER E FAVORITOS
+// ============================================================
+
+type ToolItem = {
+  key: DrawTool;
+  icon: string;
+  label: string;
+  category?: string;
+};
+
+const TOOLS_CONFIG: ToolItem[] = [
+  // FAVORITOS (sempre visíveis)
+  { key: "cursor", icon: "↖", label: "Cursor (V)", category: "⭐ Favoritos" },
+  { key: "trendline", icon: "╱", label: "Tendência (T)", category: "⭐ Favoritos" },
+  { key: "hline", icon: "─", label: "Horizontal (H)", category: "⭐ Favoritos" },
+  { key: "vline", icon: "│", label: "Vertical (K)", category: "⭐ Favoritos" },
+  
+  // LINHAS
+  { key: "ray", icon: "→", label: "Raio (R)", category: "📐 Linhas" },
+  { key: "extended", icon: "↔", label: "Estendida", category: "📐 Linhas" },
+  
+  // CANAIS
+  { key: "channel", icon: "⦀", label: "Canal", category: "🔄 Canais" },
+  { key: "pitchfork", icon: "⑂", label: "Pitchfork", category: "🔄 Canais" },
+  
+  // FIBONACCI (submenu)
+  { key: "fib", icon: "FIB", label: "Fibonacci (F)", category: "📊 Fibonacci" },
+  { key: "fibext", icon: "EXT", label: "Extensão", category: "📊 Fibonacci" },
+  { key: "fibarc", icon: "◌", label: "Arcos", category: "📊 Fibonacci" },
+  { key: "fibfan", icon: "⋱", label: "Fan", category: "📊 Fibonacci" },
+  
+  // FORMAS
+  { key: "rect", icon: "▭", label: "Retângulo (G)", category: "🔷 Formas" },
+  { key: "triangle", icon: "△", label: "Triângulo", category: "🔷 Formas" },
+  { key: "ellipse", icon: "◯", label: "Elipse", category: "🔷 Formas" },
+  
+  // MISC
+  { key: "measure", icon: "⟺", label: "Medir (M)", category: "📏 Misc" },
+  { key: "text", icon: "T", label: "Texto (X)", category: "📏 Misc" },
+];
+
 function DrawingToolbar({
   activeTool,
   onChangeTool,
@@ -477,70 +519,192 @@ function DrawingToolbar({
   activeTool: DrawTool;
   onChangeTool: (t: DrawTool) => void;
 }) {
+  const [hoverCategory, setHoverCategory] = useState<string | null>(null);
+  const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
+  const [favorites, setFavorites] = useState<DrawTool[]>(["cursor", "trendline", "hline", "vline"]);
+
+  const toggleFavorite = (tool: DrawTool, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFavorites(prev =>
+      prev.includes(tool) ? prev.filter(t => t !== tool) : [...prev, tool]
+    );
+  };
+
+  const handleMouseEnter = (category: string) => {
+    if (hoverTimer) clearTimeout(hoverTimer);
+    const timer = setTimeout(() => {
+      setHoverCategory(category);
+    }, 2000); // 2 segundos
+    setHoverTimer(timer);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimer) clearTimeout(hoverTimer);
+    setHoverCategory(null);
+  };
+
+  const handleToolClick = (tool: DrawTool) => {
+    onChangeTool(tool);
+    setHoverCategory(null);
+  };
+
+  // Agrupar por categoria
+  const grouped = TOOLS_CONFIG.reduce((acc, tool) => {
+    const cat = tool.category || "Outros";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(tool);
+    return acc;
+  }, {} as Record<string, ToolItem[]>);
+
+  // Ordem customizada
+  const categoryOrder = ["⭐ Favoritos", "📐 Linhas", "🔄 Canais", "📊 Fibonacci", "🔷 Formas", "📏 Misc"];
+
   return (
     <div style={{
-      width: 52,
+      width: 68,
       borderRight: "1px solid #172133",
       background: "linear-gradient(180deg,rgba(8,12,24,0.98),rgba(6,9,17,0.98))",
       display: "flex", flexDirection: "column",
-      padding: "8px 6px", gap: 2,
+      padding: "8px 6px", gap: 8,
       overflowY: "auto", flexShrink: 0,
     }}>
-      {TOOL_GROUPS_CONFIG.map((group, gi) => (
-        <div key={gi}>
-          {gi > 0 && <div style={{ height: 1, background: "#172133", margin: "3px 0" }} />}
-          <div style={{
-            color: "#424e63", fontSize: 7, fontWeight: 900,
-            letterSpacing: 0.8, textTransform: "uppercase",
-            textAlign: "center", marginBottom: 3,
-          }}>
-            {group.title}
+      {categoryOrder.map(cat => {
+        const tools = grouped[cat];
+        if (!tools) return null;
+        
+        const isOpen = hoverCategory === cat;
+        const isFavCat = cat === "⭐ Favoritos";
+        const visibleTools = isFavCat ? tools.filter(t => favorites.includes(t.key)) : tools;
+        
+        if (visibleTools.length === 0) return null;
+
+        return (
+          <div 
+            key={cat}
+            onMouseEnter={() => !isFavCat && handleMouseEnter(cat)}
+            onMouseLeave={handleMouseLeave}
+            style={{ position: "relative" }}
+          >
+            {/* Cabeçalho da categoria */}
+            <div style={{
+              color: "#7f93b7",
+              fontSize: 8,
+              fontWeight: 900,
+              letterSpacing: 0.9,
+              textTransform: "uppercase",
+              textAlign: "center",
+              marginBottom: 6,
+              cursor: !isFavCat ? "pointer" : "default",
+            }}>
+              {cat}
+            </div>
+
+            {/* Ferramentas da categoria */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {visibleTools.map(tool => {
+                const active = activeTool === tool.key;
+                const isFavorite = favorites.includes(tool.key);
+                
+                return (
+                  <div key={tool.key} style={{ position: "relative" }}>
+                    <button
+                      onClick={() => handleToolClick(tool.key)}
+                      onDoubleClick={(e) => toggleFavorite(tool.key, e)}
+                      title={`${tool.label} ${isFavorite ? "★ Favorito" : "☆ Clique duplo p/ favoritar"}`}
+                      style={{
+                        width: 48, height: 38,
+                        margin: "0 auto", display: "flex",
+                        alignItems: "center", justifyContent: "center",
+                        borderRadius: 8, cursor: "pointer",
+                        border: active
+                          ? "1px solid rgba(45,226,255,0.4)"
+                          : "1px solid rgba(255,255,255,0.08)",
+                        background: active
+                          ? "radial-gradient(circle,rgba(45,226,255,0.22),rgba(45,226,255,0.08))"
+                          : "linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))",
+                        color: active ? "#e0f3ff" : "#b0c4f0",
+                        fontSize: tool.icon.length > 1 ? 9 : 14,
+                        fontWeight: 700, fontFamily: "monospace",
+                        position: "relative",
+                      }}
+                    >
+                      {tool.icon}
+                      {isFavorite && !active && (
+                        <span style={{
+                          position: "absolute", bottom: -2, right: -2,
+                          fontSize: 8, color: "#f7c948"
+                        }}>★</span>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Submenu expandido (hover 2 segundos) */}
+            {isOpen && !isFavCat && (
+              <div style={{
+                position: "absolute",
+                left: "100%",
+                top: 0,
+                marginLeft: 4,
+                background: "#0f1520",
+                border: "1px solid #1e2d42",
+                borderRadius: 10,
+                padding: "8px 10px",
+                minWidth: 140,
+                zIndex: 100,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                backdropFilter: "blur(8px)",
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 900, color: "#7f93b7", marginBottom: 8, letterSpacing: 0.5 }}>
+                  {cat} • Todos
+                </div>
+                {tools.map(tool => {
+                  const isFav = favorites.includes(tool.key);
+                  return (
+                    <div
+                      key={tool.key}
+                      onClick={() => handleToolClick(tool.key)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "6px 8px",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        fontSize: 11,
+                        color: activeTool === tool.key ? ui.cyan : "#e8f1ff",
+                        background: activeTool === tool.key ? "rgba(45,226,255,0.1)" : "transparent",
+                        marginBottom: 2,
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(45,226,255,0.15)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    >
+                      <span>{tool.icon} {tool.label}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(tool.key, e); }}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: isFav ? ui.yellow : "#536887",
+                          cursor: "pointer",
+                          fontSize: 12,
+                        }}
+                      >
+                        {isFav ? "★" : "☆"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          {group.items.map(item => {
-            const active = activeTool === item.key;
-            return (
-              <button
-                key={item.key}
-                onClick={() => onChangeTool(item.key)}
-                title={TOOL_LABELS[item.key]}
-                style={{
-                  width: 38, height: 34,
-                  margin: "0 auto", display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  borderRadius: 7, cursor: "pointer",
-                  border: active
-                    ? "1px solid rgba(45,226,255,0.3)"
-                    : "1px solid rgba(255,255,255,0.04)",
-                  background: active
-                    ? "radial-gradient(circle,rgba(45,226,255,0.18),rgba(45,226,255,0.04))"
-                    : "linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.008))",
-                  color: active ? "#2de2ff" : "#90a4c8",
-                  fontSize: item.icon.length > 1 ? 8 : 13,
-                  fontWeight: 900, fontFamily: "monospace",
-                }}
-              >
-                {item.icon}
-              </button>
-            );
-          })}
-        </div>
-      ))}
-      <div style={{ height: 1, background: "#172133", margin: "3px 0" }} />
-      {[{ icon: "↩", label: "Desfazer (Z)" }, { icon: "✕", label: "Limpar tudo" }].map((b, i) => (
-        <button key={i} title={b.label} style={{
-          width: 38, height: 34, margin: "0 auto",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          borderRadius: 7, cursor: "pointer", fontSize: 13,
-          border: "1px solid rgba(255,255,255,0.04)",
-          background: "transparent", color: "#6a7f99",
-        }}>
-          {b.icon}
-        </button>
-      ))}
+        );
+      })}
     </div>
   );
 }
-
 // ============================================================
 // DRAWING SETTINGS MODAL
 // ============================================================
