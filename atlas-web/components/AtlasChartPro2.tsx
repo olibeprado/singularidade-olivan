@@ -2416,11 +2416,16 @@ function ChartPanel({
   const mainRef = useRef<HTMLDivElement>(null);
   const volOverlayRef = useRef<HTMLDivElement>(null);
   const rsiRef = useRef<HTMLDivElement>(null);
-  const overlayRef = useRef<SVGSVGElement>(null);
 
   const [drawings, setDrawings] = useState<ChartDrawObject[]>([]);
   const [draft, setDraft] = useState<ChartDrawObject | null>(null);
-  const [dragId, setDragId] = useState<string | null>(null);
+  const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(null);
+  const [dragState, setDragState] = useState<null | {
+    id: string;
+    kind: "move" | "start" | "end";
+    offsetX?: number;
+    offsetY?: number;
+  }>(null);
 
   const [livePrice, setLivePrice] = useState<number>(candles[candles.length - 1]?.close ?? 0);
   const [priceChange, setPriceChange] = useState<number>(0);
@@ -2574,9 +2579,17 @@ function ChartPanel({
   }, [candles, indicators]);
 
   const isPositive = priceChange >= 0;
+  const interactiveTool = ["trendline", "hline", "vline", "ray", "extended"].includes(selectedTool);
 
-  const interactiveTool = selectedTool === "trendline" || selectedTool === "hline" || selectedTool === "vline" || selectedTool === "ray";
-  const overlayPointerEvents = interactiveTool || dragId ? "auto" : "none";
+  const selectedDrawing = useMemo(
+    () => drawings.find((d) => d.id === selectedDrawingId) ?? null,
+    [drawings, selectedDrawingId]
+  );
+
+  const getCanvasSize = () => ({
+    width: mainRef.current?.clientWidth || 1000,
+    height: mainRef.current?.clientHeight || 600,
+  });
 
   const getLocalPoint = (e: React.MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -2599,28 +2612,18 @@ function ChartPanel({
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  const hitDrawing = (x: number, y: number) => {
-    for (let i = drawings.length - 1; i >= 0; i -= 1) {
-      const d = drawings[i];
-      if (d.hidden) continue;
-      if (d.type === "hline" && Math.abs(y - d.y1) < 8) return d.id;
-      if (d.type === "vline" && Math.abs(x - d.x1) < 8) return d.id;
-      if (distToSegment(x, y, d.x1, d.y1, d.x2, d.y2) < 8) return d.id;
-    }
-    return null;
+  const normalizeDrawing = (d: ChartDrawObject, width: number, height: number): ChartDrawObject => {
+    if (d.type === "hline") return { ...d, x1: 0, x2: width };
+    if (d.type === "vline") return { ...d, y1: 0, y2: height };
+    return d;
   };
 
-  const handleOverlayMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    const p = getLocalPoint(e);
-    const existingId = hitDrawing(p.x, p.y);
-    if (!interactiveTool && existingId) {
-      setDragId(existingId);
-      return;
-    }
-    if (selectedTool === "trendline" || selectedTool === "ray") {
+  const beginDrawing = (p: { x: number; y: number; w: number; h: number }) => {
+    if (selectedTool === "trendline" || selectedTool === "ray" || selectedTool === "extended") {
+      const type = selectedTool === "extended" ? "ray" : selectedTool;
       const obj: ChartDrawObject = {
         id: `d-${Date.now()}`,
-        type: selectedTool,
+        type: type as "trendline" | "ray",
         x1: p.x,
         y1: p.y,
         x2: p.x,
@@ -2628,10 +2631,11 @@ function ChartPanel({
         color: "#2de2ff",
       };
       setDraft(obj);
+      setSelectedDrawingId(obj.id);
       return;
     }
     if (selectedTool === "hline") {
-      setDrawings((prev) => prev.concat({
+      const obj: ChartDrawObject = {
         id: `d-${Date.now()}`,
         type: "hline",
         x1: 0,
@@ -2639,11 +2643,13 @@ function ChartPanel({
         x2: p.w,
         y2: p.y,
         color: "#f7c948",
-      }));
+      };
+      setDrawings((prev) => prev.concat(obj));
+      setSelectedDrawingId(obj.id);
       return;
     }
     if (selectedTool === "vline") {
-      setDrawings((prev) => prev.concat({
+      const obj: ChartDrawObject = {
         id: `d-${Date.now()}`,
         type: "vline",
         x1: p.x,
@@ -2651,44 +2657,95 @@ function ChartPanel({
         x2: p.x,
         y2: p.h,
         color: "#ff9d2e",
-      }));
+      };
+      setDrawings((prev) => prev.concat(obj));
+      setSelectedDrawingId(obj.id);
     }
   };
 
-  const handleOverlayMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    const p = getLocalPoint(e);
-    if (draft) {
-      setDraft((prev) => prev ? {
-        ...prev,
-        x2: selectedTool === "ray" ? Math.max(p.x, prev.x1 + 8) : p.x,
-        y2: p.y,
-      } : prev);
-      return;
-    }
-    if (dragId) {
-      setDrawings((prev) => prev.map((d) => {
-        if (d.id !== dragId || d.locked) return d;
-        if (d.type === "hline") {
-          const dy = p.y - d.y1;
-          return { ...d, y1: p.y, y2: p.y };
-        }
-        if (d.type === "vline") {
-          return { ...d, x1: p.x, x2: p.x };
-        }
-        const w = d.x2 - d.x1;
-        const h = d.y2 - d.y1;
-        return { ...d, x1: p.x - w / 2, y1: p.y - h / 2, x2: p.x + w / 2, y2: p.y + h / 2 };
-      }));
-    }
+  const updateDraft = (p: { x: number; y: number }) => {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const nextX = prev.type === "ray" ? Math.max(p.x, prev.x1 + 8) : p.x;
+      return { ...prev, x2: nextX, y2: p.y };
+    });
   };
 
-  const handleOverlayMouseUp = () => {
-    if (draft) {
-      setDrawings((prev) => prev.concat(draft));
-      setDraft(null);
-    }
-    if (dragId) setDragId(null);
+  const commitDraft = () => {
+    if (!draft) return;
+    setDrawings((prev) => prev.concat(draft));
+    setSelectedDrawingId(draft.id);
+    setDraft(null);
   };
+
+  const startMove = (id: string, p: { x: number; y: number }) => {
+    const item = drawings.find((d) => d.id === id);
+    if (!item || item.locked) return;
+    setSelectedDrawingId(id);
+    setDragState({
+      id,
+      kind: "move",
+      offsetX: p.x - item.x1,
+      offsetY: p.y - item.y1,
+    });
+  };
+
+  const startHandleDrag = (id: string, kind: "start" | "end") => {
+    const item = drawings.find((d) => d.id === id);
+    if (!item || item.locked) return;
+    setSelectedDrawingId(id);
+    setDragState({ id, kind });
+  };
+
+  const updateDraggedDrawing = (p: { x: number; y: number; w: number; h: number }) => {
+    setDrawings((prev) =>
+      prev.map((d) => {
+        if (!dragState || d.id !== dragState.id || d.locked) return d;
+        if (dragState.kind === "move") {
+          if (d.type === "hline") return { ...d, y1: p.y, y2: p.y, x1: 0, x2: p.w };
+          if (d.type === "vline") return { ...d, x1: p.x, x2: p.x, y1: 0, y2: p.h };
+          const w = d.x2 - d.x1;
+          const h = d.y2 - d.y1;
+          return { ...d, x1: p.x - (dragState.offsetX ?? 0), y1: p.y - (dragState.offsetY ?? 0), x2: p.x - (dragState.offsetX ?? 0) + w, y2: p.y - (dragState.offsetY ?? 0) + h };
+        }
+        if (dragState.kind === "start") {
+          if (d.type === "hline") return { ...d, y1: p.y, y2: p.y };
+          if (d.type === "vline") return { ...d, x1: p.x, x2: p.x };
+          return { ...d, x1: p.x, y1: p.y };
+        }
+        if (dragState.kind === "end") {
+          if (d.type === "hline") return { ...d, y1: p.y, y2: p.y };
+          if (d.type === "vline") return { ...d, x1: p.x, x2: p.x };
+          return { ...d, x2: p.x, y2: p.y };
+        }
+        return d;
+      })
+    );
+  };
+
+  const finishDrag = () => setDragState(null);
+
+  useEffect(() => {
+    if (!drawings.some((d) => d.id === selectedDrawingId)) {
+      setSelectedDrawingId(null);
+    }
+  }, [drawings, selectedDrawingId]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedDrawingId) {
+        e.preventDefault();
+        setDrawings((prev) => prev.filter((d) => d.id !== selectedDrawingId));
+        setSelectedDrawingId(null);
+      }
+      if (e.key === "Escape") {
+        setDraft(null);
+        setDragState(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedDrawingId]);
 
   const toolLabelMap: Record<ToolKey, string> = {
     cursor: "Cursor",
@@ -2711,6 +2768,11 @@ function ChartPanel({
     text: "Texto",
     magnet: "Magnet",
   };
+
+  const canvasSize = getCanvasSize();
+  const visibleDrawings = [...drawings, ...(draft ? [draft] : [])]
+    .map((d) => normalizeDrawing(d, canvasSize.width, canvasSize.height))
+    .filter((d) => !d.hidden);
 
   return (
     <div
@@ -2831,53 +2893,125 @@ function ChartPanel({
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <TopButton active>Objetos</TopButton>
-          <TopButton onClick={() => setDrawings((prev) => prev.map((d) => d.id === dragId ? { ...d, locked: !d.locked } : d))}>Travar</TopButton>
-          <TopButton onClick={() => setDrawings((prev) => prev.map((d) => d.id === dragId ? { ...d, hidden: !d.hidden } : d))}>Ocultar</TopButton>
-          <TopButton onClick={() => { setDrawings([]); setDraft(null); }}>Limpar desenhos</TopButton>
-          <TopButton onClick={() => setDrawings((prev) => prev.filter((d) => d.id !== dragId))}>Apagar selecionado</TopButton>
+          <TopButton onClick={() => selectedDrawingId && setDrawings((prev) => prev.map((d) => d.id === selectedDrawingId ? { ...d, locked: !d.locked } : d))}>
+            {selectedDrawing?.locked ? "Destravar" : "Travar"}
+          </TopButton>
+          <TopButton onClick={() => selectedDrawingId && setDrawings((prev) => prev.map((d) => d.id === selectedDrawingId ? { ...d, hidden: !d.hidden } : d))}>
+            {selectedDrawing?.hidden ? "Mostrar" : "Ocultar"}
+          </TopButton>
+          <TopButton onClick={() => { setDrawings([]); setDraft(null); setSelectedDrawingId(null); }}>Limpar desenhos</TopButton>
+          <TopButton onClick={() => {
+            if (!selectedDrawingId) return;
+            setDrawings((prev) => prev.filter((d) => d.id !== selectedDrawingId));
+            setSelectedDrawingId(null);
+          }}>Apagar selecionado</TopButton>
         </div>
         <div style={{ color: "#7f93b7", fontSize: 10, fontWeight: 800 }}>
-          {dragId ? `${drawings.find((d) => d.id === dragId)?.type ?? "obj"} selecionado` : "Nenhum objeto selecionado"}
+          {selectedDrawing ? `${selectedDrawing.type} selecionado` : "Nenhum objeto selecionado"}
         </div>
       </div>
 
       <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
         <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
         <svg
-          ref={overlayRef}
           width="100%"
           height="100%"
-          viewBox={`0 0 ${mainRef.current?.clientWidth || 1000} ${mainRef.current?.clientHeight || 600}`}
+          viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
           preserveAspectRatio="none"
-          onMouseDown={handleOverlayMouseDown}
-          onMouseMove={handleOverlayMouseMove}
-          onMouseUp={handleOverlayMouseUp}
           style={{
             position: "absolute",
             inset: 0,
             zIndex: 4,
-            pointerEvents: overlayPointerEvents as any,
-            cursor: interactiveTool ? "crosshair" : dragId ? "move" : "default",
+            pointerEvents: "none",
+          }}
+          onMouseMove={(e) => {
+            if (draft) updateDraft(getLocalPoint(e));
+            if (dragState) updateDraggedDrawing(getLocalPoint(e));
+          }}
+          onMouseUp={() => {
+            if (draft) commitDraft();
+            if (dragState) finishDrag();
+          }}
+          onMouseLeave={() => {
+            if (dragState) finishDrag();
           }}
         >
-          {[...drawings, ...(draft ? [draft] : [])].filter((d) => !d.hidden).map((d) => {
-            const common = {
-              stroke: d.color || "#2de2ff",
-              strokeWidth: dragId === d.id ? 2.5 : 1.8,
-              opacity: d.locked ? 0.65 : 0.95,
-            };
-            if (d.type === "hline" || d.type === "vline" || d.type === "trendline" || d.type === "ray") {
-              const x2 = d.type === "ray" ? Math.max(d.x2, (mainRef.current?.clientWidth || d.x2)) : d.x2;
-              const y2 = d.type === "ray" ? d.y1 + ((d.y2 - d.y1) / Math.max((d.x2 - d.x1), 1)) * (x2 - d.x1) : d.y2;
-              return (
-                <g key={d.id}>
-                  <line x1={d.x1} y1={d.y1} x2={x2} y2={y2} {...common} />
-                  <circle cx={d.x1} cy={d.y1} r={3} fill={d.color || "#2de2ff"} opacity={0.95} />
-                  {(d.type !== "hline" && d.type !== "vline") && <circle cx={d.x2} cy={d.y2} r={3} fill={d.color || "#2de2ff"} opacity={0.95} />}
-                </g>
-              );
-            }
-            return null;
+          {(interactiveTool || dragState || draft) && (
+            <rect
+              x={0}
+              y={0}
+              width={canvasSize.width}
+              height={canvasSize.height}
+              fill="transparent"
+              pointerEvents="auto"
+              style={{ cursor: interactiveTool ? "crosshair" : "move" }}
+              onMouseDown={(e) => beginDrawing(getLocalPoint(e))}
+            />
+          )}
+
+          {visibleDrawings.map((d) => {
+            const isSelected = d.id === selectedDrawingId;
+            const x2 = d.type === "ray" ? Math.max(d.x2, canvasSize.width) : d.x2;
+            const y2 = d.type === "ray" ? d.y1 + ((d.y2 - d.y1) / Math.max(d.x2 - d.x1, 1)) * (x2 - d.x1) : d.y2;
+            const stroke = d.color || "#2de2ff";
+            return (
+              <g key={d.id}>
+                <line
+                  x1={d.x1}
+                  y1={d.y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke={stroke}
+                  strokeWidth={isSelected ? 2.6 : 1.9}
+                  opacity={d.locked ? 0.6 : 0.96}
+                  pointerEvents="stroke"
+                  style={{ cursor: d.locked ? "not-allowed" : "move" }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    startMove(d.id, getLocalPoint(e));
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedDrawingId(d.id);
+                  }}
+                />
+
+                {isSelected && (
+                  <>
+                    <circle
+                      cx={d.x1}
+                      cy={d.y1}
+                      r={4.5}
+                      fill={stroke}
+                      stroke="#ffffff"
+                      strokeWidth={1}
+                      pointerEvents="all"
+                      style={{ cursor: d.locked ? "not-allowed" : "nwse-resize" }}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        startHandleDrag(d.id, "start");
+                      }}
+                    />
+                    {d.type !== "hline" && d.type !== "vline" && (
+                      <circle
+                        cx={d.x2}
+                        cy={d.y2}
+                        r={4.5}
+                        fill={stroke}
+                        stroke="#ffffff"
+                        strokeWidth={1}
+                        pointerEvents="all"
+                        style={{ cursor: d.locked ? "not-allowed" : "nwse-resize" }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          startHandleDrag(d.id, "end");
+                        }}
+                      />
+                    )}
+                  </>
+                )}
+              </g>
+            );
           })}
         </svg>
         <div
