@@ -3582,8 +3582,14 @@ function ChartPanel({
             inset: 0,
             zIndex: 4,
             pointerEvents: drawingState.activeTool !== "cursor" || drawingState.selectedId ? "auto" : "none",
-            cursor: drawingState.activeTool !== "cursor" ? "crosshair" : "default",
-          }}
+            onMouseDown={(e) => {
+  if (drawingState.activeTool === "cursor") {
+    // Deixa o gráfico tratar
+    e.stopPropagation();
+  } else {
+    handleOverlayMouseDown(e);
+  }
+}}
         >
           {drawingState.drawings.filter(d => !d.hidden).map(d => (
             <g key={d.id}>
