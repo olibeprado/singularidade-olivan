@@ -437,111 +437,6 @@ function renderDrawingSVG(
 }
 
 // ============================================================
-// LEFT TOOLBAR
-// ============================================================
-
-const TOOL_GROUPS_CONFIG = [
-  { title: "CURSOR",  items: [{ key: "cursor"    as DrawTool, icon: "↖" }] },
-  { title: "LINHAS",  items: [
-    { key: "trendline" as DrawTool, icon: "╱" },
-    { key: "hline"     as DrawTool, icon: "─" },
-    { key: "vline"     as DrawTool, icon: "│" },
-    { key: "ray"       as DrawTool, icon: "→" },
-    { key: "extended"  as DrawTool, icon: "↔" },
-  ]},
-  { title: "CANAIS",  items: [
-    { key: "channel"   as DrawTool, icon: "⦀" },
-    { key: "pitchfork" as DrawTool, icon: "⑂" },
-  ]},
-  { title: "FIBO",    items: [
-    { key: "fib"    as DrawTool, icon: "FIB" },
-    { key: "fibext" as DrawTool, icon: "EXT" },
-    { key: "fibarc" as DrawTool, icon: "◌"  },
-    { key: "fibfan" as DrawTool, icon: "⋱"  },
-  ]},
-  { title: "FORMAS",  items: [
-    { key: "rect"     as DrawTool, icon: "▭" },
-    { key: "triangle" as DrawTool, icon: "△" },
-    { key: "ellipse"  as DrawTool, icon: "◯" },
-  ]},
-  { title: "MISC",    items: [
-    { key: "measure" as DrawTool, icon: "⟺" },
-    { key: "text"    as DrawTool, icon: "T"  },
-  ]},
-];
-
-function DrawingToolbar({
-  activeTool,
-  onChangeTool,
-}: {
-  activeTool: DrawTool;
-  onChangeTool: (t: DrawTool) => void;
-}) {
-  return (
-    <div style={{
-      width: 52,
-      borderRight: "1px solid #172133",
-      background: "linear-gradient(180deg,rgba(8,12,24,0.98),rgba(6,9,17,0.98))",
-      display: "flex", flexDirection: "column",
-      padding: "8px 6px", gap: 2,
-      overflowY: "auto", flexShrink: 0,
-    }}>
-      {TOOL_GROUPS_CONFIG.map((group, gi) => (
-        <div key={gi}>
-          {gi > 0 && <div style={{ height: 1, background: "#172133", margin: "3px 0" }} />}
-          <div style={{
-            color: "#424e63", fontSize: 7, fontWeight: 900,
-            letterSpacing: 0.8, textTransform: "uppercase",
-            textAlign: "center", marginBottom: 3,
-          }}>
-            {group.title}
-          </div>
-          {group.items.map(item => {
-            const active = activeTool === item.key;
-            return (
-              <button
-                key={item.key}
-                onClick={() => onChangeTool(item.key)}
-                title={TOOL_LABELS[item.key]}
-                style={{
-                  width: 38, height: 34,
-                  margin: "0 auto", display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  borderRadius: 7, cursor: "pointer",
-                  border: active
-                    ? "1px solid rgba(45,226,255,0.3)"
-                    : "1px solid rgba(255,255,255,0.04)",
-                  background: active
-                    ? "radial-gradient(circle,rgba(45,226,255,0.18),rgba(45,226,255,0.04))"
-                    : "linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.008))",
-                  color: active ? "#2de2ff" : "#90a4c8",
-                  fontSize: item.icon.length > 1 ? 8 : 13,
-                  fontWeight: 900, fontFamily: "monospace",
-                }}
-              >
-                {item.icon}
-              </button>
-            );
-          })}
-        </div>
-      ))}
-      <div style={{ height: 1, background: "#172133", margin: "3px 0" }} />
-      {[{ icon: "↩", label: "Desfazer (Z)" }, { icon: "✕", label: "Limpar tudo" }].map((b, i) => (
-        <button key={i} title={b.label} style={{
-          width: 38, height: 34, margin: "0 auto",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          borderRadius: 7, cursor: "pointer", fontSize: 13,
-          border: "1px solid rgba(255,255,255,0.04)",
-          background: "transparent", color: "#6a7f99",
-        }}>
-          {b.icon}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ============================================================
 // DRAWING SETTINGS MODAL
 // ============================================================
 
@@ -997,6 +892,234 @@ function DrawingOptionsBar({
 }
 
 // ============================================================
+// LEFT TOOLBAR COM SUBMENUS HOVER E FAVORITOS
+// ============================================================
+
+interface ToolItemData {
+  key: DrawTool;
+  icon: string;
+  label: string;
+  category?: string;
+}
+
+const TOOLS_CONFIG_LIST: ToolItemData[] = [
+  { key: "cursor", icon: "↖", label: "Cursor (V)", category: "⭐ Favoritos" },
+  { key: "trendline", icon: "╱", label: "Tendência (T)", category: "⭐ Favoritos" },
+  { key: "hline", icon: "─", label: "Horizontal (H)", category: "⭐ Favoritos" },
+  { key: "vline", icon: "│", label: "Vertical (K)", category: "⭐ Favoritos" },
+  { key: "ray", icon: "→", label: "Raio (R)", category: "📐 Linhas" },
+  { key: "extended", icon: "↔", label: "Estendida", category: "📐 Linhas" },
+  { key: "channel", icon: "⦀", label: "Canal", category: "🔄 Canais" },
+  { key: "pitchfork", icon: "⑂", label: "Pitchfork", category: "🔄 Canais" },
+  { key: "fib", icon: "FIB", label: "Fibonacci (F)", category: "📊 Fibonacci" },
+  { key: "fibext", icon: "EXT", label: "Extensão", category: "📊 Fibonacci" },
+  { key: "fibarc", icon: "◌", label: "Arcos", category: "📊 Fibonacci" },
+  { key: "fibfan", icon: "⋱", label: "Fan", category: "📊 Fibonacci" },
+  { key: "rect", icon: "▭", label: "Retângulo (G)", category: "🔷 Formas" },
+  { key: "triangle", icon: "△", label: "Triângulo", category: "🔷 Formas" },
+  { key: "ellipse", icon: "◯", label: "Elipse", category: "🔷 Formas" },
+  { key: "measure", icon: "⟺", label: "Medir (M)", category: "📏 Misc" },
+  { key: "text", icon: "T", label: "Texto (X)", category: "📏 Misc" },
+];
+
+function DrawingToolbar({
+  activeTool,
+  onChangeTool,
+}: {
+  activeTool: DrawTool;
+  onChangeTool: (t: DrawTool) => void;
+}) {
+  const [hoverCategory, setHoverCategory] = useState<string | null>(null);
+  const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
+  const [favorites, setFavorites] = useState<DrawTool[]>(["cursor", "trendline", "hline", "vline"]);
+
+  const toggleFavorite = (tool: DrawTool, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFavorites(prev =>
+      prev.includes(tool) ? prev.filter(t => t !== tool) : [...prev, tool]
+    );
+  };
+
+  const handleMouseEnter = (category: string) => {
+    if (hoverTimer) clearTimeout(hoverTimer);
+    const timer = setTimeout(() => {
+      setHoverCategory(category);
+    }, 2000);
+    setHoverTimer(timer);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimer) clearTimeout(hoverTimer);
+    setHoverCategory(null);
+  };
+
+  const handleToolClick = (tool: DrawTool) => {
+    onChangeTool(tool);
+    setHoverCategory(null);
+  };
+
+  const grouped = TOOLS_CONFIG_LIST.reduce((acc, tool) => {
+    const cat = tool.category || "Outros";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(tool);
+    return acc;
+  }, {} as Record<string, ToolItemData[]>);
+
+  const categoryOrder = ["⭐ Favoritos", "📐 Linhas", "🔄 Canais", "📊 Fibonacci", "🔷 Formas", "📏 Misc"];
+
+  return (
+    <div style={{
+      width: 72,
+      borderRight: "1px solid #172133",
+      background: "linear-gradient(180deg,rgba(8,12,24,0.98),rgba(6,9,17,0.98))",
+      display: "flex", flexDirection: "column",
+      padding: "8px 6px", gap: 8,
+      overflowY: "auto", flexShrink: 0,
+    }}>
+      {categoryOrder.map(cat => {
+        const tools = grouped[cat];
+        if (!tools) return null;
+        
+        const isOpen = hoverCategory === cat;
+        const isFavCat = cat === "⭐ Favoritos";
+        const visibleTools = isFavCat ? tools.filter(t => favorites.includes(t.key)) : tools;
+        
+        if (visibleTools.length === 0) return null;
+
+        return (
+          <div 
+            key={cat}
+            onMouseEnter={() => !isFavCat && handleMouseEnter(cat)}
+            onMouseLeave={handleMouseLeave}
+            style={{ position: "relative" }}
+          >
+            <div style={{
+              color: "#7f93b7",
+              fontSize: 8,
+              fontWeight: 900,
+              letterSpacing: 0.9,
+              textTransform: "uppercase",
+              textAlign: "center",
+              marginBottom: 6,
+              cursor: !isFavCat ? "pointer" : "default",
+            }}>
+              {cat}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {visibleTools.map(tool => {
+                const active = activeTool === tool.key;
+                const isFavorite = favorites.includes(tool.key);
+                
+                return (
+                  <div key={tool.key} style={{ position: "relative" }}>
+                    <button
+                      onClick={() => handleToolClick(tool.key)}
+                      onDoubleClick={(e) => toggleFavorite(tool.key, e)}
+                      title={`${tool.label} ${isFavorite ? "★ Favorito" : "☆ Clique duplo p/ favoritar"}`}
+                      style={{
+                        width: 52, height: 42,
+                        margin: "0 auto", display: "flex",
+                        alignItems: "center", justifyContent: "center",
+                        borderRadius: 8, cursor: "pointer",
+                        border: active
+                          ? "1px solid rgba(45,226,255,0.5)"
+                          : "1px solid rgba(255,255,255,0.1)",
+                        background: active
+                          ? "radial-gradient(circle,rgba(45,226,255,0.25),rgba(45,226,255,0.1))"
+                          : "linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))",
+                        color: active ? "#ffffff" : "#e0f0ff",
+                        fontSize: tool.icon.length > 1 ? 10 : 16,
+                        fontWeight: 700, fontFamily: "monospace",
+                        position: "relative",
+                        boxShadow: active ? "0 0 10px rgba(45,226,255,0.6)" : "none",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      {tool.icon}
+                      {isFavorite && !active && (
+                        <span style={{
+                          position: "absolute", bottom: -2, right: -2,
+                          fontSize: 9, color: "#f7c948"
+                        }}>★</span>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {isOpen && !isFavCat && (
+              <div style={{
+                position: "absolute",
+                left: "100%",
+                top: 0,
+                marginLeft: 6,
+                background: "#0f1520",
+                border: "1px solid #2a3a55",
+                borderRadius: 12,
+                padding: "10px 12px",
+                minWidth: 160,
+                zIndex: 200,
+                boxShadow: "0 12px 32px rgba(0,0,0,0.6)",
+                backdropFilter: "blur(12px)",
+              }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#9ab3e0", marginBottom: 10, letterSpacing: 0.6, borderBottom: "1px solid #2a3a55", paddingBottom: 6 }}>
+                  {cat} • Todos
+                </div>
+                {tools.map(tool => {
+                  const isFav = favorites.includes(tool.key);
+                  return (
+                    <div
+                      key={tool.key}
+                      onClick={() => handleToolClick(tool.key)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        cursor: "pointer",
+                        fontSize: 12,
+                        color: activeTool === tool.key ? ui.cyan : "#eef5ff",
+                        background: activeTool === tool.key ? "rgba(45,226,255,0.12)" : "transparent",
+                        marginBottom: 4,
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(45,226,255,0.18)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    >
+                      <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 16 }}>{tool.icon}</span>
+                        <span>{tool.label}</span>
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(tool.key, e); }}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: isFav ? ui.yellow : "#6a7f99",
+                          cursor: "pointer",
+                          fontSize: 14,
+                          padding: "2px 6px",
+                          borderRadius: 4,
+                        }}
+                      >
+                        {isFav ? "★" : "☆"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============================================================
 // EXISTING TYPES
 // ============================================================
 
@@ -1273,7 +1396,7 @@ function symbolToInsight(asset: AssetScore): AIInsight {
 }
 
 // ============================================================
-// EXISTING COMPONENTS
+// EXISTING COMPONENTS (ModuleButton, TopButton, etc.)
 // ============================================================
 
 function ModuleButton({
@@ -3218,6 +3341,8 @@ function ChartPanel({
   const [priceChange, setPriceChange] = useState<number>(0);
   const [svgSize, setSvgSize] = useState({ w: 1000, h: 600 });
   const [draftStart, setDraftStart] = useState<{ x: number; y: number } | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!mainRef.current || !volOverlayRef.current || !rsiRef.current) return;
@@ -3384,8 +3509,11 @@ function ChartPanel({
   const handleOverlayMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
     const p = getLocalPoint(e);
     const hit = drawingState.drawings.find(d => !d.hidden && hitTestDrawing(d, p.x, p.y));
+    
     if (hit && !hit.locked) {
       drawingState.setSelectedId(hit.id);
+      setDragId(hit.id);
+      setDragOffset({ x: p.x - hit.x1, y: p.y - hit.y1 });
       if (e.button === 2) {
         e.preventDefault();
         onContextMenu(hit, e.clientX, e.clientY);
@@ -3398,28 +3526,61 @@ function ChartPanel({
     if (drawingState.activeTool !== "cursor") {
       drawingState.setSelectedId(null);
       setDraftStart(p);
+      setDragId(null);
+      setDragOffset(null);
     } else {
       drawingState.setSelectedId(null);
+      setDragId(null);
+      setDragOffset(null);
     }
   };
 
   const handleOverlayMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const p = getLocalPoint(e);
+    
+    if (dragId && dragOffset) {
+      const drawing = drawingState.drawings.find(d => d.id === dragId);
+      if (drawing && !drawing.locked) {
+        const newX1 = p.x - dragOffset.x;
+        const newY1 = p.y - dragOffset.y;
+        const deltaX = newX1 - drawing.x1;
+        const deltaY = newY1 - drawing.y1;
+        
+        drawingState.updateDrawing(dragId, {
+          x1: newX1,
+          y1: newY1,
+          x2: drawing.x2 + deltaX,
+          y2: drawing.y2 + deltaY,
+        });
+      }
+      return;
+    }
+    
     if (draftStart && drawingState.activeTool !== "cursor") {
-      // Just preview, actual creation on mouseup
+      // Preview do desenho enquanto arrasta
     }
   };
 
   const handleOverlayMouseUp = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (dragId) {
+      setDragId(null);
+      setDragOffset(null);
+      return;
+    }
+    
     if (draftStart && drawingState.activeTool !== "cursor") {
       const p = getLocalPoint(e);
-      const newDraw = newDrawing(
-        drawingState.activeTool,
-        draftStart.x,
-        draftStart.y,
-        p.x,
-        p.y
-      );
-      drawingState.addDrawing(newDraw);
+      const distance = Math.hypot(p.x - draftStart.x, p.y - draftStart.y);
+      if (distance > 5) {
+        const newDraw = newDrawing(
+          drawingState.activeTool,
+          draftStart.x,
+          draftStart.y,
+          p.x,
+          p.y
+        );
+        drawingState.addDrawing(newDraw);
+      }
       setDraftStart(null);
     }
   };
