@@ -514,6 +514,49 @@ const TOOLS_CONFIG: ToolItem[] = [
 ];
 
 function DrawingToolbar({
+ // ============================================================
+// NOVA LEFT TOOLBAR COM SUBMENUS HOVER E FAVORITOS
+// ============================================================
+
+interface ToolItemType {
+  key: DrawTool;
+  icon: string;
+  label: string;
+  category?: string;
+}
+
+const TOOLS_CONFIG_DATA: ToolItemType[] = [
+  // FAVORITOS (sempre visíveis)
+  { key: "cursor", icon: "↖", label: "Cursor (V)", category: "⭐ Favoritos" },
+  { key: "trendline", icon: "╱", label: "Tendência (T)", category: "⭐ Favoritos" },
+  { key: "hline", icon: "─", label: "Horizontal (H)", category: "⭐ Favoritos" },
+  { key: "vline", icon: "│", label: "Vertical (K)", category: "⭐ Favoritos" },
+  
+  // LINHAS
+  { key: "ray", icon: "→", label: "Raio (R)", category: "📐 Linhas" },
+  { key: "extended", icon: "↔", label: "Estendida", category: "📐 Linhas" },
+  
+  // CANAIS
+  { key: "channel", icon: "⦀", label: "Canal", category: "🔄 Canais" },
+  { key: "pitchfork", icon: "⑂", label: "Pitchfork", category: "🔄 Canais" },
+  
+  // FIBONACCI (submenu)
+  { key: "fib", icon: "FIB", label: "Fibonacci (F)", category: "📊 Fibonacci" },
+  { key: "fibext", icon: "EXT", label: "Extensão", category: "📊 Fibonacci" },
+  { key: "fibarc", icon: "◌", label: "Arcos", category: "📊 Fibonacci" },
+  { key: "fibfan", icon: "⋱", label: "Fan", category: "📊 Fibonacci" },
+  
+  // FORMAS
+  { key: "rect", icon: "▭", label: "Retângulo (G)", category: "🔷 Formas" },
+  { key: "triangle", icon: "△", label: "Triângulo", category: "🔷 Formas" },
+  { key: "ellipse", icon: "◯", label: "Elipse", category: "🔷 Formas" },
+  
+  // MISC
+  { key: "measure", icon: "⟺", label: "Medir (M)", category: "📏 Misc" },
+  { key: "text", icon: "T", label: "Texto (X)", category: "📏 Misc" },
+];
+
+function DrawingToolbar({
   activeTool,
   onChangeTool,
 }: {
@@ -535,7 +578,7 @@ function DrawingToolbar({
     if (hoverTimer) clearTimeout(hoverTimer);
     const timer = setTimeout(() => {
       setHoverCategory(category);
-    }, 2000); // 2 segundos
+    }, 2000);
     setHoverTimer(timer);
   };
 
@@ -550,14 +593,13 @@ function DrawingToolbar({
   };
 
   // Agrupar por categoria
-  const grouped = TOOLS_CONFIG.reduce((acc, tool) => {
+  const grouped = TOOLS_CONFIG_DATA.reduce((acc, tool) => {
     const cat = tool.category || "Outros";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(tool);
     return acc;
-  }, {} as Record<string, ToolItem[]>);
+  }, {} as Record<string, ToolItemType[]>);
 
-  // Ordem customizada
   const categoryOrder = ["⭐ Favoritos", "📐 Linhas", "🔄 Canais", "📊 Fibonacci", "🔷 Formas", "📏 Misc"];
 
   return (
@@ -586,7 +628,6 @@ function DrawingToolbar({
             onMouseLeave={handleMouseLeave}
             style={{ position: "relative" }}
           >
-            {/* Cabeçalho da categoria */}
             <div style={{
               color: "#7f93b7",
               fontSize: 8,
@@ -600,7 +641,6 @@ function DrawingToolbar({
               {cat}
             </div>
 
-            {/* Ferramentas da categoria */}
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {visibleTools.map(tool => {
                 const active = activeTool === tool.key;
@@ -623,10 +663,11 @@ function DrawingToolbar({
                         background: active
                           ? "radial-gradient(circle,rgba(45,226,255,0.22),rgba(45,226,255,0.08))"
                           : "linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))",
-                        color: active ? "#e0f3ff" : "#b0c4f0",
+                        color: active ? "#ffffff" : "#d0e4ff",
                         fontSize: tool.icon.length > 1 ? 9 : 14,
                         fontWeight: 700, fontFamily: "monospace",
                         position: "relative",
+                        boxShadow: active ? "0 0 8px rgba(45,226,255,0.5)" : "none",
                       }}
                     >
                       {tool.icon}
@@ -642,7 +683,6 @@ function DrawingToolbar({
               })}
             </div>
 
-            {/* Submenu expandido (hover 2 segundos) */}
             {isOpen && !isFavCat && (
               <div style={{
                 position: "absolute",
@@ -705,8 +745,7 @@ function DrawingToolbar({
       })}
     </div>
   );
-}=========================
-
+}
 function DrawingSettingsModal({
   drawing,
   onApply,
