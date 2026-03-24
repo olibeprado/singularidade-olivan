@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";import {
   createChart,
   ColorType,
   CrosshairMode,
