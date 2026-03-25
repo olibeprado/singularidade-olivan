@@ -3110,7 +3110,8 @@ function ChartPanel({
   const [draftStart, setDraftStart] = useState<{ x: number; y: number } | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
-    // CORREÇÃO: cancelar desenho ao clicar fora do SVG e voltar ao cursor
+
+  // CORREÇÃO: cancelar desenho ao clicar fora do SVG e voltar ao cursor
   useEffect(() => {
     const handleGlobalMouseUp = (e: MouseEvent) => {
       if (!overlayRef.current) return;
@@ -3141,6 +3142,10 @@ function ChartPanel({
     setDragId(null);
     setDragOffset(null);
   }, [drawingState.activeTool]);
+
+  // Criação do gráfico principal (lightweight-charts)
+  useEffect(() => {
+    if (!mainRef.current || !volOverlayRef.current || !rsiRef.current) return;
 
     const baseChartOpts = {
       layout: {
