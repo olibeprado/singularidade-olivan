@@ -1,6 +1,20 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
+const ui = {
+  bg: "#060913",
+  bg2: "#050810",
+  border: "#172133",
+  text: "#ebf3ff",
+  mut: "#7f93b7",
+  cyan: "#2de2ff",
+  cyan2: "#00d8ff",
+  green: "#27f59d",
+  yellow: "#f7c948",
+  red: "#ff6b86",
+  magenta: "#ff4fa3",
+  orange: "#ff9d2e",
+};
   createChart,
   ColorType,
   CrosshairMode,
