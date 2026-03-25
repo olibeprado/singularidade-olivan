@@ -762,6 +762,7 @@ function useDrawings() {
   }, []);
 
   const deleteSelected = useCallback(() => {
+    if (!selectedId) return;
     setDrawings(prev => prev.filter(d => d.id !== selectedId));
     setSelectedId(null);
   }, [selectedId]);
@@ -3108,39 +3109,37 @@ function ChartPanel({
   const [priceChange, setPriceChange] = useState<number>(0);
   const [svgSize, setSvgSize] = useState({ w: 1000, h: 600 });
   const [draftStart, setDraftStart] = useState<{ x: number; y: number } | null>(null);
+  const [draftEnd, setDraftEnd] = useState<{ x: number; y: number } | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
+  const [pointerDown, setPointerDown] = useState(false);
+  const interactionRef = useRef<{
+    dragId: string | null;
+    dragOffset: { x: number; y: number } | null;
+    draftStart: { x: number; y: number } | null;
+    activeTool: DrawTool;
+  }>({
+    dragId: null,
+    dragOffset: null,
+    draftStart: null,
+    activeTool: drawingState.activeTool,
+  });
 
-  // CORREÇÃO: cancelar desenho ao clicar fora do SVG e voltar ao cursor
   useEffect(() => {
-    const handleGlobalMouseUp = (e: MouseEvent) => {
-      if (!overlayRef.current) return;
-
-      const target = e.target as Node;
-      const clickOutside = !overlayRef.current.contains(target);
-
-      // Se há um rascunho e clicou fora, cancela o desenho e volta ao cursor
-      if (draftStart && clickOutside) {
-        setDraftStart(null);
-        setDragId(null);
-        setDragOffset(null);
-        drawingState.setActiveTool("cursor");
-      }
-      // Se a ferramenta está ativa (não cursor) e clicou fora, desativa a ferramenta
-      else if (drawingState.activeTool !== "cursor" && clickOutside) {
-        drawingState.setActiveTool("cursor");
-      }
+    interactionRef.current = {
+      dragId,
+      dragOffset,
+      draftStart,
+      activeTool: drawingState.activeTool,
     };
+  }, [dragId, dragOffset, draftStart, drawingState.activeTool]);
 
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [draftStart, drawingState.activeTool]);
-
-  // CORREÇÃO: cancelar rascunho quando a ferramenta ativa muda
   useEffect(() => {
     setDraftStart(null);
+    setDraftEnd(null);
     setDragId(null);
     setDragOffset(null);
+    setPointerDown(false);
   }, [drawingState.activeTool]);
 
   // Criação do gráfico principal (lightweight-charts)
@@ -3301,88 +3300,139 @@ function ChartPanel({
 
   const isPositive = priceChange >= 0;
 
-  const getLocalPoint = (e: React.MouseEvent<SVGSVGElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
+  const clampPoint = useCallback((point: { x: number; y: number }) => ({
+    x: clamp(point.x, 0, svgSize.w),
+    y: clamp(point.y, 0, svgSize.h),
+  }), [svgSize.h, svgSize.w]);
 
-  const handleOverlayMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    const p = getLocalPoint(e);
-    const hit = drawingState.drawings.find(d => !d.hidden && hitTestDrawing(d, p.x, p.y));
-    
-    if (hit && !hit.locked) {
-      drawingState.setSelectedId(hit.id);
-      setDragId(hit.id);
-      setDragOffset({ x: p.x - hit.x1, y: p.y - hit.y1 });
-      if (e.button === 2) {
-        e.preventDefault();
-        onContextMenu(hit, e.clientX, e.clientY);
-      } else if (e.detail === 2) {
-        onDoubleClick(hit);
-      }
-      return;
+  const getClientPoint = useCallback((clientX: number, clientY: number) => {
+    const rect = overlayRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    return clampPoint({ x: clientX - rect.left, y: clientY - rect.top });
+  }, [clampPoint]);
+
+  const getLocalPoint = (e: React.MouseEvent<SVGSVGElement>) => getClientPoint(e.clientX, e.clientY);
+
+  const commitDraft = useCallback((endPoint: { x: number; y: number }) => {
+    if (!draftStart || drawingState.activeTool === "cursor") return;
+    const end = clampPoint(endPoint);
+    const distance = Math.hypot(end.x - draftStart.x, end.y - draftStart.y);
+    if (distance > 5) {
+      const created = newDrawing(
+        drawingState.activeTool,
+        draftStart.x,
+        draftStart.y,
+        end.x,
+        end.y
+      );
+      drawingState.addDrawing(created);
     }
+    setDraftStart(null);
+    setDraftEnd(null);
+    setPointerDown(false);
+  }, [clampPoint, draftStart, drawingState]);
 
-    if (drawingState.activeTool !== "cursor") {
-      drawingState.setSelectedId(null);
-      setDraftStart(p);
-      setDragId(null);
-      setDragOffset(null);
-    } else {
-      drawingState.setSelectedId(null);
-      setDragId(null);
-      setDragOffset(null);
-    }
-  };
+  const beginDragging = useCallback((drawing: Drawing, point: { x: number; y: number }) => {
+    if (drawing.locked) return;
+    drawingState.setSelectedId(drawing.id);
+    setDragId(drawing.id);
+    setDragOffset({ x: point.x - drawing.x1, y: point.y - drawing.y1 });
+    setPointerDown(true);
+  }, [drawingState]);
 
-  const handleOverlayMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    const p = getLocalPoint(e);
-    
-    if (dragId && dragOffset) {
-      const drawing = drawingState.drawings.find(d => d.id === dragId);
-      if (drawing && !drawing.locked) {
-        const newX1 = p.x - dragOffset.x;
-        const newY1 = p.y - dragOffset.y;
+  useEffect(() => {
+    const handleWindowPointerMove = (e: MouseEvent) => {
+      const state = interactionRef.current;
+      const point = getClientPoint(e.clientX, e.clientY);
+
+      if (state.dragId && state.dragOffset) {
+        const drawing = drawingState.drawings.find((d) => d.id === state.dragId);
+        if (!drawing || drawing.locked) return;
+
+        const newX1 = point.x - state.dragOffset.x;
+        const newY1 = point.y - state.dragOffset.y;
         const deltaX = newX1 - drawing.x1;
         const deltaY = newY1 - drawing.y1;
-        
-        drawingState.updateDrawing(dragId, {
+
+        drawingState.updateDrawing(state.dragId, {
           x1: newX1,
           y1: newY1,
           x2: drawing.x2 + deltaX,
           y2: drawing.y2 + deltaY,
+          ...(typeof drawing.x3 === "number" && typeof drawing.y3 === "number"
+            ? { x3: drawing.x3 + deltaX, y3: drawing.y3 + deltaY }
+            : {}),
         });
+        return;
       }
-      return;
-    }
-    
-    if (draftStart && drawingState.activeTool !== "cursor") {
-      // Preview do desenho enquanto arrasta
-    }
+
+      if (state.draftStart && state.activeTool !== "cursor") {
+        setDraftEnd(point);
+      }
+    };
+
+    const handleWindowPointerUp = (e: MouseEvent) => {
+      const state = interactionRef.current;
+      if (state.dragId) {
+        setDragId(null);
+        setDragOffset(null);
+        setPointerDown(false);
+        return;
+      }
+
+      if (state.draftStart && state.activeTool !== "cursor") {
+        commitDraft(getClientPoint(e.clientX, e.clientY));
+      }
+    };
+
+    window.addEventListener("mousemove", handleWindowPointerMove);
+    window.addEventListener("mouseup", handleWindowPointerUp);
+    return () => {
+      window.removeEventListener("mousemove", handleWindowPointerMove);
+      window.removeEventListener("mouseup", handleWindowPointerUp);
+    };
+  }, [commitDraft, drawingState.drawings, drawingState.updateDrawing, getClientPoint]);
+
+  const handleOverlayMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (e.button === 2) return;
+    if (drawingState.activeTool === "cursor") return;
+
+    const p = getLocalPoint(e);
+    drawingState.setSelectedId(null);
+    setDraftStart(p);
+    setDraftEnd(p);
+    setDragId(null);
+    setDragOffset(null);
+    setPointerDown(true);
+  };
+
+  const handleOverlayMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!draftStart || drawingState.activeTool === "cursor") return;
+    setDraftEnd(getLocalPoint(e));
   };
 
   const handleOverlayMouseUp = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (dragId) {
-      setDragId(null);
-      setDragOffset(null);
+    if (!draftStart || drawingState.activeTool === "cursor") return;
+    commitDraft(getLocalPoint(e));
+  };
+
+  const handleDrawingPointerDown = (drawing: Drawing, e: React.MouseEvent<SVGGElement>) => {
+    e.stopPropagation();
+    const point = getClientPoint(e.clientX, e.clientY);
+
+    if (e.button === 2) {
+      drawingState.setSelectedId(drawing.id);
+      onContextMenu(drawing, e.clientX, e.clientY);
       return;
     }
-    
-    if (draftStart && drawingState.activeTool !== "cursor") {
-      const p = getLocalPoint(e);
-      const distance = Math.hypot(p.x - draftStart.x, p.y - draftStart.y);
-      if (distance > 5) {
-        const newDraw = newDrawing(
-          drawingState.activeTool,
-          draftStart.x,
-          draftStart.y,
-          p.x,
-          p.y
-        );
-        drawingState.addDrawing(newDraw);
-      }
-      setDraftStart(null);
+
+    if (e.detail === 2) {
+      drawingState.setSelectedId(drawing.id);
+      onDoubleClick(drawing);
+      return;
     }
+
+    beginDragging(drawing, point);
   };
 
   const toolLabelMap: Record<DrawTool, string> = {
@@ -3537,20 +3587,66 @@ function ChartPanel({
           onMouseDown={handleOverlayMouseDown}
           onMouseMove={handleOverlayMouseMove}
           onMouseUp={handleOverlayMouseUp}
-          onContextMenu={(e) => e.preventDefault()}
+          onContextMenu={(e) => {
+            if (drawingState.activeTool !== "cursor") e.preventDefault();
+          }}
           style={{
             position: "absolute",
             inset: 0,
             zIndex: 4,
-            pointerEvents: drawingState.activeTool !== "cursor" || drawingState.selectedId ? "auto" : "none",
-            cursor: drawingState.activeTool !== "cursor" ? "crosshair" : "default",
+            pointerEvents: drawingState.activeTool !== "cursor" || pointerDown ? "auto" : "none",
+            cursor:
+              dragId
+                ? "grabbing"
+                : drawingState.activeTool !== "cursor"
+                ? "crosshair"
+                : "default",
           }}
         >
           {drawingState.drawings.filter(d => !d.hidden).map(d => (
-            <g key={d.id}>
+            <g
+              key={d.id}
+              onMouseDown={(e) => handleDrawingPointerDown(d, e)}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                drawingState.setSelectedId(d.id);
+                onDoubleClick(d);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                drawingState.setSelectedId(d.id);
+                onContextMenu(d, e.clientX, e.clientY);
+              }}
+              style={{
+                pointerEvents: "auto",
+                cursor: d.locked ? "pointer" : dragId === d.id ? "grabbing" : "grab",
+              }}
+            >
               {renderDrawingSVG(d, svgSize.w, svgSize.h, d.id === drawingState.selectedId)}
             </g>
           ))}
+
+          {draftStart && draftEnd && drawingState.activeTool !== "cursor" && (
+            <g opacity={0.85} style={{ pointerEvents: "none" }}>
+              {renderDrawingSVG(
+                {
+                  ...newDrawing(
+                    drawingState.activeTool,
+                    draftStart.x,
+                    draftStart.y,
+                    draftEnd.x,
+                    draftEnd.y
+                  ),
+                  id: "draft-preview",
+                  color: TOOL_COLORS[drawingState.activeTool],
+                },
+                svgSize.w,
+                svgSize.h,
+                false
+              )}
+            </g>
+          )}
         </svg>
         <div
           ref={volOverlayRef}
