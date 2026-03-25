@@ -4929,72 +4929,80 @@ export default function AtlasChartPro2() {
         onTimeframeChange={setTimeframe}
       />
 
-      <ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
+<ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
 
-      <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) 320px",
-            height: "100%",
-            minHeight: 0,
-          }}
-        >
-          <div style={{ minWidth: 0, minHeight: 0 }}>
-            <WorkspaceByModule
-              activeModule={activeModule}
-              candles={candles}
-              indicators={indicators}
-              selectedObject={selectedObject}
-              mode={mode}
-              symbol={activeAsset.symbol}
-              timeframe={timeframe}
-              events={scannerEvents}
-              insight={insight}
-              scannerAssets={scannerAssets}
-              onSelectSymbol={setSelectedSymbol}
-              selectedTool={drawingState.activeTool}
-              drawingState={drawingState}
-              onContextMenu={(drawing, x, y) => setContextMenu({ x, y, drawing })}
-              onDoubleClick={(drawing) => setSettingsDrawing(drawing)}
-              onSetSettingsDrawing={setSettingsDrawing}
-            />
-          </div>
+<div style={{ display: "flex", minHeight: 0, flex: 1 }}>
+  <DrawingToolbar
+    activeTool={drawingState.activeTool}
+    onSelectTool={(tool) => drawingState.setActiveTool(tool)}
+    accent="#f0b90b"
+  />
 
+  <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) 320px",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
+      <div style={{ minWidth: 0, minHeight: 0 }}>
+        <WorkspaceByModule
+          activeModule={activeModule}
+          candles={candles}
+          indicators={indicators}
+          selectedObject={selectedObject}
+          mode={mode}
+          symbol={activeAsset.symbol}
+          timeframe={timeframe}
+          events={scannerEvents}
+          insight={insight}
+          scannerAssets={scannerAssets}
+          onSelectSymbol={setSelectedSymbol}
+          selectedTool={drawingState.activeTool}
+          drawingState={drawingState}
+          onContextMenu={(drawing, x, y) => setContextMenu({ x, y, drawing })}
+          onDoubleClick={(drawing) => setSettingsDrawing(drawing)}
+          onSetSettingsDrawing={setSettingsDrawing}
+        />
+      </div>
+
+      <div
+        style={{
+          minWidth: 0,
+          minHeight: 0,
+          borderLeft: `1px solid ${ui.border}`,
+          background:
+            "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+          display: "grid",
+          gridTemplateRows:
+            activeModule === "Scanner" || activeModule === "Mestre Scanner"
+              ? "1fr"
+              : "1fr auto",
+        }}
+      >
+        <AIInsightPanel insight={insight} topModule={activeModule} />
+
+        {activeModule !== "Scanner" && activeModule !== "Mestre Scanner" && (
           <div
             style={{
-              minWidth: 0,
-              minHeight: 0,
-              borderLeft: `1px solid ${ui.border}`,
-              background:
-                "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
-              display: "grid",
-              gridTemplateRows:
-                activeModule === "Scanner" || activeModule === "Mestre Scanner"
-                  ? "1fr"
-                  : "1fr auto",
+              borderTop: `1px solid ${ui.border}`,
+              padding: 10,
+              background: "rgba(255,255,255,0.015)",
             }}
           >
-            <AIInsightPanel insight={insight} topModule={activeModule} />
-
-            {activeModule !== "Scanner" && activeModule !== "Mestre Scanner" && (
-              <div
-                style={{
-                  borderTop: `1px solid ${ui.border}`,
-                  padding: 10,
-                  background: "rgba(255,255,255,0.015)",
-                }}
-              >
-                <ScannerPanelContinuous
-                  assets={scannerAssets.slice(0, 6)}
-                  selectedSymbol={selectedSymbol}
-                  onSelectSymbol={setSelectedSymbol}
-                />
-              </div>
-            )}
+            <ScannerPanelContinuous
+              assets={scannerAssets.slice(0, 6)}
+              selectedSymbol={selectedSymbol}
+              onSelectSymbol={setSelectedSymbol}
+            />
           </div>
-        </div>
+        )}
       </div>
+    </div>
+  </div>
+</div>
 
       {contextMenu && (
         <DrawingContextMenu
