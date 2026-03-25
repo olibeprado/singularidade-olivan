@@ -1,0 +1,42 @@
+// atlas-web/components/atlas-v3/types.ts
+
+// ============================================================
+// SINGULARIDADE ATLAS - CORE TYPES
+// ============================================================
+export type DrawTool = 
+| "cursor" | "trendline" | "hline" | "vline" | "ray" | "extended"
+| "channel" | "pitchfork" | "fib" | "fibext" | "fibarc" | "fibfan"
+| "rect" | "triangle" | "ellipse" | "measure" | "text";
+
+export type FibLevel = { 
+  pct: number; 
+  color: string; 
+  visible: boolean; 
+};
+
+export type Drawing = {
+  id: string;
+  tool: DrawTool;
+  color: string;
+  lineWidth: number;
+  lineStyle: "solid" | "dashed" | "dotted";
+  fillOpacity: number;
+  locked: boolean;
+  hidden: boolean;
+  note: string;
+  showPrice: boolean;
+  x1: number; y1: number;
+  x2: number; y2: number;
+  x3?: number; y3?: number;
+  fibLevels?: FibLevel[];
+  text?: string;
+  fontSize?: number;
+  bold?: boolean;
+  label?: string;
+  showArrow?: boolean;
+  showVariation?: boolean;
+  showPercent?: boolean;
+  channelOffset?: number;
+  p1?: number; // price at y1
+  p2?: number; // price at y2
+};
