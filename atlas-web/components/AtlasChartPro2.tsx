@@ -1,8 +1,13 @@
 "use client";
 
-import DrawingToolbar from "./DrawingToolbar";
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { createChart, ColorType, CrosshairMode, IChartApi, Time } from "lightweight-charts";
+import {
+  createChart,
+  ColorType,
+  CrosshairMode,
+  IChartApi,
+  Time,
+} from "lightweight-charts";
 import {
   Activity,
   BarChart2,
@@ -432,6 +437,111 @@ function renderDrawingSVG(
 }
 
 // ============================================================
+// LEFT TOOLBAR
+// ============================================================
+
+const TOOL_GROUPS_CONFIG = [
+  { title: "CURSOR",  items: [{ key: "cursor"    as DrawTool, icon: "↖" }] },
+  { title: "LINHAS",  items: [
+    { key: "trendline" as DrawTool, icon: "╱" },
+    { key: "hline"     as DrawTool, icon: "─" },
+    { key: "vline"     as DrawTool, icon: "│" },
+    { key: "ray"       as DrawTool, icon: "→" },
+    { key: "extended"  as DrawTool, icon: "↔" },
+  ]},
+  { title: "CANAIS",  items: [
+    { key: "channel"   as DrawTool, icon: "⦀" },
+    { key: "pitchfork" as DrawTool, icon: "⑂" },
+  ]},
+  { title: "FIBO",    items: [
+    { key: "fib"    as DrawTool, icon: "FIB" },
+    { key: "fibext" as DrawTool, icon: "EXT" },
+    { key: "fibarc" as DrawTool, icon: "◌"  },
+    { key: "fibfan" as DrawTool, icon: "⋱"  },
+  ]},
+  { title: "FORMAS",  items: [
+    { key: "rect"     as DrawTool, icon: "▭" },
+    { key: "triangle" as DrawTool, icon: "△" },
+    { key: "ellipse"  as DrawTool, icon: "◯" },
+  ]},
+  { title: "MISC",    items: [
+    { key: "measure" as DrawTool, icon: "⟺" },
+    { key: "text"    as DrawTool, icon: "T"  },
+  ]},
+];
+
+function DrawingToolbar({
+  activeTool,
+  onChangeTool,
+}: {
+  activeTool: DrawTool;
+  onChangeTool: (t: DrawTool) => void;
+}) {
+  return (
+    <div style={{
+      width: 52,
+      borderRight: "1px solid #172133",
+      background: "linear-gradient(180deg,rgba(8,12,24,0.98),rgba(6,9,17,0.98))",
+      display: "flex", flexDirection: "column",
+      padding: "8px 6px", gap: 2,
+      overflowY: "auto", flexShrink: 0,
+    }}>
+      {TOOL_GROUPS_CONFIG.map((group, gi) => (
+        <div key={gi}>
+          {gi > 0 && <div style={{ height: 1, background: "#172133", margin: "3px 0" }} />}
+          <div style={{
+            color: "#424e63", fontSize: 7, fontWeight: 900,
+            letterSpacing: 0.8, textTransform: "uppercase",
+            textAlign: "center", marginBottom: 3,
+          }}>
+            {group.title}
+          </div>
+          {group.items.map(item => {
+            const active = activeTool === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => onChangeTool(item.key)}
+                title={TOOL_LABELS[item.key]}
+                style={{
+                  width: 38, height: 34,
+                  margin: "0 auto", display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  borderRadius: 7, cursor: "pointer",
+                  border: active
+                    ? "1px solid rgba(45,226,255,0.3)"
+                    : "1px solid rgba(255,255,255,0.04)",
+                  background: active
+                    ? "radial-gradient(circle,rgba(45,226,255,0.18),rgba(45,226,255,0.04))"
+                    : "linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.008))",
+                  color: active ? "#2de2ff" : "#90a4c8",
+                  fontSize: item.icon.length > 1 ? 8 : 13,
+                  fontWeight: 900, fontFamily: "monospace",
+                }}
+              >
+                {item.icon}
+              </button>
+            );
+          })}
+        </div>
+      ))}
+      <div style={{ height: 1, background: "#172133", margin: "3px 0" }} />
+      {[{ icon: "↩", label: "Desfazer (Z)" }, { icon: "✕", label: "Limpar tudo" }].map((b, i) => (
+        <button key={i} title={b.label} style={{
+          width: 38, height: 34, margin: "0 auto",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          borderRadius: 7, cursor: "pointer", fontSize: 13,
+          border: "1px solid rgba(255,255,255,0.04)",
+          background: "transparent", color: "#6a7f99",
+        }}>
+          {b.icon}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
 // DRAWING SETTINGS MODAL
 // ============================================================
 
@@ -762,7 +872,6 @@ function useDrawings() {
   }, []);
 
   const deleteSelected = useCallback(() => {
-    if (!selectedId) return;
     setDrawings(prev => prev.filter(d => d.id !== selectedId));
     setSelectedId(null);
   }, [selectedId]);
@@ -1164,7 +1273,7 @@ function symbolToInsight(asset: AssetScore): AIInsight {
 }
 
 // ============================================================
-// EXISTING COMPONENTS (ModuleButton, TopButton, etc.)
+// EXISTING COMPONENTS
 // ============================================================
 
 function ModuleButton({
@@ -3109,40 +3218,7 @@ function ChartPanel({
   const [priceChange, setPriceChange] = useState<number>(0);
   const [svgSize, setSvgSize] = useState({ w: 1000, h: 600 });
   const [draftStart, setDraftStart] = useState<{ x: number; y: number } | null>(null);
-  const [draftEnd, setDraftEnd] = useState<{ x: number; y: number } | null>(null);
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
-  const [pointerDown, setPointerDown] = useState(false);
-  const interactionRef = useRef<{
-    dragId: string | null;
-    dragOffset: { x: number; y: number } | null;
-    draftStart: { x: number; y: number } | null;
-    activeTool: DrawTool;
-  }>({
-    dragId: null,
-    dragOffset: null,
-    draftStart: null,
-    activeTool: drawingState.activeTool,
-  });
 
-  useEffect(() => {
-    interactionRef.current = {
-      dragId,
-      dragOffset,
-      draftStart,
-      activeTool: drawingState.activeTool,
-    };
-  }, [dragId, dragOffset, draftStart, drawingState.activeTool]);
-
-  useEffect(() => {
-    setDraftStart(null);
-    setDraftEnd(null);
-    setDragId(null);
-    setDragOffset(null);
-    setPointerDown(false);
-  }, [drawingState.activeTool]);
-
-  // Criação do gráfico principal (lightweight-charts)
   useEffect(() => {
     if (!mainRef.current || !volOverlayRef.current || !rsiRef.current) return;
 
@@ -3300,139 +3376,52 @@ function ChartPanel({
 
   const isPositive = priceChange >= 0;
 
-  const clampPoint = useCallback((point: { x: number; y: number }) => ({
-    x: clamp(point.x, 0, svgSize.w),
-    y: clamp(point.y, 0, svgSize.h),
-  }), [svgSize.h, svgSize.w]);
-
-  const getClientPoint = useCallback((clientX: number, clientY: number) => {
-    const rect = overlayRef.current?.getBoundingClientRect();
-    if (!rect) return { x: 0, y: 0 };
-    return clampPoint({ x: clientX - rect.left, y: clientY - rect.top });
-  }, [clampPoint]);
-
-  const getLocalPoint = (e: React.MouseEvent<SVGSVGElement>) => getClientPoint(e.clientX, e.clientY);
-
-  const commitDraft = useCallback((endPoint: { x: number; y: number }) => {
-    if (!draftStart || drawingState.activeTool === "cursor") return;
-    const end = clampPoint(endPoint);
-    const distance = Math.hypot(end.x - draftStart.x, end.y - draftStart.y);
-    if (distance > 5) {
-      const created = newDrawing(
-        drawingState.activeTool,
-        draftStart.x,
-        draftStart.y,
-        end.x,
-        end.y
-      );
-      drawingState.addDrawing(created);
-    }
-    setDraftStart(null);
-    setDraftEnd(null);
-    setPointerDown(false);
-  }, [clampPoint, draftStart, drawingState]);
-
-  const beginDragging = useCallback((drawing: Drawing, point: { x: number; y: number }) => {
-    if (drawing.locked) return;
-    drawingState.setSelectedId(drawing.id);
-    setDragId(drawing.id);
-    setDragOffset({ x: point.x - drawing.x1, y: point.y - drawing.y1 });
-    setPointerDown(true);
-  }, [drawingState]);
-
-  useEffect(() => {
-    const handleWindowPointerMove = (e: MouseEvent) => {
-      const state = interactionRef.current;
-      const point = getClientPoint(e.clientX, e.clientY);
-
-      if (state.dragId && state.dragOffset) {
-        const drawing = drawingState.drawings.find((d) => d.id === state.dragId);
-        if (!drawing || drawing.locked) return;
-
-        const newX1 = point.x - state.dragOffset.x;
-        const newY1 = point.y - state.dragOffset.y;
-        const deltaX = newX1 - drawing.x1;
-        const deltaY = newY1 - drawing.y1;
-
-        drawingState.updateDrawing(state.dragId, {
-          x1: newX1,
-          y1: newY1,
-          x2: drawing.x2 + deltaX,
-          y2: drawing.y2 + deltaY,
-          ...(typeof drawing.x3 === "number" && typeof drawing.y3 === "number"
-            ? { x3: drawing.x3 + deltaX, y3: drawing.y3 + deltaY }
-            : {}),
-        });
-        return;
-      }
-
-      if (state.draftStart && state.activeTool !== "cursor") {
-        setDraftEnd(point);
-      }
-    };
-
-    const handleWindowPointerUp = (e: MouseEvent) => {
-      const state = interactionRef.current;
-      if (state.dragId) {
-        setDragId(null);
-        setDragOffset(null);
-        setPointerDown(false);
-        return;
-      }
-
-      if (state.draftStart && state.activeTool !== "cursor") {
-        commitDraft(getClientPoint(e.clientX, e.clientY));
-      }
-    };
-
-    window.addEventListener("mousemove", handleWindowPointerMove);
-    window.addEventListener("mouseup", handleWindowPointerUp);
-    return () => {
-      window.removeEventListener("mousemove", handleWindowPointerMove);
-      window.removeEventListener("mouseup", handleWindowPointerUp);
-    };
-  }, [commitDraft, drawingState.drawings, drawingState.updateDrawing, getClientPoint]);
+  const getLocalPoint = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
 
   const handleOverlayMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (e.button === 2) return;
-    if (drawingState.activeTool === "cursor") return;
-
     const p = getLocalPoint(e);
-    drawingState.setSelectedId(null);
-    setDraftStart(p);
-    setDraftEnd(p);
-    setDragId(null);
-    setDragOffset(null);
-    setPointerDown(true);
+    const hit = drawingState.drawings.find(d => !d.hidden && hitTestDrawing(d, p.x, p.y));
+    if (hit && !hit.locked) {
+      drawingState.setSelectedId(hit.id);
+      if (e.button === 2) {
+        e.preventDefault();
+        onContextMenu(hit, e.clientX, e.clientY);
+      } else if (e.detail === 2) {
+        onDoubleClick(hit);
+      }
+      return;
+    }
+
+    if (drawingState.activeTool !== "cursor") {
+      drawingState.setSelectedId(null);
+      setDraftStart(p);
+    } else {
+      drawingState.setSelectedId(null);
+    }
   };
 
   const handleOverlayMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!draftStart || drawingState.activeTool === "cursor") return;
-    setDraftEnd(getLocalPoint(e));
+    if (draftStart && drawingState.activeTool !== "cursor") {
+      // Just preview, actual creation on mouseup
+    }
   };
 
   const handleOverlayMouseUp = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!draftStart || drawingState.activeTool === "cursor") return;
-    commitDraft(getLocalPoint(e));
-  };
-
-  const handleDrawingPointerDown = (drawing: Drawing, e: React.MouseEvent<SVGGElement>) => {
-    e.stopPropagation();
-    const point = getClientPoint(e.clientX, e.clientY);
-
-    if (e.button === 2) {
-      drawingState.setSelectedId(drawing.id);
-      onContextMenu(drawing, e.clientX, e.clientY);
-      return;
+    if (draftStart && drawingState.activeTool !== "cursor") {
+      const p = getLocalPoint(e);
+      const newDraw = newDrawing(
+        drawingState.activeTool,
+        draftStart.x,
+        draftStart.y,
+        p.x,
+        p.y
+      );
+      drawingState.addDrawing(newDraw);
+      setDraftStart(null);
     }
-
-    if (e.detail === 2) {
-      drawingState.setSelectedId(drawing.id);
-      onDoubleClick(drawing);
-      return;
-    }
-
-    beginDragging(drawing, point);
   };
 
   const toolLabelMap: Record<DrawTool, string> = {
@@ -3587,66 +3576,20 @@ function ChartPanel({
           onMouseDown={handleOverlayMouseDown}
           onMouseMove={handleOverlayMouseMove}
           onMouseUp={handleOverlayMouseUp}
-          onContextMenu={(e) => {
-            if (drawingState.activeTool !== "cursor") e.preventDefault();
-          }}
+          onContextMenu={(e) => e.preventDefault()}
           style={{
             position: "absolute",
             inset: 0,
             zIndex: 4,
-            pointerEvents: drawingState.activeTool !== "cursor" || pointerDown ? "auto" : "none",
-            cursor:
-              dragId
-                ? "grabbing"
-                : drawingState.activeTool !== "cursor"
-                ? "crosshair"
-                : "default",
+            pointerEvents: drawingState.activeTool !== "cursor" || drawingState.selectedId ? "auto" : "none",
+            cursor: drawingState.activeTool !== "cursor" ? "crosshair" : "default",
           }}
         >
           {drawingState.drawings.filter(d => !d.hidden).map(d => (
-            <g
-              key={d.id}
-              onMouseDown={(e) => handleDrawingPointerDown(d, e)}
-              onDoubleClick={(e) => {
-                e.stopPropagation();
-                drawingState.setSelectedId(d.id);
-                onDoubleClick(d);
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                drawingState.setSelectedId(d.id);
-                onContextMenu(d, e.clientX, e.clientY);
-              }}
-              style={{
-                pointerEvents: "auto",
-                cursor: d.locked ? "pointer" : dragId === d.id ? "grabbing" : "grab",
-              }}
-            >
+            <g key={d.id}>
               {renderDrawingSVG(d, svgSize.w, svgSize.h, d.id === drawingState.selectedId)}
             </g>
           ))}
-
-          {draftStart && draftEnd && drawingState.activeTool !== "cursor" && (
-            <g opacity={0.85} style={{ pointerEvents: "none" }}>
-              {renderDrawingSVG(
-                {
-                  ...newDrawing(
-                    drawingState.activeTool,
-                    draftStart.x,
-                    draftStart.y,
-                    draftEnd.x,
-                    draftEnd.y
-                  ),
-                  id: "draft-preview",
-                  color: TOOL_COLORS[drawingState.activeTool],
-                },
-                svgSize.w,
-                svgSize.h,
-                false
-              )}
-            </g>
-          )}
         </svg>
         <div
           ref={volOverlayRef}
@@ -5059,80 +5002,76 @@ export default function AtlasChartPro2() {
         onTimeframeChange={setTimeframe}
       />
 
-<ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
+      <ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
 
-<div style={{ display: "flex", minHeight: 0, flex: 1 }}>
-  <DrawingToolbar
-    activeTool={drawingState.activeTool}
-    onSelectTool={(tool) => drawingState.setActiveTool(tool)}
-    accent="#f0b90b"
-  />
+      <div style={{ display: "flex", minHeight: 0, flex: 1 }}>
+        <DrawingToolbar activeTool={drawingState.activeTool} onChangeTool={drawingState.setActiveTool} />
 
-  <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "minmax(0, 1fr) 320px",
-        height: "100%",
-        minHeight: 0,
-      }}
-    >
-      <div style={{ minWidth: 0, minHeight: 0 }}>
-        <WorkspaceByModule
-          activeModule={activeModule}
-          candles={candles}
-          indicators={indicators}
-          selectedObject={selectedObject}
-          mode={mode}
-          symbol={activeAsset.symbol}
-          timeframe={timeframe}
-          events={scannerEvents}
-          insight={insight}
-          scannerAssets={scannerAssets}
-          onSelectSymbol={setSelectedSymbol}
-          selectedTool={drawingState.activeTool}
-          drawingState={drawingState}
-          onContextMenu={(drawing, x, y) => setContextMenu({ x, y, drawing })}
-          onDoubleClick={(drawing) => setSettingsDrawing(drawing)}
-          onSetSettingsDrawing={setSettingsDrawing}
-        />
-      </div>
-
-      <div
-        style={{
-          minWidth: 0,
-          minHeight: 0,
-          borderLeft: `1px solid ${ui.border}`,
-          background:
-            "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
-          display: "grid",
-          gridTemplateRows:
-            activeModule === "Scanner" || activeModule === "Mestre Scanner"
-              ? "1fr"
-              : "1fr auto",
-        }}
-      >
-        <AIInsightPanel insight={insight} topModule={activeModule} />
-
-        {activeModule !== "Scanner" && activeModule !== "Mestre Scanner" && (
+        <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
           <div
             style={{
-              borderTop: `1px solid ${ui.border}`,
-              padding: 10,
-              background: "rgba(255,255,255,0.015)",
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) 320px",
+              height: "100%",
+              minHeight: 0,
             }}
           >
-            <ScannerPanelContinuous
-              assets={scannerAssets.slice(0, 6)}
-              selectedSymbol={selectedSymbol}
-              onSelectSymbol={setSelectedSymbol}
-            />
+            <div style={{ minWidth: 0, minHeight: 0 }}>
+              <WorkspaceByModule
+                activeModule={activeModule}
+                candles={candles}
+                indicators={indicators}
+                selectedObject={selectedObject}
+                mode={mode}
+                symbol={activeAsset.symbol}
+                timeframe={timeframe}
+                events={scannerEvents}
+                insight={insight}
+                scannerAssets={scannerAssets}
+                onSelectSymbol={setSelectedSymbol}
+                selectedTool={drawingState.activeTool}
+                drawingState={drawingState}
+                onContextMenu={(drawing, x, y) => setContextMenu({ x, y, drawing })}
+                onDoubleClick={(drawing) => setSettingsDrawing(drawing)}
+                onSetSettingsDrawing={setSettingsDrawing}
+              />
+            </div>
+
+            <div
+              style={{
+                minWidth: 0,
+                minHeight: 0,
+                borderLeft: `1px solid ${ui.border}`,
+                background:
+                  "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+                display: "grid",
+                gridTemplateRows:
+                  activeModule === "Scanner" || activeModule === "Mestre Scanner"
+                    ? "1fr"
+                    : "1fr auto",
+              }}
+            >
+              <AIInsightPanel insight={insight} topModule={activeModule} />
+
+              {activeModule !== "Scanner" && activeModule !== "Mestre Scanner" && (
+                <div
+                  style={{
+                    borderTop: `1px solid ${ui.border}`,
+                    padding: 10,
+                    background: "rgba(255,255,255,0.015)",
+                  }}
+                >
+                  <ScannerPanelContinuous
+                    assets={scannerAssets.slice(0, 6)}
+                    selectedSymbol={selectedSymbol}
+                    onSelectSymbol={setSelectedSymbol}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
-    </div>
-  </div>
-</div>
 
       {contextMenu && (
         <DrawingContextMenu
