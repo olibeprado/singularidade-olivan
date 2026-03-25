@@ -5161,7 +5161,7 @@ export default function AtlasChartPro2() {
       <ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
 
       <div style={{ display: "flex", minHeight: 0, flex: 1 }}>
-     {/* <DrawingToolbar REMOVIDO TEMPORARIAMENTE */}
+    
 <div style={{ width: 0 }}></div> {/* Espaço vazio para manter layout */}
         <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
           <div
