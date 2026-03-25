@@ -260,9 +260,6 @@ export default function ToolsSidebar({
                     padding: 10,
                     cursor: "pointer",
                     transition: "all 0.15s ease",
-                    "&:hover": {
-                      background: `rgba(${accent}, 0.08)`,
-                    },
                   }}
                   onClick={() => onSelectOption(activeGroupData.key, item.id)}
                 >
