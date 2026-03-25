@@ -3110,7 +3110,25 @@ function ChartPanel({
   const [draftStart, setDraftStart] = useState<{ x: number; y: number } | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
+  // CORREÇÃO: cancelar desenho ao clicar fora do SVG
+  useEffect(() => {
+    const handleGlobalMouseUp = (e: MouseEvent) => {
+      if (draftStart && overlayRef.current && !overlayRef.current.contains(e.target as Node)) {
+        setDraftStart(null);
+        setDragId(null);
+        setDragOffset(null);
+      }
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, [draftStart]);
 
+  // CORREÇÃO: cancelar rascunho quando a ferramenta ativa muda
+  useEffect(() => {
+    setDraftStart(null);
+    setDragId(null);
+    setDragOffset(null);
+  }, [selectedTool]);
   useEffect(() => {
     if (!mainRef.current || !volOverlayRef.current || !rsiRef.current) return;
 
