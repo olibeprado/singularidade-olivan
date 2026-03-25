@@ -8,7 +8,7 @@ export default function ToolsSidebar({ activeTool, onChangeTool }: {
   activeTool: string;
   onChangeTool: (tool: string) => void;
 }) {
-  // Configuração Moderna das Ferramentas
+  // Configuração Moderna das Ferramentas (Estilo Singularidade)
   const tools = [
     { 
       id: "cursor", 
