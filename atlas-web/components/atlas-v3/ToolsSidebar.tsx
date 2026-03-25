@@ -1,35 +1,26 @@
 "use client";
 
 import React from "react";
-
-// ============================================================
-// DEFINIÇÃO DO TIPO DRAWTOL (ALINHADO AO ATLAS CHART PRO)
-// ============================================================
-export type DrawTool = 
-| "cursor " | "trendline " | "hline " | "vline " | "ray " | "extended "
-| "channel " | "pitchfork " | "fib " | "fibext " | "fibarc " | "fibfan "
-| "rect " | "triangle " | "ellipse " | "measure " | "text ";
-
-// ============================================================
-// ÍCONES (Lucide React)
-// ============================================================
 import { Crosshair, Activity, MoveHorizontal, Grid3X3, Layers3, Type } from "lucide-react";
 
-// ============================================================
-// COMPONENTE SIDEBAR
-// ============================================================
+// ⭐ IMPORTAR TIPO ÚNICO DO ARCHIVO CENTRALIZADO ⭐
+// Isso garante que o tipo seja exatamente o mesmo do AtlasChartPro2
+import type { DrawTool } from "./types"; 
+
 export default function ToolsSidebar({ activeTool, onChangeTool }: {
-  activeTool: DrawTool; // ⬅️ AGORA RECEBE O TIPO CORRETO
-  onChangeTool: (tool: DrawTool) => void; // ⬅️ E ENCAMINHA O MESMO TIPO
+  activeTool: DrawTool; 
+  onChangeTool: (tool: DrawTool) => void;
 }) {
+  
+  // Lista única de ferramentas definidas neste componente
   const tools: Array<{ id: DrawTool; icon: React.ReactNode; label: string }> = [
-    { id: "cursor", icon: <Crosshair size={18} />, label: "Cursor" },
-    { id: "trendline", icon: <Activity size={18} />, label: "Tendência" },
-    { id: "hline", icon: <MoveHorizontal size={18} />, label: "Horizontal" },
-    { id: "vline", icon: <Grid3X3 size={16} rotate={90} />, label: "Vertical" },
-    { id: "fib", icon: <Layers3 size={18} />, label: "Fibonacci" },
-    { id: "rect", icon: <Grid3X3 size={18} />, label: "Retângulo" },
-    { id: "text", icon: <Type size={18} />, label: "Texto" },
+    { id: "cursor",       icon: <Crosshair size={18} />,      label: "Cursor" },
+    { id: "trendline",    icon: <Activity size={18} />,       label: "Tendência" },
+    { id: "hline",        icon: <MoveHorizontal size={18} />, label: "Horizontal" },
+    { id: "vline",        icon: <Grid3X3 size={16} rotate={90} />, label: "Vertical" },
+    { id: "fib",          icon: <Layers3 size={18} />,        label: "Fibonacci" },
+    { id: "rect",         icon: <Grid3X3 size={18} />,        label: "Retângulo" },
+    { id: "text",         icon: <Type size={18} />,           label: "Texto" },
   ];
 
   return (
@@ -48,6 +39,7 @@ export default function ToolsSidebar({ activeTool, onChangeTool }: {
       zIndex: 50,
       boxShadow: '4px 0 15px rgba(0,0,0,0.3)'
     }}>
+      {/* Renderização das ferramentas */}
       {tools.map((tool) => {
         const isActive = activeTool === tool.id;
         
@@ -60,8 +52,12 @@ export default function ToolsSidebar({ activeTool, onChangeTool }: {
               width: 40,
               height: 40,
               borderRadius: 12,
-              border: isActive ? '1px solid #2de2ff' : '1px solid rgba(255,255,255,0.05)',
-              background: isActive ? 'linear-gradient(135deg, rgba(45,226,255,0.15), rgba(0,0,0,0))' : 'transparent',
+              border: isActive 
+                ? '1px solid #2de2ff' 
+                : '1px solid rgba(255,255,255,0.05)',
+              background: isActive 
+                ? 'linear-gradient(135deg, rgba(45,226,255,0.15), rgba(0,0,0,0))' 
+                : 'transparent',
               color: isActive ? '#2de2ff' : '#6b7f9c',
               cursor: 'pointer',
               display: 'flex',
@@ -75,7 +71,7 @@ export default function ToolsSidebar({ activeTool, onChangeTool }: {
         );
       })}
       
-      {/* Marca d'água Singularidade */}
+      {/* Rodapé / Marca d'água */}
       <div style={{ marginTop: 'auto', textAlign: 'center', padding: '4px', opacity: 0.5 }}>
          <span style={{ fontSize: '9px', color: '#2de2ff' }}>SINGULARIDADE</span>
       </div>
