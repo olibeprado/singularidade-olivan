@@ -62,7 +62,6 @@ const ui = {
 } from "lightweight-charts";
 import {
   Activity,
-  Bell,
   BrainCircuit,
   ChevronDown,
   ChevronRight,
