@@ -22,7 +22,33 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
-import { DrawTool, TOOL_LABELS } from "@/components/AtlasChartPro2"; // ajuste o caminho
+
+// Tipo das ferramentas (deve ser idêntico ao usado em AtlasChartPro2)
+export type DrawTool =
+  | "cursor" | "trendline" | "hline" | "vline" | "ray" | "extended"
+  | "channel" | "pitchfork" | "fib" | "fibext" | "fibarc" | "fibfan"
+  | "rect" | "triangle" | "ellipse" | "measure" | "text";
+
+// Rótulos das ferramentas (igual ao TOOL_LABELS do arquivo principal)
+const TOOL_LABELS: Record<DrawTool, string> = {
+  cursor: "Cursor (V)",
+  trendline: "Tendência (T)",
+  hline: "Horizontal (H)",
+  vline: "Vertical (K)",
+  ray: "Raio (R)",
+  extended: "Estendida",
+  channel: "Canal",
+  pitchfork: "Pitchfork",
+  fib: "Fibonacci (F)",
+  fibext: "Fib Extensão",
+  fibarc: "Fib Arcos",
+  fibfan: "Fib Fan",
+  rect: "Retângulo (G)",
+  triangle: "Triângulo",
+  ellipse: "Elipse",
+  measure: "Medir (M)",
+  text: "Texto (X)",
+};
 
 type ToolCategory = {
   id: string;
@@ -97,7 +123,7 @@ const categories: ToolCategory[] = [
     id: "zoom",
     icon: <Search size={18} />,
     label: "Zoom",
-    tools: [], // não é ferramenta de desenho
+    tools: [],
     defaultTool: "cursor",
   },
   {
@@ -136,14 +162,10 @@ export default function DrawingToolbar({ activeTool, onSelectTool, accent = "#f0
     setHoverCategory(null);
   };
 
-  const isActive = (tool: DrawTool) => activeTool === tool;
-
-  // Verifica se alguma ferramenta da categoria está ativa
   const isCategoryActive = (cat: ToolCategory) => {
     return cat.tools.some(t => activeTool === t);
   };
 
-  // Função para obter o ícone do submenu
   const getToolIcon = (tool: DrawTool) => {
     switch (tool) {
       case "cursor": return <MousePointer size={14} />;
@@ -180,23 +202,23 @@ export default function DrawingToolbar({ activeTool, onSelectTool, accent = "#f0
       userSelect: "none",
       boxShadow: "0 4px 15px rgba(0,0,0,0.5)",
     }}>
-      {categories.map((cat, idx) => {
-        const active = isCategoryActive(cat);
+      {categories.map((cat) => {
+        const isZoom = cat.id === "zoom";
         const hasSubmenu = cat.tools.length > 1;
 
-        // Pular o item de zoom se não quisermos (podemos tratar separadamente)
-        if (cat.id === "zoom") {
+        if (isZoom) {
           return (
             <React.Fragment key={cat.id}>
-              <div className="tool-divider" style={{ width: 30, height: 1, background: "#2a2e39", margin: "6px 0" }} />
+              <div style={{ width: 30, height: 1, background: "#2a2e39", margin: "6px 0" }} />
               <div
                 onClick={() => {
-                  // Aqui você pode implementar zoom (ex: chamar função do gráfico)
+                  // Futuramente: implementar zoom
+                  console.log("Zoom - ainda não implementado");
                 }}
-                className="tool-item"
                 style={{
-                  width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "#b2b5be", cursor: "pointer", borderRadius: 4, fontSize: 18,
+                  width: 36, height: 36,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "#b2b5be", cursor: "pointer", borderRadius: 4,
                   transition: "all 0.15s ease",
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)"}
@@ -209,7 +231,8 @@ export default function DrawingToolbar({ activeTool, onSelectTool, accent = "#f0
           );
         }
 
-        // Para itens com submenu, usamos hover para mostrar submenu
+        const active = isCategoryActive(cat);
+
         return (
           <div
             key={cat.id}
@@ -219,12 +242,12 @@ export default function DrawingToolbar({ activeTool, onSelectTool, accent = "#f0
           >
             <div
               onClick={() => handleToolClick(cat.defaultTool)}
-              className="tool-item"
               style={{
-                width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+                width: 36, height: 36,
+                display: "flex", alignItems: "center", justifyContent: "center",
                 color: active ? accent : "#b2b5be",
                 backgroundColor: active ? "rgba(240,185,11,0.08)" : "transparent",
-                cursor: "pointer", borderRadius: 4, fontSize: 18,
+                cursor: "pointer", borderRadius: 4,
                 transition: "all 0.15s ease",
                 position: "relative",
               }}
