@@ -886,234 +886,6 @@ function DrawingOptionsBar({
 }
 
 // ============================================================
-// LEFT TOOLBAR COM SUBMENUS HOVER E FAVORITOS
-// ============================================================
-
-interface ToolItemData {
-  key: DrawTool;
-  icon: string;
-  label: string;
-  category?: string;
-}
-
-const TOOLS_CONFIG_LIST: ToolItemData[] = [
-  { key: "cursor", icon: "↖", label: "Cursor (V)", category: "⭐ Favoritos" },
-  { key: "trendline", icon: "╱", label: "Tendência (T)", category: "⭐ Favoritos" },
-  { key: "hline", icon: "─", label: "Horizontal (H)", category: "⭐ Favoritos" },
-  { key: "vline", icon: "│", label: "Vertical (K)", category: "⭐ Favoritos" },
-  { key: "ray", icon: "→", label: "Raio (R)", category: "📐 Linhas" },
-  { key: "extended", icon: "↔", label: "Estendida", category: "📐 Linhas" },
-  { key: "channel", icon: "⦀", label: "Canal", category: "🔄 Canais" },
-  { key: "pitchfork", icon: "⑂", label: "Pitchfork", category: "🔄 Canais" },
-  { key: "fib", icon: "FIB", label: "Fibonacci (F)", category: "📊 Fibonacci" },
-  { key: "fibext", icon: "EXT", label: "Extensão", category: "📊 Fibonacci" },
-  { key: "fibarc", icon: "◌", label: "Arcos", category: "📊 Fibonacci" },
-  { key: "fibfan", icon: "⋱", label: "Fan", category: "📊 Fibonacci" },
-  { key: "rect", icon: "▭", label: "Retângulo (G)", category: "🔷 Formas" },
-  { key: "triangle", icon: "△", label: "Triângulo", category: "🔷 Formas" },
-  { key: "ellipse", icon: "◯", label: "Elipse", category: "🔷 Formas" },
-  { key: "measure", icon: "⟺", label: "Medir (M)", category: "📏 Misc" },
-  { key: "text", icon: "T", label: "Texto (X)", category: "📏 Misc" },
-];
-
-function DrawingToolbar({
-  activeTool,
-  onChangeTool,
-}: {
-  activeTool: DrawTool;
-  onChangeTool: (t: DrawTool) => void;
-}) {
-  const [hoverCategory, setHoverCategory] = useState<string | null>(null);
-  const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
-  const [favorites, setFavorites] = useState<DrawTool[]>(["cursor", "trendline", "hline", "vline"]);
-
-  const toggleFavorite = (tool: DrawTool, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFavorites(prev =>
-      prev.includes(tool) ? prev.filter(t => t !== tool) : [...prev, tool]
-    );
-  };
-
-  const handleMouseEnter = (category: string) => {
-    if (hoverTimer) clearTimeout(hoverTimer);
-    const timer = setTimeout(() => {
-      setHoverCategory(category);
-    }, 2000);
-    setHoverTimer(timer);
-  };
-
-  const handleMouseLeave = () => {
-    if (hoverTimer) clearTimeout(hoverTimer);
-    setHoverCategory(null);
-  };
-
-  const handleToolClick = (tool: DrawTool) => {
-    onChangeTool(tool);
-    setHoverCategory(null);
-  };
-
-  const grouped = TOOLS_CONFIG_LIST.reduce((acc, tool) => {
-    const cat = tool.category || "Outros";
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(tool);
-    return acc;
-  }, {} as Record<string, ToolItemData[]>);
-
-  const categoryOrder = ["⭐ Favoritos", "📐 Linhas", "🔄 Canais", "📊 Fibonacci", "🔷 Formas", "📏 Misc"];
-
-  return (
-    <div style={{
-      width: 72,
-      borderRight: "1px solid #172133",
-      background: "linear-gradient(180deg,rgba(8,12,24,0.98),rgba(6,9,17,0.98))",
-      display: "flex", flexDirection: "column",
-      padding: "8px 6px", gap: 8,
-      overflowY: "auto", flexShrink: 0,
-    }}>
-      {categoryOrder.map(cat => {
-        const tools = grouped[cat];
-        if (!tools) return null;
-        
-        const isOpen = hoverCategory === cat;
-        const isFavCat = cat === "⭐ Favoritos";
-        const visibleTools = isFavCat ? tools.filter(t => favorites.includes(t.key)) : tools;
-        
-        if (visibleTools.length === 0) return null;
-
-        return (
-          <div 
-            key={cat}
-            onMouseEnter={() => !isFavCat && handleMouseEnter(cat)}
-            onMouseLeave={handleMouseLeave}
-            style={{ position: "relative" }}
-          >
-            <div style={{
-              color: "#7f93b7",
-              fontSize: 8,
-              fontWeight: 900,
-              letterSpacing: 0.9,
-              textTransform: "uppercase",
-              textAlign: "center",
-              marginBottom: 6,
-              cursor: !isFavCat ? "pointer" : "default",
-            }}>
-              {cat}
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {visibleTools.map(tool => {
-                const active = activeTool === tool.key;
-                const isFavorite = favorites.includes(tool.key);
-                
-                return (
-                  <div key={tool.key} style={{ position: "relative" }}>
-                    <button
-                      onClick={() => handleToolClick(tool.key)}
-                      onDoubleClick={(e) => toggleFavorite(tool.key, e)}
-                      title={`${tool.label} ${isFavorite ? "★ Favorito" : "☆ Clique duplo p/ favoritar"}`}
-                      style={{
-                        width: 52, height: 42,
-                        margin: "0 auto", display: "flex",
-                        alignItems: "center", justifyContent: "center",
-                        borderRadius: 8, cursor: "pointer",
-                        border: active
-                          ? "1px solid rgba(45,226,255,0.5)"
-                          : "1px solid rgba(255,255,255,0.1)",
-                        background: active
-                          ? "radial-gradient(circle,rgba(45,226,255,0.25),rgba(45,226,255,0.1))"
-                          : "linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))",
-                        color: active ? "#ffffff" : "#e0f0ff",
-                        fontSize: tool.icon.length > 1 ? 10 : 16,
-                        fontWeight: 700, fontFamily: "monospace",
-                        position: "relative",
-                        boxShadow: active ? "0 0 10px rgba(45,226,255,0.6)" : "none",
-                        transition: "all 0.2s ease",
-                      }}
-                    >
-                      {tool.icon}
-                      {isFavorite && !active && (
-                        <span style={{
-                          position: "absolute", bottom: -2, right: -2,
-                          fontSize: 9, color: "#f7c948"
-                        }}>★</span>
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            {isOpen && !isFavCat && (
-              <div style={{
-                position: "absolute",
-                left: "100%",
-                top: 0,
-                marginLeft: 6,
-                background: "#0f1520",
-                border: "1px solid #2a3a55",
-                borderRadius: 12,
-                padding: "10px 12px",
-                minWidth: 160,
-                zIndex: 200,
-                boxShadow: "0 12px 32px rgba(0,0,0,0.6)",
-                backdropFilter: "blur(12px)",
-              }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#9ab3e0", marginBottom: 10, letterSpacing: 0.6, borderBottom: "1px solid #2a3a55", paddingBottom: 6 }}>
-                  {cat} • Todos
-                </div>
-                {tools.map(tool => {
-                  const isFav = favorites.includes(tool.key);
-                  return (
-                    <div
-                      key={tool.key}
-                      onClick={() => handleToolClick(tool.key)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "8px 10px",
-                        borderRadius: 8,
-                        cursor: "pointer",
-                        fontSize: 12,
-                        color: activeTool === tool.key ? ui.cyan : "#eef5ff",
-                        background: activeTool === tool.key ? "rgba(45,226,255,0.12)" : "transparent",
-                        marginBottom: 4,
-                        transition: "background 0.15s",
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = "rgba(45,226,255,0.18)"}
-                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                    >
-                      <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontSize: 16 }}>{tool.icon}</span>
-                        <span>{tool.label}</span>
-                      </span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleFavorite(tool.key, e); }}
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          color: isFav ? ui.yellow : "#6a7f99",
-                          cursor: "pointer",
-                          fontSize: 14,
-                          padding: "2px 6px",
-                          borderRadius: 4,
-                        }}
-                      >
-                        {isFav ? "★" : "☆"}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ============================================================
 // EXISTING TYPES
 // ============================================================
 
@@ -5159,71 +4931,67 @@ export default function AtlasChartPro2() {
 
       <ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
 
-      <div style={{ display: "flex", minHeight: 0, flex: 1 }}>
-    
-<div style={{ width: 0 }}></div> {/* Espaço vazio para manter layout */}
-        <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) 320px",
+            height: "100%",
+            minHeight: 0,
+          }}
+        >
+          <div style={{ minWidth: 0, minHeight: 0 }}>
+            <WorkspaceByModule
+              activeModule={activeModule}
+              candles={candles}
+              indicators={indicators}
+              selectedObject={selectedObject}
+              mode={mode}
+              symbol={activeAsset.symbol}
+              timeframe={timeframe}
+              events={scannerEvents}
+              insight={insight}
+              scannerAssets={scannerAssets}
+              onSelectSymbol={setSelectedSymbol}
+              selectedTool={drawingState.activeTool}
+              drawingState={drawingState}
+              onContextMenu={(drawing, x, y) => setContextMenu({ x, y, drawing })}
+              onDoubleClick={(drawing) => setSettingsDrawing(drawing)}
+              onSetSettingsDrawing={setSettingsDrawing}
+            />
+          </div>
+
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) 320px",
-              height: "100%",
+              minWidth: 0,
               minHeight: 0,
+              borderLeft: `1px solid ${ui.border}`,
+              background:
+                "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+              display: "grid",
+              gridTemplateRows:
+                activeModule === "Scanner" || activeModule === "Mestre Scanner"
+                  ? "1fr"
+                  : "1fr auto",
             }}
           >
-            <div style={{ minWidth: 0, minHeight: 0 }}>
-              <WorkspaceByModule
-                activeModule={activeModule}
-                candles={candles}
-                indicators={indicators}
-                selectedObject={selectedObject}
-                mode={mode}
-                symbol={activeAsset.symbol}
-                timeframe={timeframe}
-                events={scannerEvents}
-                insight={insight}
-                scannerAssets={scannerAssets}
-                onSelectSymbol={setSelectedSymbol}
-                selectedTool={drawingState.activeTool}
-                drawingState={drawingState}
-                onContextMenu={(drawing, x, y) => setContextMenu({ x, y, drawing })}
-                onDoubleClick={(drawing) => setSettingsDrawing(drawing)}
-                onSetSettingsDrawing={setSettingsDrawing}
-              />
-            </div>
+            <AIInsightPanel insight={insight} topModule={activeModule} />
 
-            <div
-              style={{
-                minWidth: 0,
-                minHeight: 0,
-                borderLeft: `1px solid ${ui.border}`,
-                background:
-                  "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
-                display: "grid",
-                gridTemplateRows:
-                  activeModule === "Scanner" || activeModule === "Mestre Scanner"
-                    ? "1fr"
-                    : "1fr auto",
-              }}
-            >
-              <AIInsightPanel insight={insight} topModule={activeModule} />
-
-              {activeModule !== "Scanner" && activeModule !== "Mestre Scanner" && (
-                <div
-                  style={{
-                    borderTop: `1px solid ${ui.border}`,
-                    padding: 10,
-                    background: "rgba(255,255,255,0.015)",
-                  }}
-                >
-                  <ScannerPanelContinuous
-                    assets={scannerAssets.slice(0, 6)}
-                    selectedSymbol={selectedSymbol}
-                    onSelectSymbol={setSelectedSymbol}
-                  />
-                </div>
-              )}
-            </div>
+            {activeModule !== "Scanner" && activeModule !== "Mestre Scanner" && (
+              <div
+                style={{
+                  borderTop: `1px solid ${ui.border}`,
+                  padding: 10,
+                  background: "rgba(255,255,255,0.015)",
+                }}
+              >
+                <ScannerPanelContinuous
+                  assets={scannerAssets.slice(0, 6)}
+                  selectedSymbol={selectedSymbol}
+                  onSelectSymbol={setSelectedSymbol}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
