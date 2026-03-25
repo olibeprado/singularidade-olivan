@@ -1,5 +1,6 @@
 "use client";
 
+import { DrawTool } from "../../AtlasChartPro2"; // ajuste o caminho conforme necessário
 import React from "react";
 import { Crosshair, Activity, MoveHorizontal, Grid3X3, Layers3, Type } from "lucide-react";
 
