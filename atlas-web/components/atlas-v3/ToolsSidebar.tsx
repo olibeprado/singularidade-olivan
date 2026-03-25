@@ -3,26 +3,35 @@
 import React from "react";
 import { Crosshair, Activity, MoveHorizontal, Grid3X3, Layers3, Type } from "lucide-react";
 
-// ⭐ IMPORTAR TIPO ÚNICO DO ARCHIVO CENTRALIZADO ⭐
-// Isso garante que o tipo seja exatamente o mesmo do AtlasChartPro2
-import type { DrawTool } from "./types"; 
+// ============================================================
+// DEFINIÇÃO LOCAL DO TIPO DRAWTOL (Sem dependências externas)
+// ============================================================
+// Isso garante compatibilidade direta com o AtlasChartPro2
+export type DrawTool = 
+| "cursor " | "trendline " | "hline " | "vline " | "ray " | "extended "
+| "channel " | "pitchfork " | "fib " | "fibext " | "fibarc " | "fibfan "
+| "rect " | "triangle " | "ellipse " | "measure " | "text ";
 
+// ============================================================
+// CONFIGURAÇÃO DAS FERRAMENTAS (ESTILO SINGULARIDADE)
+// ============================================================
+const TOOLS_CONFIG: Array<{ id: DrawTool; icon: React.ReactNode; label: string }> = [
+  { id: "cursor",      icon: <Crosshair size={18} />,   label: "Cursor" },
+  { id: "trendline",   icon: <Activity size={18} />,    label: "Tendência" },
+  { id: "hline",       icon: <MoveHorizontal size={18}/>,label: "Horizontal" },
+  { id: "vline",       icon: <Grid3X3 size={16} rotate={90} />,label: "Vertical" },
+  { id: "fib",         icon: <Layers3 size={18} />,     label: "Fibonacci" },
+  { id: "rect",        icon: <Grid3X3 size={18} />,     label: "Retângulo" },
+  { id: "text",        icon: <Type size={18} />,        label: "Texto" },
+];
+
+// ============================================================
+// COMPONENTE PRINCIPAL
+// ============================================================
 export default function ToolsSidebar({ activeTool, onChangeTool }: {
-  activeTool: DrawTool; 
+  activeTool: DrawTool;
   onChangeTool: (tool: DrawTool) => void;
 }) {
-  
-  // Lista única de ferramentas definidas neste componente
-  const tools: Array<{ id: DrawTool; icon: React.ReactNode; label: string }> = [
-    { id: "cursor",       icon: <Crosshair size={18} />,      label: "Cursor" },
-    { id: "trendline",    icon: <Activity size={18} />,       label: "Tendência" },
-    { id: "hline",        icon: <MoveHorizontal size={18} />, label: "Horizontal" },
-    { id: "vline",        icon: <Grid3X3 size={16} rotate={90} />, label: "Vertical" },
-    { id: "fib",          icon: <Layers3 size={18} />,        label: "Fibonacci" },
-    { id: "rect",         icon: <Grid3X3 size={18} />,        label: "Retângulo" },
-    { id: "text",         icon: <Type size={18} />,           label: "Texto" },
-  ];
-
   return (
     <div style={{
       width: 48,
@@ -39,8 +48,8 @@ export default function ToolsSidebar({ activeTool, onChangeTool }: {
       zIndex: 50,
       boxShadow: '4px 0 15px rgba(0,0,0,0.3)'
     }}>
-      {/* Renderização das ferramentas */}
-      {tools.map((tool) => {
+      {/* Renderiza cada ferramenta */}
+      {TOOLS_CONFIG.map((tool) => {
         const isActive = activeTool === tool.id;
         
         return (
@@ -71,7 +80,7 @@ export default function ToolsSidebar({ activeTool, onChangeTool }: {
         );
       })}
       
-      {/* Rodapé / Marca d'água */}
+      {/* Marca d'água Singularidade */}
       <div style={{ marginTop: 'auto', textAlign: 'center', padding: '4px', opacity: 0.5 }}>
          <span style={{ fontSize: '9px', color: '#2de2ff' }}>SINGULARIDADE</span>
       </div>
