@@ -2,53 +2,24 @@
 
 import React from "react";
 
-// ============================================================
-// IMPORTANTE: Definir o TIPO DrawTool aqui para evitar conflitos
-// ============================================================
-export type DrawTool =
-  | "cursor" 
-  | "trendline" 
-  | "hline" 
-  | "vline" 
-  | "ray" 
-  | "extended"
-  | "channel" 
-  | "pitchfork" 
-  | "fib" 
-  | "fibext" 
-  | "fibarc" 
-  | "fibfan"
-  | "rect" 
-  | "triangle" 
-  | "ellipse" 
-  | "measure" 
-  | "text";
-
-// ============================================================
-// ÍCONES (Lucide React) — Leveza e Performance
-// ============================================================
+// Ícones Lucide para leveza
 import { Crosshair, Activity, MoveHorizontal, Grid3X3, Layers3, Type } from "lucide-react";
 
-// ============================================================
-// CONFIGURAÇÃO DAS FERRAMENTAS (Singularidade Style)
-// ============================================================
-const TOOLS_CONFIG: Array<{ id: DrawTool; icon: React.ReactNode; label: string }> = [
-  { id: "cursor",      icon: <Crosshair size={18} />,   label: "Cursor" },
-  { id: "trendline",   icon: <Activity size={18} />,    label: "Tendência" },
-  { id: "hline",       icon: <MoveHorizontal size={18}/>,label: "Horizontal" },
-  { id: "vline",       icon: <Grid3X3 size={16} rotate={90} />,label: "Vertical" },
-  { id: "fib",         icon: <Layers3 size={18} />,     label: "Fibonacci" },
-  { id: "rect",        icon: <Grid3X3 size={18} />,     label: "Retângulo" },
-  { id: "text",        icon: <Type size={18} />,        label: "Texto" },
-];
-
-// ============================================================
-// COMPONENTE PRINCIPAL — Sidebar Minimalista
-// ============================================================
 export default function ToolsSidebar({ activeTool, onChangeTool }: {
-  activeTool: DrawTool;
-  onChangeTool: (tool: DrawTool) => void;
+  activeTool: string;
+  onChangeTool: (tool: string) => void;
 }) {
+  // Lista completa de ferramentas
+  const tools = [
+    { id: "cursor", icon: <Crosshair size={18} />, label: "Cursor" },
+    { id: "trendline", icon: <Activity size={18} />, label: "Tendência (T)" },
+    { id: "hline", icon: <MoveHorizontal size={18} />, label: "Horizontal (H)" },
+    { id: "vline", icon: <Grid3X3 size={16} rotate={90} />, label: "Vertical (K)" },
+    { id: "fib", icon: <Layers3 size={18} />, label: "Fibonacci" },
+    { id: "rect", icon: <Grid3X3 size={18} />, label: "Retângulo" },
+    { id: "text", icon: <Type size={18} />, label: "Texto" },
+  ];
+
   return (
     <div style={{
       width: 48,
@@ -65,7 +36,8 @@ export default function ToolsSidebar({ activeTool, onChangeTool }: {
       zIndex: 50,
       boxShadow: '4px 0 15px rgba(0,0,0,0.3)'
     }}>
-      {TOOLS_CONFIG.map((tool) => {
+      {/* Renderiza cada ferramenta */}
+      {tools.map((tool) => {
         const isActive = activeTool === tool.id;
         
         return (
