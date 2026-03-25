@@ -5161,10 +5161,10 @@ export default function AtlasChartPro2() {
       <ModuleStrip activeModule={activeModule} onChange={setActiveModule} />
 
       <div style={{ display: "flex", minHeight: 0, flex: 1 }}>
-       <ToolsSidebar
-        activeTool={drawingState.activeTool}
-        onChangeTool={drawingState.setActiveTool}
-     />
+     <DrawingToolbar
+  activeTool={drawingState.activeTool}
+  onChangeTool={drawingState.setActiveTool}
+/>
         <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
           <div
             style={{
