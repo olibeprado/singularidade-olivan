@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   MousePointer,
   TrendingUp,
@@ -140,22 +140,31 @@ interface Props {
 
 export default function DrawingToolbar({ activeTool, onSelectTool, accent = "#f0b90b" }: Props) {
   const [hoverCategory, setHoverCategory] = useState<string | null>(null);
-  let hoverTimer: NodeJS.Timeout | null = null;
+  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, []);
 
   const handleMouseEnter = (catId: string) => {
-    if (hoverTimer) clearTimeout(hoverTimer);
-    hoverTimer = setTimeout(() => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => {
       setHoverCategory(catId);
-    }, 500);
+    }, 180);
   };
 
   const handleMouseLeave = () => {
-    if (hoverTimer) clearTimeout(hoverTimer);
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = null;
     setHoverCategory(null);
   };
 
   const handleToolClick = (tool: DrawTool) => {
     onSelectTool(tool);
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = null;
     setHoverCategory(null);
   };
 
