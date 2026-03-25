@@ -1,353 +1,136 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+// Ícones Lucide para leveza
+import { MousePointer2, PenTool, Type, Grid3X3, MoveHorizontal, Layers3, Activity, Crosshair } from "lucide-react";
 
-// ── 1. TIPOS ────────────────────────────────────────────────────
-export type ToolKey =
-  | "cursor"
-  | "draw"
-  | "shapes"
-  | "measure"
-  | "fib"
-  | "patterns"
-  | "longshort"
-  | "forecast"
-  | "more";
-
-export type ToolOption = {
-  id: string;
-  label: string;
-  icon: string;
-  description: string;
-};
-
-export type ToolGroup = {
-  key: ToolKey;
-  icon: string;
-  label: string;
-  items: ToolOption[];
-};
-
-type Props = {
-  groups: ToolGroup[];
-  activeGroup: ToolKey | null;
-  activeOptionId: string;
-  favorites: string[];
-  accent: string;
-  expanded: boolean;
-  compact?: boolean;
-  onOpenGroup: (key: ToolKey) => void;
-  onSelectOption: (groupKey: ToolKey, optionId: string) => void;
-  onToggleFavorite: (optionId: string) => void;
-};
-
-// ── 2. DADOS PADRÃO DE FERRAMENTAS ──────────────────────────────
-const DEFAULT_TOOL_GROUPS: ToolGroup[] = [
-  {
-    key: "cursor",
-    icon: "↖",
-    label: "Cursor",
-    items: [
-      { id: "cursor", label: "Selecionar", icon: "👆", description: "Mover elementos e navegar no gráfico" },
-    ],
-  },
-  {
-    key: "draw",
-    icon: "🖊",
-    label: "Desenho Básico",
-    items: [
-      { id: "trendline", label: "Tendência (T)", icon: "╱", description: "Linha de tendência com seta indicativa" },
-      { id: "hline", label: "Horizontal (H)", icon: "─", description: "Nível horizontal fixo por preço" },
-      { id: "vline", label: "Vertical (K)", icon: "│", description: "Linha vertical fixa por tempo" },
-      { id: "ray", label: "Raio (R)", icon: "→", description: "Linha infinita para direita" },
-      { id: "extended", label: "Estendida (X)", icon: "↔", description: "Linha expandida em ambas direções" },
-    ],
-  },
-  {
-    key: "shapes",
-    icon: "◉",
-    label: "Formas Geométricas",
-    items: [
-      { id: "rect", label: "Retângulo (G)", icon: "▭", description: "Caixa delimitada por dois pontos" },
-      { id: "triangle", label: "Triângulo", icon: "△", description: "Padrão triângular de retração" },
-      { id: "ellipse", label: "Elipse (E)", icon: "◯", description: "Círculo ou elipse livre" },
-      { id: "text", label: "Texto (X)", icon: "T", description: "Anotação de texto personalizável" },
-    ],
-  },
-  {
-    key: "fib",
-    icon: "FIB",
-    label: "Fibonacci",
-    items: [
-      { id: "fib", label: "Fibonacci (F)", icon: "FIB", description: "Retração Fibonacci clássica" },
-      { id: "fibext", label: "Extensão (EXT)", icon: "EXT", description: "Extensões além do swing" },
-      { id: "fibarc", label: "Arcos (ARC)", icon: "◌", description: "Arcos baseados em distâncias" },
-      { id: "fibfan", label: "Fan (FAN)", icon: "⋱", description: "Ventilador de linhas de suporte/resistência" },
-    ],
-  },
-  {
-    key: "patterns",
-    icon: "◎",
-    label: "Canais & Padrões",
-    items: [
-      { id: "channel", label: "Canal (C)", icon: "⦀", description: "Canal paralelo automático" },
-      { id: "pitchfork", label: "Pitchfork (P)", icon: "⑂", description: "Médias de Andrew personalizadas" },
-      { id: "longshort", label: "Long/Short", icon: "⇄", description: "Marcadores de posição compradora/vendedora" },
-    ],
-  },
-  {
-    key: "measure",
-    icon: "⟺",
-    label: "Medição",
-    items: [
-      { id: "measure", label: "Medir (M)", icon: "⟺", description: "Calcular distância X/Y entre pontos" },
-    ],
-  },
-  {
-    key: "forecast",
-    icon: "▲",
-    label: "Previsão IA",
-    items: [
-      { id: "forecast", label: "IA Atlas", icon: "🤖", description: "Marcadores preditivos da IA Atlas" },
-    ],
-  },
-  {
-    key: "more",
-    icon: "⋯",
-    label: "Mais Opções",
-    items: [],
-  },
-];
-
-// ── 3. COMPONENTE PRINCIPAL ──────────────────────────────────────
-export default function ToolsSidebar({
-  groups,
-  activeGroup,
-  activeOptionId,
-  favorites,
-  accent,
-  expanded,
-  compact,
-  onOpenGroup,
-  onSelectOption,
-  onToggleFavorite,
-}: Props) {
-  const activeGroupData = groups.find((g) => g.key === activeGroup) ?? groups[0] ?? {
-    key: "draw" as ToolKey,
-    icon: "",
-    label: "Ferramentas",
-    items: [],
-  };
+export default function ToolsSidebar({ activeTool, onChangeTool }: {
+  activeTool: string;
+  onChangeTool: (tool: string) => void;
+}) {
+  // Configuração Moderna das Ferramentas
+  const tools = [
+    { 
+      id: "cursor", 
+      icon: <Crosshair size={18} />, 
+      label: "Cursor", 
+      group: "Favoritos" 
+    },
+    { 
+      id: "trendline", 
+      icon: <Activity size={18} />, 
+      label: "Tendência (T)", 
+      group: "Linhas" 
+    },
+    { 
+      id: "hline", 
+      icon: <MoveHorizontal size={18} />, 
+      label: "Horizontal (H)", 
+      group: "Linhas" 
+    },
+    { 
+      id: "vline", 
+      icon: <Grid3X3 size={16} rotate={90} />, 
+      label: "Vertical (K)", 
+      group: "Linhas" 
+    },
+    { 
+      id: "fib", 
+      icon: <Layers3 size={18} />, 
+      label: "Fibonacci", 
+      group: "Indicadores" 
+    },
+    { 
+      id: "rect", 
+      icon: <Grid3X3 size={18} />, 
+      label: "Retângulo", 
+      group: "Formas" 
+    },
+    { 
+      id: "text", 
+      icon: <Type size={18} />, 
+      label: "Texto", 
+      group: "Ferramentas" 
+    },
+  ];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: expanded ? 10 : 0,
-        alignItems: "flex-start",
-        width: expanded ? 320 : 52,
-        minWidth: expanded ? 320 : 52,
-        transition: "width 0.18s ease",
-      }}
-    >
-      {/* ═══ BARRA LATERAL DIREITA (ÍCONES) ═══ */}
-      <div
-        style={{
-          width: 52,
-          minWidth: 52,
-          background: "linear-gradient(180deg, rgba(14,21,38,0.98), rgba(8,12,24,0.98))",
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: 16,
-          padding: "8px 6px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          alignItems: "center",
-          position: "sticky",
-          top: 100,
-        }}
-      >
-        {groups.map((group) => {
-          const active = activeGroup === group.key;
-          const hasFavorite = group.items.some((item) => favorites.includes(item.id));
-
-          return (
-            <button
-              key={group.key}
-              onClick={() => onOpenGroup(group.key)}
-              title={group.label}
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 10,
-                border: active
-                  ? `1px solid ${accent}55`
-                  : "1px solid rgba(255,255,255,0.06)",
-                background: active
-                  ? `linear-gradient(180deg, ${accent}28, rgba(255,255,255,0.03))`
-                  : "rgba(255,255,255,0.025)",
-                color: active ? "#eef4ff" : hasFavorite ? "#dce7ff" : "#9fb3d4",
-                fontSize: 13,
-                cursor: "pointer",
-                position: "relative",
-                transition: "all 0.15s ease",
-              }}
-            >
-              {group.icon}
-              {hasFavorite && (
-                <span
-                  style={{
-                    position: "absolute",
-                    right: -2,
-                    top: -3,
-                    fontSize: 9,
-                    color: "#ffd65a",
-                  }}
-                >
-                  ★
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ═══ PAINEL EXPANDIDO (DETALHES) ═══ */}
-      {expanded && !compact && (
-        <div
-          style={{
-            width: 248,
-            minWidth: 248,
-            background: "linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.995))",
-            border: "1px solid rgba(255,255,255,0.07)",
-            borderRadius: 16,
-            padding: 12,
-            position: "sticky",
-            top: 100,
-            maxHeight: "calc(100vh - 120px)",
-            overflowY: "auto",
-          }}
-        >
-          <div
+    <div style={{
+      width: 48,
+      height: 'calc(100vh - 150px)',
+      borderRight: '1px solid rgba(45,226,255,0.15)',
+      background: 'rgba(7, 12, 24, 0.98)',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '8px 4px',
+      gap: '6px',
+      position: 'absolute',
+      left: 0,
+      top: 64, // Ajuste conforme sua header
+      zIndex: 50,
+      boxShadow: '4px 0 15px rgba(0,0,0,0.3)'
+    }}>
+      {/* Lista de Ferramentas */}
+      {tools.map((tool) => {
+        const isActive = activeTool === tool.id;
+        
+        return (
+          <button
+            key={tool.id}
+            onClick={() => onChangeTool(tool.id)}
             style={{
-              color: "#e9f1ff",
-              fontSize: 13,
-              fontWeight: 900,
-              marginBottom: 10,
-              textTransform: "uppercase",
-              letterSpacing: 0.8,
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              border: isActive 
+                ? '1px solid #2de2ff' 
+                : '1px solid rgba(255,255,255,0.05)',
+              background: isActive 
+                ? 'linear-gradient(135deg, rgba(45,226,255,0.15), rgba(0,0,0,0))' 
+                : 'transparent',
+              color: isActive ? '#2de2ff' : '#6b7f9c',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              position: 'relative'
             }}
+            onMouseEnter={(e) => !isActive && (e.currentTarget.style.borderColor = '#2de2ff44')}
+            onMouseLeave={(e) => !isActive && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)')}
+            title={tool.label}
           >
-            {activeGroupData.label}
-          </div>
-
-          <div style={{ display: "grid", gap: 8 }}>
-            {activeGroupData.items.map((item) => {
-              const active = activeOptionId === item.id;
-              const starred = favorites.includes(item.id);
-
-              return (
-                <div
-                  key={item.id}
-                  style={{
-                    border: active
-                      ? `1px solid ${accent}55`
-                      : "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 12,
-                    background: active
-                      ? `linear-gradient(180deg, ${accent}20, rgba(255,255,255,0.03))`
-                      : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
-                    padding: 10,
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                  onClick={() => onSelectOption(activeGroupData.key, item.id)}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 10,
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <div
-                      style={{
-                        flex: 1,
-                        display: "flex",
-                        gap: 10,
-                        alignItems: "center",
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 24,
-                          height: 24,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: 8,
-                          background: "rgba(255,255,255,0.04)",
-                          color: "#e6efff",
-                          fontSize: 13,
-                        }}
-                      >
-                        {item.icon}
-                      </span>
-                      <div
-                        style={{
-                          color: "#eef4ff",
-                          fontSize: 12,
-                          fontWeight: 800,
-                        }}
-                      >
-                        {item.label}
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleFavorite(item.id);
-                      }}
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 9,
-                        border: starred
-                          ? "1px solid rgba(255,214,90,0.38)"
-                          : "1px solid rgba(255,255,255,0.06)",
-                        background: starred
-                          ? "linear-gradient(180deg, rgba(255,214,90,0.18), rgba(255,214,90,0.06))"
-                          : "rgba(255,255,255,0.02)",
-                        color: starred ? "#ffd65a" : "#7d93bc",
-                        cursor: "pointer",
-                        flexShrink: 0,
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      {starred ? "★" : "☆"}
-                    </button>
-                  </div>
-
-                  {!active && (
-                    <div
-                      style={{
-                        color: "#8ea4c8",
-                        fontSize: 11,
-                        lineHeight: 1.35,
-                        marginTop: 6,
-                      }}
-                    >
-                      {item.description}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+            {tool.icon}
+            
+            {/* Tooltip Moderno Hover */}
+            {!isActive && (
+              <span style={{
+                position: 'absolute',
+                left: '110%',
+                backgroundColor: '#0a0f1d',
+                color: '#fff',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                fontSize: '10px',
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                opacity: 0,
+                transform: 'translateY(-50%)',
+                transition: 'opacity 0.2s',
+                border: '1px solid rgba(45,226,255,0.3)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+              }}>
+                {tool.label}
+              </span>
+            )}
+          </button>
+        );
+      })}
+      
+      {/* Dica Visual no Rodapé */}
+      <div style={{ marginTop: 'auto', textAlign: 'center', padding: '4px', opacity: 0.5 }}>
+         <span style={{ fontSize: '9px', color: '#2de2ff' }}>SINGULARIDADE</span>
+      </div>
     </div>
   );
 }
