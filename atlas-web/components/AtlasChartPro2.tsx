@@ -1,13 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import {
-  createChart,
-  ColorType,
-  CrosshairMode,
-  IChartApi,
-  Time,
-} from "lightweight-charts";
+import { createChart, ColorType, CrosshairMode, IChartApi, Time } from "lightweight-charts";
 import {
   Activity,
   BarChart2,
