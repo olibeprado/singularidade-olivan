@@ -3110,27 +3110,37 @@ function ChartPanel({
   const [draftStart, setDraftStart] = useState<{ x: number; y: number } | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
-  // CORREÇÃO: cancelar desenho ao clicar fora do SVG
+    // CORREÇÃO: cancelar desenho ao clicar fora do SVG e voltar ao cursor
   useEffect(() => {
     const handleGlobalMouseUp = (e: MouseEvent) => {
-      if (draftStart && overlayRef.current && !overlayRef.current.contains(e.target as Node)) {
+      if (!overlayRef.current) return;
+
+      const target = e.target as Node;
+      const clickOutside = !overlayRef.current.contains(target);
+
+      // Se há um rascunho e clicou fora, cancela o desenho e volta ao cursor
+      if (draftStart && clickOutside) {
         setDraftStart(null);
         setDragId(null);
         setDragOffset(null);
+        drawingState.setActiveTool("cursor");
+      }
+      // Se a ferramenta está ativa (não cursor) e clicou fora, desativa a ferramenta
+      else if (drawingState.activeTool !== "cursor" && clickOutside) {
+        drawingState.setActiveTool("cursor");
       }
     };
+
     window.addEventListener('mouseup', handleGlobalMouseUp);
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [draftStart]);
+  }, [draftStart, drawingState.activeTool]);
 
   // CORREÇÃO: cancelar rascunho quando a ferramenta ativa muda
   useEffect(() => {
     setDraftStart(null);
     setDragId(null);
     setDragOffset(null);
-  }, [selectedTool]);
-  useEffect(() => {
-    if (!mainRef.current || !volOverlayRef.current || !rsiRef.current) return;
+  }, [drawingState.activeTool]);
 
     const baseChartOpts = {
       layout: {
