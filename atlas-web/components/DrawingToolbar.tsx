@@ -6,7 +6,6 @@ import {
   TrendingUp,
   Square,
   Type,
-  Brush,
   ChartArea,
   Ruler,
   Search,
@@ -17,8 +16,6 @@ import {
   GitBranch,
   Circle,
   Triangle,
-  Ellipse,
-  Spline,
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
@@ -168,24 +165,24 @@ export default function DrawingToolbar({ activeTool, onSelectTool, accent = "#f0
 
   const getToolIcon = (tool: DrawTool) => {
     switch (tool) {
-      case "cursor": return <MousePointer size={14} />;
-      case "trendline": return <TrendingUp size={14} />;
-      case "ray": return <ArrowUp size={14} />;
-      case "extended": return <ArrowDown size={14} />;
-      case "fib": return <Activity size={14} />;
-      case "fibext": return <GitBranch size={14} />;
-      case "fibarc": return <Circle size={14} />;
-      case "fibfan": return <Spline size={14} />;
-      case "rect": return <Square size={14} />;
-      case "triangle": return <Triangle size={14} />;
-      case "ellipse": return <Circle size={14} />;
-      case "text": return <Type size={14} />;
-      case "channel": return <Move size={14} />;
-      case "pitchfork": return <GitBranch size={14} />;
-      case "measure": return <Ruler size={14} />;
-      case "hline": return <Minus size={14} />;
-      case "vline": return <Plus size={14} />;
-      default: return null;
+      case "cursor":     return <MousePointer size={14} />;
+      case "trendline":  return <TrendingUp size={14} />;
+      case "ray":        return <ArrowUp size={14} />;
+      case "extended":   return <ArrowDown size={14} />;
+      case "fib":        return <Activity size={14} />;
+      case "fibext":     return <GitBranch size={14} />;
+      case "fibarc":     return <Circle size={14} />;
+      case "fibfan":     return <Move size={14} />;          // substituído Spline por Move
+      case "rect":       return <Square size={14} />;
+      case "triangle":   return <Triangle size={14} />;
+      case "ellipse":    return <Circle size={14} />;        // substituído Ellipse por Circle
+      case "text":       return <Type size={14} />;
+      case "channel":    return <Move size={14} />;
+      case "pitchfork":  return <GitBranch size={14} />;
+      case "measure":    return <Ruler size={14} />;
+      case "hline":      return <Minus size={14} />;
+      case "vline":      return <Plus size={14} />;
+      default:           return null;
     }
   };
 
