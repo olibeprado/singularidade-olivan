@@ -1,6 +1,6 @@
 "use client";
 
-import ToolsSidebar from "./ToolsSidebar"; 2
+import ToolsSidebar from "./ToolsSidebar"; 
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { createChart, ColorType, CrosshairMode, IChartApi, Time } from "lightweight-charts";
 import {
