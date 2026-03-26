@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { createChart, ColorType, CrosshairMode, IChartApi, Time } from "lightweight-charts";
+import { createChart, ColorType, CrosshairMode, Time } from "lightweight-charts";
 
 // TIPOS
 type DrawTool = "cursor" | "trendline" | "hline" | "vline" | "rect" | "fib";
@@ -64,16 +64,17 @@ function DrawingToolbar({ activeTool, onChangeTool }: { activeTool: DrawTool; on
   );
 }
 
-// TOP BAR - CASCA VAZIA
+// TOP BAR - MESMO DESIGN, BOTÕES VAZIOS
 function TopBar() {
   return (
     <div style={{ height: 64, padding: "0 14px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid #172133", background: "radial-gradient(circle at top, rgba(14,28,60,0.86), rgba(6,10,20,0.98) 55%)" }}>
-      {/* LOGO */}
+      {/* SEU ÍCONE GEOMÉTRICO */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 38, height: 38, borderRadius: 11, background: "linear-gradient(135deg, rgba(42,231,255,0.22), rgba(119,77,255,0.28))", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 38, height: 38, borderRadius: 11, background: "linear-gradient(135deg, rgba(42,231,255,0.22), rgba(119,77,255,0.28))", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 24px rgba(46,226,255,0.16)" }}>
           <svg width="22" height="22" viewBox="0 0 512 512" fill="none">
             <circle cx="256" cy="256" r="240" stroke="#2de2ff" strokeWidth="2" opacity="0.8"/>
             <path d="M256 60 L428 160 L428 352 L256 452 L84 352 L84 160 Z" stroke="#2de2ff" strokeWidth="2.5"/>
+            <path d="M180 180 L332 180 L332 332 L180 332 Z" stroke="#ffffff" strokeWidth="2" opacity="0.9"/>
             <circle cx="256" cy="256" r="12" fill="#ffffff" opacity="0.95"/>
           </svg>
         </div>
@@ -82,7 +83,6 @@ function TopBar() {
       
       <div style={{ width: 1, height: 30, background: "rgba(255,255,255,0.08)" }} />
       
-      {/* BOTÕES VAZIOS */}
       <button style={{ display: "inline-flex", alignItems: "center", gap: 7, height: 36, padding: "0 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.07)", background: "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))", color: "#eef6ff", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>
         <span style={{ color: "#f7c948" }}>₿</span> BTC
       </button>
@@ -97,7 +97,6 @@ function TopBar() {
       
       <div style={{ flex: 1 }} />
       
-      {/* BOTÕES SUPERIORES VAZIOS */}
       {["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"].map(tab => (
         <button key={tab} style={{ height: 29, padding: "0 10px", borderRadius: 9, border: tab === "Gráfico" ? "1px solid rgba(247,201,72,0.34)" : "1px solid rgba(255,255,255,0.06)", background: tab === "Gráfico" ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))" : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))", color: tab === "Gráfico" ? "#f7c948" : "#dce8ff", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
           {tab}
@@ -107,7 +106,7 @@ function TopBar() {
   );
 }
 
-// CHART PANEL - FUNCIONAL
+// CHART PANEL - FUNCIONAL, SEM RSI
 function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawings> }) {
   const mainRef = useRef<HTMLDivElement>(null);
   const volRef = useRef<HTMLDivElement>(null);
@@ -115,7 +114,6 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
   const [svgSize, setSvgSize] = useState({ w: 800, h: 600 });
   const [draft, setDraft] = useState<{x1:number,y1:number,x2:number,y2:number} | null>(null);
 
-  // Inicializa gráfico
   useEffect(() => {
     if (!mainRef.current || !volRef.current) return;
 
@@ -135,7 +133,6 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
       wickUpColor: "#37f4ad", wickDownColor: "#ff6c8d",
     });
 
-    // Dados simulados
     const now = Math.floor(Date.now() / 1000);
     const candles = Array.from({ length: 100 }, (_, i) => {
       const time = now - (100 - i) * 60;
@@ -151,7 +148,6 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
 
     series.setData(candles);
 
-    // Volume
     const volChart = createChart(volRef.current, {
       width: volRef.current.clientWidth,
       height: volRef.current.clientHeight,
@@ -187,7 +183,6 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
     return () => { window.removeEventListener("resize", resize); chart.remove(); volChart.remove(); };
   }, []);
 
-  // Handlers de desenho
   const handleMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if (drawingState.activeTool === "cursor") return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -213,7 +208,6 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
     setDraft(null);
   }, [draft, drawingState]);
 
-  // Renderiza SVG
   const renderDrawing = (d: Drawing) => {
     switch (d.tool) {
       case "trendline": return <line key={d.id} x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2} stroke={d.color} strokeWidth={2} />;
@@ -227,7 +221,7 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%", background: "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(6,10,18,0.98))" }}>
-      {/* Header vazio */}
+      {/* Header - MESMO DESIGN, CONTEÚDO VAZIO */}
       <div style={{ padding: "8px 10px", borderBottom: "1px solid #172133", display: "grid", gridTemplateColumns: "1fr repeat(4, 120px)", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <div style={{ width: 24, height: 24, borderRadius: 7, background: "rgba(247,201,72,0.16)", color: "#f7c948", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900 }}>SC</div>
@@ -244,7 +238,7 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
         ))}
       </div>
 
-      {/* Botões vazios */}
+      {/* Botões - MESMO DESIGN, SEM AÇÃO */}
       <div style={{ height: 28, padding: "0 10px", display: "flex", alignItems: "center", gap: 4, borderBottom: "1px solid #172133", background: "rgba(255,255,255,0.012)" }}>
         <button style={{ padding: "2px 8px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.07)", background: "transparent", color: "#9ab0d4", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>🔒 Travar</button>
         <button style={{ padding: "2px 8px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.07)", background: "transparent", color: "#9ab0d4", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>⚙ Config.</button>
@@ -257,7 +251,7 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
         ))}
       </div>
 
-      {/* Gráfico + Volume + SVG */}
+      {/* Gráfico + Volume + SVG Overlay */}
       <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
         <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
         
@@ -272,7 +266,7 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
   );
 }
 
-// COMPONENTE PRINCIPAL - SUPER ENXUTO
+// COMPONENTE PRINCIPAL - CASCA FUNCIONAL
 export default function AtlasChartLite() {
   const drawingState = useDrawings();
 
@@ -287,9 +281,9 @@ export default function AtlasChartLite() {
           <ChartPanel drawingState={drawingState} />
         </div>
         
-        {/* PAINEL DIREITO VAZIO */}
+        {/* PAINEL DIREITO - SÓ A CASCA */}
         <div style={{ width: 320, borderLeft: "1px solid #172133", background: "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))" }}>
-          {/* SÓ A CASCA - SEM CONTEÚDO */}
+          {/* VAZIO - CONTEÚDO SERÁ ADICIONADO DEPOIS */}
         </div>
       </div>
     </div>
