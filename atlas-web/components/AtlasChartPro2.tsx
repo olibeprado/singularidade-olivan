@@ -1134,7 +1134,7 @@ function ChartPanel({
   };
 
   const createObject = (tool: DrawingTool, p1: TrendPoint, p2?: TrendPoint): DrawingObject | null => {
-    const id = `${tool}-${Date.now()}`;
+    const id = `${tool}-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
     switch (tool) {
       case "trendline":
         if (!p2) return null;
@@ -1156,14 +1156,18 @@ function ChartPanel({
     if (!world) return;
 
     if (currentTool !== "cursor") {
+      // Drawing mode
       if (currentTool === "trendline" || currentTool === "ray") {
         if (!draft || draft.type !== currentTool) {
-          setDraft({ type: currentTool, p1: world, p2: world });
+          setDraft({ type: currentTool, p1: world, p2: null });
         } else {
-          const obj = createObject(currentTool, draft.p1, world);
-          if (obj) {
-            onAdd(obj);
-            onSelect(obj.id);
+          // Second click: finalize drawing
+          if (draft.p2 === null) {
+            const obj = createObject(currentTool, draft.p1, world);
+            if (obj) {
+              onAdd(obj);
+              onSelect(obj.id);
+            }
           }
           setDraft(null);
         }
@@ -1181,6 +1185,7 @@ function ChartPanel({
       }
     }
 
+    // Cursor mode: selection or drag
     const hit = hitTest(e.clientX, e.clientY);
     if (!hit) {
       onSelect(null);
@@ -1255,6 +1260,21 @@ function ChartPanel({
     setDraft(null);
     dragRef.current = null;
   };
+
+  // Keyboard handlers
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Delete") {
+        onDeleteSelected();
+      } else if (e.key === "Escape") {
+        setDraft(null);
+        dragRef.current = null;
+        onSelect(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onDeleteSelected, onSelect]);
 
   const selectedLabel = selectedObject
     ? `${selectedObject.name} • ${selectedObject.locked ? "travada" : "livre"}`
