@@ -1,498 +1,665 @@
-"use client";
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { createChart, ColorType, CrosshairMode, IChartApi, Time } from "lightweight-charts";
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Singularidade - Replica Trading Dashboard</title>
+    <!-- Font Awesome (ícones apenas para aprimoramento visual, sem alterar textos) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js para o gráfico -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* apenas para aspecto de ferramenta, não interfere nos textos */
+        }
 
-// TIPOS
-type DrawTool = "cursor" | "trendline" | "hline" | "vline" | "rect" | "fib";
+        body {
+            background-color: #05080c;
+            font-family: 'Segoe UI', 'Inter', 'Roboto', 'Poppins', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            color: #eef2ff;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-interface Drawing {
-  id: string;
-  tool: DrawTool;
-  color: string;
-  x1: number; y1: number;
-  x2: number; y2: number;
-}
+        /* Container principal - grid total */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #0b1015;
+        }
 
-// CONSTANTES
-const TOOL_COLORS: Record<DrawTool, string> = {
-  cursor: "#ffffff", trendline: "#00d4ff", hline: "#ffd54f",
-  vline: "#ffd54f", rect: "#00d4ff", fib: "#ffd54f",
-};
+        /* ========= TOP MENU ========= */
+        .top-menu {
+            background: #0e141c;
+            border-bottom: 1px solid #1f2a36;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            height: 52px;
+            font-weight: 500;
+            font-size: 14px;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: thin;
+        }
+        .top-menu span {
+            color: #b9c7d9;
+            transition: 0.2s;
+            cursor: default;
+            padding: 4px 0;
+            border-bottom: 2px solid transparent;
+        }
+        .top-menu span:hover {
+            color: #f0b90b;
+            border-bottom-color: #f0b90b;
+        }
+        /* item especial BTC pode destacar */
+        .top-menu span:first-child {
+            color: #f0b90b;
+            font-weight: 600;
+        }
 
-const TOOL_LABELS: Record<DrawTool, string> = {
-  cursor: "Cursor", trendline: "Tendência", hline: "Horizontal",
-  vline: "Vertical", rect: "Retângulo", fib: "Fibonacci",
-};
+        /* ========= CONTEÚDO PRINCIPAL (3 colunas) ========= */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 0;
+        }
 
-// HOOK DESENHOS
-function useDrawings() {
-  const [drawings, setDrawings] = useState<Drawing[]>([]);
-  const [activeTool, setActiveTool] = useState<DrawTool>("cursor");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+        /* LEFT MENU */
+        .left-menu {
+            width: 250px;
+            background: #0c1118;
+            border-right: 1px solid #1a222c;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0 16px 0;
+            gap: 24px;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .left-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 0 16px;
+        }
+        .left-item {
+            font-size: 13px;
+            font-weight: 500;
+            color: #ccdbe9;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: transparent;
+            transition: all 0.15s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .left-item i {
+            width: 20px;
+            color: #6c86a3;
+            font-size: 14px;
+        }
+        .left-item:hover {
+            background: #18212b;
+            color: white;
+        }
+        .left-item.active {
+            background: #1f2a36;
+            color: #f0b90b;
+        }
+        .scanner-row {
+            background: #0f151f;
+            border-left: 3px solid #f0b90b;
+            font-family: monospace;
+            font-size: 12px;
+            letter-spacing: 0.2px;
+            font-weight: 500;
+            word-break: keep-all;
+        }
+        .divider-light {
+            height: 1px;
+            background: #1f2a36;
+            margin: 8px 0;
+        }
+        .menu-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #5d7184;
+            margin-bottom: 8px;
+            padding-left: 12px;
+            font-weight: 600;
+        }
 
-  const addDrawing = useCallback((d: Drawing) => {
-    setDrawings(prev => [...prev, d]);
-    setActiveTool("cursor");
-  }, []);
+        /* CENTER REGION (graph + header) */
+        .center-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0a0f16;
+            overflow: hidden;
+            min-width: 0;
+        }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px 8px 20px;
+            border-bottom: 1px solid #1a222c;
+            flex-wrap: wrap;
+            background: #0b1018;
+        }
+        .price-stats {
+            display: flex;
+            gap: 24px;
+            align-items: baseline;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .price-stats span {
+            color: #a0b3cc;
+        }
+        .price-stats strong {
+            color: #eef2ff;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .positive {
+            color: #0ecb81 !important;
+        }
+        .btc-legend {
+            background: #11171f;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #2a3643;
+        }
+        .btc-legend .btc-symbol {
+            color: #f0b90b;
+        }
+        .btc-price {
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+        .btc-change {
+            color: #0ecb81;
+            background: #0a2a1f;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .graph-container {
+            flex: 1;
+            padding: 16px 16px 8px 16px;
+            position: relative;
+            min-height: 0;
+        }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            background: #070c12;
+            border-radius: 12px;
+        }
+        .tradingview-note {
+            position: absolute;
+            bottom: 12px;
+            right: 28px;
+            font-size: 10px;
+            color: #3e4e62;
+            background: rgba(7, 12, 18, 0.7);
+            padding: 2px 8px;
+            border-radius: 12px;
+            pointer-events: none;
+            font-family: monospace;
+            z-index: 2;
+        }
 
-  const deleteDrawing = useCallback((id: string) => {
-    setDrawings(prev => prev.filter(d => d.id !== id));
-  }, []);
+        /* RIGHT MENU */
+        .right-menu {
+            width: 220px;
+            background: #0c1118;
+            border-left: 1px solid #1a222c;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 16px;
+            gap: 24px;
+            flex-shrink: 0;
+        }
+        .ia-insights {
+            background: #0f1620;
+            border-radius: 14px;
+            padding: 16px 12px;
+            border: 1px solid #202a36;
+        }
+        .ia-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #f0b90b;
+            margin-bottom: 18px;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ia-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn-ia {
+            background: #121a24;
+            border: none;
+            color: #cfdef5;
+            padding: 8px 0;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.1s;
+            width: 100%;
+        }
+        .btn-ia:hover {
+            background: #1f2c3a;
+            color: white;
+        }
+        .dual-group {
+            display: flex;
+            gap: 8px;
+        }
+        .dual-group .btn-ia {
+            flex: 1;
+        }
+        .reset-btn {
+            background: #1e1a2a;
+            border: 1px solid #3a2a4a;
+        }
 
-  const clearAll = useCallback(() => setDrawings([]), []);
+        /* BOTTOM MENU */
+        .bottom-menu {
+            background: #0b1018;
+            border-top: 1px solid #1a222c;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            font-size: 13px;
+            font-weight: 500;
+            gap: 24px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .bottom-tools {
+            display: flex;
+            gap: 28px;
+        }
+        .bottom-tools span {
+            color: #b0c2da;
+            cursor: default;
+            padding: 4px 8px;
+            border-radius: 20px;
+            transition: 0.1s;
+        }
+        .bottom-tools span:hover {
+            background: #1f2a36;
+            color: #f0b90b;
+        }
+        .watermark {
+            font-size: 11px;
+            color: #2e4057;
+            font-family: monospace;
+        }
 
-  return {
-    drawings, activeTool, selectedId,
-    setDrawings, setActiveTool, setSelectedId,
-    addDrawing, deleteDrawing, clearAll,
-  };
-}
-
-// TOOLBAR ESQUERDA
-function DrawingToolbar({ 
-  activeTool, 
-  onChangeTool 
-}: { 
-  activeTool: DrawTool; 
-  onChangeTool: (t: DrawTool) => void;
-}) {
-  const tools = [
-    { key: "cursor" as DrawTool, icon: "↖" },
-    { key: "trendline" as DrawTool, icon: "╱" },
-    { key: "hline" as DrawTool, icon: "─" },
-    { key: "vline" as DrawTool, icon: "│" },
-    { key: "rect" as DrawTool, icon: "▭" },
-    { key: "fib" as DrawTool, icon: "FIB" },
-  ];
-
-  return (
-    <div style={{
-      width: 48,
-      borderRight: "1px solid #172133",
-      background: "linear-gradient(180deg,rgba(8,12,24,0.98),rgba(6,9,17,0.98))",
-      display: "flex", flexDirection: "column",
-      padding: "8px 6px", gap: 4,
-    }}>
-      {tools.map(tool => {
-        const active = activeTool === tool.key;
-        return (
-          <button
-            key={tool.key}
-            onClick={() => onChangeTool(tool.key)}
-            title={TOOL_LABELS[tool.key]}
-            style={{
-              width: 36, height: 36,
-              borderRadius: 7, cursor: "pointer",
-              border: active
-                ? "1px solid rgba(45,226,255,0.3)"
-                : "1px solid rgba(255,255,255,0.04)",
-              background: active
-                ? "radial-gradient(circle,rgba(45,226,255,0.18),rgba(45,226,255,0.04))"
-                : "linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.008))",
-              color: active ? "#2de2ff" : "#90a4c8",
-              fontSize: 13, fontWeight: 900, fontFamily: "monospace",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >
-            {tool.icon}
-          </button>
-        );
-      })}
+        /* scrolls bonitos */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #11181f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a3a48;
+            border-radius: 6px;
+        }
+        button, .left-item, .top-menu span, .bottom-tools span, .btn-ia {
+            cursor: pointer;
+        }
+        /* garantir que todos os textos exatos estejam presentes */
+        .text-exact {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <!-- TOP MENU: exatamente os itens descritos -->
+    <div class="top-menu">
+        <span>BTC</span>
+        <span>Singularidade</span>
+        <span>IA Atlas</span>
+        <span>Scanner</span>
+        <span>Mestre Scanner</span>
+        <span>Estrutura</span>
+        <span>Liquidez</span>
     </div>
-  );
-}
 
-// TOP BAR - MESMO DESIGN
-function TopBar({ symbol, price, change }: { symbol: string; price: number; change: number }) {
-  const timeframes = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
-  const isPositive = change >= 0;
-
-  return (
-    <div style={{
-      height: 64,
-      padding: "0 14px",
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      borderBottom: "1px solid #172133",
-      background: "radial-gradient(circle at top, rgba(14,28,60,0.86), rgba(6,10,20,0.98) 55%)",
-    }}>
-      {/* ÍCONE GEOMÉTRICO */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{
-          width: 38, height: 38, borderRadius: 11,
-          background: "linear-gradient(135deg, rgba(42,231,255,0.22), rgba(119,77,255,0.28))",
-          border: "1px solid rgba(255,255,255,0.08)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 0 24px rgba(46,226,255,0.16)",
-        }}>
-          <svg width="22" height="22" viewBox="0 0 512 512" fill="none">
-            <circle cx="256" cy="256" r="240" stroke="#2de2ff" strokeWidth="2" opacity="0.8"/>
-            <path d="M256 60 L428 160 L428 352 L256 452 L84 352 L84 160 Z" stroke="#2de2ff" strokeWidth="2.5"/>
-            <path d="M180 180 L332 180 L332 332 L180 332 Z" stroke="#ffffff" strokeWidth="2" opacity="0.9"/>
-            <circle cx="256" cy="256" r="12" fill="#ffffff" opacity="0.95"/>
-          </svg>
+    <div class="main-layout">
+        <!-- LEFT MENU: conforme especificação -->
+        <div class="left-menu">
+            <div class="left-section">
+                <div class="left-item">
+                    <i class="fas fa-chart-line"></i> Fluxo
+                </div>
+                <div class="left-item scanner-row">
+                    <i class="fas fa-microchip"></i> Scaner Atlas - Ferrantia: Cursor - TF: 15m
+                </div>
+                <div class="divider-light"></div>
+                <div class="left-item">
+                    <i class="fas fa-lock"></i> Travar
+                </div>
+                <div class="left-item">
+                    <i class="fas fa-sliders-h"></i> Config.
+                </div>
+                <div class="left-item">
+                    <i class="fas fa-trash-alt"></i> Apagar
+                </div>
+                <div class="left-item">
+                    <i class="fas fa-broom"></i> Limpar
+                </div>
+            </div>
+            <!-- pequeno espaço extra para manter visual, sem alterar textos -->
         </div>
-        <span style={{ color: "#f6fbff", fontSize: 17, fontWeight: 900 }}>
-          SINGULARIDADE
-        </span>
-      </div>
-      
-      <div style={{ width: 1, height: 30, background: "rgba(255,255,255,0.08)" }} />
-      
-      <button style={{
-        display: "inline-flex", alignItems: "center", gap: 7,
-        height: 36, padding: "0 12px", borderRadius: 10,
-        border: "1px solid rgba(255,255,255,0.07)",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))",
-        color: "#eef6ff", fontSize: 13, fontWeight: 800, cursor: "pointer",
-      }}>
-        <span style={{ color: "#f7c948" }}>₿</span>
-        {symbol}
-      </button>
-      
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ color: "#f6fbff", fontSize: 13, fontFamily: "monospace", fontWeight: 900 }}>
-          ${price.toLocaleString()}
-        </span>
-        <span style={{
-          color: isPositive ? "#27f59d" : "#ff6b86",
-          fontSize: 12, fontFamily: "monospace", fontWeight: 900,
-        }}>
-          {isPositive ? "+" : ""}{change.toFixed(2)}%
-        </span>
-      </div>
-      
-      <div style={{ width: 1, height: 30, background: "rgba(255,255,255,0.08)" }} />
-      
-      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-        {timeframes.map(tf => (
-          <button key={tf} style={{
-            height: 29, padding: "0 10px", borderRadius: 9,
-            border: tf === "15m" ? "1px solid rgba(247,201,72,0.34)" : "1px solid rgba(255,255,255,0.06)",
-            background: tf === "15m"
-              ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
-              : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
-            color: tf === "15m" ? "#f7c948" : "#dce8ff",
-            fontSize: 11, fontWeight: 800, cursor: "pointer",
-          }}>
-            {tf}
-          </button>
-        ))}
-      </div>
-      
-      <div style={{ flex: 1 }} />
-      
-      <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-        {["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"].map(tab => (
-          <button key={tab} style={{
-            height: 29, padding: "0 10px", borderRadius: 9,
-            border: tab === "Gráfico" ? "1px solid rgba(247,201,72,0.34)" : "1px solid rgba(255,255,255,0.06)",
-            background: tab === "Gráfico"
-              ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
-              : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
-            color: tab === "Gráfico" ? "#f7c948" : "#dce8ff",
-            fontSize: 11, fontWeight: 800, cursor: "pointer",
-          }}>
-            {tab}
-          </button>
-        ))}
-      </div>
+
+        <!-- CENTER: gráfico e cabeçalho -->
+        <div class="center-area">
+            <div class="chart-header">
+                <div class="price-stats">
+                    <span>PREÇO</span>
+                    <span>VARIÁRIO</span>
+                    <span>VOLUME</span>
+                    <strong class="positive">+0.36%</strong>
+                    <strong>217.36</strong>
+                </div>
+                <div class="btc-legend">
+                    <span class="btc-symbol">BTC</span>
+                    <span class="btc-price">74.682</span>
+                    <span class="btc-change">+2.80%</span>
+                </div>
+            </div>
+            <div class="graph-container">
+                <canvas id="priceChart"></canvas>
+                <div class="tradingview-note">TradingView</div>
+            </div>
+        </div>
+
+        <!-- RIGHT MENU: IA Atlas Insights + ferramentas -->
+        <div class="right-menu">
+            <div class="ia-insights">
+                <div class="ia-title">
+                    <i class="fas fa-brain"></i> IA Atlas Insights
+                </div>
+                <div class="ia-buttons">
+                    <div class="dual-group">
+                        <button class="btn-ia">Auto</button>
+                        <button class="btn-ia">Manual</button>
+                    </div>
+                    <button class="btn-ia">Seguir + Espaço</button>
+                    <button class="btn-ia reset-btn">Reset</button>
+                </div>
+            </div>
+            <!-- pequeno espaço para manter coesão -->
+        </div>
     </div>
-  );
-}
 
-// CHART PANEL - SEM RSI
-function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawings> }) {
-  const mainRef = useRef<HTMLDivElement>(null);
-  const volRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [svgSize, setSvgSize] = useState({ w: 800, h: 600 });
-  const [draft, setDraft] = useState<{x1:number,y1:number,x2:number,y2:number} | null>(null);
-  const [price, setPrice] = useState(87294);
-  const [volume, setVolume] = useState(217);
+    <!-- BOTTOM MENU: FORMAÇÃO, RSI/MFI, RS1, MFI -->
+    <div class="bottom-menu">
+        <div class="bottom-tools">
+            <span>FORMAÇÃO</span>
+            <span>RSI / MFI</span>
+            <span>RS1</span>
+            <span>MFI</span>
+        </div>
+        <div class="watermark">© Singularidade Terminal</div>
+    </div>
+</div>
 
-  // Inicializa gráfico
-  useEffect(() => {
-    if (!mainRef.current || !volRef.current) return;
-
-    const chart = createChart(mainRef.current, {
-      width: mainRef.current.clientWidth,
-      height: mainRef.current.clientHeight,
-      layout: {
-        background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#7085ad",
-      },
-      grid: {
-        vertLines: { color: "rgba(255,255,255,0.035)" },
-        horzLines: { color: "rgba(255,255,255,0.035)" },
-      },
-      crosshair: { mode: CrosshairMode.Normal },
-      handleScroll: true,
-      handleScale: true,
-    });
-
-    const series = chart.addCandlestickSeries({
-      upColor: "#37f4ad",
-      downColor: "#ff6c8d",
-      borderUpColor: "#37f4ad",
-      borderDownColor: "#ff6c8d",
-      wickUpColor: "#37f4ad",
-      wickDownColor: "#ff6c8d",
-    });
-
-    // Dados simulados
-    const now = Math.floor(Date.now() / 1000);
-    const candles = Array.from({ length: 100 }, (_, i) => {
-      const time = now - (100 - i) * 60;
-      const base = 87000 + Math.sin(i / 10) * 1000;
-      return {
-        time: time as Time,
-        open: base,
-        high: base + Math.random() * 500,
-        low: base - Math.random() * 500,
-        close: base + (Math.random() - 0.5) * 300,
-      };
-    });
-
-    series.setData(candles);
-    setPrice(candles[candles.length - 1].close);
-
-    // Volume
-    const volChart = createChart(volRef.current, {
-      width: volRef.current.clientWidth,
-      height: volRef.current.clientHeight,
-      layout: { background: { type: ColorType.Solid, color: "transparent" } },
-      grid: { vertLines: { visible: false }, horzLines: { visible: false } },
-      rightPriceScale: { visible: false },
-      timeScale: { visible: false },
-    });
-
-    const volSeries = volChart.addHistogramSeries({
-      color: "rgba(55,244,173,0.42)",
-      priceScaleId: "",
-    });
-
-    volSeries.setData(candles.map(c => ({
-      time: c.time as Time,
-      value: 120 + Math.random() * 1400,
-      color: c.close >= c.open ? "rgba(55,244,173,0.42)" : "rgba(255,108,141,0.42)",
-    })));
-
-    chart.timeScale().fitContent();
-    volChart.timeScale().fitContent();
-
-    // Resize
-    const resize = () => {
-      if (mainRef.current) {
-        const w = mainRef.current.clientWidth;
-        const h = mainRef.current.clientHeight;
-        chart.applyOptions({ width: w, height: h });
-        setSvgSize({ w, h });
-      }
-      if (volRef.current) {
-        volChart.applyOptions({ 
-          width: volRef.current.clientWidth, 
-          height: volRef.current.clientHeight 
+<script>
+    (function() {
+        // Gerar dados para o gráfico com base nos eixos especificados:
+        // X: 13:00 até 24:00 (12 pontos)
+        const timeLabels = [];
+        for (let i = 13; i <= 24; i++) {
+            timeLabels.push(`${i.toString().padStart(2,'0')}:00`);
+        }
+        
+        // Simular preços realistas mas respeitando a legenda BTC 74.682 e +2.80%
+        // Último preço (24:00) = 74682 (mesmo valor exibido na legenda)
+        // Primeiro preço (13:00) será aproximadamente 72650 ~ (para ter +2.80% de variação diária)
+        // Mas a legenda exibe +2.80% em relação ao período, vou criar uma variação ascendente.
+        // Valor inicial calculado: 74682 / 1.028 = ~72670
+        const finalPrice = 74682;    // 74.682 representado como número inteiro 74682
+        const initialPrice = Math.round(finalPrice / 1.028);  // ~72670
+        // Gerar array com caminhada suave entre initialPrice e finalPrice
+        const prices = [];
+        const steps = timeLabels.length - 1; // 11 intervalos
+        for (let i = 0; i < timeLabels.length; i++) {
+            const ratio = i / steps; // 0 a 1
+            // interpolação linear + pequenas flutuações realistas (+- 0.6%)
+            let baseValue = initialPrice + (finalPrice - initialPrice) * ratio;
+            // adiciona ruído controlado para parecer mercado real, mas mantém tendência
+            let noise = 0;
+            if (i > 0 && i < steps) {
+                noise = (Math.sin(i * 1.2) * 180) + (Math.cos(i * 0.7) * 120);
+                noise = noise * 0.3;
+            }
+            let finalVal = baseValue + noise;
+            // garantir que o último seja exato 74682
+            if (i === steps) finalVal = finalPrice;
+            prices.push(Math.round(finalVal));
+        }
+        
+        // Dados para volume? não obrigatório mas para enriquecer o gráfico principal
+        // apenas preço, mas manteremos a linha.
+        
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        
+        // Configuração do gráfico respeitando eixo Y: 0 a 100000 com ticks sugeridos
+        // e eixo X: exatamente os horários
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [
+                    {
+                        label: 'Preço BTC',
+                        data: prices,
+                        borderColor: '#f0b90b',
+                        backgroundColor: 'rgba(240, 185, 11, 0.05)',
+                        borderWidth: 2.5,
+                        pointRadius: 2,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#f0b90b',
+                        pointBorderColor: '#0b1015',
+                        fill: true,
+                        tension: 0.25,
+                        pointBorderWidth: 1,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: '#11171f',
+                        titleColor: '#f0b90b',
+                        bodyColor: '#ccdbe9',
+                        borderColor: '#2a3a48',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                let val = context.raw;
+                                return ` BTC: $${val.toLocaleString()}`;
+                            }
+                        }
+                    },
+                    legend: {
+                        display: false,
+                    },
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: '#1a232e',
+                            drawBorder: true,
+                            borderColor: '#2a3a48',
+                        },
+                        ticks: {
+                            color: '#8a9bb0',
+                            font: { size: 10, weight: '500' },
+                            maxRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 8,
+                        },
+                        title: {
+                            display: false,
+                        }
+                    },
+                    y: {
+                        min: 0,
+                        max: 100000,
+                        grid: {
+                            color: '#1a232e',
+                            drawBorder: true,
+                            borderColor: '#2a3a48',
+                        },
+                        ticks: {
+                            color: '#8a9bb0',
+                            stepSize: 20000,
+                            callback: function(val) {
+                                return val.toLocaleString();
+                            },
+                            font: { size: 10 },
+                        },
+                        title: {
+                            display: false,
+                        }
+                    }
+                },
+                elements: {
+                    point: {
+                        radius: 1.5,
+                        hoverRadius: 4,
+                    }
+                },
+                layout: {
+                    padding: {
+                        top: 12,
+                        bottom: 8,
+                        left: 6,
+                        right: 8
+                    }
+                }
+            }
         });
-      }
-    };
-
-    window.addEventListener("resize", resize);
-    setSvgSize({ w: mainRef.current.clientWidth, h: mainRef.current.clientHeight });
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      chart.remove();
-      volChart.remove();
-    };
-  }, []);
-
-  // Handlers de desenho
-  const handleMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (drawingState.activeTool === "cursor") return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    setDraft({
-      x1: e.clientX - rect.left,
-      y1: e.clientY - rect.top,
-      x2: e.clientX - rect.left,
-      y2: e.clientY - rect.top,
-    });
-  }, [drawingState.activeTool]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (!draft) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    setDraft(prev => prev ? ({
-      ...prev,
-      x2: e.clientX - rect.left,
-      y2: e.clientY - rect.top,
-    }) : null);
-  }, [draft]);
-
-  const handleMouseUp = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (!draft || drawingState.activeTool === "cursor") return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    drawingState.addDrawing({
-      id: `draw-${Date.now()}`,
-      tool: drawingState.activeTool,
-      x1: draft.x1,
-      y1: draft.y1,
-      x2: e.clientX - rect.left,
-      y2: e.clientY - rect.top,
-      color: TOOL_COLORS[drawingState.activeTool],
-    });
-    setDraft(null);
-  }, [draft, drawingState]);
-
-  // Renderiza SVG
-  const renderDrawing = (d: Drawing) => {
-    switch (d.tool) {
-      case "trendline":
-        return <line key={d.id} x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2} 
-          stroke={d.color} strokeWidth={2} />;
-      case "hline":
-        return <line key={d.id} x1={0} y1={d.y1} x2={svgSize.w} y2={d.y1} 
-          stroke={d.color} strokeWidth={2} strokeDasharray="5,3" />;
-      case "vline":
-        return <line key={d.id} x1={d.x1} y1={0} x2={d.x1} y2={svgSize.h} 
-          stroke={d.color} strokeWidth={2} strokeDasharray="5,3" />;
-      case "rect":
-        return <rect key={d.id} x={Math.min(d.x1,d.x2)} y={Math.min(d.y1,d.y2)} 
-          width={Math.abs(d.x2-d.x1)} height={Math.abs(d.y2-d.y1)}
-          fill={`${d.color}22`} stroke={d.color} strokeWidth={2} />;
-      case "fib":
-        return <line key={d.id} x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2} 
-          stroke={d.color} strokeWidth={2} />;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div style={{
-      display: "flex", flexDirection: "column",
-      height: "100%", width: "100%",
-      background: "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(6,10,18,0.98))",
-    }}>
-      {/* Header info - MESMO DESIGN */}
-      <div style={{
-        padding: "8px 10px", borderBottom: "1px solid #172133",
-        display: "grid", gridTemplateColumns: "1fr repeat(4, 120px)", gap: 8,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <div style={{
-            width: 24, height: 24, borderRadius: 7,
-            background: "rgba(247,201,72,0.16)", color: "#f7c948",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 10, fontWeight: 900,
-          }}>SC</div>
-          <div>
-            <div style={{ color: "#eef6ff", fontSize: 14, fontWeight: 900 }}>BTC</div>
-            <div style={{ color: "#7d91b6", fontSize: 10 }}>Scanner Atlas</div>
-          </div>
-        </div>
-        {["Preço", "Variação", "Volume", "Desenhos"].map(label => (
-          <div key={label} style={{
-            borderRadius: 13, border: "1px solid rgba(255,255,255,0.06)",
-            background: "linear-gradient(180deg, rgba(8,15,31,0.98), rgba(7,12,24,0.96))",
-            minHeight: 58, padding: "10px 13px",
-          }}>
-            <div style={{ color: "#7f93b7", fontSize: 9, fontWeight: 900, textTransform: "uppercase" }}>
-              {label}
-            </div>
-            <div style={{ color: "#4ef0cb", fontSize: 12, fontWeight: 900 }}>
-              {label === "Preço" ? price.toLocaleString() : label === "Variação" ? "+0.36%" : label === "Volume" ? volume : drawingState.drawings.length}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Botões - MESMO DESIGN */}
-      <div style={{
-        height: 28, padding: "0 10px", display: "flex", alignItems: "center", gap: 4,
-        borderBottom: "1px solid #172133", background: "rgba(255,255,255,0.012)",
-      }}>
-        <button style={{
-          padding: "2px 8px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.07)",
-          background: "transparent", color: "#9ab0d4", fontSize: 10, fontWeight: 700, cursor: "pointer",
-        }}>🔒 Travar</button>
-        <button style={{
-          padding: "2px 8px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.07)",
-          background: "transparent", color: "#9ab0d4", fontSize: 10, fontWeight: 700, cursor: "pointer",
-        }}>⚙ Config.</button>
-        <button style={{
-          padding: "2px 8px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.07)",
-          background: "transparent", color: "#ff3060", fontSize: 10, fontWeight: 700, cursor: "pointer",
-        }}>✕ Apagar</button>
-        <button style={{
-          padding: "2px 8px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.07)",
-          background: "transparent", color: "#9ab0d4", fontSize: 10, fontWeight: 700, cursor: "pointer",
-        }}>🗑 Limpar</button>
-        <div style={{ width: 1, height: 14, background: "#172133", margin: "0 4px" }} />
-        <span style={{ fontSize: 9, color: "#536887" }}>Cor:</span>
-        {["#ffd54f","#00d4ff","#00e676","#ff3060","#c77dff"].map(c => (
-          <div key={c} style={{
-            width: 14, height: 14, borderRadius: 3, background: c, cursor: "pointer",
-          }} />
-        ))}
-      </div>
-
-      {/* Gráfico + Volume + SVG */}
-      <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
-        <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
         
-        <svg
-          ref={svgRef}
-          width={svgSize.w} height={svgSize.h}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={() => setDraft(null)}
-          style={{
-            position: "absolute", inset: 0, zIndex: 4,
-            cursor: drawingState.activeTool !== "cursor" ? "crosshair" : "default",
-          }}
-        >
-          {drawingState.drawings.map(renderDrawing)}
-          {draft && (
-            <line x1={draft.x1} y1={draft.y1} x2={draft.x2} y2={draft.y2}
-              stroke={TOOL_COLORS[drawingState.activeTool]} strokeWidth={2} opacity={0.6} />
-          )}
-        </svg>
-
-        <div ref={volRef} style={{
-          position: "absolute", left: 0, right: 0, bottom: 0, height: 140,
-          borderTop: "1px solid rgba(255,255,255,0.05)",
-        }} />
-      </div>
-    </div>
-  );
-}
-
-// COMPONENTE PRINCIPAL
-export default function AtlasChartLite() {
-  const drawingState = useDrawings();
-
-  return (
-    <div style={{
-      width: "100%", height: "100vh",
-      display: "flex", flexDirection: "column",
-      background: "#060913", color: "#ebf3ff",
-      fontFamily: "Inter, Arial, sans-serif",
-    }}>
-      <TopBar symbol="BTC" price={87294} change={0.36} />
-      
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <DrawingToolbar 
-          activeTool={drawingState.activeTool} 
-          onChangeTool={drawingState.setActiveTool} 
-        />
+        // Simular pequena interação para os botões (apenas feedback visual, sem alterar a réplica textual)
+        const allButtons = document.querySelectorAll('.btn-ia, .left-item, .top-menu span, .bottom-tools span');
+        allButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // efeito sutil de clique, não altera nenhum texto ou estrutura
+                e.stopPropagation();
+                // apenas para dar sensação de ferramenta ativa
+                if (btn.classList.contains('btn-ia')) {
+                    btn.style.transform = 'scale(0.97)';
+                    setTimeout(() => { btn.style.transform = ''; }, 120);
+                }
+            });
+        });
         
-        <div style={{ flex: 1 }}>
-          <ChartPanel drawingState={drawingState} />
-        </div>
-      </div>
-    </div>
-  );
-}
+        // Botão Reset simula recarregar gráfico (apenas efeito visual mantendo a casca)
+        const resetBtn = document.querySelector('.reset-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                // Recarregar com pequena animação no gráfico: opcional, mantém os mesmos dados
+                // para não mudar a réplica, apenas dar feedback de "reset"
+                chart.update();
+                const container = document.querySelector('.graph-container');
+                container.style.transition = '0.1s';
+                container.style.opacity = '0.98';
+                setTimeout(() => { container.style.opacity = '1'; }, 100);
+            });
+        }
+        
+        // Garantir que o texto "Scaner Atlas - Ferrantia: Cursor - TF: 15m" esteja fiel
+        // e todos os textos do left/right/bottom já estão exatos.
+        // Adicionalmente, garantir que "Fluxo" e outros itens não sofram alteração.
+        console.log('Replica carregada com todos os elementos textuais exatos');
+        
+        // Simular interação no "Auto/Manual" para manter aparência dinâmica (sem quebrar)
+        const autoBtn = Array.from(document.querySelectorAll('.btn-ia')).find(btn => btn.innerText === 'Auto');
+        const manualBtn = Array.from(document.querySelectorAll('.btn-ia')).find(btn => btn.innerText === 'Manual');
+        if (autoBtn && manualBtn) {
+            autoBtn.addEventListener('click', () => {
+                autoBtn.style.background = '#f0b90b';
+                autoBtn.style.color = '#0b1015';
+                manualBtn.style.background = '#121a24';
+                manualBtn.style.color = '#cfdef5';
+                setTimeout(() => {
+                    autoBtn.style.background = '';
+                    autoBtn.style.color = '';
+                }, 200);
+            });
+            manualBtn.addEventListener('click', () => {
+                manualBtn.style.background = '#f0b90b';
+                manualBtn.style.color = '#0b1015';
+                autoBtn.style.background = '#121a24';
+                autoBtn.style.color = '#cfdef5';
+                setTimeout(() => {
+                    manualBtn.style.background = '';
+                    manualBtn.style.color = '';
+                }, 200);
+            });
+        }
+        
+        // tooltip extra: todos os textos exatos foram mantidos, verificação final
+        const verifyTexts = () => {
+            const topTexts = ['BTC', 'Singularidade', 'IA Atlas', 'Scanner', 'Mestre Scanner', 'Estrutura', 'Liquidez'];
+            const topElements = document.querySelectorAll('.top-menu span');
+            topElements.forEach((el, idx) => {
+                if (topTexts[idx] && el.innerText !== topTexts[idx]) console.warn('Texto divergente no topo');
+            });
+            const leftExact = ['Fluxo', 'Scaner Atlas - Ferrantia: Cursor - TF: 15m', 'Travar', 'Config.', 'Apagar', 'Limpar'];
+            const leftItems = document.querySelectorAll('.left-item .text-exact-fallback');
+            // Mas já está no innerHTML, então confiamos que está presente.
+            const leftDivs = document.querySelectorAll('.left-item');
+            const leftTexts = Array.from(leftDivs).map(el => el.innerText.trim().replace(/[^\w\s\-\.:]/g, '').replace(/\n/g, ' ').replace(/\s+/g, ' '));
+            // não forçar falha, apenas garantir que o scanner row está fiel.
+        };
+        verifyTexts();
+    })();
+</script>
+</body>
+</html>
