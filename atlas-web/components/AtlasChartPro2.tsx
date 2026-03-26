@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -27,7 +26,28 @@ type TopModule =
 type Timeframe = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "1d";
 type DrawTool = "cursor" | "trendline" | "hline" | "vline" | "rect" | "fib";
 
+type ChartPoint = {
+  time: UTCTimestamp;
+  price: number;
+};
+
 type Drawing = {
+  id: string;
+  tool: DrawTool;
+  color: string;
+  locked: boolean;
+  hidden: boolean;
+  p1: ChartPoint;
+  p2: ChartPoint;
+};
+
+type DragState = {
+  id: string;
+  kind: "move" | "start" | "end";
+  lastPoint: ChartPoint;
+} | null;
+
+type ScreenDrawing = {
   id: string;
   tool: DrawTool;
   color: string;
@@ -38,13 +58,6 @@ type Drawing = {
   x2: number;
   y2: number;
 };
-
-type DragState = {
-  id: string;
-  kind: "move" | "start" | "end";
-  lastX: number;
-  lastY: number;
-} | null;
 
 const ui = {
   bg: "#060b14",
@@ -171,81 +184,6 @@ function SideToolButton({
   );
 }
 
-function drawShape(d: Drawing, width: number, height: number, selected: boolean) {
-  const stroke = d.color;
-  const handles =
-    selected && !d.locked ? (
-      <>
-        <circle cx={d.x1} cy={d.y1} r={5} fill="#fff" stroke={stroke} strokeWidth={1.5} />
-        {(d.tool === "trendline" || d.tool === "rect" || d.tool === "fib") && (
-          <circle cx={d.x2} cy={d.y2} r={5} fill="#fff" stroke={stroke} strokeWidth={1.5} />
-        )}
-      </>
-    ) : null;
-
-  if (d.hidden) return null;
-
-  if (d.tool === "hline") {
-    return (
-      <g key={d.id}>
-        <line x1={0} y1={d.y1} x2={width} y2={d.y1} stroke={stroke} strokeWidth={selected ? 2.4 : 1.8} strokeDasharray="6 5" />
-        {handles}
-      </g>
-    );
-  }
-
-  if (d.tool === "vline") {
-    return (
-      <g key={d.id}>
-        <line x1={d.x1} y1={0} x2={d.x1} y2={height} stroke={stroke} strokeWidth={selected ? 2.4 : 1.8} strokeDasharray="6 5" />
-        {handles}
-      </g>
-    );
-  }
-
-  if (d.tool === "rect") {
-    const x = Math.min(d.x1, d.x2);
-    const y = Math.min(d.y1, d.y2);
-    const w = Math.abs(d.x2 - d.x1);
-    const h = Math.abs(d.y2 - d.y1);
-    return (
-      <g key={d.id}>
-        <rect x={x} y={y} width={w} height={h} fill="rgba(0,212,255,0.08)" stroke={stroke} strokeWidth={selected ? 2.2 : 1.7} />
-        {handles}
-      </g>
-    );
-  }
-
-  if (d.tool === "fib") {
-    const left = Math.min(d.x1, d.x2);
-    const right = Math.max(d.x1, d.x2);
-    const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
-    return (
-      <g key={d.id}>
-        {levels.map((lv) => {
-          const y = d.y1 + (d.y2 - d.y1) * lv;
-          return (
-            <g key={`${d.id}-${lv}`}>
-              <line x1={left} y1={y} x2={right} y2={y} stroke={stroke} strokeWidth={selected ? 2.0 : 1.4} />
-              <text x={left + 6} y={y - 4} fill={stroke} fontSize={10} fontWeight={800}>
-                {lv.toFixed(3)}
-              </text>
-            </g>
-          );
-        })}
-        {handles}
-      </g>
-    );
-  }
-
-  return (
-    <g key={d.id}>
-      <line x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2} stroke={stroke} strokeWidth={selected ? 2.4 : 1.9} />
-      {handles}
-    </g>
-  );
-}
-
 function distToSegment(px: number, py: number, x1: number, y1: number, x2: number, y2: number) {
   const dx = x2 - x1;
   const dy = y2 - y1;
@@ -254,30 +192,6 @@ function distToSegment(px: number, py: number, x1: number, y1: number, x2: numbe
   const xx = x1 + t * dx;
   const yy = y1 + t * dy;
   return Math.hypot(px - xx, py - yy);
-}
-
-function hitDrawing(drawings: Drawing[], x: number, y: number) {
-  for (let i = drawings.length - 1; i >= 0; i -= 1) {
-    const d = drawings[i];
-    if (d.hidden) continue;
-    if (!d.locked) {
-      if (Math.hypot(x - d.x1, y - d.y1) <= 8) return { id: d.id, kind: "start" as const };
-      if ((d.tool === "trendline" || d.tool === "rect" || d.tool === "fib") && Math.hypot(x - d.x2, y - d.y2) <= 8) {
-        return { id: d.id, kind: "end" as const };
-      }
-    }
-    if (d.tool === "hline" && Math.abs(y - d.y1) < 8) return { id: d.id, kind: "move" as const };
-    if (d.tool === "vline" && Math.abs(x - d.x1) < 8) return { id: d.id, kind: "move" as const };
-    if (d.tool === "rect" || d.tool === "fib") {
-      const lx = Math.min(d.x1, d.x2);
-      const rx = Math.max(d.x1, d.x2);
-      const ty = Math.min(d.y1, d.y2);
-      const by = Math.max(d.y1, d.y2);
-      if (x >= lx - 8 && x <= rx + 8 && y >= ty - 8 && y <= by + 8) return { id: d.id, kind: "move" as const };
-    }
-    if (d.tool === "trendline" && distToSegment(x, y, d.x1, d.y1, d.x2, d.y2) < 8) return { id: d.id, kind: "move" as const };
-  }
-  return null;
 }
 
 function PlaceholderModule({ title }: { title: string }) {
@@ -298,6 +212,119 @@ function PlaceholderModule({ title }: { title: string }) {
         {title}
       </div>
     </div>
+  );
+}
+
+function drawShape(d: ScreenDrawing, width: number, height: number, selected: boolean) {
+  const stroke = d.color;
+  const handles =
+    selected && !d.locked ? (
+      <>
+        <circle cx={d.x1} cy={d.y1} r={5} fill="#fff" stroke={stroke} strokeWidth={1.5} />
+        {(d.tool === "trendline" || d.tool === "rect" || d.tool === "fib") && (
+          <circle cx={d.x2} cy={d.y2} r={5} fill="#fff" stroke={stroke} strokeWidth={1.5} />
+        )}
+      </>
+    ) : null;
+
+  if (d.hidden) return null;
+
+  if (d.tool === "hline") {
+    return (
+      <g key={d.id}>
+        <line
+          x1={0}
+          y1={d.y1}
+          x2={width}
+          y2={d.y1}
+          stroke={stroke}
+          strokeWidth={selected ? 2.4 : 1.8}
+          strokeDasharray="6 5"
+        />
+        {handles}
+      </g>
+    );
+  }
+
+  if (d.tool === "vline") {
+    return (
+      <g key={d.id}>
+        <line
+          x1={d.x1}
+          y1={0}
+          x2={d.x1}
+          y2={height}
+          stroke={stroke}
+          strokeWidth={selected ? 2.4 : 1.8}
+          strokeDasharray="6 5"
+        />
+        {handles}
+      </g>
+    );
+  }
+
+  if (d.tool === "rect") {
+    const x = Math.min(d.x1, d.x2);
+    const y = Math.min(d.y1, d.y2);
+    const w = Math.abs(d.x2 - d.x1);
+    const h = Math.abs(d.y2 - d.y1);
+    return (
+      <g key={d.id}>
+        <rect
+          x={x}
+          y={y}
+          width={w}
+          height={h}
+          fill="rgba(0,212,255,0.08)"
+          stroke={stroke}
+          strokeWidth={selected ? 2.2 : 1.7}
+        />
+        {handles}
+      </g>
+    );
+  }
+
+  if (d.tool === "fib") {
+    const left = Math.min(d.x1, d.x2);
+    const right = Math.max(d.x1, d.x2);
+    const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+    return (
+      <g key={d.id}>
+        {levels.map((lv) => {
+          const y = d.y1 + (d.y2 - d.y1) * lv;
+          return (
+            <g key={`${d.id}-${lv}`}>
+              <line
+                x1={left}
+                y1={y}
+                x2={right}
+                y2={y}
+                stroke={stroke}
+                strokeWidth={selected ? 2.0 : 1.4}
+              />
+              <text x={left + 6} y={y - 4} fill={stroke} fontSize={10} fontWeight={800}>
+                {lv.toFixed(3)}
+              </text>
+            </g>
+          );
+        })}
+        {handles}
+      </g>
+    );
+  }
+
+  return (
+    <g key={d.id}>
+      <line
+        x1={d.x1}
+        y1={d.y1}
+        x2={d.x2}
+        y2={d.y2}
+        stroke={stroke}
+        strokeWidth={selected ? 2.4 : 1.9}
+      />
+      {handles}
+    </g>
   );
 }
 
@@ -322,6 +349,7 @@ function ScannerWorkspace({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<DragState>(null);
   const [svgSize, setSvgSize] = useState({ width: 1000, height: 600 });
+  const [hoveringDrawing, setHoveringDrawing] = useState(false);
 
   const selectedDrawing = drawings.find((d) => d.id === selectedId) || null;
   const livePrice = data.candles[data.candles.length - 1]?.close ?? 0;
@@ -330,6 +358,7 @@ function ScannerWorkspace({
 
   useEffect(() => {
     if (!chartHostRef.current) return;
+
     const chart = createChart(chartHostRef.current, {
       width: chartHostRef.current.clientWidth,
       height: chartHostRef.current.clientHeight,
@@ -398,6 +427,8 @@ function ScannerWorkspace({
       ro.disconnect();
       chart.remove();
       chartRef.current = null;
+      candleSeriesRef.current = null;
+      volumeSeriesRef.current = null;
     };
   }, [data]);
 
@@ -418,79 +449,225 @@ function ScannerWorkspace({
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedId]);
 
-  const getLocalPoint = <T extends Element,>(e: React.MouseEvent<T>) => {
+  const pixelToChartPoint = (clientX: number, clientY: number): ChartPoint | null => {
     const rect = overlayWrapRef.current?.getBoundingClientRect();
-    if (!rect) return { x: 0, y: 0 };
+    const chart = chartRef.current;
+    const series = candleSeriesRef.current;
+    if (!rect || !chart || !series) return null;
+
+    const x = clamp(clientX - rect.left, 0, rect.width);
+    const y = clamp(clientY - rect.top, 0, rect.height);
+
+    const rawTime = chart.timeScale().coordinateToTime(x);
+    const rawPrice = series.coordinateToPrice(y);
+
+    if (rawTime == null || rawPrice == null) return null;
+    if (typeof rawTime !== "number") return null;
+
     return {
-      x: clamp(e.clientX - rect.left, 0, rect.width),
-      y: clamp(e.clientY - rect.top, 0, rect.height),
+      time: rawTime as UTCTimestamp,
+      price: rawPrice,
     };
   };
 
-  const begin = (x: number, y: number) => {
+  const chartPointToPixel = (point: ChartPoint) => {
+    const chart = chartRef.current;
+    const series = candleSeriesRef.current;
+    if (!chart || !series) return null;
+
+    const x = chart.timeScale().timeToCoordinate(point.time);
+    const y = series.priceToCoordinate(point.price);
+
+    if (x == null || y == null) return null;
+    return { x, y };
+  };
+
+  const toScreenDrawing = (d: Drawing): ScreenDrawing | null => {
+    const a = chartPointToPixel(d.p1);
+    const b = chartPointToPixel(d.p2);
+    if (!a || !b) return null;
+
+    return {
+      id: d.id,
+      tool: d.tool,
+      color: d.color,
+      locked: d.locked,
+      hidden: d.hidden,
+      x1: a.x,
+      y1: a.y,
+      x2: b.x,
+      y2: b.y,
+    };
+  };
+
+  const visibleDrawings = useMemo(() => {
+    const list = draft ? [...drawings, draft] : drawings;
+    return list
+      .map((d) => ({ raw: d, screen: toScreenDrawing(d) }))
+      .filter((item): item is { raw: Drawing; screen: ScreenDrawing } => !!item.screen);
+  }, [drawings, draft, svgSize]);
+
+  const hitDrawing = (x: number, y: number) => {
+    for (let i = visibleDrawings.length - 1; i >= 0; i -= 1) {
+      const { raw, screen } = visibleDrawings[i];
+      if (raw.hidden) continue;
+
+      if (!raw.locked) {
+        if (Math.hypot(x - screen.x1, y - screen.y1) <= 8) return { id: raw.id, kind: "start" as const };
+        if (
+          (raw.tool === "trendline" || raw.tool === "rect" || raw.tool === "fib") &&
+          Math.hypot(x - screen.x2, y - screen.y2) <= 8
+        ) {
+          return { id: raw.id, kind: "end" as const };
+        }
+      }
+
+      if (raw.tool === "hline" && Math.abs(y - screen.y1) < 8) return { id: raw.id, kind: "move" as const };
+      if (raw.tool === "vline" && Math.abs(x - screen.x1) < 8) return { id: raw.id, kind: "move" as const };
+
+      if (raw.tool === "rect" || raw.tool === "fib") {
+        const lx = Math.min(screen.x1, screen.x2);
+        const rx = Math.max(screen.x1, screen.x2);
+        const ty = Math.min(screen.y1, screen.y2);
+        const by = Math.max(screen.y1, screen.y2);
+        if (x >= lx - 8 && x <= rx + 8 && y >= ty - 8 && y <= by + 8) {
+          return { id: raw.id, kind: "move" as const };
+        }
+      }
+
+      if (raw.tool === "trendline" && distToSegment(x, y, screen.x1, screen.y1, screen.x2, screen.y2) < 8) {
+        return { id: raw.id, kind: "move" as const };
+      }
+    }
+
+    return null;
+  };
+
+  const beginPointer = (e: React.MouseEvent<HTMLDivElement | SVGSVGElement>) => {
+    const point = pixelToChartPoint(e.clientX, e.clientY);
+    if (!point) return;
+
+    const rect = overlayWrapRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const localX = clamp(e.clientX - rect.left, 0, rect.width);
+    const localY = clamp(e.clientY - rect.top, 0, rect.height);
+
     if (activeTool === "cursor") {
-      const hit = hitDrawing(drawings, x, y);
+      const hit = hitDrawing(localX, localY);
       if (!hit) {
         setSelectedId(null);
         return;
       }
+
       setSelectedId(hit.id);
       const found = drawings.find((d) => d.id === hit.id);
       if (!found || found.locked) return;
-      setDragState({ id: hit.id, kind: hit.kind, lastX: x, lastY: y });
+      setDragState({ id: hit.id, kind: hit.kind, lastPoint: point });
       return;
     }
 
     const id = `dw-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
     if (activeTool === "hline") {
-      const obj: Drawing = { id, tool: "hline", color: ui.yellow, locked: false, hidden: false, x1: 0, y1: y, x2: svgSize.width, y2: y };
+      const obj: Drawing = {
+        id,
+        tool: "hline",
+        color: ui.yellow,
+        locked: false,
+        hidden: false,
+        p1: point,
+        p2: point,
+      };
       setDrawings((prev) => [...prev, obj]);
       setSelectedId(id);
       setActiveTool("cursor");
       return;
     }
+
     if (activeTool === "vline") {
-      const obj: Drawing = { id, tool: "vline", color: ui.orange, locked: false, hidden: false, x1: x, y1: 0, x2: x, y2: svgSize.height };
+      const obj: Drawing = {
+        id,
+        tool: "vline",
+        color: ui.orange,
+        locked: false,
+        hidden: false,
+        p1: point,
+        p2: point,
+      };
       setDrawings((prev) => [...prev, obj]);
       setSelectedId(id);
       setActiveTool("cursor");
       return;
     }
-    const color = activeTool === "fib" ? ui.yellow : activeTool === "rect" ? ui.cyan : ui.cyan;
-    setDraft({ id, tool: activeTool, color, locked: false, hidden: false, x1: x, y1: y, x2: x, y2: y });
+
+    const color = activeTool === "fib" ? ui.yellow : ui.cyan;
+    setDraft({
+      id,
+      tool: activeTool,
+      color,
+      locked: false,
+      hidden: false,
+      p1: point,
+      p2: point,
+    });
     setSelectedId(id);
   };
 
-  const moveDraft = (x: number, y: number) => {
-    if (draft) {
-      setDraft((prev) => (prev ? { ...prev, x2: x, y2: y } : prev));
+  const movePointer = (e: React.MouseEvent<HTMLDivElement | SVGSVGElement>) => {
+    const point = pixelToChartPoint(e.clientX, e.clientY);
+    if (!point) return;
+
+    const rect = overlayWrapRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const localX = clamp(e.clientX - rect.left, 0, rect.width);
+    const localY = clamp(e.clientY - rect.top, 0, rect.height);
+
+    if (activeTool === "cursor" && !dragState) {
+      const hit = hitDrawing(localX, localY);
+      setHoveringDrawing(!!hit);
       return;
     }
+
+    if (draft) {
+      setDraft((prev) => (prev ? { ...prev, p2: point } : prev));
+      return;
+    }
+
     if (!dragState) return;
+
     setDrawings((prev) =>
       prev.map((d) => {
         if (d.id !== dragState.id || d.locked) return d;
+
         if (dragState.kind === "start") {
-          if (d.tool === "hline") return { ...d, y1: y, y2: y };
-          if (d.tool === "vline") return { ...d, x1: x, x2: x };
-          return { ...d, x1: x, y1: y };
+          return { ...d, p1: point };
         }
+
         if (dragState.kind === "end") {
-          if (d.tool === "hline") return { ...d, y1: y, y2: y };
-          if (d.tool === "vline") return { ...d, x1: x, x2: x };
-          return { ...d, x2: x, y2: y };
+          return { ...d, p2: point };
         }
-        const dx = x - dragState.lastX;
-        const dy = y - dragState.lastY;
-        if (d.tool === "hline") return { ...d, y1: d.y1 + dy, y2: d.y2 + dy };
-        if (d.tool === "vline") return { ...d, x1: d.x1 + dx, x2: d.x2 + dx };
-        return { ...d, x1: d.x1 + dx, y1: d.y1 + dy, x2: d.x2 + dx, y2: d.y2 + dy };
+
+        const dt = point.time - dragState.lastPoint.time;
+        const dp = point.price - dragState.lastPoint.price;
+
+        return {
+          ...d,
+          p1: {
+            time: (d.p1.time + dt) as UTCTimestamp,
+            price: d.p1.price + dp,
+          },
+          p2: {
+            time: (d.p2.time + dt) as UTCTimestamp,
+            price: d.p2.price + dp,
+          },
+        };
       })
     );
-    setDragState((prev) => (prev ? { ...prev, lastX: x, lastY: y } : prev));
+
+    setDragState((prev) => (prev ? { ...prev, lastPoint: point } : prev));
   };
 
-  const finish = () => {
+  const finishPointer = () => {
     if (draft) {
       setDrawings((prev) => [...prev, draft]);
       setDraft(null);
@@ -499,8 +676,8 @@ function ScannerWorkspace({
     setDragState(null);
   };
 
-  const interactive = activeTool !== "cursor" || !!draft || !!dragState;
-  const visibleDrawings = draft ? [...drawings, draft] : drawings;
+  const overlayCaptures =
+    activeTool !== "cursor" || !!draft || !!dragState || hoveringDrawing;
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", minWidth: 0 }}>
@@ -536,10 +713,30 @@ function ScannerWorkspace({
             </div>
           </div>
 
-          <SmallCard title="Preço" value={livePrice.toLocaleString(undefined, { maximumFractionDigits: 2 })} color="#4ef0cb" sub="Mercado em tempo real" />
-          <SmallCard title="Variação" value={`${priceChange >= 0 ? "+" : ""}${priceChange.toFixed(2)}%`} color={priceChange >= 0 ? ui.green : ui.red} sub="Último candle" />
-          <SmallCard title="Volume" value={formatCompact(data.volume[data.volume.length - 1]?.value ?? 0)} color={ui.cyan} sub="Volume recente" />
-          <SmallCard title="Desenhos" value={String(drawings.length + (draft ? 1 : 0))} color={drawings.length || draft ? ui.yellow : ui.red} sub="Objetos no gráfico" />
+          <SmallCard
+            title="Preço"
+            value={livePrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            color="#4ef0cb"
+            sub="Mercado em tempo real"
+          />
+          <SmallCard
+            title="Variação"
+            value={`${priceChange >= 0 ? "+" : ""}${priceChange.toFixed(2)}%`}
+            color={priceChange >= 0 ? ui.green : ui.red}
+            sub="Último candle"
+          />
+          <SmallCard
+            title="Volume"
+            value={formatCompact(data.volume[data.volume.length - 1]?.value ?? 0)}
+            color={ui.cyan}
+            sub="Volume recente"
+          />
+          <SmallCard
+            title="Desenhos"
+            value={String(drawings.length + (draft ? 1 : 0))}
+            color={drawings.length || draft ? ui.yellow : ui.red}
+            sub="Objetos no gráfico"
+          />
 
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <button
@@ -617,8 +814,25 @@ function ScannerWorkspace({
           <SideToolButton active={activeTool === "fib"} icon="FIB" title="Fibonacci" onClick={() => setActiveTool("fib")} />
         </div>
 
-        <div ref={overlayWrapRef} style={{ position: "relative", minWidth: 0, minHeight: 0 }}>
-          <div ref={chartHostRef} style={{ position: "absolute", inset: 0 }} />
+        <div
+          ref={overlayWrapRef}
+          style={{ position: "relative", minWidth: 0, minHeight: 0 }}
+          onMouseDown={(e) => {
+            if (activeTool !== "cursor") beginPointer(e);
+          }}
+          onMouseMove={(e) => {
+            if (activeTool !== "cursor") movePointer(e);
+          }}
+          onMouseUp={() => {
+            if (activeTool !== "cursor") finishPointer();
+          }}
+          onMouseLeave={() => {
+            if (activeTool !== "cursor") finishPointer();
+            setHoveringDrawing(false);
+          }}
+        >
+          <div ref={chartHostRef} style={{ position: "absolute", inset: 0, zIndex: 1 }} />
+
           <svg
             width="100%"
             height="100%"
@@ -628,43 +842,25 @@ function ScannerWorkspace({
               position: "absolute",
               inset: 0,
               zIndex: 5,
-              pointerEvents: interactive ? "auto" : "none",
+              pointerEvents: overlayCaptures ? "auto" : "none",
+              cursor:
+                activeTool !== "cursor"
+                  ? "crosshair"
+                  : hoveringDrawing
+                  ? "pointer"
+                  : "default",
             }}
-            onMouseDown={(e) => {
-              const p = getLocalPoint(e);
-              begin(p.x, p.y);
+            onMouseDown={(e) => beginPointer(e)}
+            onMouseMove={(e) => movePointer(e)}
+            onMouseUp={finishPointer}
+            onMouseLeave={() => {
+              finishPointer();
+              setHoveringDrawing(false);
             }}
-            onMouseMove={(e) => {
-              const p = getLocalPoint(e);
-              moveDraft(p.x, p.y);
-            }}
-            onMouseUp={finish}
-            onMouseLeave={finish}
           >
-            {!interactive &&
-              visibleDrawings.map((d) => (
-                <g
-                  key={`${d.id}-hit`}
-                  onMouseDown={(e) => {
-                    e.stopPropagation();
-                    const p = getLocalPoint(e);
-                    const hit = hitDrawing(drawings, p.x, p.y);
-                    if (!hit) return;
-                    setSelectedId(hit.id);
-                    const found = drawings.find((x) => x.id === hit.id);
-                    if (!found || found.locked) return;
-                    setDragState({ id: hit.id, kind: hit.kind, lastX: p.x, lastY: p.y });
-                  }}
-                  style={{ cursor: d.locked ? "default" : "move", pointerEvents: "all" }}
-                >
-                  {drawShape(d, svgSize.width, svgSize.height, d.id === selectedId)}
-                </g>
-              ))}
-
-            {interactive &&
-              visibleDrawings.map((d) => (
-                <g key={d.id}>{drawShape(d, svgSize.width, svgSize.height, d.id === selectedId)}</g>
-              ))}
+            {visibleDrawings.map(({ raw, screen }) => (
+              <g key={raw.id}>{drawShape(screen, svgSize.width, svgSize.height, raw.id === selectedId)}</g>
+            ))}
           </svg>
         </div>
 
@@ -681,14 +877,14 @@ function ScannerWorkspace({
           <div style={{ border: `1px solid ${ui.border}`, borderRadius: 14, padding: 12, background: "rgba(255,255,255,0.02)" }}>
             <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 6 }}>Leitura rápida</div>
             <div style={{ color: "#8ea2c8", fontSize: 12, lineHeight: 1.7 }}>
-              Liquidez acima: pesada. Fluxo institucional positivo. Ferramenta ativa: {activeTool}. Objeto selecionado: {selectedDrawing ? selectedDrawing.tool : "nenhum"}.
+              Agora os objetos vivem em time/preço. Cursor navega. Ferramentas capturam só quando necessário.
             </div>
           </div>
 
           <div style={{ border: `1px solid ${ui.border}`, borderRadius: 14, padding: 12, background: "rgba(255,255,255,0.02)" }}>
             <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 6 }}>IA Análise</div>
             <div style={{ color: "#8ea2c8", fontSize: 12, lineHeight: 1.7 }}>
-              Base mais leve: gráfico fica livre no cursor. Ferramentas capturam o mouse só quando necessário.
+              Base correta para modularizar depois. Próximo passo ideal: extrair engine, overlay e sidebar em arquivos separados.
             </div>
           </div>
 
