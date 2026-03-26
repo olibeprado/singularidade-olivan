@@ -726,7 +726,7 @@ function LeftToolbar({
             >
               <div style={{ color: currentTool === item.id ? ui.cyan : "#4b5b7c" }}>
                  {/* Reutiliza o ícone do grupo para os itens */}
-                 {React.cloneElement(active.icon as React.ReactElement, { size: 14 })}
+                 {React.isValidElement(active.icon) && React.cloneElement(active.icon, { size: 14 } as React.Attributes & { size?: number })}
               </div>
               {item.label}
             </button>
