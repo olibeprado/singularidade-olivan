@@ -1,341 +1,201 @@
-// AtlasChartPro2.tsx
 "use client";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { createChart, ColorType, CrosshairMode, IChartApi, Time } from "lightweight-charts";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  createChart,
-  ColorType,
-  CrosshairMode,
-  IChartApi,
-  ISeriesApi,
-  CandlestickData,
-  HistogramData,
-  Time,
-  UTCTimestamp,
-} from "lightweight-charts";
-
-type TopModule =
-  | "Fluxo"
-  | "Singularidade"
-  | "IA Atlas"
-  | "Scanner"
-  | "Estrutura"
-  | "Euler"
-  | "Liquidez"
-  | "Mestre Scanner";
-
-type Timeframe = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "1d";
+// TIPOS
 type DrawTool = "cursor" | "trendline" | "hline" | "vline" | "rect" | "fib";
 
-type ChartPoint = {
-  time: UTCTimestamp;
-  price: number;
-};
-
-type Drawing = {
+interface Drawing {
   id: string;
-  tool: Exclude<DrawTool, "cursor">;
+  tool: DrawTool;
   color: string;
-  locked: boolean;
-  hidden: boolean;
-  p1: ChartPoint;
-  p2: ChartPoint;
+  x1: number; y1: number;
+  x2: number; y2: number;
+}
+
+// CONSTANTES
+const TOOL_COLORS: Record<DrawTool, string> = {
+  cursor: "#ffffff", trendline: "#00d4ff", hline: "#ffd54f",
+  vline: "#ffd54f", rect: "#00d4ff", fib: "#ffd54f",
 };
 
-type DragState = {
-  id: string;
-  kind: "move" | "start" | "end";
-  last: ChartPoint;
-} | null;
-
-type ScreenDrawing = {
-  id: string;
-  tool: Drawing["tool"];
-  color: string;
-  locked: boolean;
-  hidden: boolean;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
+const TOOL_LABELS: Record<DrawTool, string> = {
+  cursor: "Cursor", trendline: "Tendência", hline: "Horizontal",
+  vline: "Vertical", rect: "Retângulo", fib: "Fibonacci",
 };
 
-const ui = {
-  bg: "#060b14",
-  panel: "rgba(9,14,26,0.98)",
-  panel2: "rgba(12,19,36,0.98)",
-  border: "rgba(255,255,255,0.07)",
-  text: "#eef4ff",
-  soft: "#8ea2c8",
-  cyan: "#00d4ff",
-  green: "#34d399",
-  red: "#fb7185",
-  yellow: "#ffd54f",
-  orange: "#ff9f43",
-};
+// HOOK DESENHOS
+function useDrawings() {
+  const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [activeTool, setActiveTool] = useState<DrawTool>("cursor");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-const topModules: TopModule[] = [
-  "Fluxo",
-  "Singularidade",
-  "IA Atlas",
-  "Scanner",
-  "Estrutura",
-  "Euler",
-  "Liquidez",
-  "Mestre Scanner",
-];
+  const addDrawing = useCallback((d: Drawing) => {
+    setDrawings(prev => [...prev, d]);
+    setActiveTool("cursor");
+  }, []);
 
-const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
-const timeframes: Timeframe[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
-const fibLevels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+  const deleteDrawing = useCallback((id: string) => {
+    setDrawings(prev => prev.filter(d => d.id !== id));
+  }, []);
 
-function clamp(v: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, v));
+  const clearAll = useCallback(() => setDrawings([]), []);
+
+  return {
+    drawings, activeTool, selectedId,
+    setDrawings, setActiveTool, setSelectedId,
+    addDrawing, deleteDrawing, clearAll,
+  };
 }
 
-function formatCompact(num: number) {
-  if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(2)}B`;
-  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(2)}M`;
-  if (num >= 1_000) return `${(num / 1_000).toFixed(2)}K`;
-  return num.toFixed(2);
-}
-
-function makeMockData(points = 220): {
-  candles: CandlestickData<Time>[];
-  volume: HistogramData<Time>[];
-} {
-  const start = Math.floor(Date.now() / 1000) - points * 60;
-  let last = 74200;
-  const candles: CandlestickData<Time>[] = [];
-  const volume: HistogramData<Time>[] = [];
-
-  for (let i = 0; i < points; i++) {
-    const time = (start + i * 60) as UTCTimestamp;
-    const wave = Math.sin(i / 12) * 34 + Math.cos(i / 8) * 18;
-    const open = last;
-    const close = open + wave + (Math.random() - 0.5) * 55;
-    const high = Math.max(open, close) + Math.random() * 70;
-    const low = Math.min(open, close) - Math.random() * 70;
-    last = close;
-
-    candles.push({ time, open, high, low, close });
-    volume.push({
-      time,
-      value: Math.round(600 + Math.random() * 2400),
-      color: close >= open ? "rgba(52,211,153,0.35)" : "rgba(251,113,133,0.35)",
-    });
-  }
-
-  return { candles, volume };
-}
-
-function distToSegment(px: number, py: number, x1: number, y1: number, x2: number, y2: number) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const lenSq = dx * dx + dy * dy || 1;
-  const t = clamp(((px - x1) * dx + (py - y1) * dy) / lenSq, 0, 1);
-  const xx = x1 + t * dx;
-  const yy = y1 + t * dy;
-  return Math.hypot(px - xx, py - yy);
-}
-
-function ToolButton({
-  active,
-  label,
-  onClick,
-}: {
-  active?: boolean;
-  label: string;
-  onClick: () => void;
+// TOOLBAR ESQUERDA
+function DrawingToolbar({ 
+  activeTool, 
+  onChangeTool 
+}: { 
+  activeTool: DrawTool; 
+  onChangeTool: (t: DrawTool) => void;
 }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        width: 36,
-        height: 36,
-        borderRadius: 8,
-        border: active ? `1px solid ${ui.cyan}` : `1px solid ${ui.border}`,
-        background: active ? "rgba(0,212,255,0.12)" : "rgba(255,255,255,0.03)",
-        color: active ? "#bff8ff" : "#9cb1d8",
-        cursor: "pointer",
-        fontWeight: 900,
-        fontSize: label.length > 2 ? 10 : 14,
-      }}
-      title={label}
-    >
-      {label}
-    </button>
-  );
-}
+  const tools = [
+    { key: "cursor" as DrawTool, icon: "↖" },
+    { key: "trendline" as DrawTool, icon: "╱" },
+    { key: "hline" as DrawTool, icon: "─" },
+    { key: "vline" as DrawTool, icon: "│" },
+    { key: "rect" as DrawTool, icon: "▭" },
+    { key: "fib" as DrawTool, icon: "FIB" },
+  ];
 
-function SmallCard({
-  title,
-  value,
-  color,
-  sub,
-}: {
-  title: string;
-  value: string;
-  color: string;
-  sub: string;
-}) {
   return (
-    <div
-      style={{
-        border: `1px solid ${ui.border}`,
-        borderRadius: 12,
-        background: `linear-gradient(180deg, ${ui.panel2}, rgba(7,11,22,0.99))`,
-        padding: "10px 12px",
-        minHeight: 60,
-      }}
-    >
-      <div style={{ color: "#7f93b9", fontSize: 10, fontWeight: 800, marginBottom: 4 }}>{title}</div>
-      <div style={{ color, fontSize: 18, fontWeight: 900, lineHeight: 1.1 }}>{value}</div>
-      <div style={{ color: "#8ea2c8", fontSize: 10, marginTop: 4 }}>{sub}</div>
+    <div style={{
+      width: 48,
+      borderRight: "1px solid #172133",
+      background: "linear-gradient(180deg,rgba(8,12,24,0.98),rgba(6,9,17,0.98))",
+      display: "flex", flexDirection: "column",
+      padding: "8px 6px", gap: 4,
+    }}>
+      {tools.map(tool => {
+        const active = activeTool === tool.key;
+        return (
+          <button
+            key={tool.key}
+            onClick={() => onChangeTool(tool.key)}
+            title={TOOL_LABELS[tool.key]}
+            style={{
+              width: 36, height: 36,
+              borderRadius: 7, cursor: "pointer",
+              border: active
+                ? "1px solid rgba(45,226,255,0.3)"
+                : "1px solid rgba(255,255,255,0.04)",
+              background: active
+                ? "radial-gradient(circle,rgba(45,226,255,0.18),rgba(45,226,255,0.04))"
+                : "linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.008))",
+              color: active ? "#2de2ff" : "#90a4c8",
+              fontSize: 13, fontWeight: 900, fontFamily: "monospace",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+          >
+            {tool.icon}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-function PlaceholderModule({ title }: { title: string }) {
+// TOP BAR
+function TopBar({ symbol }: { symbol: string }) {
   return (
-    <div style={{ height: "100%", padding: 12 }}>
-      <div
-        style={{
-          height: "100%",
-          borderRadius: 16,
-          border: `1px solid ${ui.border}`,
-          background: `linear-gradient(180deg, ${ui.panel2}, rgba(7,11,22,0.99))`,
-          display: "grid",
-          placeItems: "center",
-          color: "#92a7cf",
-          fontWeight: 700,
-        }}
-      >
-        {title}
+    <div style={{
+      height: 64,
+      padding: "0 14px",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      borderBottom: "1px solid #172133",
+      background: "radial-gradient(circle at top, rgba(14,28,60,0.86), rgba(6,10,20,0.98) 55%)",
+    }}>
+      {/* LOGO AQUI */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{
+          width: 38, height: 38, borderRadius: 11,
+          background: "linear-gradient(135deg, rgba(42,231,255,0.22), rgba(119,77,255,0.28))",
+          border: "1px solid rgba(255,255,255,0.08)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          {/* SEU ÍCONE SVG AQUI */}
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#2de2ff" strokeWidth="2"/>
+            <path d="M12 6v12M6 12h12" stroke="#2de2ff" strokeWidth="2"/>
+          </svg>
+        </div>
+        <span style={{ color: "#f6fbff", fontSize: 17, fontWeight: 900 }}>
+          SINGULARIDADE
+        </span>
+      </div>
+      
+      <div style={{ width: 1, height: 30, background: "rgba(255,255,255,0.08)" }} />
+      
+      <button style={{
+        display: "inline-flex", alignItems: "center", gap: 7,
+        height: 36, padding: "0 12px", borderRadius: 10,
+        border: "1px solid rgba(255,255,255,0.07)",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))",
+        color: "#eef6ff", fontSize: 13, fontWeight: 800, cursor: "pointer",
+      }}>
+        <span style={{ color: "#f7c948" }}>₿</span>
+        {symbol}
+      </button>
+      
+      <div style={{ flex: 1 }} />
+      
+      <div style={{ display: "flex", gap: 4 }}>
+        {["1m", "5m", "15m", "30m", "1H", "4H", "1D"].map(tf => (
+          <button key={tf} style={{
+            height: 29, padding: "0 10px", borderRadius: 9,
+            border: "1px solid rgba(255,255,255,0.06)",
+            background: tf === "15m" 
+              ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
+              : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
+            color: tf === "15m" ? "#f7c948" : "#dce8ff",
+            fontSize: 11, fontWeight: 800, cursor: "pointer",
+          }}>
+            {tf}
+          </button>
+        ))}
       </div>
     </div>
   );
 }
 
-function drawShape(d: ScreenDrawing, width: number, height: number, selected: boolean) {
-  if (d.hidden) return null;
+// CHART PANEL SIMPLIFICADO
+function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawings> }) {
+  const mainRef = useRef<HTMLDivElement>(null);
+  const volRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [svgSize, setSvgSize] = useState({ w: 800, h: 600 });
+  const [draft, setDraft] = useState<{x1:number,y1:number,x2:number,y2:number} | null>(null);
 
-  const handles = selected && !d.locked && (
-    <>
-      <circle cx={d.x1} cy={d.y1} r={5} fill="#fff" stroke={d.color} strokeWidth={1.5} />
-      {(d.tool === "trendline" || d.tool === "rect" || d.tool === "fib") && (
-        <circle cx={d.x2} cy={d.y2} r={5} fill="#fff" stroke={d.color} strokeWidth={1.5} />
-      )}
-    </>
-  );
-
-  if (d.tool === "hline") {
-    return (
-      <g key={d.id}>
-        <line x1={0} y1={d.y1} x2={width} y2={d.y1} stroke={d.color} strokeWidth={selected ? 2.3 : 1.8} strokeDasharray="6 5" />
-        {handles}
-      </g>
-    );
-  }
-
-  if (d.tool === "vline") {
-    return (
-      <g key={d.id}>
-        <line x1={d.x1} y1={0} x2={d.x1} y2={height} stroke={d.color} strokeWidth={selected ? 2.3 : 1.8} strokeDasharray="6 5" />
-        {handles}
-      </g>
-    );
-  }
-
-  if (d.tool === "rect") {
-    const x = Math.min(d.x1, d.x2);
-    const y = Math.min(d.y1, d.y2);
-    const w = Math.abs(d.x2 - d.x1);
-    const h = Math.abs(d.y2 - d.y1);
-    return (
-      <g key={d.id}>
-        <rect x={x} y={y} width={w} height={h} fill="rgba(0,212,255,0.08)" stroke={d.color} strokeWidth={selected ? 2.1 : 1.6} />
-        {handles}
-      </g>
-    );
-  }
-
-  if (d.tool === "fib") {
-    const left = Math.min(d.x1, d.x2);
-    const right = Math.max(d.x1, d.x2);
-    return (
-      <g key={d.id}>
-        {fibLevels.map((lv) => {
-          const y = d.y1 + (d.y2 - d.y1) * lv;
-          return (
-            <g key={`${d.id}-${lv}`}>
-              <line x1={left} y1={y} x2={right} y2={y} stroke={d.color} strokeWidth={selected ? 1.9 : 1.4} />
-              <text x={left + 6} y={y - 4} fill={d.color} fontSize={10} fontWeight={800}>
-                {lv.toFixed(3)}
-              </text>
-            </g>
-          );
-        })}
-        {handles}
-      </g>
-    );
-  }
-
-  return (
-    <g key={d.id}>
-      <line x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2} stroke={d.color} strokeWidth={selected ? 2.3 : 1.9} />
-      {handles}
-    </g>
-  );
-}
-
-function ScannerWorkspace({ symbol, timeframe }: { symbol: string; timeframe: Timeframe }) {
-  const chartHostRef = useRef<HTMLDivElement | null>(null);
-  const overlayRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
-
-  const data = useMemo(() => makeMockData(220), [symbol, timeframe]);
-
-  const [activeTool, setActiveTool] = useState<DrawTool>("cursor");
-  const [drawings, setDrawings] = useState<Drawing[]>([]);
-  const [draft, setDraft] = useState<Drawing | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [dragState, setDragState] = useState<DragState>(null);
-  const [svgSize, setSvgSize] = useState({ width: 1000, height: 600 });
-  const [hoverHit, setHoverHit] = useState(false);
-
-  const selected = drawings.find((d) => d.id === selectedId) || null;
-  const livePrice = data.candles[data.candles.length - 1]?.close ?? 0;
-  const prevPrice = data.candles[data.candles.length - 2]?.close ?? livePrice;
-  const priceChange = prevPrice ? ((livePrice - prevPrice) / prevPrice) * 100 : 0;
-
+  // Inicializa gráfico
   useEffect(() => {
-    if (!chartHostRef.current) return;
+    if (!mainRef.current || !volRef.current) return;
 
-    const chart = createChart(chartHostRef.current, {
-      width: chartHostRef.current.clientWidth,
-      height: chartHostRef.current.clientHeight,
+    const chart = createChart(mainRef.current, {
+      width: mainRef.current.clientWidth,
+      height: mainRef.current.clientHeight,
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
         textColor: "#7085ad",
-        fontFamily: "JetBrains Mono, monospace",
-        fontSize: 10,
       },
       grid: {
         vertLines: { color: "rgba(255,255,255,0.035)" },
         horzLines: { color: "rgba(255,255,255,0.035)" },
       },
-      rightPriceScale: { borderColor: "rgba(255,255,255,0.08)" },
-      timeScale: { borderColor: "rgba(255,255,255,0.08)", timeVisible: true, secondsVisible: false },
       crosshair: { mode: CrosshairMode.Normal },
       handleScroll: true,
       handleScale: true,
     });
 
-    const candle = chart.addCandlestickSeries({
+    const series = chart.addCandlestickSeries({
       upColor: "#37f4ad",
       downColor: "#ff6c8d",
       borderUpColor: "#37f4ad",
@@ -344,474 +204,254 @@ function ScannerWorkspace({ symbol, timeframe }: { symbol: string; timeframe: Ti
       wickDownColor: "#ff6c8d",
     });
 
-    const volume = chart.addHistogramSeries({
-      priceScaleId: "",
-      color: "rgba(0,212,255,0.35)",
-      priceFormat: { type: "volume" },
+    // Dados simulados
+    const now = Math.floor(Date.now() / 1000);
+    const candles = Array.from({ length: 100 }, (_, i) => {
+      const time = now - (100 - i) * 60;
+      const base = 74000 + Math.sin(i / 10) * 1000;
+      return {
+        time: time as Time,
+        open: base,
+        high: base + Math.random() * 500,
+        low: base - Math.random() * 500,
+        close: base + (Math.random() - 0.5) * 300,
+      };
     });
 
-    volume.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
-    candle.setData(data.candles);
-    volume.setData(data.volume);
+    series.setData(candles);
+
+    // Volume
+    const volChart = createChart(volRef.current, {
+      width: volRef.current.clientWidth,
+      height: volRef.current.clientHeight,
+      layout: { background: { type: ColorType.Solid, color: "transparent" } },
+      grid: { vertLines: { visible: false }, horzLines: { visible: false } },
+      rightPriceScale: { visible: false },
+      timeScale: { visible: false },
+    });
+
+    const volSeries = volChart.addHistogramSeries({
+      color: "rgba(55,244,173,0.42)",
+      priceScaleId: "",
+    });
+
+    volSeries.setData(candles.map(c => ({
+      time: c.time as Time,
+      value: 120 + Math.random() * 1400,
+      color: c.close >= c.open ? "rgba(55,244,173,0.42)" : "rgba(255,108,141,0.42)",
+    })));
+
     chart.timeScale().fitContent();
+    volChart.timeScale().fitContent();
 
-    chartRef.current = chart;
-    candleRef.current = candle;
-    volumeRef.current = volume;
-
-    const syncSize = () => {
-      if (!chartHostRef.current) return;
-      const width = chartHostRef.current.clientWidth;
-      const height = chartHostRef.current.clientHeight;
-      chart.applyOptions({ width, height });
-      setSvgSize({ width, height });
+    // Resize
+    const resize = () => {
+      if (mainRef.current) {
+        const w = mainRef.current.clientWidth;
+        const h = mainRef.current.clientHeight;
+        chart.applyOptions({ width: w, height: h });
+        setSvgSize({ w, h });
+      }
+      if (volRef.current) {
+        volChart.applyOptions({ 
+          width: volRef.current.clientWidth, 
+          height: volRef.current.clientHeight 
+        });
+      }
     };
 
-    syncSize();
-    const ro = new ResizeObserver(syncSize);
-    ro.observe(chartHostRef.current);
+    window.addEventListener("resize", resize);
+    setSvgSize({ w: mainRef.current.clientWidth, h: mainRef.current.clientHeight });
 
     return () => {
-      ro.disconnect();
+      window.removeEventListener("resize", resize);
       chart.remove();
-      chartRef.current = null;
-      candleRef.current = null;
-      volumeRef.current = null;
+      volChart.remove();
     };
-  }, [data]);
+  }, []);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
-        e.preventDefault();
-        setDrawings((prev) => prev.filter((d) => d.id !== selectedId));
-        setSelectedId(null);
-      }
-      if (e.key === "Escape") {
-        setDraft(null);
-        setDragState(null);
-        setActiveTool("cursor");
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [selectedId]);
-
-  const pixelToPoint = (clientX: number, clientY: number): ChartPoint | null => {
-    const rect = overlayRef.current?.getBoundingClientRect();
-    const chart = chartRef.current;
-    const candle = candleRef.current;
-    if (!rect || !chart || !candle) return null;
-
-    const x = clamp(clientX - rect.left, 0, rect.width);
-    const y = clamp(clientY - rect.top, 0, rect.height);
-
-    const rawTime = chart.timeScale().coordinateToTime(x);
-    const rawPrice = candle.coordinateToPrice(y);
-    if (rawTime == null || rawPrice == null || typeof rawTime !== "number") return null;
-
-    return { time: rawTime as UTCTimestamp, price: rawPrice };
-  };
-
-  const pointToPixel = (p: ChartPoint) => {
-    const chart = chartRef.current;
-    const candle = candleRef.current;
-    if (!chart || !candle) return null;
-
-    const x = chart.timeScale().timeToCoordinate(p.time);
-    const y = candle.priceToCoordinate(p.price);
-    if (x == null || y == null) return null;
-
-    return { x, y };
-  };
-
-  const toScreen = (d: Drawing): ScreenDrawing | null => {
-    const a = pointToPixel(d.p1);
-    const b = pointToPixel(d.p2);
-    if (!a || !b) return null;
-    return {
-      id: d.id,
-      tool: d.tool,
-      color: d.color,
-      locked: d.locked,
-      hidden: d.hidden,
-      x1: a.x,
-      y1: a.y,
-      x2: b.x,
-      y2: b.y,
-    };
-  };
-
-  const screenDrawings = useMemo(() => {
-    const list = draft ? [...drawings, draft] : drawings;
-    return list
-      .map((raw) => ({ raw, screen: toScreen(raw) }))
-      .filter((x): x is { raw: Drawing; screen: ScreenDrawing } => !!x.screen);
-  }, [drawings, draft, svgSize]);
-
-  const hitDrawing = (x: number, y: number) => {
-    for (let i = screenDrawings.length - 1; i >= 0; i -= 1) {
-      const { raw, screen } = screenDrawings[i];
-      if (raw.hidden) continue;
-
-      if (!raw.locked) {
-        if (Math.hypot(x - screen.x1, y - screen.y1) <= 8) return { id: raw.id, kind: "start" as const };
-        if ((raw.tool === "trendline" || raw.tool === "rect" || raw.tool === "fib") && Math.hypot(x - screen.x2, y - screen.y2) <= 8) {
-          return { id: raw.id, kind: "end" as const };
-        }
-      }
-
-      if (raw.tool === "hline" && Math.abs(y - screen.y1) < 8) return { id: raw.id, kind: "move" as const };
-      if (raw.tool === "vline" && Math.abs(x - screen.x1) < 8) return { id: raw.id, kind: "move" as const };
-
-      if (raw.tool === "rect" || raw.tool === "fib") {
-        const lx = Math.min(screen.x1, screen.x2);
-        const rx = Math.max(screen.x1, screen.x2);
-        const ty = Math.min(screen.y1, screen.y2);
-        const by = Math.max(screen.y1, screen.y2);
-        if (x >= lx - 8 && x <= rx + 8 && y >= ty - 8 && y <= by + 8) return { id: raw.id, kind: "move" as const };
-      }
-
-      if (raw.tool === "trendline" && distToSegment(x, y, screen.x1, screen.y1, screen.x2, screen.y2) < 8) {
-        return { id: raw.id, kind: "move" as const };
-      }
-    }
-    return null;
-  };
-
-  const begin = (e: React.MouseEvent<SVGSVGElement>) => {
-    const rect = overlayRef.current?.getBoundingClientRect();
-    const point = pixelToPoint(e.clientX, e.clientY);
-    if (!rect || !point) return;
-
-    const localX = clamp(e.clientX - rect.left, 0, rect.width);
-    const localY = clamp(e.clientY - rect.top, 0, rect.height);
-
-    if (activeTool === "cursor") {
-      const hit = hitDrawing(localX, localY);
-      if (!hit) {
-        setSelectedId(null);
-        return;
-      }
-      setSelectedId(hit.id);
-      const found = drawings.find((d) => d.id === hit.id);
-      if (!found || found.locked) return;
-      setDragState({ id: hit.id, kind: hit.kind, last: point });
-      return;
-    }
-
-    const id = `dw-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-
-    if (activeTool === "hline") {
-      setDrawings((prev) => [...prev, { id, tool: "hline", color: ui.yellow, locked: false, hidden: false, p1: point, p2: point }]);
-      setSelectedId(id);
-      setActiveTool("cursor");
-      return;
-    }
-
-    if (activeTool === "vline") {
-      setDrawings((prev) => [...prev, { id, tool: "vline", color: ui.orange, locked: false, hidden: false, p1: point, p2: point }]);
-      setSelectedId(id);
-      setActiveTool("cursor");
-      return;
-    }
-
+  // Handlers de desenho
+  const handleMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    if (drawingState.activeTool === "cursor") return;
+    const rect = e.currentTarget.getBoundingClientRect();
     setDraft({
-      id,
-      tool: activeTool,
-      color: activeTool === "fib" ? ui.yellow : ui.cyan,
-      locked: false,
-      hidden: false,
-      p1: point,
-      p2: point,
-    } as Drawing);
-    setSelectedId(id);
-  };
+      x1: e.clientX - rect.left,
+      y1: e.clientY - rect.top,
+      x2: e.clientX - rect.left,
+      y2: e.clientY - rect.top,
+    });
+  }, [drawingState.activeTool]);
 
-  const move = (e: React.MouseEvent<SVGSVGElement>) => {
-    const rect = overlayRef.current?.getBoundingClientRect();
-    const point = pixelToPoint(e.clientX, e.clientY);
-    if (!rect || !point) return;
+  const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    if (!draft) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDraft(prev => prev ? ({
+      ...prev,
+      x2: e.clientX - rect.left,
+      y2: e.clientY - rect.top,
+    }) : null);
+  }, [draft]);
 
-    const localX = clamp(e.clientX - rect.left, 0, rect.width);
-    const localY = clamp(e.clientY - rect.top, 0, rect.height);
+  const handleMouseUp = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    if (!draft || drawingState.activeTool === "cursor") return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    drawingState.addDrawing({
+      id: `draw-${Date.now()}`,
+      tool: drawingState.activeTool,
+      x1: draft.x1,
+      y1: draft.y1,
+      x2: e.clientX - rect.left,
+      y2: e.clientY - rect.top,
+      color: TOOL_COLORS[drawingState.activeTool],
+    });
+    setDraft(null);
+  }, [draft, drawingState]);
 
-    if (activeTool === "cursor" && !dragState) {
-      setHoverHit(!!hitDrawing(localX, localY));
-      return;
+  // Renderiza SVG
+  const renderDrawing = (d: Drawing) => {
+    switch (d.tool) {
+      case "trendline":
+        return <line key={d.id} x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2} 
+          stroke={d.color} strokeWidth={2} />;
+      case "hline":
+        return <line key={d.id} x1={0} y1={d.y1} x2={svgSize.w} y2={d.y1} 
+          stroke={d.color} strokeWidth={2} strokeDasharray="5,3" />;
+      case "vline":
+        return <line key={d.id} x1={d.x1} y1={0} x2={d.x1} y2={svgSize.h} 
+          stroke={d.color} strokeWidth={2} strokeDasharray="5,3" />;
+      case "rect":
+        return <rect key={d.id} x={Math.min(d.x1,d.x2)} y={Math.min(d.y1,d.y2)} 
+          width={Math.abs(d.x2-d.x1)} height={Math.abs(d.y2-d.y1)}
+          fill={`${d.color}22`} stroke={d.color} strokeWidth={2} />;
+      case "fib":
+        return <line key={d.id} x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2} 
+          stroke={d.color} strokeWidth={2} />;
+      default:
+        return null;
     }
-
-    if (draft) {
-      setDraft((prev) => (prev ? { ...prev, p2: point } : prev));
-      return;
-    }
-
-    if (!dragState) return;
-
-    setDrawings((prev) =>
-      prev.map((d) => {
-        if (d.id !== dragState.id || d.locked) return d;
-
-        if (dragState.kind === "start") return { ...d, p1: point };
-        if (dragState.kind === "end") return { ...d, p2: point };
-
-        const dt = point.time - dragState.last.time;
-        const dp = point.price - dragState.last.price;
-
-        return {
-          ...d,
-          p1: { time: (d.p1.time + dt) as UTCTimestamp, price: d.p1.price + dp },
-          p2: { time: (d.p2.time + dt) as UTCTimestamp, price: d.p2.price + dp },
-        };
-      })
-    );
-
-    setDragState((prev) => (prev ? { ...prev, last: point } : prev));
   };
-
-  const finish = () => {
-    if (draft) {
-      setDrawings((prev) => [...prev, draft]);
-      setDraft(null);
-      setActiveTool("cursor");
-    }
-    setDragState(null);
-  };
-
-  const captures = activeTool !== "cursor" || !!dragState || !!draft || hoverHit;
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", minWidth: 0 }}>
-      <div style={{ padding: "10px 12px", borderBottom: `1px solid ${ui.border}`, background: `linear-gradient(180deg, rgba(12,19,36,0.94), rgba(8,13,25,0.94))` }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1.2fr repeat(4, 0.72fr) 230px", gap: 8, alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(247,201,72,0.14)", color: ui.yellow, display: "grid", placeItems: "center", fontSize: 11, fontWeight: 900 }}>SC</div>
-            <div>
-              <div style={{ color: ui.text, fontWeight: 900, fontSize: 15 }}>{symbol}</div>
-              <div style={{ color: "#7d91b6", fontSize: 10, fontWeight: 700 }}>Scanner Atlas • Ferramenta: {activeTool} • TF: {timeframe}</div>
-            </div>
-          </div>
-
-          <SmallCard title="Preço" value={livePrice.toLocaleString(undefined, { maximumFractionDigits: 2 })} color="#4ef0cb" sub="Mercado em tempo real" />
-          <SmallCard title="Variação" value={`${priceChange >= 0 ? "+" : ""}${priceChange.toFixed(2)}%`} color={priceChange >= 0 ? ui.green : ui.red} sub="Último candle" />
-          <SmallCard title="Volume" value={formatCompact(data.volume[data.volume.length - 1]?.value ?? 0)} color={ui.cyan} sub="Volume recente" />
-          <SmallCard title="Desenhos" value={String(drawings.length + (draft ? 1 : 0))} color={drawings.length || draft ? ui.yellow : ui.red} sub="Objetos no gráfico" />
-
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
-            <button
-              onClick={() => selectedId && setDrawings((prev) => prev.map((d) => (d.id === selectedId ? { ...d, locked: !d.locked } : d)))}
-              style={{ border: `1px solid ${ui.border}`, borderRadius: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", color: "#d7e4ff", fontWeight: 800, cursor: "pointer" }}
-            >
-              {selected?.locked ? "Destravar" : "Travar"}
-            </button>
-            <button
-              onClick={() => selectedId && setDrawings((prev) => prev.map((d) => (d.id === selectedId ? { ...d, hidden: !d.hidden } : d)))}
-              style={{ border: `1px solid ${ui.border}`, borderRadius: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", color: "#d7e4ff", fontWeight: 800, cursor: "pointer" }}
-            >
-              {selected?.hidden ? "Mostrar" : "Ocultar"}
-            </button>
-            <button
-              onClick={() => {
-                if (!selectedId) return;
-                setDrawings((prev) => prev.filter((d) => d.id !== selectedId));
-                setSelectedId(null);
-              }}
-              style={{ border: "1px solid rgba(255,107,129,0.30)", borderRadius: 10, padding: "8px 10px", background: "rgba(255,107,129,0.08)", color: "#ffd3da", fontWeight: 800, cursor: "pointer" }}
-            >
-              Apagar selecionado
-            </button>
+    <div style={{
+      display: "flex", flexDirection: "column",
+      height: "100%", width: "100%",
+      background: "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(6,10,18,0.98))",
+    }}>
+      {/* Header info */}
+      <div style={{
+        padding: "8px 10px", borderBottom: "1px solid #172133",
+        display: "grid", gridTemplateColumns: "1fr repeat(4, 120px)", gap: 8,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <div style={{
+            width: 24, height: 24, borderRadius: 7,
+            background: "rgba(247,201,72,0.16)", color: "#f7c948",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 10, fontWeight: 900,
+          }}>SC</div>
+          <div>
+            <div style={{ color: "#eef6ff", fontSize: 14, fontWeight: 900 }}>BTC</div>
+            <div style={{ color: "#7d91b6", fontSize: 10 }}>Scanner Atlas</div>
           </div>
         </div>
+        {["Preço", "Variação", "Volume", "Desenhos"].map(label => (
+          <div key={label} style={{
+            borderRadius: 13, border: "1px solid rgba(255,255,255,0.06)",
+            background: "linear-gradient(180deg, rgba(8,15,31,0.98), rgba(7,12,24,0.96))",
+            minHeight: 58, padding: "10px 13px",
+          }}>
+            <div style={{ color: "#7f93b7", fontSize: 9, fontWeight: 900, textTransform: "uppercase" }}>
+              {label}
+            </div>
+            <div style={{ color: "#4ef0cb", fontSize: 12, fontWeight: 900 }}>--</div>
+          </div>
+        ))}
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "52px minmax(0,1fr) 220px" }}>
-        <div style={{ borderRight: `1px solid ${ui.border}`, background: `linear-gradient(180deg, rgba(8,12,24,0.98), rgba(6,9,17,0.98))`, display: "flex", flexDirection: "column", padding: 8, gap: 6 }}>
-          <ToolButton active={activeTool === "cursor"} label="↖" onClick={() => setActiveTool("cursor")} />
-          <ToolButton active={activeTool === "trendline"} label="╱" onClick={() => setActiveTool("trendline")} />
-          <ToolButton active={activeTool === "hline"} label="─" onClick={() => setActiveTool("hline")} />
-          <ToolButton active={activeTool === "vline"} label="│" onClick={() => setActiveTool("vline")} />
-          <ToolButton active={activeTool === "rect"} label="▭" onClick={() => setActiveTool("rect")} />
-          <ToolButton active={activeTool === "fib"} label="FIB" onClick={() => setActiveTool("fib")} />
-        </div>
+      {/* Botões */}
+      <div style={{
+        height: 28, padding: "0 10px", display: "flex", alignItems: "center", gap: 4,
+        borderBottom: "1px solid #172133", background: "rgba(255,255,255,0.012)",
+      }}>
+        <button style={{
+          padding: "2px 8px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.07)",
+          background: "transparent", color: "#9ab0d4", fontSize: 10, fontWeight: 700, cursor: "pointer",
+        }}>🔒 Travar</button>
+        <button style={{
+          padding: "2px 8px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.07)",
+          background: "transparent", color: "#9ab0d4", fontSize: 10, fontWeight: 700, cursor: "pointer",
+        }}>⚙ Config.</button>
+        <button style={{
+          padding: "2px 8px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.07)",
+          background: "transparent", color: "#ff3060", fontSize: 10, fontWeight: 700, cursor: "pointer",
+        }}>✕ Apagar</button>
+        <button style={{
+          padding: "2px 8px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.07)",
+          background: "transparent", color: "#9ab0d4", fontSize: 10, fontWeight: 700, cursor: "pointer",
+        }}>🗑 Limpar</button>
+        <div style={{ width: 1, height: 14, background: "#172133", margin: "0 4px" }} />
+        <span style={{ fontSize: 9, color: "#536887" }}>Cor:</span>
+        {["#ffd54f","#00d4ff","#00e676","#ff3060","#c77dff"].map(c => (
+          <div key={c} style={{
+            width: 14, height: 14, borderRadius: 3, background: c, cursor: "pointer",
+          }} />
+        ))}
+      </div>
 
-        <div ref={overlayRef} style={{ position: "relative", minWidth: 0, minHeight: 0 }}>
-          <div ref={chartHostRef} style={{ position: "absolute", inset: 0, zIndex: 1 }} />
-          <svg
-            width="100%"
-            height="100%"
-            viewBox={`0 0 ${svgSize.width} ${svgSize.height}`}
-            preserveAspectRatio="none"
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 5,
-              pointerEvents: captures ? "auto" : "none",
-              cursor: activeTool !== "cursor" ? "crosshair" : hoverHit ? "pointer" : "default",
-            }}
-            onMouseDown={begin}
-            onMouseMove={move}
-            onMouseUp={finish}
-            onMouseLeave={() => {
-              finish();
-              setHoverHit(false);
-            }}
-          >
-            {screenDrawings.map(({ raw, screen }) => (
-              <g key={raw.id}>{drawShape(screen, svgSize.width, svgSize.height, raw.id === selectedId)}</g>
-            ))}
-          </svg>
-        </div>
+      {/* Gráfico + Volume + SVG */}
+      <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+        <div ref={mainRef} style={{ position: "absolute", inset: 0 }} />
+        
+        <svg
+          ref={svgRef}
+          width={svgSize.w} height={svgSize.h}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={() => setDraft(null)}
+          style={{
+            position: "absolute", inset: 0, zIndex: 4,
+            cursor: drawingState.activeTool !== "cursor" ? "crosshair" : "default",
+          }}
+        >
+          {drawingState.drawings.map(renderDrawing)}
+          {draft && (
+            <line x1={draft.x1} y1={draft.y1} x2={draft.x2} y2={draft.y2}
+              stroke={TOOL_COLORS[drawingState.activeTool]} strokeWidth={2} opacity={0.6} />
+          )}
+        </svg>
 
-        <div style={{ borderLeft: `1px solid ${ui.border}`, background: `linear-gradient(180deg, rgba(12,18,34,0.985), rgba(7,11,22,0.99))`, padding: 12, display: "grid", gridTemplateRows: "auto auto 1fr", gap: 12 }}>
-          <div style={{ border: `1px solid ${ui.border}`, borderRadius: 14, padding: 12, background: "rgba(255,255,255,0.02)" }}>
-            <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 6 }}>Leitura rápida</div>
-            <div style={{ color: "#8ea2c8", fontSize: 12, lineHeight: 1.7 }}>
-              Núcleo leve. Cursor navega. Ferramenta captura só quando precisa. Objeto agora acompanha o gráfico.
-            </div>
-          </div>
-
-          <div style={{ border: `1px solid ${ui.border}`, borderRadius: 14, padding: 12, background: "rgba(255,255,255,0.02)" }}>
-            <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 6 }}>IA Análise</div>
-            <div style={{ color: "#8ea2c8", fontSize: 12, lineHeight: 1.7 }}>
-              Esta base é o Bloco 1 enxuto. O peso dos outros módulos fica fora dele.
-            </div>
-          </div>
-
-          <div style={{ border: `1px solid ${ui.border}`, borderRadius: 14, padding: 12, background: "rgba(255,255,255,0.02)", overflow: "auto" }}>
-            <div style={{ color: "#edf5ff", fontSize: 14, fontWeight: 900, marginBottom: 8 }}>Objetos</div>
-            {drawings.length === 0 ? (
-              <div style={{ color: "#8ea2c8", fontSize: 12 }}>Nenhum desenho ainda.</div>
-            ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {[...drawings].reverse().map((d) => (
-                  <button
-                    key={d.id}
-                    onClick={() => setSelectedId(d.id)}
-                    style={{
-                      textAlign: "left",
-                      border: d.id === selectedId ? `1px solid ${ui.cyan}` : `1px solid ${ui.border}`,
-                      background: d.id === selectedId ? "rgba(0,212,255,0.10)" : "rgba(255,255,255,0.03)",
-                      borderRadius: 10,
-                      padding: 10,
-                      color: "#dfe8ff",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div style={{ fontWeight: 800, fontSize: 12 }}>{d.tool}</div>
-                    <div style={{ color: "#8ea2c8", fontSize: 10, marginTop: 4 }}>
-                      {d.locked ? "travado" : "editável"} • {d.hidden ? "oculto" : "visível"}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <div ref={volRef} style={{
+          position: "absolute", left: 0, right: 0, bottom: 0, height: 140,
+          borderTop: "1px solid rgba(255,255,255,0.05)",
+        }} />
       </div>
     </div>
   );
 }
 
-export default function AtlasChartPro2() {
-  const [symbol, setSymbol] = useState("BTCUSDT");
-  const [timeframe, setTimeframe] = useState<Timeframe>("15m");
-  const [module, setModule] = useState<TopModule>("Scanner");
+// COMPONENTE PRINCIPAL
+export default function AtlasChartLite() {
+  const drawingState = useDrawings();
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(180deg, rgba(5,8,16,1), rgba(7,11,22,1))",
-        color: ui.text,
-        fontFamily: "Inter, system-ui, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "auto auto 1fr auto",
-          alignItems: "center",
-          gap: 12,
-          padding: "10px 14px",
-          borderBottom: `1px solid ${ui.border}`,
-          background: `linear-gradient(180deg, rgba(12,18,34,0.98), rgba(8,12,24,0.98))`,
-          position: "sticky",
-          top: 0,
-          zIndex: 20,
-        }}
-      >
-        <div style={{ fontWeight: 900, letterSpacing: 0.6, color: "#fff4bf" }}>SINGULARIDADE</div>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {symbols.map((s) => (
-            <button
-              key={s}
-              onClick={() => setSymbol(s)}
-              style={{
-                borderRadius: 10,
-                border: s === symbol ? "1px solid rgba(255,220,110,0.42)" : `1px solid ${ui.border}`,
-                background: s === symbol ? "rgba(255,213,79,0.14)" : "rgba(255,255,255,0.03)",
-                color: s === symbol ? "#fff4bf" : "#bfd0ea",
-                padding: "8px 10px",
-                cursor: "pointer",
-                fontWeight: 800,
-                fontSize: 12,
-              }}
-            >
-              {s}
-            </button>
-          ))}
+    <div style={{
+      width: "100%", height: "100vh",
+      display: "flex", flexDirection: "column",
+      background: "#060913", color: "#ebf3ff",
+      fontFamily: "Inter, Arial, sans-serif",
+    }}>
+      <TopBar symbol="BTC" />
+      
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        <DrawingToolbar 
+          activeTool={drawingState.activeTool} 
+          onChangeTool={drawingState.setActiveTool} 
+        />
+        
+        <div style={{ flex: 1 }}>
+          <ChartPanel drawingState={drawingState} />
         </div>
-
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-          {topModules.map((m) => (
-            <button
-              key={m}
-              onClick={() => setModule(m)}
-              style={{
-                borderRadius: 10,
-                border: m === module ? "1px solid rgba(94,231,255,0.38)" : `1px solid ${ui.border}`,
-                background: m === module ? "rgba(94,231,255,0.10)" : "rgba(255,255,255,0.03)",
-                color: m === module ? "#c7fbff" : "#bfd0ea",
-                padding: "8px 10px",
-                cursor: "pointer",
-                fontWeight: 800,
-                fontSize: 12,
-              }}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {timeframes.map((tf) => (
-            <button
-              key={tf}
-              onClick={() => setTimeframe(tf)}
-              style={{
-                borderRadius: 10,
-                border: tf === timeframe ? `1px solid ${ui.cyan}` : `1px solid ${ui.border}`,
-                background: tf === timeframe ? "rgba(0,212,255,0.12)" : "rgba(255,255,255,0.03)",
-                color: tf === timeframe ? "#bff8ff" : "#bfd0ea",
-                padding: "8px 10px",
-                cursor: "pointer",
-                fontWeight: 800,
-                fontSize: 12,
-              }}
-            >
-              {tf}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ height: "calc(100vh - 64px)" }}>
-        {module === "Scanner" ? (
-          <ScannerWorkspace symbol={symbol} timeframe={timeframe} />
-        ) : (
-          <PlaceholderModule title={module} />
-        )}
       </div>
     </div>
   );
