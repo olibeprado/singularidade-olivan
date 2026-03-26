@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   createChart,
   ColorType,
@@ -12,143 +12,116 @@ import {
   Activity,
   BarChart2,
   Bell,
-  BrainCircuit,
   ChevronDown,
   ChevronRight,
-  Droplets,
-  Layers3,
+  Eye,
+  Magnet,
+  Maximize2,
+  MousePointer2,
+  PenTool,
   RotateCcw,
-  ScanSearch,
+  Ruler,
   Search,
   Settings,
-  Sigma,
+  Shapes,
+  Square,
   Star,
+  Trash2,
   TrendingDown,
   TrendingUp,
+  Type,
   Waves,
+  Sigma,
+  BrainCircuit,
+  Layers3,
+  ScanSearch,
+  Droplets,
 } from "lucide-react";
 
-// ============================================
-// TIPOS E CONSTANTES
-// ============================================
-type DrawTool =
-  | "cursor"
-  | "trendline"
-  | "hline"
-  | "vline"
-  | "ray"
-  | "extended"
-  | "channel"
-  | "pitchfork"
-  | "fib"
-  | "fibext"
-  | "fibarc"
-  | "fibfan"
-  | "rect"
-  | "triangle"
-  | "ellipse"
-  | "measure"
-  | "text";
+type Timeframe = "1m" | "5m" | "15m" | "30m" | "1H" | "4H" | "1D";
+type ModeKey = "auto" | "manual" | "space";
 
-export type FibLevel = { pct: number; color: string; visible: boolean };
-export type Drawing = {
+type CandleData = {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+type StructureItem = {
+  label: string;
+  value?: string;
+  type: "positive" | "strong" | "negative" | "neutral" | "dots";
+  dots?: number;
+};
+
+type AIInsight = {
+  symbol: string;
+  price: number;
+  score: number;
+  signal: string;
+  riskLevel: string;
+  riskType: string;
+  invalidation: number;
+  structure: StructureItem[];
+  structure2: StructureItem[];
+};
+
+type DrawObject = {
   id: string;
-  tool: DrawTool;
-  color: string;
-  lineWidth: number;
-  lineStyle: "solid" | "dashed" | "dotted";
-  fillOpacity: number;
-  locked: boolean;
-  hidden: boolean;
-  note: string;
-  showPrice: boolean;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  x3?: number;
-  y3?: number;
-  fibLevels?: FibLevel[];
-  text?: string;
-  fontSize?: number;
-  bold?: boolean;
-  label?: string;
-  showArrow?: boolean;
-  showVariation?: boolean;
-  channelOffset?: number;
-  p1?: number;
-  p2?: number;
+  name: string;
+  type: string;
+  locked?: boolean;
+  hidden?: boolean;
 };
 
-const DEFAULT_FIB_LEVELS: FibLevel[] = [
-  { pct: 0, color: "#ffd54f", visible: true },
-  { pct: 0.236, color: "#00d4ff", visible: true },
-  { pct: 0.382, color: "#00e676", visible: true },
-  { pct: 0.5, color: "#ff9100", visible: true },
-  { pct: 0.618, color: "#c77dff", visible: true },
-  { pct: 0.786, color: "#ff3060", visible: true },
-  { pct: 1.0, color: "#ffd54f", visible: true },
-];
+const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
+const NAV_TABS = ["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"];
 
-const TOOL_COLORS: Record<DrawTool, string> = {
-  cursor: "#ffffff",
-  trendline: "#00d4ff",
-  hline: "#ffd54f",
-  vline: "#ffd54f",
-  ray: "#ff9100",
-  extended: "#00d4ff",
-  channel: "#448aff",
-  pitchfork: "#c77dff",
-  fib: "#ffd54f",
-  rect: "#00d4ff",
-  triangle: "#00e676",
-  ellipse: "#ff9100",
-  measure: "#00e676",
-  text: "#ffffff",
-};
-
-const ui = {
-  bg: "#060913",
-  border: "#172133",
-  cyan: "#2de2ff",
-  green: "#27f59d",
-  yellow: "#f7c948",
-  red: "#ff6b86",
-};
-
-// ============================================
-// FUNÇÕES UTILITÁRIAS
-// ============================================
 function clamp(v: number, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
 }
+
 function formatCompact(n: number) {
-  if (n >= 1_000_000_000) return `${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1_000_000) return `${(n / 1e6).toFixed(2)}M`;
-  if (n >= 1_000) return `${(n / 1e3).toFixed(2)}K`;
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)}B`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(2)}K`;
   return n.toFixed(2);
 }
-function symbolBasePrice(symbol: string) {
-  const map: Record<string, number> = { BTC: 74682, ETH: 3932 };
-  return map[symbol] ?? 74682;
-}
-function generateCandles(count = 240, startPrice = 74682): any[] {
-  const candles = [];
-  let price = startPrice;
+
+function generateCandles(count = 240, startPrice = 74500): CandleData[] {
   const now = Math.floor(Date.now() / 1000);
+  const candles: CandleData[] = [];
+  let prevClose = startPrice;
+
   for (let i = count; i > 0; i--) {
-    const open = price;
-    const change = (Math.random() - 0.49) * price * 0.006;
-    const close = Math.max(0.01, open + change);
-    const high = Math.max(open, close) + Math.random() * price * 0.002;
-    const low = Math.min(open, close) - Math.random() * price * 0.002;
-    const volume = Math.random() * 1000 + 100;
-    candles.push({ time: now - i * 300, open, high, low, close, volume });
-    price = close;
+    const time = now - i * 300;
+    const wave = Math.sin(i / 11) * 35 + Math.cos(i / 17) * 18;
+    const drift = (Math.random() - 0.49) * 130 + wave;
+    const open = prevClose;
+    const close = Math.max(1000, open + drift);
+    const high = Math.max(open, close) + Math.random() * 75;
+    const low = Math.min(open, close) - Math.random() * 75;
+    const volume = 120 + Math.random() * 1400;
+
+    candles.push({
+      time,
+      open,
+      high,
+      low,
+      close,
+      volume,
+    });
+
+    prevClose = close;
   }
+
   return candles;
 }
-function computeSMA(candles: any[], period: number) {
+
+function computeSMA(candles: CandleData[], period: number) {
   return candles.map((c, i) => {
     if (i < period - 1) return { time: c.time, value: c.close };
     let sum = 0;
@@ -156,98 +129,74 @@ function computeSMA(candles: any[], period: number) {
     return { time: c.time, value: sum / period };
   });
 }
-function computeEMA(candles: any[], period: number) {
+
+function computeEMA(candles: CandleData[], period: number) {
   const k = 2 / (period + 1);
-  const ema = [];
+  const ema: { time: number; value: number }[] = [];
   let prev = candles[0]?.close ?? 0;
+
   for (let i = 0; i < candles.length; i++) {
-    const value = i === 0 ? candles[i].close : candles[i].close * k + prev * (1 - k);
+    const close = candles[i].close;
+    const value = i === 0 ? close : close * k + prev * (1 - k);
     ema.push({ time: candles[i].time, value });
     prev = value;
   }
+
   return ema;
 }
 
-// ============================================
-// RENDERIZAÇÃO DE DESENHOS (SVG)
-// ============================================
-function renderDrawingSVG(d: Drawing, w: number, h: number, selected: boolean) {
-  const col = d.color;
-  const lw = d.lineWidth || 2;
-  const dash = d.lineStyle === "dashed" ? "5,3" : "";
-  const handles = selected ? (
-    <>
-      <circle cx={d.x1} cy={d.y1} r={5} fill="#fff" stroke={col} strokeWidth={1.5} />
-      <circle cx={d.x2} cy={d.y2} r={5} fill="#fff" stroke={col} strokeWidth={1.5} />
-    </>
-  ) : null;
+const ui = {
+  bg: "#060913",
+  border: "#182235",
+  text: "#ebf3ff",
+  mut: "#7f93b7",
+  cyan: "#2de2ff",
+  green: "#27f59d",
+  yellow: "#f7c948",
+  red: "#ff6b86",
+};
 
-  switch (d.tool) {
-    case "hline":
-      return (
-        <g>
-          <line x1={0} y1={d.y1} x2={w} y2={d.y1} stroke={col} strokeWidth={lw} strokeDasharray={dash} />
-          {handles}
-        </g>
-      );
-    case "vline":
-      return (
-        <g>
-          <line x1={d.x1} y1={0} x2={d.x1} y2={h} stroke={col} strokeWidth={lw} strokeDasharray={dash} />
-          {handles}
-        </g>
-      );
-    case "trendline":
-      return (
-        <g>
-          <line x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2} stroke={col} strokeWidth={lw} strokeDasharray={dash} />
-          {handles}
-        </g>
-      );
-    case "rect":
-      return (
-        <g>
-          <rect
-            x={Math.min(d.x1, d.x2)}
-            y={Math.min(d.y1, d.y2)}
-            width={Math.abs(d.x2 - d.x1)}
-            height={Math.abs(d.y2 - d.y1)}
-            fill={col}
-            fillOpacity={0.1}
-            stroke={col}
-            strokeWidth={lw}
-          />
-          {handles}
-        </g>
-      );
-    case "fib":
-      return (
-        <g>
-          {DEFAULT_FIB_LEVELS.filter(lvl => lvl.visible).map((lvl, i) => (
-            <line key={i} x1={0} y1={d.y1 + (d.y2 - d.y1) * lvl.pct} x2={w} y2={d.y1 + (d.y2 - d.y1) * lvl.pct}
-              stroke={lvl.color} strokeWidth={1} opacity={0.6} />
-          ))}
-          <line x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2} stroke={col} strokeWidth={lw} />
-          {handles}
-        </g>
-      );
-    default:
-      return <line x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2} stroke={col} strokeWidth={lw} />;
-  }
+function sectionTitle(text: string) {
+  return (
+    <span
+      style={{
+        color: "#e8f1ff",
+        fontSize: 12,
+        fontWeight: 800,
+        letterSpacing: 0.45,
+      }}
+    >
+      {text}
+    </span>
+  );
 }
 
-// ============================================
-// COMPONENTES DE UI
-// ============================================
-function TopButton({ children, active }: { children: React.ReactNode; active?: boolean }) {
+function TopButton({
+  children,
+  active,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active?: boolean;
+  onClick?: () => void;
+}) {
   return (
     <button
+      onClick={onClick}
       style={{
-        height: 29, padding: "0 10px", borderRadius: 9,
-        border: active ? `1px solid rgba(247,201,72,0.34)` : "1px solid rgba(255,255,255,0.06)",
-        background: active ? "rgba(247,201,72,0.16)" : "transparent",
-        color: active ? "#f7c948" : "#dce8ff",
-        fontSize: 11, fontWeight: 800, cursor: "pointer",
+        height: 31,
+        padding: "0 11px",
+        borderRadius: 10,
+        border: active
+          ? "1px solid rgba(247,201,72,0.34)"
+          : "1px solid rgba(255,255,255,0.06)",
+        background: active
+          ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
+          : "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))",
+        color: active ? ui.yellow : "#dce8ff",
+        fontSize: 12,
+        fontWeight: 800,
+        cursor: "pointer",
       }}
     >
       {children}
@@ -255,191 +204,905 @@ function TopButton({ children, active }: { children: React.ReactNode; active?: b
   );
 }
 
-function DrawingToolbar({ activeTool, onChangeTool }: { activeTool: DrawTool; onChangeTool: (t: DrawTool) => void }) {
-  const tools: { key: DrawTool; icon: string }[] = [
-    { key: "cursor", icon: "↖" }, { key: "trendline", icon: "╱" }, { key: "hline", icon: "─" },
-    { key: "vline", icon: "│" }, { key: "rect", icon: "▭" }, { key: "fib", icon: "FIB" },
-  ];
+function ModuleButton({
+  icon,
+  text,
+  active,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  active?: boolean;
+}) {
   return (
-    <div style={{ width: 52, borderRight: "1px solid #172133", background: "#0a0f1d", display: "flex", flexDirection: "column", padding: 8, gap: 4 }}>
-      {tools.map(tool => (
-        <button key={tool.key} onClick={() => onChangeTool(tool.key)}
+    <button
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        height: 34,
+        padding: "0 14px",
+        borderRadius: 12,
+        border: active
+          ? "1px solid rgba(247,201,72,0.34)"
+          : "1px solid rgba(255,255,255,0.06)",
+        background: active
+          ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
+          : "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))",
+        color: active ? "#ffe39a" : "#d9e8ff",
+        fontSize: 12,
+        fontWeight: 800,
+        cursor: "pointer",
+      }}
+    >
+      {icon}
+      {text}
+    </button>
+  );
+}
+
+function StatCard({
+  title,
+  value,
+  subtitle,
+  valueColor,
+}: {
+  title: string;
+  value: string;
+  subtitle?: string;
+  valueColor?: string;
+}) {
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background:
+          "linear-gradient(180deg, rgba(8,15,31,0.98), rgba(7,12,24,0.96))",
+        minHeight: 72,
+        padding: "12px 14px",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+      }}
+    >
+      <div
+        style={{
+          color: "#7f93b7",
+          fontSize: 10,
+          fontWeight: 900,
+          letterSpacing: 0.8,
+          textTransform: "uppercase",
+          marginBottom: 6,
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          color: valueColor || "#eef6ff",
+          fontSize: 14,
+          fontWeight: 900,
+          marginBottom: subtitle ? 3 : 0,
+        }}
+      >
+        {value}
+      </div>
+      {subtitle ? (
+        <div
           style={{
-            width: 38, height: 36, borderRadius: 7, cursor: "pointer",
-            border: activeTool === tool.key ? "1px solid rgba(45,226,255,0.3)" : "1px solid transparent",
-            background: activeTool === tool.key ? "rgba(45,226,255,0.15)" : "transparent",
-            color: activeTool === tool.key ? "#2de2ff" : "#90a4c8",
-            fontSize: 13, fontWeight: 900, fontFamily: "monospace",
-            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#7286ac",
+            fontSize: 11,
+            fontWeight: 700,
           }}
-        >{tool.icon}</button>
+        >
+          {subtitle}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ScoreDots({ count, total = 9 }: { count: number; total?: number }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+      {Array.from({ length: total }).map((_, i) => (
+        <span
+          key={i}
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            display: "inline-block",
+            background:
+              i < count
+                ? "linear-gradient(180deg, #31e9ff, #18b7ff)"
+                : "rgba(255,255,255,0.14)",
+          }}
+        />
       ))}
     </div>
   );
 }
 
-function AIInsightPanel() {
+function StructureRow({ item }: { item: StructureItem }) {
+  const getColor = (type: StructureItem["type"]) => {
+    switch (type) {
+      case "positive":
+        return ui.green;
+      case "strong":
+        return "#9fffbc";
+      case "negative":
+        return ui.red;
+      case "neutral":
+        return "#aab7d1";
+      default:
+        return "#dbe7ff";
+    }
+  };
+
   return (
-    <div style={{ width: 280, borderLeft: "1px solid #172133", background: "#0a0f1d", padding: 12 }}>
-      <h3 style={{ color: "#eef6ff", fontSize: 12, fontWeight: 800, marginBottom: 12 }}>IA Insights</h3>
-      <div style={{ borderBottom: "1px solid #172133", paddingBottom: 8, marginBottom: 8 }}>
-        <div style={{ color: "#f7c948", fontSize: 11 }}>BTC</div>
-        <div style={{ color: "#27f59d", fontSize: 16, fontWeight: 900 }}>COMPRA</div>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "7px 0",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <ChevronRight size={10} color="#66789d" />
+        <span style={{ fontSize: 12, color: "#8ea2c8" }}>{item.label}</span>
       </div>
-      <div style={{ color: "#7a8aa3", fontSize: 11 }}>Risco moderado, tendência alta.</div>
+      {item.type === "dots" && item.dots !== undefined ? (
+        <ScoreDots count={item.dots} />
+      ) : (
+        <span style={{ fontSize: 12, color: getColor(item.type), fontWeight: 700 }}>
+          {item.value}
+        </span>
+      )}
     </div>
   );
 }
 
-// ============================================
-// CHART PANEL COM FUNCIONALIDADE
-// ============================================
-function ChartPanel({ candleCount = 240 }: { candleCount?: number }) {
+function AIInsightPanel({ insight }: { insight: AIInsight }) {
+  return (
+    <div
+      style={{
+        height: "100%",
+        background:
+          "linear-gradient(180deg, rgba(6,10,20,0.98), rgba(4,7,15,0.98))",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          padding: "12px 16px",
+          borderBottom: `1px solid ${ui.border}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        {sectionTitle("Chat / IA Atlas")}
+        <ChevronDown size={14} color="#6c7da2" />
+      </div>
+
+      <div style={{ height: "calc(100% - 47px)" }} />
+    </div>
+  );
+}
+
+function TopBar({
+  symbol,
+  price,
+  change,
+  timeframe,
+  onTimeframeChange,
+}: {
+  symbol: string;
+  price: number;
+  change: number;
+  timeframe: Timeframe;
+  onTimeframeChange: (tf: Timeframe) => void;
+}) {
+  const [replayMode, setReplayMode] = useState(false);
+  const isPositive = change >= 0;
+
+  return (
+    <div
+      style={{
+        height: 64,
+        padding: "0 14px",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        borderBottom: `1px solid ${ui.border}`,
+        background:
+          "radial-gradient(circle at top, rgba(14,28,60,0.86), rgba(6,10,20,0.98) 55%)",
+        flexShrink: 0,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginRight: 8 }}>
+        <div
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 11,
+            background:
+              "linear-gradient(135deg, rgba(42,231,255,0.22), rgba(119,77,255,0.28))",
+            border: "1px solid rgba(255,255,255,0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 0 24px rgba(46,226,255,0.16)",
+          }}
+        >
+          <Activity size={17} color="#e8f7ff" />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span
+            style={{
+              color: "#f6fbff",
+              fontSize: 17,
+              fontWeight: 900,
+              letterSpacing: 0.3,
+            }}
+          >
+            SINGULARIDADE
+          </span>
+          <span
+            style={{
+              color: "#2de2ff",
+              fontSize: 10,
+              fontWeight: 900,
+              background: "rgba(45,226,255,0.1)",
+              padding: "3px 6px",
+              borderRadius: 999,
+            }}
+          >
+            OBP
+          </span>
+        </div>
+      </div>
+
+      <div
+        style={{
+          width: 1,
+          height: 30,
+          background: "rgba(255,255,255,0.08)",
+        }}
+      />
+
+      <button
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 7,
+          height: 36,
+          padding: "0 12px",
+          borderRadius: 10,
+          border: "1px solid rgba(255,255,255,0.07)",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))",
+          color: "#eef6ff",
+          fontSize: 13,
+          fontWeight: 800,
+          cursor: "pointer",
+        }}
+      >
+        <span style={{ color: ui.yellow }}>₿</span>
+        {symbol}
+        <ChevronDown size={13} color="#8295bb" />
+      </button>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span
+          style={{
+            color: "#f6fbff",
+            fontSize: 13,
+            fontFamily: "monospace",
+            fontWeight: 900,
+          }}
+        >
+          ${price.toLocaleString()}
+        </span>
+        <span
+          style={{
+            color: isPositive ? ui.green : ui.red,
+            fontSize: 12,
+            fontFamily: "monospace",
+            fontWeight: 900,
+          }}
+        >
+          {isPositive ? "+" : ""}
+          {change.toFixed(2)}%
+        </span>
+      </div>
+
+      <div
+        style={{
+          width: 1,
+          height: 30,
+          background: "rgba(255,255,255,0.08)",
+        }}
+      />
+
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        {TIMEFRAMES.map((tf) => (
+          <TopButton
+            key={tf}
+            active={timeframe === tf}
+            onClick={() => onTimeframeChange(tf)}
+          >
+            {tf}
+          </TopButton>
+        ))}
+      </div>
+
+      <div
+        style={{
+          width: 1,
+          height: 30,
+          background: "rgba(255,255,255,0.08)",
+          marginLeft: 4,
+        }}
+      />
+
+      <button
+        onClick={() => setReplayMode(!replayMode)}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          height: 32,
+          padding: "0 10px",
+          borderRadius: 10,
+          border: replayMode
+            ? "1px solid rgba(247,201,72,0.34)"
+            : "1px solid transparent",
+          background: replayMode
+            ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
+            : "transparent",
+          color: replayMode ? ui.yellow : "#8da1c7",
+          fontSize: 12,
+          fontWeight: 800,
+          cursor: "pointer",
+        }}
+      >
+        <RotateCcw size={12} />
+        Replay
+      </button>
+
+      <div style={{ flex: 1 }} />
+
+      <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+        {NAV_TABS.map((tab, i) => (
+          <TopButton key={tab} active={i === 0}>
+            {tab}
+          </TopButton>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: 8 }}>
+        <span style={{ color: ui.green, fontSize: 12, fontWeight: 900 }}>+1.88%</span>
+        <Search size={15} color="#90a4c8" />
+        <Bell size={15} color="#90a4c8" />
+        <Settings size={15} color="#90a4c8" />
+      </div>
+    </div>
+  );
+}
+
+function ModuleStrip() {
+  return (
+    <div
+      style={{
+        height: 50,
+        padding: "0 16px",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        borderBottom: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(8,12,23,0.98), rgba(7,11,20,0.98))",
+        flexShrink: 0,
+      }}
+    >
+      <ModuleButton icon={<Waves size={13} />} text="Fluxo" />
+      <ModuleButton icon={<BrainCircuit size={13} />} text="Singularidade" />
+      <ModuleButton icon={<Activity size={13} />} text="IA Atlas" />
+      <ModuleButton icon={<ScanSearch size={13} />} text="Scanner" active />
+      <ModuleButton icon={<Layers3 size={13} />} text="Estrutura" />
+      <ModuleButton icon={<Sigma size={13} />} text="Euler" />
+      <ModuleButton icon={<Droplets size={13} />} text="Liquidez" />
+    </div>
+  );
+}
+
+function LeftToolbar() {
+  const tools = [
+    { icon: <MousePointer2 size={16} />, active: true, title: "Cursor" },
+    { icon: <TrendingUp size={16} />, title: "Linha" },
+    { icon: <BarChart2 size={16} />, title: "Fibonacci" },
+    { icon: <Shapes size={16} />, title: "Formas" },
+    { icon: <PenTool size={16} />, title: "Pincel" },
+    { icon: <Type size={16} />, title: "Texto" },
+    { icon: <Square size={16} />, title: "Padrões" },
+    { icon: <Activity size={16} />, title: "Medição" },
+    { icon: <Star size={16} />, title: "Favoritos" },
+    { icon: <Ruler size={16} />, title: "Régua" },
+    { icon: <Maximize2 size={16} />, title: "Zoom" },
+    { icon: <Magnet size={16} />, title: "Magnetismo" },
+    { icon: <Eye size={16} />, title: "Ocultar" },
+    { icon: <Trash2 size={16} />, title: "Remover" },
+  ];
+
+  return (
+    <div
+      style={{
+        width: 56,
+        borderRight: `1px solid ${ui.border}`,
+        background:
+          "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(6,9,17,0.98))",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "12px 0",
+        gap: 8,
+        flexShrink: 0,
+      }}
+    >
+      {tools.map((tool, i) => (
+        <button
+          key={i}
+          title={tool.title}
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 10,
+            border: tool.active
+              ? "1px solid rgba(45,226,255,0.22)"
+              : "1px solid rgba(255,255,255,0.04)",
+            background: tool.active
+              ? "linear-gradient(180deg, rgba(45,226,255,0.12), rgba(45,226,255,0.04))"
+              : "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))",
+            color: tool.active ? ui.cyan : "#95a8cb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            boxShadow: tool.active ? "0 0 18px rgba(45,226,255,0.12)" : "none",
+          }}
+        >
+          {tool.icon}
+        </button>
+      ))}
+
+      <div style={{ flex: 1 }} />
+
+      <button
+        style={{
+          width: 34,
+          height: 34,
+          borderRadius: 10,
+          border: "1px solid rgba(255,255,255,0.05)",
+          background: "rgba(255,255,255,0.02)",
+          color: "#95a8cb",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+        }}
+      >
+        <Settings size={15} />
+      </button>
+    </div>
+  );
+}
+
+function ChartPanel({
+  candles,
+  selectedObject,
+  mode,
+}: {
+  candles: CandleData[];
+  selectedObject: DrawObject | null;
+  mode: ModeKey;
+}) {
   const mainRef = useRef<HTMLDivElement>(null);
-  const oscRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [drawings, setDrawings] = useState<Drawing[]>([]);
-  const [activeTool, setActiveTool] = useState<DrawTool>("cursor");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [draftStart, setDraftStart] = useState<{ x: number; y: number } | null>(null);
-  const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
-  
-  // Dados
-  const candles = useMemo(() => generateCandles(candleCount), []);
-  const ma20 = useMemo(() => computeSMA(candles, 20), [candles]);
-  const ma50 = useMemo(() => computeSMA(candles, 50), [candles]);
+  const volRef = useRef<HTMLDivElement>(null);
 
-  // Inicializa Charts
+  const [livePrice, setLivePrice] = useState<number>(candles[candles.length - 1]?.close ?? 0);
+  const [priceChange, setPriceChange] = useState<number>(0);
+
   useEffect(() => {
-    if (!mainRef.current || !oscRef.current) return;
+    if (!mainRef.current || !volRef.current) return;
 
-    const opts = {
-      layout: { background: { type: ColorType.Solid, color: "transparent" }, textColor: "#7085ad" },
-      grid: { vertLines: { color: "rgba(255,255,255,0.05)" }, horzLines: { color: "rgba(255,255,255,0.05)" } },
-      crosshair: { mode: CrosshairMode.Normal }, handleScroll: true, handleScale: true,
+    const baseChartOpts = {
+      layout: {
+        background: { type: ColorType.Solid, color: "transparent" },
+        textColor: "#7085ad",
+        fontFamily: "JetBrains Mono, monospace",
+        fontSize: 10,
+      },
+      grid: {
+        vertLines: { color: "rgba(255,255,255,0.035)", style: 1 as const },
+        horzLines: { color: "rgba(255,255,255,0.035)", style: 1 as const },
+      },
+      crosshair: { mode: CrosshairMode.Normal },
+      rightPriceScale: { borderColor: "rgba(255,255,255,0.08)" },
+      timeScale: {
+        borderColor: "rgba(255,255,255,0.08)",
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      handleScroll: true,
+      handleScale: true,
     };
 
-    const chart = createChart(mainRef.current, { ...opts, width: mainRef.current.clientWidth, height: mainRef.current.clientHeight });
-    const series = chart.addCandlestickSeries({
-      upColor: "#26a69a", downColor: "#ef5350", borderUpColor: "#26a69a", borderDownColor: "#ef5350",
-      wickUpColor: "#26a69a", wickDownColor: "#ef5350",
+    const mc: IChartApi = createChart(mainRef.current, {
+      ...baseChartOpts,
+      width: mainRef.current.clientWidth,
+      height: mainRef.current.clientHeight,
     });
-    series.setData(candles.map((c: any) => ({ time: c.time as Time, open: c.open, high: c.high, low: c.low, close: c.close })));
 
-    chart.timeScale().fitContent();
-    setSvgSize({ w: mainRef.current.clientWidth, h: mainRef.current.clientHeight });
+    const cSeries = mc.addCandlestickSeries({
+      upColor: "#37f4ad",
+      downColor: "#ff6c8d",
+      borderUpColor: "#37f4ad",
+      borderDownColor: "#ff6c8d",
+      wickUpColor: "#37f4ad",
+      wickDownColor: "#ff6c8d",
+    });
 
-    window.addEventListener("resize", () => {
-      if (mainRef.current && oscRef.current) {
-        setSvgSize({ w: mainRef.current.clientWidth, h: mainRef.current.clientHeight });
-        chart.applyOptions({ width: mainRef.current.clientWidth, height: mainRef.current.clientHeight });
+    cSeries.setData(
+      candles.map((c) => ({
+        time: c.time as Time,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+      }))
+    );
+
+    const ma20 = mc.addLineSeries({
+      color: "#d2b000",
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    });
+    ma20.setData(computeSMA(candles, 20).map((d) => ({ time: d.time as Time, value: d.value })));
+
+    const ma50 = mc.addLineSeries({
+      color: "#bd742a",
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    });
+    ma50.setData(computeSMA(candles, 50).map((d) => ({ time: d.time as Time, value: d.value })));
+
+    const ema9 = mc.addLineSeries({
+      color: "#50dfff",
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    });
+    ema9.setData(computeEMA(candles, 9).map((d) => ({ time: d.time as Time, value: d.value })));
+
+    mc.timeScale().fitContent();
+
+    const last = candles[candles.length - 1];
+    const prev = candles[candles.length - 2] ?? last;
+    setLivePrice(last.close);
+    setPriceChange(((last.close - prev.close) / prev.close) * 100);
+
+    const vc: IChartApi = createChart(volRef.current, {
+      ...baseChartOpts,
+      width: volRef.current.clientWidth,
+      height: volRef.current.clientHeight,
+    });
+
+    const volSeries = vc.addHistogramSeries({ priceScaleId: "right" });
+    volSeries.setData(
+      candles.map((c) => ({
+        time: c.time as Time,
+        value: c.volume,
+        color: c.close >= c.open ? "rgba(55,244,173,0.45)" : "rgba(255,108,141,0.45)",
+      }))
+    );
+    vc.timeScale().fitContent();
+
+    mc.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (range !== null) {
+        vc.timeScale().setVisibleLogicalRange(range);
       }
     });
 
-    return () => chart.remove();
+    const resize = () => {
+      if (mainRef.current) {
+        mc.applyOptions({
+          width: mainRef.current.clientWidth,
+          height: mainRef.current.clientHeight,
+        });
+      }
+      if (volRef.current) {
+        vc.applyOptions({
+          width: volRef.current.clientWidth,
+          height: volRef.current.clientHeight,
+        });
+      }
+    };
+
+    window.addEventListener("resize", resize);
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      mc.remove();
+      vc.remove();
+    };
   }, [candles]);
 
-  // Lógica Desenho
-  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (activeTool === "cursor") {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const hit = drawings.find(d => d.id === selectedId && !d.locked);
-      if (hit) setSelectedId(null); else { setDraftStart({ x: mx, y: e.clientY - rect.top }); }
-      return;
-    }
-    const rect = e.currentTarget.getBoundingClientRect();
-    setDraftStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  };
-  const handleMouseUp = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (draftStart && activeTool !== "cursor") {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const newD: Drawing = {
-        id: Date.now().toString(), tool: activeTool, color: TOOL_COLORS[activeTool],
-        x1: draftStart.x, y1: draftStart.y, x2: e.clientX - rect.left, y2: e.clientY - rect.top,
-        lineWidth: 2, lineStyle: "solid", fillOpacity: 10, locked: false, hidden: false, note: "", showPrice: true,
-      };
-      setDrawings(prev => [...prev, newD]);
-      setDraftStart(null);
-    }
-  };
+  const isPositive = priceChange >= 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, background: ui.bg, position: "relative" }}>
-      {/* Info Header */}
-      <div style={{ height: 44, borderBottom: "1px solid #172133", display: "grid", gridTemplateColumns: "auto 1fr", alignItems: "center", padding: "0 16px" }}>
-        <div style={{ display: "flex", gap: 12 }}>
-          <div style={{ color: "#27f59d", fontSize: 14, fontWeight: 900 }}>BTC</div>
-          <div style={{ color: "#7085ad", fontSize: 11 }}>Live Trading</div>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {["1m", "5m", "15m", "1H", "4H"].map(tf => <TopButton key={tf} active>{tf}</TopButton>)}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        background:
+          "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(6,10,18,0.98))",
+      }}
+    >
+      <div
+        style={{
+          padding: "10px 12px",
+          borderBottom: `1px solid ${ui.border}`,
+          background:
+            "linear-gradient(180deg, rgba(12,19,36,0.94), rgba(8,13,25,0.94))",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.6fr repeat(4, 1fr) auto",
+            gap: 10,
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              minWidth: 0,
+            }}
+          >
+            <div
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 8,
+                background: "rgba(247,201,72,0.16)",
+                color: ui.yellow,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 11,
+                fontWeight: 900,
+                flexShrink: 0,
+              }}
+            >
+              SC
+            </div>
+
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  color: "#eef6ff",
+                  fontSize: 16,
+                  fontWeight: 900,
+                  lineHeight: 1.15,
+                }}
+              >
+                BTCUSDT
+              </div>
+              <div
+                style={{
+                  color: "#7d91b6",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                Scanner Atlas • Pasta: Cursor • Item: Navegar • TF: 15m
+              </div>
+            </div>
+          </div>
+
+          <StatCard
+            title="Preço"
+            value={livePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            valueColor="#4ef0cb"
+          />
+          <StatCard
+            title="Variação"
+            value={`${isPositive ? "+" : ""}${priceChange.toFixed(2)}%`}
+            valueColor={isPositive ? ui.green : ui.red}
+          />
+          <StatCard
+            title="Volume"
+            value={formatCompact(candles[candles.length - 1]?.volume ?? 0)}
+            valueColor="#51e6ff"
+          />
+          <StatCard
+            title="Desenhos"
+            value={selectedObject ? "1" : "0"}
+            valueColor={selectedObject ? ui.yellow : ui.red}
+          />
+
+          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+            <TopButton active={mode === "auto"}>Auto</TopButton>
+            <TopButton active={mode === "manual"}>Manual</TopButton>
+            <TopButton active={mode === "space"}>Seguir + Espaço</TopButton>
+            <TopButton>Zoom -</TopButton>
+            <TopButton>Zoom +</TopButton>
+            <TopButton>Agora</TopButton>
+            <TopButton>Reset</TopButton>
+          </div>
         </div>
       </div>
 
-      {/* Chart Container */}
-      <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-        <div ref={mainRef} style={{ width: "100%", height: "100%" }} />
-        
-        {/* SVG Overlay */}
-        <svg ref={svgRef} style={{ position: "absolute", inset: 0, zIndex: 10, pointerEvents: activeTool !== "cursor" ? "auto" : "none", cursor: activeTool === "cursor" ? "default" : "crosshair" }}
-          onMouseDown={handleMouseDown} onMouseMove={(e) => { const r=e.currentTarget.getBoundingClientRect(); if(draftStart)setDraftStart({...draftStart,x:e.clientX-r.left}); }} onMouseUp={handleMouseUp}>
-          
-          {/* Render Desenhos Fixos */}
-          {drawings.map(d => renderDrawingSVG(d, svgSize.w, svgSize.h, d.id === selectedId))}
-          
-          {/* Render Draft (Preview) */}
-          {draftStart && activeTool !== "cursor" && renderDrawingSVG({
-            id: "draft", tool: activeTool, color: TOOL_COLORS[activeTool], x1: draftStart.x, y1: draftStart.y,
-            x2: svgSize.w, y2: svgSize.h, lineWidth: 2, lineStyle: "solid", fillOpacity: 0, locked: false, hidden: false, showPrice: false
-          }, svgSize.w, svgSize.h, false).cloneNode(true)} 
-        </svg>
-
-        {/* Oscillator Placeholder */}
-        <div ref={oscRef} style={{ height: 80, borderTop: "1px solid #172133", background: "#060913" }}>
-          <div style={{ padding: 4, color: "#7085ad", fontSize: 10 }}>Volume</div>
+      <div
+        style={{
+          height: 34,
+          padding: "0 12px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottom: `1px solid ${ui.border}`,
+          background: "rgba(255,255,255,0.015)",
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <TopButton active>Objetos</TopButton>
+          <TopButton>Travar</TopButton>
+          <TopButton>Ocultar</TopButton>
+          <TopButton>Limpar desenhos</TopButton>
+          <TopButton>Apagar selecionado</TopButton>
         </div>
+
+        <div
+          style={{
+            color: selectedObject ? "#dce8ff" : "#7f93b7",
+            fontSize: 11,
+            fontWeight: 800,
+          }}
+        >
+          {selectedObject ? `${selectedObject.name} • ${selectedObject.type}` : "Nenhum objeto selecionado"}
+        </div>
+      </div>
+
+      <div ref={mainRef} style={{ flex: 1, minHeight: 0, width: "100%" }} />
+
+      <div style={{ flexShrink: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "6px 16px",
+            borderTop: `1px solid ${ui.border}`,
+            background: "#0a0f1d",
+          }}
+        >
+          <span style={{ color: "#7f93b7", fontSize: 11, fontFamily: "monospace" }}>
+            Volume
+          </span>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(55,244,173,0.45)", display: "inline-block" }} />
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(255,108,141,0.45)", display: "inline-block" }} />
+        </div>
+        <div ref={volRef} style={{ height: 82, width: "100%" }} />
       </div>
     </div>
   );
 }
 
-// ============================================
-// APP PRINCIPAL
-// ============================================
 export default function AtlasChartPro2() {
-  const [activeTab, setActiveTab] = useState<"Chart" | "Scan">("Chart");
+  const [timeframe, setTimeframe] = useState<Timeframe>("15m");
+  const [mode] = useState<ModeKey>("auto");
+  const [objects] = useState<DrawObject[]>([
+    { id: "1", name: "Linha 1", type: "line" },
+  ]);
+  const [selectedId] = useState<string | null>(null);
+
+  const candles = useMemo(() => generateCandles(240, 70200), []);
+
+  const selectedObject = useMemo(
+    () => objects.find((o) => o.id === selectedId) ?? null,
+    [objects, selectedId]
+  );
+
+  const lastCandle = candles[candles.length - 1];
+  const firstCandle = candles[0];
+  const priceChange =
+    ((lastCandle.close - firstCandle.close) / firstCandle.close) * 100;
+
+  const aiInsight = useMemo<AIInsight>(
+    () => ({
+      symbol: "BTCUSDT",
+      price: lastCandle.close,
+      score: clamp(84, 0, 100),
+      signal: "COMPRA",
+      riskLevel: "Moderado",
+      riskType: "Volatilidade",
+      invalidation: 69180.6,
+      structure: [
+        { label: "Fluxo", value: "Positivo", type: "positive" },
+        { label: "Momentum", value: "Forte", type: "strong" },
+        { label: "Liquidez", value: "Acima", type: "positive" },
+        { label: "Confluência", type: "dots", dots: 8 },
+      ],
+      structure2: [
+        { label: "Euler", value: "Alinhado", type: "positive" },
+        { label: "Razão de Prata", value: "Estável", type: "neutral" },
+        { label: "Risco Assimétrico", value: "Bom", type: "positive" },
+        { label: "Invalidação", value: "Próxima", type: "negative" },
+      ],
+    }),
+    [lastCandle.close]
+  );
 
   return (
-    <div style={{ width: "100vw", height: "100vh", background: ui.bg, color: "#ebf3ff", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-      
-      {/* Top Navbar */}
-      <div style={{ height: 48, borderBottom: "1px solid #172133", display: "flex", alignItems: "center", padding: "0 12px", gap: 16 }}>
-        <div style={{ fontWeight: 900, fontSize: 14, color: "#2de2ff", letterSpacing: 1 }}>SINGULARIDADE</div>
-        <div style={{ flex: 1 }} />
-        <div style={{ display: "flex", gap: 8 }}>
-          <TopButton active={activeTab==="Chart"}>Gráfico</TopButton>
-          <TopButton active={activeTab==="Scan"}>Scanner</TopButton>
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        background: ui.bg,
+        color: ui.text,
+        fontFamily: "Inter, Arial, sans-serif",
+      }}
+    >
+      <TopBar
+        symbol="BTCUSDT"
+        price={lastCandle.close}
+        change={priceChange}
+        timeframe={timeframe}
+        onTimeframeChange={setTimeframe}
+      />
+
+      <ModuleStrip />
+
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        <LeftToolbar />
+
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: 0 }}>
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <ChartPanel
+              candles={candles}
+              selectedObject={selectedObject}
+              mode={mode}
+            />
+          </div>
         </div>
-        <Settings size={16} color="#90a4c8" style={{ marginLeft: 16 }} />
-      </div>
 
-      {/* Modules Strip */}
-      <div style={{ height: 32, borderBottom: "1px solid #172133", padding: "0 16px", display: "flex", alignItems: "center", gap: 8, background: "#080e1c" }}>
-         {["Fluxo", "Scanner", "Estrutura", "IA Atlas", "Liquidez"].map(m => (
-           <span key={m} style={{ fontSize: 10, color: "#90a4c8", cursor: "pointer", fontWeight: 600 }}>{m}</span>
-         ))}
-      </div>
-
-      {/* Content Area */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        <DrawingToolbar activeTool={"cursor" as DrawTool} onChangeTool={() => {}} />
-        
-        <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
-          <ChartPanel />
+        <div
+          style={{
+            width: 258,
+            flexShrink: 0,
+            borderLeft: `1px solid ${ui.border}`,
+            background:
+              "linear-gradient(180deg, rgba(7,11,20,0.98), rgba(4,7,14,0.98))",
+          }}
+        >
+          <AIInsightPanel insight={aiInsight} />
         </div>
-
-        <AIInsightPanel />
       </div>
     </div>
   );
