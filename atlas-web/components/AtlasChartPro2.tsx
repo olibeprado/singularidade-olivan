@@ -12,6 +12,12 @@ import {
   Activity,
   BarChart2,
   Bell,
+  Minus,
+  Eraser,
+  Lock,
+  EyeOff,
+  Move,
+  ArrowLeft,
   ChevronDown,
   ChevronRight,
   Eye,
@@ -75,6 +81,30 @@ type DrawObject = {
   type: string;
   locked?: boolean;
   hidden?: boolean;
+};
+
+type ToolCategory =
+  | "cursor"
+  | "trend"
+  | "gannfib"
+  | "shapes"
+  | "annotation"
+  | "measure"
+  | "zoom"
+  | "magnet"
+  | "visibility"
+  | "remove";
+
+type ToolItem = {
+  id: string;
+  label: string;
+};
+
+type ToolGroup = {
+  id: ToolCategory;
+  icon: React.ReactNode;
+  title: string;
+  items: ToolItem[];
 };
 
 const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
@@ -144,6 +174,149 @@ function computeEMA(candles: CandleData[], period: number) {
 
   return ema;
 }
+
+
+const TOOL_GROUPS: ToolGroup[] = [
+  {
+    id: "cursor",
+    icon: <MousePointer2 size={16} />,
+    title: "Cursor / Navegação",
+    items: [
+      { id: "cursor", label: "Cursor" },
+      { id: "crosshair", label: "Cruzeta" },
+      { id: "hand", label: "Mover gráfico" },
+      { id: "select", label: "Selecionar objeto" },
+    ],
+  },
+  {
+    id: "trend",
+    icon: <TrendingUp size={16} />,
+    title: "Linhas de Tendência",
+    items: [
+      { id: "trendline", label: "Trend Line" },
+      { id: "info-line", label: "Info Line" },
+      { id: "ray", label: "Ray" },
+      { id: "extended", label: "Extended Line" },
+      { id: "hline", label: "Horizontal Line" },
+      { id: "vline", label: "Vertical Line" },
+      { id: "cross", label: "Cross Line" },
+      { id: "arrow", label: "Arrow" },
+      { id: "path", label: "Path" },
+      { id: "brush", label: "Brush" },
+    ],
+  },
+  {
+    id: "gannfib",
+    icon: <BarChart2 size={16} />,
+    title: "Gann / Fibonacci / Pitchfork",
+    items: [
+      { id: "pitchfork", label: "Pitchfork" },
+      { id: "schiff", label: "Schiff Pitchfork" },
+      { id: "modified-schiff", label: "Modified Schiff Pitchfork" },
+      { id: "inside", label: "Inside Pitchfork" },
+      { id: "pitchfan", label: "Pitchfan" },
+      { id: "gann-box", label: "Gann Box" },
+      { id: "gann-square", label: "Gann Square" },
+      { id: "gann-fan", label: "Gann Fan" },
+      { id: "fib-retrace", label: "Fib Retracement" },
+      { id: "fib-ext", label: "Trend-Based Fib Extension" },
+      { id: "fib-speed", label: "Fib Speed Resistance Fan" },
+      { id: "fib-timezone", label: "Fib Time Zone" },
+      { id: "fib-time", label: "Trend-Based Fib Time" },
+      { id: "fib-circles", label: "Fib Circles" },
+      { id: "fib-spiral", label: "Fib Spiral" },
+      { id: "fib-arcs", label: "Fib Speed Resistance Arcs" },
+      { id: "fib-wedge", label: "Fib Wedge" },
+      { id: "fib-channel", label: "Fib Channel" },
+    ],
+  },
+  {
+    id: "shapes",
+    icon: <Shapes size={16} />,
+    title: "Formas / Padrões",
+    items: [
+      { id: "rect", label: "Rectangle" },
+      { id: "rot-rect", label: "Rotated Rectangle" },
+      { id: "circle", label: "Circle" },
+      { id: "ellipse", label: "Ellipse" },
+      { id: "triangle", label: "Triangle" },
+      { id: "polyline", label: "Polyline" },
+      { id: "curve", label: "Curve" },
+      { id: "pattern-xab", label: "XABCD Pattern" },
+      { id: "pattern-abcd", label: "ABCD Pattern" },
+      { id: "long", label: "Long Position" },
+      { id: "short", label: "Short Position" },
+      { id: "forecast", label: "Forecast" },
+    ],
+  },
+  {
+    id: "annotation",
+    icon: <Type size={16} />,
+    title: "Anotações",
+    items: [
+      { id: "text", label: "Text" },
+      { id: "note", label: "Note" },
+      { id: "balloon", label: "Balloon" },
+      { id: "price-note", label: "Price Label" },
+      { id: "arrow-mark", label: "Arrow Marker" },
+      { id: "flag", label: "Flag Mark" },
+    ],
+  },
+  {
+    id: "measure",
+    icon: <Ruler size={16} />,
+    title: "Medição",
+    items: [
+      { id: "measure", label: "Measure" },
+      { id: "date-range", label: "Date Range" },
+      { id: "price-range", label: "Price Range" },
+      { id: "bars-pattern", label: "Bars Pattern" },
+    ],
+  },
+  {
+    id: "zoom",
+    icon: <Maximize2 size={16} />,
+    title: "Zoom / Navegação",
+    items: [
+      { id: "zoom-in", label: "Zoom In" },
+      { id: "zoom-out", label: "Zoom Out" },
+      { id: "auto-fit", label: "Auto Fit" },
+      { id: "reset-view", label: "Reset View" },
+    ],
+  },
+  {
+    id: "magnet",
+    icon: <Magnet size={16} />,
+    title: "Magnetismo",
+    items: [
+      { id: "magnet-weak", label: "Magnet Weak" },
+      { id: "magnet-strong", label: "Magnet Strong" },
+      { id: "magnet-off", label: "Magnet Off" },
+    ],
+  },
+  {
+    id: "visibility",
+    icon: <Eye size={16} />,
+    title: "Visibilidade / Objetos",
+    items: [
+      { id: "show-all", label: "Mostrar tudo" },
+      { id: "hide-all", label: "Ocultar tudo" },
+      { id: "lock-all", label: "Travar tudo" },
+      { id: "unlock-all", label: "Destravar tudo" },
+    ],
+  },
+  {
+    id: "remove",
+    icon: <Trash2 size={16} />,
+    title: "Remover / Limpeza",
+    items: [
+      { id: "delete-selected", label: "Apagar selecionado" },
+      { id: "clear-drawings", label: "Limpar desenhos" },
+      { id: "clear-indicators", label: "Limpar indicadores" },
+      { id: "factory-ui", label: "Reset visual" },
+    ],
+  },
+];
 
 const ui = {
   bg: "#060913",
@@ -619,83 +792,214 @@ function ModuleStrip() {
   );
 }
 
+
 function LeftToolbar() {
-  const tools = [
-    { icon: <MousePointer2 size={16} />, active: true, title: "Cursor" },
-    { icon: <TrendingUp size={16} />, title: "Linha" },
-    { icon: <BarChart2 size={16} />, title: "Fibonacci" },
-    { icon: <Shapes size={16} />, title: "Formas" },
-    { icon: <PenTool size={16} />, title: "Pincel" },
-    { icon: <Type size={16} />, title: "Texto" },
-    { icon: <Square size={16} />, title: "Padrões" },
-    { icon: <Activity size={16} />, title: "Medição" },
-    { icon: <Star size={16} />, title: "Favoritos" },
-    { icon: <Ruler size={16} />, title: "Régua" },
-    { icon: <Maximize2 size={16} />, title: "Zoom" },
-    { icon: <Magnet size={16} />, title: "Magnetismo" },
-    { icon: <Eye size={16} />, title: "Ocultar" },
-    { icon: <Trash2 size={16} />, title: "Remover" },
-  ];
+  const [activeGroup, setActiveGroup] = useState<ToolCategory>("gannfib");
+
+  const active = TOOL_GROUPS.find((g) => g.id === activeGroup) ?? TOOL_GROUPS[0];
+
+  const secondaryIcon = (id: ToolCategory) => {
+    switch (id) {
+      case "cursor":
+        return <Move size={13} />;
+      case "trend":
+        return <Minus size={13} />;
+      case "gannfib":
+        return <BarChart2 size={13} />;
+      case "shapes":
+        return <Square size={13} />;
+      case "annotation":
+        return <Type size={13} />;
+      case "measure":
+        return <Ruler size={13} />;
+      case "zoom":
+        return <Search size={13} />;
+      case "magnet":
+        return <Magnet size={13} />;
+      case "visibility":
+        return <EyeOff size={13} />;
+      case "remove":
+        return <Eraser size={13} />;
+      default:
+        return <ChevronRight size={13} />;
+    }
+  };
 
   return (
     <div
       style={{
-        width: 56,
+        width: 260,
         borderRight: `1px solid ${ui.border}`,
         background:
           "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(6,9,17,0.98))",
         display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "12px 0",
-        gap: 8,
         flexShrink: 0,
       }}
     >
-      {tools.map((tool, i) => (
+      <div
+        style={{
+          width: 56,
+          borderRight: "1px solid rgba(255,255,255,0.05)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "10px 0",
+          gap: 8,
+        }}
+      >
+        {TOOL_GROUPS.map((tool) => {
+          const isActive = tool.id === activeGroup;
+          return (
+            <button
+              key={tool.id}
+              title={tool.title}
+              onClick={() => setActiveGroup(tool.id)}
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                border: isActive
+                  ? "1px solid rgba(45,226,255,0.22)"
+                  : "1px solid rgba(255,255,255,0.04)",
+                background: isActive
+                  ? "linear-gradient(180deg, rgba(45,226,255,0.12), rgba(45,226,255,0.04))"
+                  : "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))",
+                color: isActive ? ui.cyan : "#95a8cb",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                boxShadow: isActive ? "0 0 18px rgba(45,226,255,0.12)" : "none",
+              }}
+            >
+              {tool.icon}
+            </button>
+          );
+        })}
+
+        <div style={{ flex: 1 }} />
+
         <button
-          key={i}
-          title={tool.title}
           style={{
             width: 34,
             height: 34,
             borderRadius: 10,
-            border: tool.active
-              ? "1px solid rgba(45,226,255,0.22)"
-              : "1px solid rgba(255,255,255,0.04)",
-            background: tool.active
-              ? "linear-gradient(180deg, rgba(45,226,255,0.12), rgba(45,226,255,0.04))"
-              : "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))",
-            color: tool.active ? ui.cyan : "#95a8cb",
+            border: "1px solid rgba(255,255,255,0.05)",
+            background: "rgba(255,255,255,0.02)",
+            color: "#95a8cb",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            boxShadow: tool.active ? "0 0 18px rgba(45,226,255,0.12)" : "none",
           }}
         >
-          {tool.icon}
+          <Settings size={15} />
         </button>
-      ))}
+      </div>
 
-      <div style={{ flex: 1 }} />
-
-      <button
+      <div
         style={{
-          width: 34,
-          height: 34,
-          borderRadius: 10,
-          border: "1px solid rgba(255,255,255,0.05)",
-          background: "rgba(255,255,255,0.02)",
-          color: "#95a8cb",
+          width: 204,
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
+          flexDirection: "column",
+          background:
+            "linear-gradient(180deg, rgba(16,22,36,0.98), rgba(12,17,28,0.98))",
         }}
       >
-        <Settings size={15} />
-      </button>
+        <div
+          style={{
+            height: 42,
+            padding: "0 12px",
+            borderBottom: "1px solid rgba(255,255,255,0.05)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            color: "#ecf4ff",
+            fontSize: 12,
+            fontWeight: 900,
+          }}
+        >
+          <span>{active.title}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#7f93b7" }}>
+            {secondaryIcon(active.id)}
+            <ChevronRight size={13} />
+          </div>
+        </div>
+
+        <div
+          style={{
+            padding: "8px 0",
+            overflowY: "auto",
+            flex: 1,
+          }}
+        >
+          {active.items.map((item) => (
+            <button
+              key={item.id}
+              style={{
+                width: "100%",
+                height: 32,
+                padding: "0 12px",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                border: "none",
+                background: "transparent",
+                color: "#aebedc",
+                fontSize: 12,
+                textAlign: "left",
+                cursor: "pointer",
+              }}
+            >
+              <span style={{ color: "#7e90b4", display: "flex", alignItems: "center" }}>
+                {secondaryIcon(active.id)}
+              </span>
+              <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div
+          style={{
+            padding: 10,
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 8,
+          }}
+        >
+          <button
+            style={{
+              height: 30,
+              borderRadius: 9,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.02)",
+              color: "#c7d7f7",
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            Favoritos
+          </button>
+          <button
+            style={{
+              height: 30,
+              borderRadius: 9,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.02)",
+              color: "#c7d7f7",
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            Recente
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1094,7 +1398,7 @@ export default function AtlasChartPro2() {
 
         <div
           style={{
-            width: 258,
+            width: 238,
             flexShrink: 0,
             borderLeft: `1px solid ${ui.border}`,
             background:
