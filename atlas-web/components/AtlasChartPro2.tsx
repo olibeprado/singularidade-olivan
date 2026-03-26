@@ -713,30 +713,41 @@ function LeftToolbar({
         
         <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
           {active.items.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setCurrentTool(item.id as DrawingTool)} // <--- AQUI SELECIONA A FERRAMENTA
-              style={{
-                width: "100%", padding: "10px 16px", border: "none", cursor: "pointer", textAlign: "left",
-                background: currentTool === item.id ? "rgba(255,255,255,0.05)" : "transparent",
-                color: currentTool === item.id ? "#fff" : "#8ca1c4",
-                fontSize: 12, fontWeight: currentTool === item.id ? 700 : 500,
-                display: "flex", alignItems: "center", gap: 10
-              }}
-            >
-              <div style={{ color: currentTool === item.id ? ui.cyan : "#4b5b7c" }}>
-                 {/* Reutiliza o ícone do grupo para os itens */}
-                 {React.isValidElement(active.icon) && React.cloneElement(active.icon, { size: 14 } as React.Attributes & { size?: number })}
-              </div>
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+           <button
+  key={item.id}
+  onClick={() => setCurrentTool(item.id as DrawingTool)}
+  style={{
+    width: "100%",
+    height: 36,
+    padding: "0 14px",
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    background: currentTool === item.id ? "rgba(45,226,255,0.07)" : "transparent",
+    border: "none",
+    cursor: "pointer",
+    textAlign: "left",
+  }}
+>
+  {/* EM VEZ DE CLONE, USAMOS UM WRAPPER DE TAMANHO */}
+  <div style={{ 
+    color: currentTool === item.id ? ui.cyan : "#4b5b7c", 
+    display: "flex",
+    fontSize: 14, // Força o tamanho via CSS se necessário
+    width: 14,
+    height: 14
+  }}>
+    {active.icon} 
+  </div>
 
+  <span style={{ 
+    fontSize: 12, 
+    fontWeight: currentTool === item.id ? 700 : 500, 
+    color: currentTool === item.id ? "#fff" : "#8ca1c4" 
+  }}>
+    {item.label}
+  </span>
+</button>
 function pointToSegmentDistance(px: number, py: number, x1: number, y1: number, x2: number, y2: number) {
   const dx = x2 - x1;
   const dy = y2 - y1;
