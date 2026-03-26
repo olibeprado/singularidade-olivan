@@ -10,10 +10,11 @@ import {
 } from "lightweight-charts";
 import {
   Activity,
-  BarChart2,
   Bell,
+  BrainCircuit,
   ChevronDown,
   ChevronRight,
+  Droplets,
   Eye,
   Magnet,
   Maximize2,
@@ -24,20 +25,14 @@ import {
   Search,
   Settings,
   Shapes,
+  Sigma,
   Square,
   Star,
   Trash2,
-  TrendingDown,
   TrendingUp,
-  Type,
   Waves,
-  Sigma,
-  BrainCircuit,
   Layers3,
   ScanSearch,
-  Droplets,
-  Lock,
-  Unlock,
 } from "lucide-react";
 
 type Timeframe = "1m" | "5m" | "15m" | "30m" | "1H" | "4H" | "1D";
@@ -50,12 +45,6 @@ type CandleData = {
   low: number;
   close: number;
   volume: number;
-};
-
-type IndicatorData = {
-  time: number;
-  rsi: number;
-  mfi: number;
 };
 
 type StructureItem = {
@@ -77,16 +66,6 @@ type AIInsight = {
   structure2: StructureItem[];
 };
 
-type AssetScore = {
-  symbol: string;
-  volumeScore: number;
-  rsiMfi: number;
-  price: number;
-  change: number;
-  trend: "up" | "down" | "neutral";
-  color: string;
-};
-
 type DrawObject = {
   id: string;
   name: string;
@@ -97,18 +76,20 @@ type DrawObject = {
 
 const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
 const NAV_TABS = ["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"];
-const SCANNER_TABS = ["Volume", "RSI/MFI", "Fluxo", "Singularidade", "Confluência"];
-const TOP_SCANNER_TABS = ["Indicadores", "Fluxo", "Scanner", "Scanner+", "Eventos", "1Bs"];
+
+const ui = {
+  bg: "#060913",
+  panel: "#0b1222",
+  border: "#182235",
+  text: "#ebf3ff",
+  cyan: "#2de2ff",
+  green: "#27f59d",
+  yellow: "#f7c948",
+  red: "#ff6b86",
+};
 
 function clamp(v: number, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
-}
-
-function formatCompact(n: number) {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)}B`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(2)}K`;
-  return n.toFixed(2);
 }
 
 function generateCandles(count = 240, startPrice = 74500): CandleData[] {
@@ -140,74 +121,6 @@ function generateCandles(count = 240, startPrice = 74500): CandleData[] {
 
   return candles;
 }
-
-function generateIndicators(candles: CandleData[]): IndicatorData[] {
-  return candles.map((c, i) => {
-    const base = 48 + Math.sin(i / 8) * 14 + (Math.random() - 0.5) * 6;
-    const base2 = 52 + Math.cos(i / 10) * 16 + (Math.random() - 0.5) * 6;
-    return {
-      time: c.time,
-      rsi: clamp(base, 5, 95),
-      mfi: clamp(base2, 5, 95),
-    };
-  });
-}
-
-function generateSparkline(
-  count: number,
-  start: number,
-  trend: "up" | "down" | "neutral"
-) {
-  const arr: number[] = [];
-  let value = start;
-
-  for (let i = 0; i < count; i++) {
-    const drift = trend === "up" ? 1.3 : trend === "down" ? -1.2 : 0.12;
-    value += drift + (Math.random() - 0.5) * 3;
-    arr.push(value);
-  }
-
-  return arr;
-}
-
-function computeSMA(candles: CandleData[], period: number) {
-  return candles.map((c, i) => {
-    if (i < period - 1) return { time: c.time, value: c.close };
-    let sum = 0;
-    for (let j = i - period + 1; j <= i; j++) sum += candles[j].close;
-    return { time: c.time, value: sum / period };
-  });
-}
-
-function computeEMA(candles: CandleData[], period: number) {
-  const k = 2 / (period + 1);
-  const ema: { time: number; value: number }[] = [];
-  let prev = candles[0]?.close ?? 0;
-
-  for (let i = 0; i < candles.length; i++) {
-    const close = candles[i].close;
-    const value = i === 0 ? close : close * k + prev * (1 - k);
-    ema.push({ time: candles[i].time, value });
-    prev = value;
-  }
-
-  return ema;
-}
-
-const ui = {
-  bg: "#060913",
-  bg2: "#090f1e",
-  panel: "#0b1222",
-  panel2: "#0d1427",
-  border: "#182235",
-  softBorder: "rgba(255,255,255,0.06)",
-  text: "#ebf3ff",
-  mut: "#7f93b7",
-  cyan: "#2de2ff",
-  green: "#27f59d",
-  yellow: "#f7c948",
-  red: "#ff6b86",
-};
 
 function sectionTitle(text: string) {
   return (
@@ -951,400 +864,25 @@ function LeftToolbar() {
   );
 }
 
-function MiniSparkline({
-  data,
-  trend,
-}: {
-  data: number[];
-  trend: "up" | "down" | "neutral";
-}) {
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const w = 86;
-  const h = 34;
-
-  const points = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * w;
-      const y = h - ((v - min) / range) * h;
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  const color =
-    trend === "up" ? ui.green : trend === "down" ? ui.red : "#8ea2c8";
-
-  return (
-    <svg width={w} height={h} style={{ overflow: "visible" }}>
-      <polyline
-        points={points}
-        fill="none"
-        stroke={color}
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.95"
-      />
-      <circle
-        cx={w}
-        cy={h - ((data[data.length - 1] - min) / range) * h}
-        r="2.5"
-        fill={color}
-      />
-    </svg>
-  );
-}
-
-function ScoreBar({
-  value,
-  max = 100,
-  color,
-}: {
-  value: number;
-  max?: number;
-  color: string;
-}) {
-  const pct = Math.min(100, (value / max) * 100);
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <div
-        style={{
-          width: 72,
-          height: 6,
-          background: "rgba(255,255,255,0.08)",
-          borderRadius: 999,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            width: `${pct}%`,
-            height: "100%",
-            borderRadius: 999,
-            background: color,
-          }}
-        />
-      </div>
-      <span
-        style={{
-          width: 44,
-          textAlign: "right",
-          fontSize: 12,
-          fontFamily: "monospace",
-          color: "#dbe8ff",
-        }}
-      >
-        {value.toFixed(3)}
-      </span>
-    </div>
-  );
-}
-
-function ScannerPanel({
-  assets,
-  activeTab,
-  onTabChange,
-}: {
-  assets: AssetScore[];
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-}) {
-  const sparklines = useMemo(
-    () => assets.map((a) => generateSparkline(24, 40 + Math.random() * 40, a.trend)),
-    [assets]
-  );
-
-  return (
-    <div
-      style={{
-        height: "100%",
-        borderTop: `1px solid ${ui.border}`,
-        background:
-          "linear-gradient(180deg, rgba(7,10,19,0.98), rgba(5,8,15,0.98))",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <div
-        style={{
-          height: 34,
-          padding: "0 12px",
-          borderBottom: `1px solid ${ui.border}`,
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          flexShrink: 0,
-        }}
-      >
-        {TOP_SCANNER_TABS.map((t, i) => (
-          <button
-            key={t}
-            onClick={() => onTabChange(t)}
-            style={{
-              border: "none",
-              background:
-                i === 2
-                  ? "rgba(247,201,72,0.12)"
-                  : activeTab === t
-                  ? "rgba(255,255,255,0.08)"
-                  : "transparent",
-              color: i === 2 ? ui.yellow : activeTab === t ? "#fff" : "#7f93b7",
-              borderRadius: 7,
-              padding: "4px 8px",
-              fontSize: 11,
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            {t}
-          </button>
-        ))}
-        <div style={{ flex: 1 }} />
-        <span style={{ color: "#6c7da2", fontSize: 11 }}>⊞ ≡ ⊟</span>
-      </div>
-
-      <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
-        <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              height: 40,
-              padding: "0 12px",
-              borderBottom: `1px solid ${ui.border}`,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexShrink: 0,
-            }}
-          >
-            <span
-              style={{
-                color: "#f1f7ff",
-                fontSize: 13,
-                fontWeight: 900,
-                letterSpacing: 0.3,
-              }}
-            >
-              MESTRE SCANNER
-            </span>
-
-            <div style={{ flex: 1 }} />
-
-            {SCANNER_TABS.map((t) => (
-              <button
-                key={t}
-                onClick={() => onTabChange(t)}
-                style={{
-                  border: "none",
-                  background: activeTab === t ? "rgba(255,255,255,0.08)" : "transparent",
-                  color: activeTab === t ? "#fff" : "#7f93b7",
-                  borderRadius: 7,
-                  padding: "4px 7px",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                {t}
-              </button>
-            ))}
-
-            <span
-              style={{
-                color: ui.cyan,
-                fontSize: 11,
-                fontWeight: 900,
-                padding: "4px 9px",
-                borderRadius: 8,
-                background: "rgba(45,226,255,0.1)",
-              }}
-            >
-              IA Atlas 2350
-            </span>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1.15fr 1fr 0.95fr 0.95fr 1fr",
-              gap: 8,
-              padding: "8px 12px",
-              borderBottom: `1px solid ${ui.border}`,
-              color: "#6c7da2",
-              fontSize: 11,
-              flexShrink: 0,
-            }}
-          >
-            <span>Top Forge</span>
-            <span>Score</span>
-            <span>RSI/MFI</span>
-            <span>Preço</span>
-            <span>Mini Chart</span>
-          </div>
-
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            {assets.map((asset, i) => (
-              <div
-                key={asset.symbol}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1.15fr 1fr 0.95fr 0.95fr 1fr",
-                  gap: 8,
-                  padding: "10px 12px",
-                  borderBottom: "1px solid rgba(255,255,255,0.045)",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span
-                    style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: "50%",
-                      background: asset.color,
-                      display: "inline-block",
-                    }}
-                  />
-                  <span style={{ color: "#edf5ff", fontSize: 12, fontWeight: 800 }}>
-                    {asset.symbol}
-                  </span>
-                </div>
-
-                <ScoreBar value={asset.volumeScore} color={asset.color} />
-
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {asset.trend === "up" ? (
-                    <TrendingUp size={11} color={ui.green} />
-                  ) : asset.trend === "down" ? (
-                    <TrendingDown size={11} color={ui.red} />
-                  ) : (
-                    <Activity size={11} color="#a2b3d3" />
-                  )}
-                  <span
-                    style={{
-                      color: "#dbe8ff",
-                      fontSize: 12,
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    {asset.rsiMfi.toFixed(3)}
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <span
-                    style={{
-                      color: "#eef5ff",
-                      fontSize: 12,
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    ${asset.price.toLocaleString()}
-                  </span>
-                  <span
-                    style={{
-                      color: asset.change >= 0 ? ui.green : ui.red,
-                      fontSize: 12,
-                      fontFamily: "monospace",
-                      fontWeight: 800,
-                    }}
-                  >
-                    {asset.change >= 0 ? "+" : ""}
-                    {asset.change.toFixed(1)}%
-                  </span>
-                </div>
-
-                <MiniSparkline data={sparklines[i]} trend={asset.trend} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div
-          style={{
-            width: 250,
-            borderLeft: `1px solid ${ui.border}`,
-            background:
-              "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(5,8,15,0.98))",
-            flexShrink: 0,
-          }}
-        >
-          <div
-            style={{
-              height: 40,
-              padding: "0 12px",
-              borderBottom: `1px solid ${ui.border}`,
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ color: "#92a6cc", fontSize: 12 }}>IA Atlas 2350</span>
-          </div>
-
-          <div style={{ padding: 12 }}>
-            <svg width="100%" height="80" viewBox="0 0 200 80">
-              <line x1="0" y1="40" x2="200" y2="40" stroke="#1e2a42" strokeWidth="1" />
-              <polyline
-                points={Array.from({ length: 30 }, (_, i) => {
-                  const x = (i / 29) * 200;
-                  const y = 40 + Math.sin(i / 3) * 20 + (Math.random() - 0.5) * 10;
-                  return `${x},${y}`;
-                }).join(" ")}
-                fill="none"
-                stroke={ui.cyan}
-                strokeWidth="1.5"
-              />
-            </svg>
-
-            <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
-              {[
-                ["Estrutura", "▲ Positivo", ui.green],
-                ["Euler", "Forte", "#9fffbc"],
-                ["Razão de Prata", "Suporte Sólido", ui.green],
-                ["Ciclo", "Acelerado", ui.cyan],
-              ].map(([a, b, c]) => (
-                <div
-                  key={a}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: 12,
-                  }}
-                >
-                  <span style={{ color: "#7186ad" }}>{a}</span>
-                  <span style={{ color: c as string, fontWeight: 800 }}>{b}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ChartPanel({
   candles,
-  indicators,
   selectedObject,
   mode,
 }: {
   candles: CandleData[];
-  indicators: IndicatorData[];
   selectedObject: DrawObject | null;
   mode: ModeKey;
 }) {
   const mainRef = useRef<HTMLDivElement>(null);
-  const volRef = useRef<HTMLDivElement>(null);
-  const rsiRef = useRef<HTMLDivElement>(null);
-
   const [livePrice, setLivePrice] = useState<number>(candles[candles.length - 1]?.close ?? 0);
   const [priceChange, setPriceChange] = useState<number>(0);
 
   useEffect(() => {
-    if (!mainRef.current || !volRef.current || !rsiRef.current) return;
+    if (!mainRef.current) return;
 
-    const baseChartOpts = {
+    const chart: IChartApi = createChart(mainRef.current, {
+      width: mainRef.current.clientWidth,
+      height: mainRef.current.clientHeight,
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
         textColor: "#7085ad",
@@ -1364,15 +902,9 @@ function ChartPanel({
       },
       handleScroll: true,
       handleScale: true,
-    };
-
-    const mc: IChartApi = createChart(mainRef.current, {
-      ...baseChartOpts,
-      width: mainRef.current.clientWidth,
-      height: mainRef.current.clientHeight,
     });
 
-    const cSeries = mc.addCandlestickSeries({
+    const cSeries = chart.addCandlestickSeries({
       upColor: "#37f4ad",
       downColor: "#ff6c8d",
       borderUpColor: "#37f4ad",
@@ -1391,125 +923,28 @@ function ChartPanel({
       }))
     );
 
-    const ma20 = mc.addLineSeries({
-      color: "#d2b000",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    ma20.setData(computeSMA(candles, 20).map((d) => ({ time: d.time as Time, value: d.value })));
-
-    const ma50 = mc.addLineSeries({
-      color: "#bd742a",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    ma50.setData(computeSMA(candles, 50).map((d) => ({ time: d.time as Time, value: d.value })));
-
-    const ema9 = mc.addLineSeries({
-      color: "#50dfff",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    ema9.setData(computeEMA(candles, 9).map((d) => ({ time: d.time as Time, value: d.value })));
-
-    mc.timeScale().fitContent();
+    chart.timeScale().fitContent();
 
     const last = candles[candles.length - 1];
     const prev = candles[candles.length - 2] ?? last;
     setLivePrice(last.close);
     setPriceChange(((last.close - prev.close) / prev.close) * 100);
 
-    const vc: IChartApi = createChart(volRef.current, {
-      ...baseChartOpts,
-      width: volRef.current.clientWidth,
-      height: volRef.current.clientHeight,
-    });
-
-    const volSeries = vc.addHistogramSeries({ priceScaleId: "right" });
-    volSeries.setData(
-      candles.map((c) => ({
-        time: c.time as Time,
-        value: c.volume,
-        color: c.close >= c.open ? "rgba(55,244,173,0.45)" : "rgba(255,108,141,0.45)",
-      }))
-    );
-    vc.timeScale().fitContent();
-
-    const rc: IChartApi = createChart(rsiRef.current, {
-      ...baseChartOpts,
-      width: rsiRef.current.clientWidth,
-      height: rsiRef.current.clientHeight,
-    });
-
-    const rsiSeries = rc.addLineSeries({
-      color: "#9b7cff",
-      lineWidth: 2,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    const mfiSeries = rc.addLineSeries({
-      color: "#d2b000",
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-
-    rsiSeries.setData(
-      indicators.map((d) => ({
-        time: d.time as Time,
-        value: clamp(d.rsi, 0, 100),
-      }))
-    );
-
-    mfiSeries.setData(
-      indicators.map((d) => ({
-        time: d.time as Time,
-        value: clamp(d.mfi, 0, 100),
-      }))
-    );
-
-    rc.timeScale().fitContent();
-
-    mc.timeScale().subscribeVisibleLogicalRangeChange((range) => {
-      if (range !== null) {
-        vc.timeScale().setVisibleLogicalRange(range);
-        rc.timeScale().setVisibleLogicalRange(range);
-      }
-    });
-
     const resize = () => {
       if (mainRef.current) {
-        mc.applyOptions({
+        chart.applyOptions({
           width: mainRef.current.clientWidth,
           height: mainRef.current.clientHeight,
-        });
-      }
-      if (volRef.current) {
-        vc.applyOptions({
-          width: volRef.current.clientWidth,
-          height: volRef.current.clientHeight,
-        });
-      }
-      if (rsiRef.current) {
-        rc.applyOptions({
-          width: rsiRef.current.clientWidth,
-          height: rsiRef.current.clientHeight,
         });
       }
     };
 
     window.addEventListener("resize", resize);
-
     return () => {
       window.removeEventListener("resize", resize);
-      mc.remove();
-      vc.remove();
-      rc.remove();
+      chart.remove();
     };
-  }, [candles, indicators]);
+  }, [candles]);
 
   const isPositive = priceChange >= 0;
 
@@ -1603,7 +1038,7 @@ function ChartPanel({
           />
           <StatCard
             title="Volume"
-            value={formatCompact(candles[candles.length - 1]?.volume ?? 0)}
+            value={candleVol(candles[candles.length - 1]?.volume ?? 0)}
             valueColor="#51e6ff"
           />
           <StatCard
@@ -1656,83 +1091,30 @@ function ChartPanel({
       </div>
 
       <div ref={mainRef} style={{ flex: 1, minHeight: 0, width: "100%" }} />
-
-      <div style={{ flexShrink: 0 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            padding: "6px 16px",
-            borderTop: `1px solid ${ui.border}`,
-            background: "#0a0f1d",
-          }}
-        >
-          <span style={{ color: "#7f93b7", fontSize: 11, fontFamily: "monospace" }}>
-            Volume
-          </span>
-          <span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(55,244,173,0.45)", display: "inline-block" }} />
-          <span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(255,108,141,0.45)", display: "inline-block" }} />
-        </div>
-        <div ref={volRef} style={{ height: 82, width: "100%" }} />
-      </div>
-
-      <div style={{ flexShrink: 0 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            padding: "6px 16px",
-            borderTop: `1px solid ${ui.border}`,
-            background: "#0a0f1d",
-          }}
-        >
-          <span style={{ color: "#7f93b7", fontSize: 11, fontFamily: "monospace" }}>
-            RSI / MFI
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 11 }}>
-            <span style={{ width: 12, height: 2, background: "#9b7cff", display: "inline-block" }} />
-            RSI
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#dce8ff", fontSize: 11 }}>
-            <span style={{ width: 12, height: 2, background: "#d2b000", display: "inline-block" }} />
-            MFI
-          </span>
-        </div>
-        <div ref={rsiRef} style={{ height: 82, width: "100%" }} />
-      </div>
     </div>
   );
 }
 
+function candleVol(n: number) {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)}B`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(2)}K`;
+  return n.toFixed(2);
+}
+
 export default function AtlasChartPro2() {
   const [timeframe, setTimeframe] = useState<Timeframe>("15m");
-  const [activeTab, setActiveTab] = useState("Scanner");
   const [mode] = useState<ModeKey>("auto");
-  const [objects, setObjects] = useState<DrawObject[]>([
+  const [objects] = useState<DrawObject[]>([
     { id: "1", name: "Linha 1", type: "line" },
   ]);
   const [selectedId] = useState<string | null>(null);
 
   const candles = useMemo(() => generateCandles(240, 70200), []);
-  const indicators = useMemo(() => generateIndicators(candles), [candles]);
 
   const selectedObject = useMemo(
     () => objects.find((o) => o.id === selectedId) ?? null,
     [objects, selectedId]
-  );
-
-  const scannerAssets = useMemo<AssetScore[]>(
-    () => [
-      { symbol: "BTC", volumeScore: 82.41, rsiMfi: 64.82, price: 74682, change: 2.8, trend: "up", color: "#27f59d" },
-      { symbol: "ETH", volumeScore: 73.35, rsiMfi: 58.10, price: 3840, change: 1.2, trend: "up", color: "#31c8ff" },
-      { symbol: "SOL", volumeScore: 61.18, rsiMfi: 43.70, price: 182, change: -1.6, trend: "down", color: "#ffb14a" },
-      { symbol: "BNB", volumeScore: 69.08, rsiMfi: 52.20, price: 612, change: 0.9, trend: "neutral", color: "#f7c948" },
-      { symbol: "XRP", volumeScore: 55.63, rsiMfi: 39.90, price: 0.72, change: -2.1, trend: "down", color: "#a783ff" },
-      { symbol: "DOGE", volumeScore: 66.14, rsiMfi: 57.60, price: 0.18, change: 1.7, trend: "up", color: "#22c55e" },
-    ],
-    []
   );
 
   const lastCandle = candles[candles.length - 1];
@@ -1792,22 +1174,11 @@ export default function AtlasChartPro2() {
         <LeftToolbar />
 
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: 0 }}>
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <ChartPanel
-              candles={candles}
-              indicators={indicators}
-              selectedObject={selectedObject}
-              mode={mode}
-            />
-          </div>
-
-          <div style={{ height: 220, flexShrink: 0 }}>
-            <ScannerPanel
-              assets={scannerAssets}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-            />
-          </div>
+          <ChartPanel
+            candles={candles}
+            selectedObject={selectedObject}
+            mode={mode}
+          />
         </div>
 
         <div
