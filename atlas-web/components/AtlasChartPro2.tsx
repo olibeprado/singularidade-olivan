@@ -679,178 +679,58 @@ function LeftToolbar({
   currentTool: DrawingTool;
   setCurrentTool: (v: DrawingTool) => void;
 }) {
-  const active = TOOL_GROUPS.find((g) => g.id === activeGroup) ?? TOOL_GROUPS[0];
-
-  const isToolActive = (itemId: string) => itemId === currentTool;
+  // SEGURANÇA: Se o grupo ativo sumir ou for inválido, ele volta para o primeiro (Cursor)
+  const active = useMemo(() => {
+    return TOOL_GROUPS.find((g) => g.id === activeGroup) || TOOL_GROUPS[0];
+  }, [activeGroup]);
 
   return (
-    <div
-      style={{
-        width: 260,
-        borderRight: `1px solid ${ui.border}`,
-        background: "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(6,9,17,0.98))",
-        display: "flex",
-        flexShrink: 0,
-      }}
-    >
-      <div
-        style={{
-          width: 56,
-          borderRight: "1px solid rgba(255,255,255,0.05)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: "10px 0",
-          gap: 8,
-        }}
-      >
-        {TOOL_GROUPS.map((tool) => {
-          const isActive = tool.id === activeGroup;
-          return (
-            <button
-              key={tool.id}
-              title={tool.title}
-              onClick={() => setActiveGroup(tool.id)}
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 10,
-                border: isActive ? "1px solid rgba(45,226,255,0.22)" : "1px solid rgba(255,255,255,0.04)",
-                background: isActive
-                  ? "linear-gradient(180deg, rgba(45,226,255,0.12), rgba(45,226,255,0.04))"
-                  : "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))",
-                color: isActive ? ui.cyan : "#95a8cb",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                boxShadow: isActive ? "0 0 18px rgba(45,226,255,0.12)" : "none",
-              }}
-            >
-              {tool.icon}
-            </button>
-          );
-        })}
-
-        <div style={{ flex: 1 }} />
-
-        <button
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 10,
-            border: "1px solid rgba(255,255,255,0.05)",
-            background: "rgba(255,255,255,0.02)",
-            color: "#95a8cb",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-        >
-          <Settings size={15} />
-        </button>
+    <div style={{ display: "flex", height: "100%", width: 260, borderRight: `1px solid ${ui.border}`, background: "#080c18" }}>
+      
+      {/* COLUNA 1: OS ÍCONES DOS GRUPOS (ESQUERDA) */}
+      <div style={{ width: 56, display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0", gap: 8, borderRight: "1px solid rgba(255,255,255,0.05)" }}>
+        {TOOL_GROUPS.map((group) => (
+          <button
+            key={group.id}
+            onClick={() => setActiveGroup(group.id)} // <--- AQUI TROCA O GRUPO
+            style={{
+              width: 36, height: 36, borderRadius: 8, cursor: "pointer", border: "none",
+              background: group.id === activeGroup ? "rgba(45,226,255,0.15)" : "transparent",
+              color: group.id === activeGroup ? ui.cyan : "#7f93b7",
+              display: "flex", alignItems: "center", justifyContent: "center"
+            }}
+          >
+            {group.icon}
+          </button>
+        ))}
       </div>
 
-      <div
-        style={{
-          width: 204,
-          display: "flex",
-          flexDirection: "column",
-          background: "linear-gradient(180deg, rgba(16,22,36,0.98), rgba(12,17,28,0.98))",
-        }}
-      >
-        <div
-          style={{
-            height: 42,
-            padding: "0 12px",
-            borderBottom: "1px solid rgba(255,255,255,0.05)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            color: "#ecf4ff",
-            fontSize: 12,
-            fontWeight: 900,
-          }}
-        >
-          <span>{active.title}</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#7f93b7" }}>
-            {toolIcon(active.id)}
-            <ChevronRight size={13} />
-          </div>
+      {/* COLUNA 2: AS FERRAMENTAS DO GRUPO (DIREITA) */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "rgba(0,0,0,0.2)" }}>
+        <div style={{ padding: "16px 12px", fontSize: 11, fontWeight: 900, color: "#fff", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          {active.title.toUpperCase()}
         </div>
-
-        <div style={{ padding: "8px 0", overflowY: "auto", flex: 1 }}>
+        
+        <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
           {active.items.map((item) => (
             <button
               key={item.id}
-              onClick={() => {
-                if (["cursor", "trendline", "ray", "hline", "vline"].includes(item.id)) {
-                  setCurrentTool(item.id as DrawingTool);
-                }
-              }}
+              onClick={() => setCurrentTool(item.id as DrawingTool)} // <--- AQUI SELECIONA A FERRAMENTA
               style={{
-                width: "100%",
-                height: 32,
-                padding: "0 12px",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                border: "none",
-                background: isToolActive(item.id) ? "rgba(45,226,255,0.08)" : "transparent",
-                color: isToolActive(item.id) ? "#e9f7ff" : "#aebedc",
-                fontSize: 12,
-                textAlign: "left",
-                cursor: "pointer",
+                width: "100%", padding: "10px 16px", border: "none", cursor: "pointer", textAlign: "left",
+                background: currentTool === item.id ? "rgba(255,255,255,0.05)" : "transparent",
+                color: currentTool === item.id ? "#fff" : "#8ca1c4",
+                fontSize: 12, fontWeight: currentTool === item.id ? 700 : 500,
+                display: "flex", alignItems: "center", gap: 10
               }}
             >
-              <span style={{ color: isToolActive(item.id) ? ui.cyan : "#7e90b4", display: "flex", alignItems: "center" }}>
-                {toolIcon(active.id)}
-              </span>
-              <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {item.label}
-              </span>
+              <div style={{ color: currentTool === item.id ? ui.cyan : "#4b5b7c" }}>
+                 {/* Reutiliza o ícone do grupo para os itens */}
+                 {React.cloneElement(active.icon as React.ReactElement, { size: 14 })}
+              </div>
+              {item.label}
             </button>
           ))}
-        </div>
-
-        <div
-          style={{
-            padding: 10,
-            borderTop: "1px solid rgba(255,255,255,0.05)",
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 8,
-          }}
-        >
-          <button
-            style={{
-              height: 30,
-              borderRadius: 9,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background: "rgba(255,255,255,0.02)",
-              color: "#c7d7f7",
-              fontSize: 11,
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            Favoritos
-          </button>
-          <button
-            style={{
-              height: 30,
-              borderRadius: 9,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background: "rgba(255,255,255,0.02)",
-              color: "#c7d7f7",
-              fontSize: 11,
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            Recente
-          </button>
         </div>
       </div>
     </div>
