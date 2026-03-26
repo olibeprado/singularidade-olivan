@@ -102,8 +102,11 @@ function DrawingToolbar({
   );
 }
 
-// TOP BAR
-function TopBar({ symbol }: { symbol: string }) {
+// TOP BAR - MESMO DESIGN
+function TopBar({ symbol, price, change }: { symbol: string; price: number; change: number }) {
+  const timeframes = ["1m", "5m", "15m", "30m", "1H", "4H", "1D"];
+  const isPositive = change >= 0;
+
   return (
     <div style={{
       height: 64,
@@ -114,18 +117,20 @@ function TopBar({ symbol }: { symbol: string }) {
       borderBottom: "1px solid #172133",
       background: "radial-gradient(circle at top, rgba(14,28,60,0.86), rgba(6,10,20,0.98) 55%)",
     }}>
-      {/* LOGO AQUI */}
+      {/* ÍCONE GEOMÉTRICO */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{
           width: 38, height: 38, borderRadius: 11,
           background: "linear-gradient(135deg, rgba(42,231,255,0.22), rgba(119,77,255,0.28))",
           border: "1px solid rgba(255,255,255,0.08)",
           display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 0 24px rgba(46,226,255,0.16)",
         }}>
-          {/* SEU ÍCONE SVG AQUI */}
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="#2de2ff" strokeWidth="2"/>
-            <path d="M12 6v12M6 12h12" stroke="#2de2ff" strokeWidth="2"/>
+          <svg width="22" height="22" viewBox="0 0 512 512" fill="none">
+            <circle cx="256" cy="256" r="240" stroke="#2de2ff" strokeWidth="2" opacity="0.8"/>
+            <path d="M256 60 L428 160 L428 352 L256 452 L84 352 L84 160 Z" stroke="#2de2ff" strokeWidth="2.5"/>
+            <path d="M180 180 L332 180 L332 332 L180 332 Z" stroke="#ffffff" strokeWidth="2" opacity="0.9"/>
+            <circle cx="256" cy="256" r="12" fill="#ffffff" opacity="0.95"/>
           </svg>
         </div>
         <span style={{ color: "#f6fbff", fontSize: 17, fontWeight: 900 }}>
@@ -146,14 +151,26 @@ function TopBar({ symbol }: { symbol: string }) {
         {symbol}
       </button>
       
-      <div style={{ flex: 1 }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ color: "#f6fbff", fontSize: 13, fontFamily: "monospace", fontWeight: 900 }}>
+          ${price.toLocaleString()}
+        </span>
+        <span style={{
+          color: isPositive ? "#27f59d" : "#ff6b86",
+          fontSize: 12, fontFamily: "monospace", fontWeight: 900,
+        }}>
+          {isPositive ? "+" : ""}{change.toFixed(2)}%
+        </span>
+      </div>
       
-      <div style={{ display: "flex", gap: 4 }}>
-        {["1m", "5m", "15m", "30m", "1H", "4H", "1D"].map(tf => (
+      <div style={{ width: 1, height: 30, background: "rgba(255,255,255,0.08)" }} />
+      
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        {timeframes.map(tf => (
           <button key={tf} style={{
             height: 29, padding: "0 10px", borderRadius: 9,
-            border: "1px solid rgba(255,255,255,0.06)",
-            background: tf === "15m" 
+            border: tf === "15m" ? "1px solid rgba(247,201,72,0.34)" : "1px solid rgba(255,255,255,0.06)",
+            background: tf === "15m"
               ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
               : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
             color: tf === "15m" ? "#f7c948" : "#dce8ff",
@@ -163,17 +180,37 @@ function TopBar({ symbol }: { symbol: string }) {
           </button>
         ))}
       </div>
+      
+      <div style={{ flex: 1 }} />
+      
+      <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+        {["Gráfico", "Ordens", "Posições", "IA Atlas", "Fluxo"].map(tab => (
+          <button key={tab} style={{
+            height: 29, padding: "0 10px", borderRadius: 9,
+            border: tab === "Gráfico" ? "1px solid rgba(247,201,72,0.34)" : "1px solid rgba(255,255,255,0.06)",
+            background: tab === "Gráfico"
+              ? "linear-gradient(180deg, rgba(247,201,72,0.16), rgba(247,201,72,0.04))"
+              : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
+            color: tab === "Gráfico" ? "#f7c948" : "#dce8ff",
+            fontSize: 11, fontWeight: 800, cursor: "pointer",
+          }}>
+            {tab}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
-// CHART PANEL SIMPLIFICADO
+// CHART PANEL - SEM RSI
 function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawings> }) {
   const mainRef = useRef<HTMLDivElement>(null);
   const volRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [svgSize, setSvgSize] = useState({ w: 800, h: 600 });
   const [draft, setDraft] = useState<{x1:number,y1:number,x2:number,y2:number} | null>(null);
+  const [price, setPrice] = useState(87294);
+  const [volume, setVolume] = useState(217);
 
   // Inicializa gráfico
   useEffect(() => {
@@ -208,7 +245,7 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
     const now = Math.floor(Date.now() / 1000);
     const candles = Array.from({ length: 100 }, (_, i) => {
       const time = now - (100 - i) * 60;
-      const base = 74000 + Math.sin(i / 10) * 1000;
+      const base = 87000 + Math.sin(i / 10) * 1000;
       return {
         time: time as Time,
         open: base,
@@ -219,6 +256,7 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
     });
 
     series.setData(candles);
+    setPrice(candles[candles.length - 1].close);
 
     // Volume
     const volChart = createChart(volRef.current, {
@@ -337,7 +375,7 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
       height: "100%", width: "100%",
       background: "linear-gradient(180deg, rgba(7,12,24,0.98), rgba(6,10,18,0.98))",
     }}>
-      {/* Header info */}
+      {/* Header info - MESMO DESIGN */}
       <div style={{
         padding: "8px 10px", borderBottom: "1px solid #172133",
         display: "grid", gridTemplateColumns: "1fr repeat(4, 120px)", gap: 8,
@@ -363,12 +401,14 @@ function ChartPanel({ drawingState }: { drawingState: ReturnType<typeof useDrawi
             <div style={{ color: "#7f93b7", fontSize: 9, fontWeight: 900, textTransform: "uppercase" }}>
               {label}
             </div>
-            <div style={{ color: "#4ef0cb", fontSize: 12, fontWeight: 900 }}>--</div>
+            <div style={{ color: "#4ef0cb", fontSize: 12, fontWeight: 900 }}>
+              {label === "Preço" ? price.toLocaleString() : label === "Variação" ? "+0.36%" : label === "Volume" ? volume : drawingState.drawings.length}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Botões */}
+      {/* Botões - MESMO DESIGN */}
       <div style={{
         height: 28, padding: "0 10px", display: "flex", alignItems: "center", gap: 4,
         borderBottom: "1px solid #172133", background: "rgba(255,255,255,0.012)",
@@ -441,7 +481,7 @@ export default function AtlasChartLite() {
       background: "#060913", color: "#ebf3ff",
       fontFamily: "Inter, Arial, sans-serif",
     }}>
-      <TopBar symbol="BTC" />
+      <TopBar symbol="BTC" price={87294} change={0.36} />
       
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <DrawingToolbar 
