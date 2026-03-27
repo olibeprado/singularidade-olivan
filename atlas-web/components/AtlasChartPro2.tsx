@@ -39,6 +39,8 @@ import {
   Type,
   Waves,
   X,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 
 type Timeframe = "1m" | "5m" | "15m" | "30m" | "1H" | "4H" | "1D";
@@ -55,6 +57,7 @@ type ToolCategory =
   | "visibility"
   | "remove";
 type DrawingTool = "cursor" | "trendline" | "ray" | "hline" | "vline";
+type InteractionMode = "navigate" | "objects";
 
 type CandleData = {
   time: number;
@@ -484,7 +487,7 @@ function TopBar({
         <Search size={15} color="#90a4c8" />
         <Bell size={15} color="#90a4c8" />
         <Settings size={15} color="#90a4c8" />
-      </div>
+      </div> : null}
     </div>
   );
 }
@@ -550,12 +553,13 @@ function LeftToolbar({
   currentTool: DrawingTool;
   setCurrentTool: (v: DrawingTool) => void;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
   const active = TOOL_GROUPS.find((g) => g.id === activeGroup) ?? TOOL_GROUPS[0];
 
   return (
     <div
       style={{
-        width: 260,
+        width: collapsed ? 56 : 260,
         borderRight: `1px solid ${ui.border}`,
         background: "linear-gradient(180deg, rgba(8,12,24,0.98), rgba(6,9,17,0.98))",
         display: "flex",
@@ -599,6 +603,24 @@ function LeftToolbar({
             </button>
           );
         })}
+        <button
+          onClick={() => setCollapsed((v) => !v)}
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 10,
+            border: "1px solid rgba(255,255,255,0.05)",
+            background: "rgba(255,255,255,0.02)",
+            color: "#95a8cb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+        >
+          {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+        </button>
+
         <div style={{ flex: 1 }} />
         <button
           style={{
@@ -618,7 +640,7 @@ function LeftToolbar({
         </button>
       </div>
 
-      <div
+{!collapsed ?       <div
         style={{
           width: 204,
           display: "flex",
@@ -717,6 +739,8 @@ function ChartPanel({
   selectedId,
   currentTool,
   setCurrentTool,
+  interactionMode,
+  setInteractionMode,
   mode,
   onAdd,
   onSelect,
@@ -731,6 +755,8 @@ function ChartPanel({
   selectedId: string | null;
   currentTool: DrawingTool;
   setCurrentTool: (v: DrawingTool) => void;
+  interactionMode: InteractionMode;
+  setInteractionMode: (v: InteractionMode) => void;
   mode: ModeKey;
   onAdd: (obj: DrawingObject) => void;
   onSelect: (id: string | null) => void;
@@ -951,6 +977,7 @@ function ChartPanel({
           }
           setDraft(null);
           setCurrentTool("cursor");
+          setInteractionMode("objects");
         }
         return;
       }
@@ -962,6 +989,7 @@ function ChartPanel({
           onSelect(obj.id);
         }
         setCurrentTool("cursor");
+        setInteractionMode("objects");
         return;
       }
     }
@@ -1118,18 +1146,40 @@ function ChartPanel({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          {toolButtons.map((tool) => (
+          <TopButton
+            active={interactionMode === "navigate"}
+            onClick={() => {
+              setInteractionMode("navigate");
+              setCurrentTool("cursor");
+              cancelDraft();
+            }}
+          >
+            Navegar
+          </TopButton>
+          <TopButton
+            active={interactionMode === "objects"}
+            onClick={() => {
+              setInteractionMode("objects");
+              setCurrentTool("cursor");
+              cancelDraft();
+            }}
+          >
+            Objetos
+          </TopButton>
+
+          {toolButtons.filter((tool) => tool !== "cursor").map((tool) => (
             <TopButton
               key={tool}
               active={currentTool === tool}
               onClick={() => {
                 setCurrentTool(tool);
-                if (tool === "cursor") cancelDraft();
+                setInteractionMode("objects");
               }}
             >
               {toolLabel(tool)}
             </TopButton>
           ))}
+
           {draft ? (
             <TopButton onClick={cancelDraft}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -1141,7 +1191,6 @@ function ChartPanel({
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <TopButton active={!!selectedObject} onClick={() => setCurrentTool("cursor")}>Objetos</TopButton>
           <TopButton active={!!selectedObject?.locked} onClick={onToggleLocked}>Travar</TopButton>
           <TopButton active={!!selectedObject?.hidden} onClick={onToggleHidden}>Ocultar</TopButton>
           <TopButton onClick={onClearAll}>Limpar desenhos</TopButton>
@@ -1149,7 +1198,7 @@ function ChartPanel({
         </div>
 
         <div style={{ color: selectedObject ? "#dce8ff" : "#7f93b7", fontSize: 11, fontWeight: 800, marginLeft: "auto" }}>
-          {draft ? `Modo desenho ativo: ${toolLabel(draft.type)} • clique para finalizar` : objectLabel(selectedObject)}
+          {draft ? `Modo desenho: ${toolLabel(draft.type)} • clique para finalizar` : interactionMode === "navigate" ? "Gráfico livre para pan/zoom" : objectLabel(selectedObject)}
         </div>
       </div>
 
@@ -1165,7 +1214,8 @@ function ChartPanel({
             position: "absolute",
             inset: 0,
             zIndex: 5,
-            cursor: currentTool === "cursor" ? "default" : "crosshair",
+            cursor: currentTool === "cursor" ? (interactionMode === "navigate" ? "default" : "grab") : "crosshair",
+            pointerEvents: currentTool === "cursor" && interactionMode === "navigate" ? "none" : "auto",
           }}
         >
           <svg width="100%" height="100%" style={{ overflow: "visible" }}>
@@ -1260,6 +1310,7 @@ export default function AtlasChartPro2() {
   const [mode] = useState<ModeKey>("auto");
   const [activeGroup, setActiveGroup] = useState<ToolCategory>("trend");
   const [currentTool, setCurrentTool] = useState<DrawingTool>("cursor");
+  const [interactionMode, setInteractionMode] = useState<InteractionMode>("navigate");
   const [drawings, setDrawings] = useState<DrawingObject[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -1314,6 +1365,8 @@ export default function AtlasChartPro2() {
               selectedId={selectedId}
               currentTool={currentTool}
               setCurrentTool={setCurrentTool}
+              interactionMode={interactionMode}
+              setInteractionMode={setInteractionMode}
               mode={mode}
               onAdd={addObject}
               onSelect={setSelectedId}
