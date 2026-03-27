@@ -916,6 +916,7 @@ function ChartPanel({
 
     const drag = dragRef.current;
     if (!drag) return;
+    if (drag.type !== "move-body") return;
 
     const original = drag.original;
     const dt = world.time - drag.start.time;
